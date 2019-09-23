@@ -24,7 +24,7 @@ class MdUtlPrazoRN extends InfraRN
         $strDataFinal = InfraData::calcularData(($numQtde + 365), InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $strData);
 
         $this->_removerTimeDate($strData);
-        $arrFeriados  = $this->_recuperarFeriados($strData, $strDataFinal);
+        $arrFeriados  = $this->recuperarFeriados($strData, $strDataFinal);
 
         $count = 0;
         while ($count < $numQtde) {
@@ -40,10 +40,45 @@ class MdUtlPrazoRN extends InfraRN
         return $strData;
     }
 
+    public function retornaQtdDiaUtil($dtPrazoInicial, $dtPrazoFinal, $isSomarDia = true)
+    {
+
+      $this->_removerTimeDate($dtPrazoInicial);
+      $this->_removerTimeDate($dtPrazoFinal);
+
+      $qtdDiasNormais = InfraData::compararDatas($dtPrazoInicial, $dtPrazoFinal);
+      $arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
+
+      $qtdDiasUteis = 0;
+
+       while (InfraData::compararDatasSimples($dtPrazoInicial, $dtPrazoFinal) != 0) {
+
+           if($isSomarDia) {
+               $dtPrazoInicial = InfraData::calcularData(1, InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $dtPrazoInicial);
+           }
+
+            if (InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'sábado' &&
+                InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'domingo' &&
+                !in_array($dtPrazoInicial, $arrFeriados)
+            ) {
+                $qtdDiasUteis++;
+            }
+
+           $isSomarDia = true;
+
+           if($qtdDiasUteis == $qtdDiasNormais){
+                break;
+            }
+        }
+
+
+        return $qtdDiasUteis;
+    }
+
     private function _somarMes($numMes, $strData)
     {
         $strDataFinal = InfraData::calcularData(($numMes + 12), InfraData::$UNIDADE_MESES, InfraData::$SENTIDO_ADIANTE, $strData);
-        $arrFeriados  = $this->_recuperarFeriados($strData, $strDataFinal);
+        $arrFeriados  = $this->recuperarFeriados($strData, $strDataFinal);
 
         $this->_removerTimeDate($strData);
         $strDataEUA    = implode('-', array_reverse(explode('/', $strData)));
@@ -65,7 +100,7 @@ class MdUtlPrazoRN extends InfraRN
     private function _somarAno($numAno, $strData)
     {
         $strDataFinal = InfraData::calcularData($numAno, InfraData::$UNIDADE_ANOS, InfraData::$SENTIDO_ADIANTE, $strData);
-        $arrFeriados  = $this->_recuperarFeriados($strData, $strDataFinal);
+        $arrFeriados  = $this->recuperarFeriados($strData, $strDataFinal);
 
         $this->_removerTimeDate($strData);
         $strDataEUA    = implode('-', array_reverse(explode('/', $strData)));
@@ -93,7 +128,7 @@ class MdUtlPrazoRN extends InfraRN
         }
     }
 
-    private function _recuperarFeriados($strDataInicial, $strDataFinal)
+    public function recuperarFeriados($strDataInicial, $strDataFinal)
     {
         $numIdOrgao = SessaoSEI::getInstance()->getNumIdOrgaoUnidadeAtual();
 
@@ -140,6 +175,56 @@ class MdUtlPrazoRN extends InfraRN
         }
 
         return $arrFeriados;
+    }
+
+    public function retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana)
+    {
+        $count = 0;
+        while (InfraData::obterDescricaoDiaSemana($dataPrimeiroDiaSemana) != 'segunda-feira') {
+            $dataPrimeiroDiaSemana = date('d-m-Y', strtotime('-1 days', strtotime($dataPrimeiroDiaSemana)));
+
+            $count++;
+            if ($count == 20) {
+                break;
+            }
+        }
+
+        return $dataPrimeiroDiaSemana;
+    }
+
+    public function getDatasPorFrequencia($staFrequencia){
+
+        $dataAtual = InfraData::getStrDataAtual();
+        $dataAtualFormatada = explode('/', $dataAtual);
+        $mesAtual      = $dataAtualFormatada[1];
+        $anoAtual      = $dataAtualFormatada[2];
+
+        switch ($staFrequencia){
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
+                $dtInicial = $dataAtual;
+                $dtFinal   = $dataAtual;
+                break;
+
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
+                $dataAtualFormatada = implode('-',$dataAtualFormatada);
+                $dataPrimeiroDiaSemana = $dataAtualFormatada;
+                $dtInicial = MdUtlPrazoRN::retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
+                $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dtInicial)));
+                $dtInicial =  str_replace('-','/', $dtInicial);
+                break;
+
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
+                $numDias = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
+                $dtInicial = 01 . '/' . $mesAtual . '/' . $anoAtual;
+                $dtFinal   = $numDias . '/' . $mesAtual . '/' . $anoAtual;
+                break;
+        }
+
+        $dtInicial = $dtInicial. ' 00:00:00';
+        $dtFinal   = $dtFinal. ' 23:59:59';
+        $arrRetorno = array('DT_INICIAL'=> $dtInicial, 'DT_FINAL'=> $dtFinal);
+
+        return $arrRetorno;
     }
 
 }

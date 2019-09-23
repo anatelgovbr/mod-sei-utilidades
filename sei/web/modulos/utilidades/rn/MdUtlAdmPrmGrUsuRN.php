@@ -343,4 +343,104 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
      return $this->contar($objMdUtlAdmPrmGrUsuDTO) > 0;
  }
 
+    protected function verificaCargaPadraoConectado($arrObj){
+
+
+        $idUsuarioParticipante = array_key_exists(0, $arrObj) ? $arrObj[0] : null;
+        $idParam               = array_key_exists(1, $arrObj) ? $arrObj[1] : null;
+        $numCargaPadrao        = array_key_exists(2, $arrObj) ? $arrObj[2] : null;
+        $numPercentualTele     = array_key_exists(3, $arrObj) ? $arrObj[3] : null;
+        $diasUteis             = array_key_exists(4, $arrObj) ? $arrObj[4] : null;
+
+        $fatorReducaoFornada = 0;
+        $fatorDesempUsu      = 0;
+        
+        $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario($idUsuarioParticipante);
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idParam);
+        $objMdUtlAdmPrmGrUsuDTO->retStrStaTipoPresenca();
+        $objMdUtlAdmPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+        $objMdUtlAdmPrmGrUsuDTO->retStrStaTipoJornada();
+        $objMdUtlAdmPrmGrUsuDTO->retNumFatorReducaoJornada();
+
+        $objPrmGrUsuDTO = $this->consultar($objMdUtlAdmPrmGrUsuDTO);
+
+        $staTipoPresenca = $objPrmGrUsuDTO->getStrStaTipoPresenca();
+        $numFatorDesempDife = $objPrmGrUsuDTO->getNumFatorDesempDiferenciado();
+        $staTipoJornada  = $objPrmGrUsuDTO->getStrStaTipoJornada();
+        $numFatorReducaoJor = $objPrmGrUsuDTO->getNumFatorReducaoJornada();
+
+
+        switch($staTipoPresenca){
+            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_PRESENCIAL:
+                $fatorDesempUsu = 1;
+                break;
+
+            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO:
+                $fatorDesempUsu = 1 + ($numPercentualTele/100);
+                break;
+
+            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO:
+                $fatorDesempUsu = 1 + ($numFatorDesempDife/100);
+                break;
+        }
+
+        switch ($staTipoJornada){
+            case MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_INTEGRAL:
+                $fatorReducaoFornada = 1;
+                break;
+
+            case MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_REDUZIDO:
+                $fatorReducaoFornada = $numFatorReducaoJor/100;
+                break;
+        }
+        
+        $cargaPadrao = $numCargaPadrao * $fatorDesempUsu * $fatorReducaoFornada * $diasUteis;
+        $cargaPadraoTotal = round ($cargaPadrao , 0 );
+     
+        return $cargaPadraoTotal;
+    }
+
+    protected function getDiasUteisNoPeriodoConectado($staFrequencia){
+
+        $MdUtlPrazoRN = new MdUtlPrazoRN();
+
+        $dataAtual = InfraData::getStrDataAtual();
+        $dataAtualFormatada = explode('/', $dataAtual);
+        $mesAtual      = $dataAtualFormatada[1];
+        $anoAtual      = $dataAtualFormatada[2];
+
+        switch ($staFrequencia){
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
+                $numFrequencia = 1;
+
+                break;
+
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
+                $dataAtualFormatada = implode('-',$dataAtualFormatada);
+                $dataPrimeiroDiaSemana = $dataAtualFormatada;
+
+                $dataPrimeiroDiaSemana = MdUtlPrazoRN::retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
+                $dtFinalSemana   = date('d/m/Y', strtotime('+6 days', strtotime($dataPrimeiroDiaSemana)));
+
+                $arrDataPrimeiroDiaSemana = explode('-',$dataPrimeiroDiaSemana);
+                $dtInicialSemana = implode('/', $arrDataPrimeiroDiaSemana);
+                $diasUteis = $MdUtlPrazoRN->retornaQtdDiaUtil($dtInicialSemana, $dtFinalSemana, false);
+
+                $numFrequencia = $diasUteis;
+                break;
+
+            case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
+                $numDias = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
+                $dtInicial = 01 . '/' . $mesAtual . '/' . $anoAtual;
+                $dtFinal   = $numDias . '/' . $mesAtual . '/' . $anoAtual;
+
+                $diasUteis = $MdUtlPrazoRN->retornaQtdDiaUtil($dtInicial, $dtFinal, false);
+                $numFrequencia = $diasUteis;
+                break;
+        }
+
+        return $numFrequencia;
+    }
 }

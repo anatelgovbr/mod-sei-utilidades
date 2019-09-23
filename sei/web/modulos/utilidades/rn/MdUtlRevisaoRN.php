@@ -150,6 +150,9 @@ class MdUtlRevisaoRN extends InfraRN {
       $objRevisaoDTO->setStrInformacoesComplementares($_POST['txaInformacaoComplementar']);
       $objRevisaoDTO->setStrSinAtivo($sinAtivo);
       $objRevisaoDTO->setStrStaEncaminhamentoRevisao($_POST['selEncaminhamento']);
+      $objRevisaoDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+      $objRevisaoDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+
       $objRevisaoDTO->retTodos();
 
       $objRevisaoDTO = $this->cadastrar($objRevisaoDTO);

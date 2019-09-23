@@ -375,4 +375,25 @@ class MdUtlControleDsmpINT extends InfraINT {
 
         return $xml;
     }
+
+    public  static function removeNullsTriagem($idsTriagem){
+       foreach($idsTriagem as $key => $idTriagem){
+           if(is_null($idTriagem)){
+               unset($idsTriagem[$key]);
+           }
+       }
+        return $idsTriagem;
+    }
+
+    public static function formatarDatasComDoisDigitos($dataFormato){
+        $arrData = explode('/',$dataFormato);
+        $dia = str_pad($arrData[0], 2, '0', STR_PAD_LEFT);
+        $mes = str_pad($arrData[1], 2, '0', STR_PAD_LEFT);
+        $ano = str_pad($arrData[2], 2, '0', STR_PAD_LEFT);
+
+        $dataHoraCompleta = $dia.'/'.$mes.'/'.$ano.' '.$arrData[3];
+        $dataHoraCompleta = trim($dataHoraCompleta);
+
+        return $dataHoraCompleta;
+    }
 }

@@ -149,7 +149,7 @@ class MdUtlAnaliseRN extends InfraRN {
           $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
           if (!is_null($arrObjsAtuais)) {
-              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S'));
+              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S', 'S'));
               $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
               if ($numPercentualRevisao == 100) {
@@ -221,6 +221,8 @@ class MdUtlAnaliseRN extends InfraRN {
 
         $objMdUtlAnaliseDTO->setStrInformacoesComplementares($dados['txaInformacaoComplementar']);
         $objMdUtlAnaliseDTO->setStrSinAtivo('S');
+        $objMdUtlAnaliseDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+        $objMdUtlAnaliseDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
 
         if($isTpProcParametrizado) {
             $objMdUtlAnaliseDTO->setStrStaEncaminhamentoAnalise($idEncaminhamentoAnl);
@@ -255,11 +257,15 @@ class MdUtlAnaliseRN extends InfraRN {
               $objDocumentoDTO->setDblIdProcedimento($idProcedimento);
               $objDocumentoDTO->retTodos();
               $objDocumentoDTO->retNumIdSerie();
+              $objDocumentoDTO->retStrProtocoloDocumentoFormatado();
+              $objDocumentoDTO->setNumMaxRegistrosRetorno(1);
 
               if ($objDocumentoRN->contarRN0007($objDocumentoDTO) > 0) {
                   $objDocumentoDTO = $objDocumentoRN->consultarRN0005($objDocumentoDTO);
                   $objRelAnaliseProduto->setDblIdDocumento($objDocumentoDTO->getDblIdDocumento());
                   $objRelAnaliseProduto->setNumIdSerie($objDocumentoDTO->getNumIdSerie());
+                  //$objRelAnaliseProduto->setStrValor($objDocumentoDTO->getStrProtocoloDocumentoFormatado());
+
               }
           }else{
               $objRelAnaliseProduto->setDblIdDocumento(null);

@@ -13,8 +13,13 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
     //Frenquencia de distribuição
   public static $FREQUENCIA_DIARIO  = 'D';
+  public static $STR_FREQUENCIA_DIARIO  = 'Diário';
+    
   public static $FREQUENCIA_SEMANAL = 'S';
+  public static $STR_FREQUENCIA_SEMANAL = 'Semanal';
+    
   public static $FREQUENCIA_MENSAL  = 'M';
+  public static $STR_FREQUENCIA_MENSAL  = 'Mensal';
 
     //Retorno para última Fila
   public static $RETORNO_SIM = 'S';

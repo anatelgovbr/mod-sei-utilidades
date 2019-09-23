@@ -269,4 +269,28 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT {
         return $xml;
     }
 
+    public static function buscarDadosCargaUsuario($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $staFrequencia, $idTipoControle){
+
+        $objMdUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+        $objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
+        $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
+        $objMdUtlPrazoRN            = new MdUtlPrazoRN();
+
+        $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPorFrequencia($staFrequencia);
+
+        $unidEsforco      = $objMdUtlControleDsmpRN->buscarUnidadeEsforco(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
+        $unidEsforcoHist  = $objMdUtlHistControleDsmpRN->buscarUnidadeEsforcoHist(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
+        $totalUnidEsforco = $unidEsforco + $unidEsforcoHist;
+
+        $diasUteis  = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo($staFrequencia);
+        $totalCarga = $objMdUtlAdmPrmGrUsuRN->verificaCargaPadrao(array($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $diasUteis));
+
+        $xml = '<Documento>';
+        $xml .= '<ValorCarga>' . $totalCarga . '</ValorCarga>';
+        $xml .= '<ValorUndEs>' . $totalUnidEsforco . '</ValorUndEs>';
+        $xml .= '</Documento>';
+
+        return $xml;
+    }
+
 }

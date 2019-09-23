@@ -146,7 +146,10 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'atv.id_unidade',
             'atividade atv');
 
-
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
+            'IdMdUtlTriagem',
+            'cpf.id_md_utl_triagem',
+            'md_utl_controle_dsmp cpf');
 
 
         //Get Dados do Usuário da Distribuição

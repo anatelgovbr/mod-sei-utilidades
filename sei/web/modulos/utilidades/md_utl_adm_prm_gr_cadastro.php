@@ -71,11 +71,11 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                class="infraText" value="<?= PaginaSEI::tratarHTML($cargaPadrao); ?>"
                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
 
-        <label id="lblStaFrequencia" for="selStaFrequencia" accesskey="" class="infraLabelOpcional">Frequência de
+        <label id="lblStaFrequencia" for="selStaFrequencia" accesskey="" class="infraLabelObrigatorio">Frequência de
             distribuição:</label>
         <a style="" id="btnlStaFrequencia" <?= PaginaSEI::montarTitleTooltip('Informa a frequência da distribuição das tarefas.') ?>
            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <img id="imgAjudalStaFrequencia" border="0" style="width: 16px;height: 16px;"
+            <img id="imgAjudalStaFrequencia" border="0" style="width: 16px;height: 16px; margin-left: 20px!important;"
                  src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
         </a>
         <select id="selStaFrequencia" name="selStaFrequencia" class="infraSelect"

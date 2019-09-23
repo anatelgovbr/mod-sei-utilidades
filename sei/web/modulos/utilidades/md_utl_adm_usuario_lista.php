@@ -25,10 +25,10 @@ try {
   PaginaSEI::getInstance()->prepararSelecao('md_utl_adm_usuario_selecionar');
 
   SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
-  
+
   PaginaSEI::getInstance()->salvarCamposPost(array('selOrgao','txtSiglaUsuario','txtNomeUsuario'));
 
-    
+
   $idTipoControle    = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : null;
   $idParams          = null;
   $isBolUsuario      = array_key_exists('is_bol_usuario', $_GET) ? $_GET['is_bol_usuario'] : null;
@@ -43,14 +43,14 @@ try {
   $isVazioUsers      = false;
 
   $urlPadrao = 'controlador.php?acao=md_utl_adm_usuario_selecionar';
-  
+
   if(!is_null($isBolDistribuicao) && $isBolDistribuicao == '1'){
     $tpSelecao = 1;
     $isBolUsuario = 1;
     $isBolUsuarioDTO = 1;
     $urlPadrao .= '&is_bol_distribuicao='.$isBolDistribuicao;
   }
-  
+
   if(!is_null($tpSelecao)){
     $urlPadrao .= '&tipo_selecao='.$tpSelecao;
   }
@@ -62,39 +62,39 @@ try {
   if(!is_null($idStatus)){
     $urlPadrao .= '&id_status='.$idStatus;
   }
-  
+
   if(!is_null($idTipoControle)){
     $urlPadrao .= '&id_tipo_controle_utl='.$idTipoControle;
   }
-  
+
   if(!is_null($isBolUsuario) && $isBolUsuario == '1'){
     $urlPadrao .= '&is_bol_usuario='.$isBolUsuario;
   }
-  
+
   if(!is_null($isBolUsuarioDTO) && $isBolUsuarioDTO == '1'){
     $urlPadrao .= '&is_bol_usu_dto='.$isBolUsuarioDTO;
   }
-  
+
   if(!is_null($idObject)){
     $urlPadrao .= '&id_object='.$idObject;
   }
-  
+
   if(!is_null($idTipoControle) && $idTipoControle !=''){
     $objMdUtlAdmTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
-    
+
     $objMdUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
     $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
     $objMdUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
     $objMdUtlAdmTpCtrlDTO->setNumTotalRegistros(1);
-    
+
     $objMdUtlAdmTpCtrlDTO = $objMdUtlAdmTpCtrlRN->consultar($objMdUtlAdmTpCtrlDTO);
-    
+
     $idParams = $objMdUtlAdmTpCtrlDTO->getNumIdMdUtlAdmPrmGr();
   }
-  
+
   switch($_GET['acao']){
-    
-    
+
+
     case 'md_utl_adm_usuario_selecionar':
     $strTitulo = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Usuario','Selecionar Usuarios');
       break;
@@ -108,9 +108,9 @@ try {
   }
 
   $arrComandos = array();
-  
+
   $arrComandos[] = '<button type="submit" id="btnPesquisar" accesskey="P" value="Pesquisar" class="infraButton"><span class="infraTeclaAtalho">P</span>esquisar</button>';
-  
+
   if ($_GET['acao'] == 'md_utl_adm_usuario_selecionar'){
     $arrComandos[] = '<button type="button" accesskey="T" id="btnTransportarSelecao" value="Transportar" onclick="infraTransportarSelecao();" class="infraButton"><span class="infraTeclaAtalho">T</span>ransportar</button>';
   }
@@ -154,7 +154,7 @@ try {
   $objUsuarioDTO->retStrSigla();
   $objUsuarioDTO->retStrNome();
 
-  if (!is_null($idParams) || !is_null($isBolUsuarioDTO) && !$isVazioUsers) {
+  if( (!is_null($idParams) || !is_null($isBolUsuarioDTO)) && !$isVazioUsers) {
 
     if(!is_null($idParams)) {
       $objUsuarioDTO->setNumIdMdUtlAdmPrmGr($idParams);
@@ -299,7 +299,7 @@ try {
           $nomeSigla     = $arrObjUsuarioDTO[$i]->getStrSigla() . ' (' . $arrObjUsuarioDTO[$i]->getStrNome() . ')';
           $strResultado .= '<td valign="top">' . PaginaSEI::getInstance()->getTrCheck($i, $idMain, $nomeSigla) . '</td>';
         }
-        
+
         $strResultado .= '<td align="center">' . $arrObjUsuarioDTO[$i]->getNumIdUsuario() . '</td>';
         $strResultado .= '<td>' . PaginaSEI::tratarHTML($arrObjUsuarioDTO[$i]->getStrSigla()) . '</td>';
         $strResultado .= '<td>' . PaginaSEI::tratarHTML($arrObjUsuarioDTO[$i]->getStrNome()) . '</td>';
@@ -341,12 +341,12 @@ try {
   }else{
     $arrComandos[] = '<button type="button" accesskey="F" id="btnFechar" value="Fechar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao']).'\'" class="infraButton"><span class="infraTeclaAtalho">F</span>echar</button>';
   }
-  
+
   $strItensSelOrgao = OrgaoINT::montarSelectSiglaRI1358('','Todos',$numIdOrgao);
 
 }catch(Exception $e){
   PaginaSEI::getInstance()->processarExcecao($e);
-} 
+}
 
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
@@ -379,7 +379,7 @@ function inicializar(){
   }else{
     document.getElementById('btnFechar').focus();
   }
-  
+
   infraEfeitoTabelas();
 }
 
@@ -466,10 +466,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
   <select id="selOrgao" name="selOrgao" onchange="this.form.submit();" class="infraSelect" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" >
   <?=$strItensSelOrgao?>
   </select>
-  
+
   <label id="lblSiglaUsuario" for="txtSiglaUsuario" accesskey="S" class="infraLabelOpcional"><span class="infraTeclaAtalho">S</span>igla:</label>
   <input type="text" id="txtSiglaUsuario" name="txtSiglaUsuario" class="infraText" value="<?=PaginaSEI::tratarHTML($strSiglaPesquisa)?>" maxlength="15" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-  
+
   <label id="lblNomeUsuario" for="txtNomeUsuario" accesskey="N" class="infraLabelOpcional"><span class="infraTeclaAtalho">N</span>ome:</label>
   <input type="text" id="txtNomeUsuario" name="txtNomeUsuario" class="infraText" value="<?=PaginaSEI::tratarHTML($strNomePesquisa)?>" maxlength="50" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
 
@@ -483,4 +483,5 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 <?
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
+
 ?>

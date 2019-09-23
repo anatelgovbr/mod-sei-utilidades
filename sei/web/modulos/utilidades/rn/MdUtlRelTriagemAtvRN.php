@@ -186,5 +186,27 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
       $objRelTriagemAtvDTO->retStrSinAnalise();
       return $objRelTriagemAtvRN->listar($objRelTriagemAtvDTO);
   }
-    
+
+    protected function getObjsTriagemAtividadeConectado($idsTriagem)
+    {
+        
+        $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+        $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
+
+            $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
+            $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
+            $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
+            $objMdUtlRelTriagemAtvDTO->retTodos();
+
+
+        $count = $objMdUtlRelTriagemAtvRN->contar($objMdUtlRelTriagemAtvDTO);
+
+        if ($count > 0) {
+                $arrObjs = $objMdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
+                return $arrObjs;
+            }
+        
+        return null;
+    }
 }
+

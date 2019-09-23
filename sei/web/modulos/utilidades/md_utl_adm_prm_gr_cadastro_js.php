@@ -19,7 +19,7 @@ if (0){ ?>
         var bolFatorReducao = false;
         var isBolAlterar = false;
         var heigthTamanhoDivAreaPart = null ;
-        var msg11 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11, 'Carga Padrão de Unidade de Esforço'); ?>';
+        var msg11 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
         var msg12 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Tipo de Processo'); ?>'
         var msg13 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_13, 'Usuário Participante'); ?>'
         var msg14 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_14); ?>'
@@ -140,10 +140,12 @@ if (0){ ?>
             var cargaPadrao = document.getElementById('txtCargaPadrao').value;
             var tpProcesso  = document.getElementById('hdnTpProcesso').value;
             var tbUsuario   = document.getElementById('tbUsuario');
+            var selFrequencia = document.getElementById('selStaFrequencia').value;
 
 
             if(cargaPadrao == '' || cargaPadrao <1 ){
-                alert(msg11);
+                var msg = setMensagemPersonalizada(msg11, ['Carga Padrão de Unidade de Esforço']);
+                alert(msg);
                 document.getElementById('txtCargaPadrao').focus();
                 return false;
             }
@@ -155,9 +157,15 @@ if (0){ ?>
             }
 
             if(tbUsuario.rows.length == 1){
-
                 alert(msg13);
                 document.getElementById('txtUsuario').focus();
+                return false;
+            }
+
+            if(selFrequencia == 0){
+                var msg = setMensagemPersonalizada(msg11, ['Frequência de distribuição']);
+                alert(msg);
+                document.getElementById('selStaFrequencia').focus();
                 return false;
             }
 

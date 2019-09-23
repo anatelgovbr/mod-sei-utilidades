@@ -39,8 +39,9 @@ $arrCtrlVisualizacao = array();
 //Rns
 $objRegrasGerais           = new MdUtlRegrasGeraisRN();
 $objMdUtlAdmUtlTpCtrlRN    = new MdUtlAdmTpCtrlDesempRN();
+$objMdUtlAdmTpCtrlDTO      = new MdUtlAdmTpCtrlDesempDTO();
 $objTriagemRN              = new MdUtlTriagemRN();
-$objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
+$objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objAnaliseRN              = new MdUtlAnaliseRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objMdUtlAdmPrmGrRN        = new MdUtlAdmPrmGrRN();
@@ -53,6 +54,13 @@ $idTipoControle = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 if(!is_null($idTipoControle)) {
     $isParametrizado = $objMdUtlAdmUtlTpCtrlRN->verificaTipoControlePossuiParametrizacao($idTipoControle);
 }
+
+$objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+$objMdUtlAdmTpCtrlDTO->retStrStaFrequencia();
+$objMdUtlAdmTpCtrlDTO->setNumMaxRegistrosRetorno(1);
+$objDTOTipoControle = $objMdUtlAdmUtlTpCtrlRN->consultar($objMdUtlAdmTpCtrlDTO);
+
+$staFrequencia = $objDTOTipoControle->getStrStaFrequencia();
 
 $isPermiteAcoes = $objMdUtlControleDsmpRN->validaVisualizacaoUsuarioLogado($idTipoControle);
 
@@ -254,6 +262,7 @@ PaginaSEI::getInstance()->processarPaginacao($objMdUtlHistControleDsmpDTO);
             $strResultado .= !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
             $strResultado .= '</td>';
 
+
             $strResultado .= '</tr>';
         }
             $strResultado .= '</table>';
@@ -329,7 +338,14 @@ function iniciarRevisao(){
 }
 
 function iniciarDistribuicao(){
-    window.location.href = '<?= $strLinkIniciarDistrb ?>';
+
+    var staFrequencia = '<?=$staFrequencia?>';
+    if(staFrequencia == 0){
+        alert('A Frequência de Distribuição não está parametrizada no Tipo de Controle desta Unidade. Converse com o Gestor da sua área!');
+        return false;
+    }else{
+        window.location.href = '<?= $strLinkIniciarDistrb ?>';
+    }
 }
 
 function fechar() {
