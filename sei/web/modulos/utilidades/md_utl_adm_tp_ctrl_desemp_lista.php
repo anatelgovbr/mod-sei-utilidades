@@ -18,7 +18,7 @@ $strUrl = 'controlador.php?acao=md_utl_adm_tp_ctrl_desemp_';
 
 //URL das Actions
 $isAdmUsuario       = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_cadastrar');
-$isGestorSipGeral   = $objPermissaoRN->isGestor();
+$isGestorSipGeral   = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_listar');
 $isGestorUnidadeAt  = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_atividade_cadastrar');
 $isGestorSipUsuario = $isGestorSipGeral && $isGestorUnidadeAt;
 
@@ -253,7 +253,6 @@ if ($numRegistros > 0) {
         //Ação Consulta
         if (!$bolSelecionar) {
 
-            if($exibirIconesGestor) {
                 //link para tela de Tipo de Justificativa nos tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="imagens/sei_valores.gif" title="Tipo de Justificativa" alt="Tipo de Justificativa" class="infraImg" /></a>&nbsp;';
 
@@ -276,14 +275,10 @@ if ($numRegistros > 0) {
                 if(!is_null($arrObjMdUtlAdmTpCtrlDesemp[$i]->getNumIdMdUtlAdmPrmGr())){
                     $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/fila.png" title="Filas" alt="Filas" class="infraImg" /></a>&nbsp;';
                 }
-            }
 
-            if($exibirIconesGestor) {
                 //link para a tela de parametrizar tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_prm_gr_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensLocal() . '/sei_servicos.gif" title="Parametrizar Tipo de Controle" alt="Parametrizar Tipo de Controle" class="infraImg" /></a>&nbsp;';
-            }
 
-            if($isAdmUsuario || $exibirIconesGestor) {
                 //Consultar Tipo de Controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utilidades=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Tipo de Controle de Desempenho" alt="Consultar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
 
@@ -305,7 +300,6 @@ if ($numRegistros > 0) {
 
                     //Ação Excluir
                     $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Tipo de Controle de Desempenho" alt="Excluir Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
-                }
             }
 
         } else {

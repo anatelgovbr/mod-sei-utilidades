@@ -27,10 +27,14 @@ class MdUtlAdmTpCtrlDesempDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
+
     $this->configurarPK('IdMdUtlAdmTpCtrlDesemp',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr mupr', 'mupr.id_md_utl_adm_prm_gr', InfraDTO::$TIPO_FK_OPCIONAL);
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmFila', 'mupr.id_md_utl_adm_fila', 'md_utl_adm_prm_gr mupr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'CargaPadrao', 'mupr.carga_padrao', 'md_utl_adm_prm_gr mupr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'StaFrequencia', 'mupr.sta_frequencia', 'md_utl_adm_prm_gr mupr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PercentualTeletrabalho', 'mupr.percentual_teletrabalho', 'md_utl_adm_prm_gr mupr');
 
     $this->adicionarAtributo(InfraDTO::$PREFIXO_ARR, 'ObjRelTipoControleUtilidadesUsuarioDTO');
     $this->adicionarAtributo(InfraDTO::$PREFIXO_ARR, 'ObjRelTipoControleUtilidadesUnidadeDTO');

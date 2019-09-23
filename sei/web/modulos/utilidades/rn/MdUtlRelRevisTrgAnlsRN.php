@@ -140,7 +140,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
       }
   }
 
-  public function cadastrarRevisaoTriagemAnaliseConectado($objControleDsmpDTO){
+  protected function cadastrarRevisaoTriagemAnaliseControlado($objControleDsmpDTO){
 
       $objHistoricoRN           = new MdUtlHistControleDsmpRN();
       $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
@@ -166,7 +166,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
               if(!is_null($arrObjsAtuais)) {
-                  $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S'));
+                  $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S', 'S'));
                   $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
                   $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
@@ -187,7 +187,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
               if (!is_null($arrObjsAtuais)) {
-                $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais));
+                  $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array(), 'N', 'N', 'S'));
                   $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
                   $objMdUtlControleDsmpRN->desativarIdsAtivosControleDsmp($arrRetorno);
@@ -223,7 +223,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
               $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
-              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S'));
+              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S','S'));
               $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
               $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
@@ -233,7 +233,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $objHistoricoRN->salvarObjHistoricoRevisao(array($idProcedimento, $arrRetorno, $idRevisao, $strDetalheRev, $strNovoStatus, $idUsuarioDistr));
 
               //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-              $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheDistr, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO));
+              $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , 0, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheDistr, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO));
               break;
       }
 

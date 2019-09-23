@@ -33,6 +33,8 @@ class MdUtlRelAnaliseProdutoDTO extends InfraDTO
 
         $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'ObservacaoAnalise', 'observacao');
 
+        $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'Valor', 'valor');
+
         $this->configurarPK('IdMdUtlRelAnaliseProduto',InfraDTO::$TIPO_PK_NATIVA);
         $this->configurarFK('IdMdUtlAnalise', 'md_utl_analise man', 'man.id_md_utl_analise');
         $this->configurarFK('IdMdUtlRelTriagemAtv', 'md_utl_rel_triagem_atv mrt', 'mrt.id_md_utl_rel_triagem_atv');

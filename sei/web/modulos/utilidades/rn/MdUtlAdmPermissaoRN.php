@@ -46,24 +46,8 @@ class MdUtlAdmPermissaoRN extends InfraRN
 
     protected function isGestorConectado()
     {
-        $idUsuario = SessaoSEI::getInstance()->getNumIdUsuario();
-
-        $objInfraSip  = new InfraSip(SessaoSEI::getInstance());
-        $idUnidade = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
-        $arrPerfisSip = $objInfraSip->carregarPerfis(SessaoSEI::getInstance()->getNumIdSistema(), $idUsuario, $idUnidade);
-
-        for ($i = 0; $i < count($arrPerfisSip); $i++) {
-
-            if ($arrPerfisSip[$i][1] == MdUtlAdmPermissaoRN::$NOME_GESTOR_CTRL_UTL) {
-                return true;
-            }
-
-        }
-
-        return false;
+      return SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_fila_selecionar');
     }
-    
-
 
     protected function isGestorControleUtilidadesSipConectado()
     {

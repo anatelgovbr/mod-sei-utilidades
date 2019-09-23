@@ -177,7 +177,7 @@ class MdUtlTriagemRN extends InfraRN {
       $vlEncaminhamento         = $dados['selEncaminhamentoTriagem'];
 
         if (!is_null($arrObjsAtuais)) {
-            $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S'));
+            $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S', 'S'));
             $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
             $strDetalhe = $this->_retornaDetalheTriagem();
 
@@ -231,6 +231,8 @@ class MdUtlTriagemRN extends InfraRN {
       $objMdUtlTriagemDTO->setStrInformacaoComplementar($dados['txaInformacaoComplementar']);
       $objMdUtlTriagemDTO->setStrSinAtivo('S');
       $objMdUtlTriagemDTO->setStrSinPossuiAnalise($strSinAnalise);
+      $objMdUtlTriagemDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+      $objMdUtlTriagemDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
 
       if($isSemAnalise && $isTpProcParametrizado){
           $objMdUtlTriagemDTO->setStrStaEncaminhamentoTriagem($dados['selEncaminhamentoTriagem']);

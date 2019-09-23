@@ -24,6 +24,8 @@ $txtProcessoCampo     = array_key_exists('txtProcessoUtlMs', $_POST) ? $_POST['t
 $selFilaCampo         = array_key_exists('selFilaUtlMs', $_POST) ? $_POST['selFilaUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selFilaUtlMs');
 $selTipoProcessoCampo = array_key_exists('selTipoProcessoUtlMs', $_POST) ? $_POST['selTipoProcessoUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selTipoProcessoUtlMs');
 $selStatusCampo       = array_key_exists('selStatusUtlMs', $_POST) ? $_POST['selStatusUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selStatusUtlMs');
+$selAtividadeCampo    = array_key_exists('selAtividadeUtlDist', $_POST) ? $_POST['selAtividadeUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlDist');
+
 $somaUndEsforco = '';
 
 $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso'=> $selTipoProcessoCampo, 'selStatus'=> $selStatusCampo);
@@ -32,8 +34,9 @@ $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaC
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
 $objMdUtlAdmTpCtrlUsuRN    = new MdUtlAdmRelTpCtrlDesempUsuRN();
-$objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
+$objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
+$objMdUtlRelTriagemAtvRN   = new MdUtlRelTriagemAtvRN();
 
 $idTipoControle            = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 $arrObjsFilaDTO            = $objFilaRN->getFilasTipoControle($idTipoControle);
@@ -106,14 +109,17 @@ $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fe
 $numRegistros = 0;
 if (!is_null($idTipoControle) && $isParametrizado) {
 
+    $objDTOCombo = $objMdUtlControleDsmpRN->getObjDTOParametrizadoMeusProcessos(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $idTipoControle, array()));
+
     //Configuração da Paginação
-    if((count($arrObjsFilaDTO) == 0)){
+    if ((count($arrObjsFilaDTO) == 0 && !$isGestorSipSei) || !$isPermiteAssociacao) {
         $objDTO = null;
-    }else {
+    } else {
         $objDTO = $objMdUtlControleDsmpRN->getObjDTOParametrizadoMeusProcessos(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $idTipoControle, $arrPostDados));
     }
 
-    if (!is_null($objDTO)) {
+
+    if(!is_null($objDTO)) {
         $objDTO->retNumIdMdUtlAdmRelControleDsmp();
         $objDTO->retNumIdMdUtlControleDsmp();
         $objDTO->retNumIdUnidade();
@@ -126,19 +132,67 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO->retNumUnidadeEsforco();
         $objDTO->retStrNomeUsuarioDistribuicao();
         $objDTO->retDthAtual();
+        $objDTO->retDthPrazoTarefa();
         $objDTO->retStrSiglaUsuarioDistribuicao();
         $objDTO->retNumIdMdUtlAnalise();
+        $objDTO->retNumIdMdUtlTriagem();
+        $objDTO->retNumIdUsuarioDistribuicao();
+
+
+        if ($selAtividadeCampo != '') {
+            $idsTriagem = $objMdUtlControleDsmpRN->pesquisarAtividade($objDTO);
+
+            if (count($idsTriagem) > 0) {
+                $objDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
+            } else {
+                $objDTO = null;
+            }
+        }
+    }
+    $count = 0;
+    //Combo de Atividade
+    if(!is_null($objDTOCombo)) {
+        $objDTOCombo->retNumIdMdUtlTriagem();
+        $arrObjsCombo = $objMdUtlControleDsmpRN->listarProcessos($objDTOCombo);
+
+        $idTriagemCombo = InfraArray::converterArrInfraDTO($arrObjsCombo, 'IdMdUtlTriagem');
+        $idTriagemCombo = MdUtlControleDsmpINT::removeNullsTriagem($idTriagemCombo);
+        $count = count($idTriagemCombo);
+    }
+
+    $arrayObjs = [];
+
+    if ($count > 0) {
+
+        $arrObjsTriagemAtividade = $objMdUtlRelTriagemAtvRN->getObjsTriagemAtividade($idTriagemCombo);
+        $selAtividade = MdUtlAdmAtividadeINT::montarSelectAtividadesTriagem($selAtividadeCampo, $arrObjsTriagemAtividade);
+
+        foreach ($arrObjsTriagemAtividade as $obj) {
+            if (array_key_exists($obj->getNumIdMdUtlTriagem(), $arrayObjs)) {
+                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = array();
+            } else {
+                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = $obj->getStrNomeAtividade();
+            }
+        }
+
+    } else {
+        $selAtividade = '';
+    }
+
+    //Fim da Combo de Atividade
+
+    if (!is_null($objDTO)) {
 
         PaginaSEI::getInstance()->prepararOrdenacao($objDTO, 'ProtocoloProcedimentoFormatado', InfraDTO::$TIPO_ORDENACAO_ASC);
         PaginaSEI::getInstance()->prepararPaginacao($objDTO, 200);
 
-        $arrObjs      = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
+        $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
         $numRegistros = count($arrObjs);
 
         PaginaSEI::getInstance()->processarPaginacao($objDTO);
 
-        //Tabela de resultado.
         if ($numRegistros > 0) {
+            //Tabela de resultado.
             $displayNoneCheck = 'style="display:none"';
             $strResultado .= '<table width="99%" class="infraTable" summary="Processos" id="tbCtrlProcesso">';
             $strResultado .= '<caption class="infraCaption">';
@@ -150,7 +204,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             $strResultado .= '<tr>';
             $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
             $strResultado .= '<th class="infraTh" width="18%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="16%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tipo de Processo', 'IdTipoProcedimento', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="16%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
 
@@ -176,8 +230,16 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $strTpProcesso      = $arrObjs[$i]->getNumIdTipoProcedimento();
                 $nomeTpProcesso     = $arrObjs[$i]->getStrNomeTipoProcedimento();
                 $strStatus          = trim($arrObjs[$i]->getStrStaAtendimentoDsmp());
-                $numIdControleDsmp   = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
+                $numIdControleDsmp  = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
                 $numUndEsforco      = $arrObjs[$i]->getNumUnidadeEsforco();
+                $numIdTriagem       = $arrObjs[$i]->getNumIdMdUtlTriagem();
+                $strNomeAtividade   = array_key_exists($numIdTriagem, $arrayObjs) ? $arrayObjs[$numIdTriagem] : '';
+                $linkAtvTriagem     = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_atividade_triagem_listar&acao_origem=md_utl_distrib_usuario_listar&id_triagem=' . $numIdTriagem . '');
+
+                if(is_array($strNomeAtividade)){
+                    $strNomeAtividade = '<a href="javascript:void(0);" onclick="infraAbrirJanela(\'' . $linkAtvTriagem . '\',\'urlAtividadeTriagemMult\',650,500,)" alt="Múltiplas" title="Múltiplas" class="ancoraPadraoAzul"> Múltiplas </a>';;
+                }
+
                 $arrSituacao        = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
                 $linkProcedimento   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $strId . '');
                 $data               = explode(' ', $arrObjs[$i]->getDthAtual());
@@ -213,9 +275,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul">' . $strProcesso . '</a>';
                 $strResultado .= '</td>';
 
-                //Linha Descrição
-                $strResultado .= '<td class="tdTipoProcesso">';
-                $strResultado .= PaginaSEI::tratarHTML($nomeTpProcesso);
+                //Linha Atividade
+                $strResultado .= '<td class="tdNomeAtividade">';
+                $strResultado .= $strNomeAtividade;
                 $strResultado .= '</td>';
 
                 //Linha Fila Padrão
@@ -228,11 +290,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $strResultado .=  PaginaSEI::tratarHTML($numUndEsforco);
                 $strResultado .= '</td>';
 
-
                 //Linha Fila Status
                 $strResultado .= '<td class="tdStatusProcesso">';
                 $strResultado .= '<a href="'.$linkStatus.'" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul">' . $status . '</a>';
-
                 $strResultado .= '</td>';
 
                 //Linha Data Registro Status
@@ -249,8 +309,6 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $strResultado .= '<td class="tdIdControleDsmp" style="display: none">';
                 $strResultado .= $numIdControleDsmp;
                 $strResultado .= '</td>';
-
-
 
                 $strResultado .= '</tr>';
 
@@ -479,6 +537,16 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                     onchange="pesquisar();"
                     tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <?= $selStatus ?>
+            </select>
+        </div>
+
+        <div id="divAtividade" style="margin-left: 72%; margin-top: 0.8%;">
+            <label id="lblAtividade" for="selAtividadeUtlDist" accesskey="" class="infraLabelOpcional">Atividade:</label>
+            <select id="selAtividadeUtlDist" name="selAtividadeUtlDist" class="infraSelect padraoSelect" style="width: 54%"
+                    onchange="pesquisar();"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                <option value=""></option>
+                <?=$selAtividade?>
             </select>
         </div>
 

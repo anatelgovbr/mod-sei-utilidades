@@ -166,4 +166,13 @@ class MdUtlAdmAtividadeINT extends InfraINT {
         return $xml;
     }
 
+    public static function montarSelectAtividadesTriagem($selAtividadeCampo, $arrObjsTriagemAtividade)
+    {
+
+        $objTriagemAtividadeDTO = InfraArray::distinctArrInfraDTO($arrObjsTriagemAtividade, 'IdMdUtlAdmAtividade');
+
+
+        return parent::montarSelectArrInfraDTO(null, null, $selAtividadeCampo, $objTriagemAtividadeDTO, 'IdMdUtlAdmAtividade', 'NomeAtividade');
+    }
+
 }

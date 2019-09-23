@@ -127,4 +127,23 @@ class MdUtlRelAnaliseProdutoRN extends InfraRN{
         }
     }
 
+    protected function preencherProtocoloFormatadoDocControlado(){
+        $objMdUtlRelAnaliseDTO = new MdUtlRelAnaliseProdutoDTO();
+        $objMdUtlRelAnaliseDTO->setDblIdDocumento(null, InfraDTO::$OPER_DIFERENTE);
+        $objMdUtlRelAnaliseDTO->retStrDocumentoFormatado();
+        $objMdUtlRelAnaliseDTO->retDblIdDocumento();
+        $objMdUtlRelAnaliseDTO->retNumIdMdUtlRelAnaliseProduto();
+
+        $count  = $this->contar($objMdUtlRelAnaliseDTO);
+
+        if($count > 0) {
+            $arrObjs = $this->listar($objMdUtlRelAnaliseDTO);
+
+            foreach ($arrObjs as $objDTO) {
+                $objDTO->setStrValor($objDTO->getStrDocumentoFormatado());
+                $this->alterar($objDTO);
+            }
+        }
+    }
+
 }

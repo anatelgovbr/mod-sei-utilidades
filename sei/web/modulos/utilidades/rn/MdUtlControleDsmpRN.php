@@ -1073,5 +1073,88 @@ class MdUtlControleDsmpRN extends InfraRN
         return false;
     }
 
+    protected function validaExclusaoDocumentoConectado($objDocumentoAPI){
+        $isValidoEx = true;
+        $idDocumento = $objDocumentoAPI->getIdDocumento();
+
+        $objMdUtlRelAnlProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
+        $objMdUtlRelAnlProdutoRN = new MdUtlRelAnaliseProdutoRN();
+        $objMdUtlRelAnlProdutoDTO->setDblIdDocumento($idDocumento);
+        $objMdUtlRelAnlProdutoDTO->retNumIdMdUtlAnalise();
+
+        $count = $objMdUtlRelAnlProdutoRN->contar($objMdUtlRelAnlProdutoDTO);
+
+        if($count > 0) {
+            $arrAnalises = $objMdUtlRelAnlProdutoRN->listar($objMdUtlRelAnlProdutoDTO);
+            $idsAnalises = InfraArray::converterArrInfraDTO($arrAnalises, 'IdMdUtlAnalise');
+
+            $objMdUtlControleDTO = new MdUtlControleDsmpDTO();
+            $objMdUtlControleDTO->setNumIdMdUtlAnalise($idsAnalises, InfraDTO::$OPER_IN);
+            $objMdUtlControleDTO->retNumIdMdUtlControleDsmp();
+
+            $isValidoEx = $this->contar($objMdUtlControleDTO) <= 0;
+        }
+
+        return $isValidoEx;
+    }
+
+    protected function pesquisarAtividadeConectado($objDTO){
+
+        $idAtividade = $_POST['selAtividadeUtlDist'];
+        $arrObjs      = $this->listarProcessos($objDTO);
+        $idsTriagem = InfraArray::converterArrInfraDTO($arrObjs, 'IdMdUtlTriagem');
+        //$idsTriagem = MdUtlControleDsmpINT::removeNullsTriagem($idsTriagem);
+
+        $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
+        $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+        $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
+        $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlAdmAtividade($idAtividade);
+        $objMdUtlRelTriagemAtvDTO->retTodos();
+
+        $arrObjs = $objMdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
+
+        $idsTriagem = InfraArray::converterArrInfraDTO($arrObjs, 'IdMdUtlTriagem');
+
+        return $idsTriagem;
+    }
+
+
+    protected function buscarUnidadeEsforcoConectado($arrParams){
+        $idUsuarioParticipante = array_key_exists(0, $arrParams) ? $arrParams[0] : null;
+        $idTipoControle        = array_key_exists(1, $arrParams) ? $arrParams[1] : null;
+        $arrDatas              = array_key_exists(2, $arrParams) ? $arrParams[2] : null;
+        $dtInicio              = $arrDatas['DT_INICIAL'];
+        $dtFim                 = $arrDatas['DT_FINAL'];
+        $numUnidEsforco        = 0;
+
+        $dtInicio = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtInicio);
+        $dtFim = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtFim);
+
+        if(!is_null($idUsuarioParticipante) && !is_null($idTipoControle)) {
+            $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+            $objMdUtlControleDsmpDTO->setNumIdUsuarioDistribuicao($idUsuarioParticipante);
+            $objMdUtlControleDsmpDTO->setStrStaAtendimentoDsmp(array(MdUtlControleDsmpRN::$EM_REVISAO, MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE), InfraDTO::$OPER_IN);
+            $objMdUtlControleDsmpDTO->retNumUnidadeEsforco();
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+            $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+            $objMdUtlControleDsmpDTO->adicionarCriterio(array('Atual', 'Atual', 'Atual'),
+                array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_MAIOR_IGUAL, InfraDTO::$OPER_MENOR_IGUAL),
+                array(null, $dtInicio, $dtFim),
+                array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
+
+
+            $count  = $this->contar($objMdUtlControleDsmpDTO);
+
+            if($count > 0) {
+                $arrUnidEsforco = $this->listar($objMdUtlControleDsmpDTO);
+
+                foreach ($arrUnidEsforco as $objs) {
+                    $numUnidEsforco += $objs->getNumUnidadeEsforco();
+                }
+            }
+
+            return $numUnidEsforco;
+        }
+    }
 
 }

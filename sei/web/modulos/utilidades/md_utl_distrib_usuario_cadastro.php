@@ -5,25 +5,20 @@ try {
 
     session_start();
 
-    //////////////////////////////////////////////////////////////////////////////
-    // InfraDebug::getInstance()->setBolLigado(false);
-    // InfraDebug::getInstance()->setBolDebugInfra(true);
-    // InfraDebug::getInstance()->limpar();
-    /////
-    /// /////////////////////////////////////////////////////////////////////////
     session_start();
     SessaoSEI::getInstance()->validarLink();
     PaginaSEI::getInstance()->verificarSelecao('md_utl_controle_dsmp_listar');
     SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
     $isTelaProcesso = $_GET['acao_origem'] == 'md_utl_controle_dsmp_listar' || (array_key_exists('hdnIsTelaProcesso', $_POST) && $_POST['hdnIsTelaProcesso'] == '1');
-
+    $strUrlBuscarDadosCarga = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_buscar_dados_carga_usuario');
+    
     if($isTelaProcesso){
         PaginaSEI::getInstance()->setTipoPagina(PaginaSEI::$TIPO_PAGINA_SIMPLES);
     }
 
-    $objMdUtlControleDsmpRN   = new MdUtlControleDsmpRN();
+    $objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
     $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
-    $objMdUtlControleDsmpDTO  = new MdUtlControleDsmpDTO();
+    $objMdUtlControleDsmpDTO    = new MdUtlControleDsmpDTO();
     $objMdUtlControleDsmpDTO->retTodos();
     $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
 
@@ -31,6 +26,7 @@ try {
     $strItensTabela  = '';
     $strGridProcesso = '';
     $idDistribuicao  = 0;
+    $somaUndEsforco  = '';
 
     if($isTelaProcesso){
         $arrStatus              = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
@@ -59,6 +55,8 @@ try {
     $strLinkUsuarioParticipante     = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_usuario_selecionar&tipo_selecao=1&id_tipo_controle_utl='. $idTipoControle .'&is_bol_distribuicao=1&id_fila='. $idFila .'&id_status='. $idStatus .'&id_object=objLupaUsuarioParticipante');
     $strLinkAjaxUsuarioParticipante = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_usuario_participante_auto_completar&id_fila='. $idFila .'&id_status='. $idStatus);
     $countDistribuicao              = 0;
+    $arrComandos = array();
+
 
 
     switch($_GET['acao']) {
@@ -99,6 +97,7 @@ try {
     $objMdUtlControleDsmpDTO->retStrNomeTipoProcesso();
     $objMdUtlControleDsmpDTO->setNumIdMdUtlControleDsmp($idsDistribuicao, InfraDTO::$OPER_IN);
     $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+    $objMdUtlControleDsmpDTO->retNumUnidadeEsforco();
 
     $countDistribuicao  =  $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO);
     if($countDistribuicao > 0) {
@@ -110,6 +109,9 @@ try {
         foreach ($arrObjs as $obj) {
             $idProcedimento = $obj->getDblIdProcedimento();
             $idControleDsmp = $obj->getNumIdMdUtlControleDsmp();
+            $numUndEsforco  = $obj->getNumUnidadeEsforco();
+
+            $somaUndEsforco += $numUndEsforco;
 
             //Formatando Protocolo
             $protocoloFormatado = $obj->getStrProtocoloProcedimentoFormatado();
@@ -123,14 +125,38 @@ try {
             $siglaUsuario    = array_key_exists('SIGLA', $arrDadosUsuario) ? $arrDadosUsuario['SIGLA'] : '';
             $linkUsuario     = $nomeUsuario != ''  && $siglaUsuario != '' ? htmlentities('<a class="ancoraSigla" alt="' . $nomeUsuario . '" title="' . $nomeUsuario . '">' . $siglaUsuario . '</a>') : '';
 
-            $arrStrGridProcesso[] = array($idProcedimento, $idControleDsmp, $hrefLinkProcesso, $linkUsuario);
+            $arrStrGridProcesso[] = array($idProcedimento, $idControleDsmp, $hrefLinkProcesso, $numUndEsforco, $linkUsuario);
            
         }
 
-       
-
         $strGridProcesso = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrStrGridProcesso);
     }
+
+    if($_POST['txtUsuarioParticipante'] == ''){
+
+        $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+        $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
+
+        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+        $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+        $objMdUtlAdmTpCtrlDesempDTO->retNumCargaPadrao();
+        $objMdUtlAdmTpCtrlDesempDTO->retStrStaFrequencia();
+        $objMdUtlAdmTpCtrlDesempDTO->retNumPercentualTeletrabalho();
+
+        $objDTO = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+        $idPrmGr           = $objDTO->getNumIdMdUtlAdmPrmGr();
+        $numCargaPadrão    = $objDTO->getNumCargaPadrao();
+        $strStaFrequencia  = $objDTO->getStrStaFrequencia();
+        $numPercentualTele = $objDTO->getNumPercentualTeletrabalho();
+
+        $arrFrequencia = MdUtlAdmPrmGrINT::retornaArrPadraoFrequenciaDiaria();
+        $strFrequencia = $arrFrequencia[$strStaFrequencia];
+
+        $strCargaPadrao = $numCargaPadrão .' - '. $strFrequencia;
+
+    }
+
 
     $arrComandos = array();
 
@@ -189,9 +215,56 @@ if (0) { ?>
         }
 
         #divTabelaProcessos{
-            margin-top: 22px;
+            margin-top: 139px;
         }
 
+        #divCarga {
+            width: 100%;
+        }
+
+        #divCargaPadrao{
+            margin-top: 1%;
+            position: absolute;
+        }
+
+        #divDistribuidaMes {
+            position: absolute;
+            margin-top: 6.5%;
+        }
+
+        #divMais{
+            position: absolute;
+            margin-top: 8.5%;
+            margin-left: 20%;
+            width: 5%;
+        }
+
+        #spnMais{
+            font-size: 1.5em;
+        }
+
+        #divSelecionadaDist{
+            margin-top: 6.5%;
+            margin-left: 25%;
+            position: absolute;
+        }
+
+        #divIgual{
+            margin-top: 8.5%;
+            margin-left: 48%;
+            width: 5%;
+            position: absolute
+        }
+
+        #spnIgual{
+            font-size: 1.5em;
+        }
+
+        #divTotalUniEsforco{
+            margin-top: 6.5%;
+            margin-left: 53%;
+            position: absolute;
+        }
 
         <?
         if (0) { ?></style><?
@@ -203,6 +276,13 @@ PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
 require_once 'md_utl_geral_js.php';
 if(0){?><script><?}?>
+
+    var idParam           = '<?php echo $idPrmGr ?>';
+    var numCargaPadrao    = '<?php echo $numCargaPadrão ?>';
+    var numPercentualTele = '<?php echo $numPercentualTele ?>';
+    var staFrequencia     = '<?php echo $strStaFrequencia?>';
+    var strStaFrequencia  = '<?php echo $strFrequencia?>';
+    var selecionadaDist   = '<?php echo $somaUndEsforco?>';
 
     function inicializar() {
         var count = "<?=$countDistribuicao?>";
@@ -230,8 +310,9 @@ if(0){?><script><?}?>
         objTabelaDinamicaProcesso = new infraTabelaDinamica('tbProcesso', 'hdnTbProcesso', false, false);
         objTabelaDinamicaProcesso.gerarEfeitoTabela = true;
 
-        var hdnLista = '';
+        var hdnLista    = '';
         var arrhdnLista = '';
+
 
         if (objTabelaDinamicaProcesso.hdn.value != '') {
             objTabelaDinamicaProcesso.recarregar();
@@ -244,16 +325,18 @@ if(0){?><script><?}?>
             if (arrhdnLista.length > 0) {
                 for (i = 0; i < arrhdnLista.length; i++) {
                     var hdnListaTela = arrhdnLista[i].split('±');
-                    var btnDistribuicao = "<a onclick='objTabelaDinamicaProcesso.removerProcesso("+hdnListaTela[0]+")'><img title='Remover Seleção do Processo' alt='Remover Seleção do Processo' src=\"modulos/utilidades/imagens/removerSelecao.png\" class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
+                    var btnDistribuicao = "<a onclick='objTabelaDinamicaProcesso.removerProcesso("+hdnListaTela[0]+"," +hdnListaTela[3] +")'><img title='Remover Seleção do Processo' alt='Remover Seleção do Processo' src=\"modulos/utilidades/imagens/removerSelecao.png\" class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
 
                     objTabelaDinamicaProcesso.adicionarAcoes(hdnListaTela[0], btnDistribuicao);
                 }
             }
         }
 
-        objTabelaDinamicaProcesso.removerProcesso = function (idProcesso) {
+        objTabelaDinamicaProcesso.removerProcesso = function (idProcesso, undEsforco) {
             var row = objTabelaDinamicaProcesso.procuraLinha(idProcesso);
             objTabelaDinamicaProcesso.removerLinha(row);
+
+            controlarExibicaoCargaDistribuida(undEsforco);
 
             if (objTabelaDinamicaProcesso.tbl.rows.length==1){
                 document.getElementById('divTabelaProcessos').style.display = 'none';
@@ -274,6 +357,20 @@ if(0){?><script><?}?>
             }
             return null;
         };
+    }
+
+    function controlarExibicaoCargaDistribuida(unidadeEsforco){
+
+        var cargaSelecDistri = $.trim(document.getElementById('txtSelecionadaDist').value);
+        var totalUndEsforco  = $.trim(document.getElementById('txtTotalUniEsforco').value);
+
+        cargaSelecDistri = parseInt(cargaSelecDistri);
+        totalUndEsforco  = parseInt(totalUndEsforco);
+
+        var somaUndEsforco  = cargaSelecDistri - unidadeEsforco;
+        var totalUniEsforco = totalUndEsforco - unidadeEsforco;
+        document.getElementById('txtSelecionadaDist').value = somaUndEsforco;
+        document.getElementById('txtTotalUniEsforco').value = totalUniEsforco;
     }
 
     function realizarDistribuicao(){
@@ -298,11 +395,6 @@ if(0){?><script><?}?>
     function carregarComponenteUsuarioParticipante(){
         objLupaUsuarioParticipante = new infraLupaText('txtUsuarioParticipante','hdnIdUsuarioParticipanteLupa','<?=$strLinkUsuarioParticipante?>');
 
-        objLupaUsuarioParticipante.finalizarSelecao = function(){
-            objAutoCompletarUsuarioParticipante.selecionar(document.getElementById('hdnIdUsuarioParticipanteLupa').value,document.getElementById('txtUsuarioParticipante').value);
-            objAjaxIdNivelAcesso.executar();
-        }
-
         objAutoCompletarUsuarioParticipante = new infraAjaxAutoCompletar('hdnIdUsuarioParticipanteLupa','txtUsuarioParticipante','<?=$strLinkAjaxUsuarioParticipante?>');
         objAutoCompletarUsuarioParticipante.limparCampo = true;
 
@@ -311,19 +403,78 @@ if(0){?><script><?}?>
         };
 
         objAutoCompletarUsuarioParticipante.processarResultado = function(id,descricao,complemento){
+
             if (id!=''){
                 document.getElementById('hdnIdUsuarioParticipanteLupa').value = id;
                 document.getElementById('txtUsuarioParticipante').value = descricao;
+              //chamar a função responsavel por carregar os campos do participante - Ajax
+                realizarAjaxDadosCarga();
+            }else{
+                limparCampos();
             }
         }
 
-        objLupaUsuarioParticipante = new infraLupaText('txtUsuarioParticipante','hdnIdUsuarioParticipanteLupa','<?=$strLinkUsuarioParticipante?>');
+        objLupaUsuarioParticipante.finalizarSelecao = function(){
+              objAutoCompletarUsuarioParticipante.selecionar(document.getElementById('hdnIdUsuarioParticipanteLupa').value,document.getElementById('txtUsuarioParticipante').value);
+            //chamar a função responsavel por carregar os campos do participante - Lupa
+            realizarAjaxDadosCarga();
+        }
+
+        objLupaUsuarioParticipante.processarRemocao = function(){
+            limparCampos();
+            return true;
+        }
+
     }
 
     function cancelar() {
         location.href = "<?= $strLinkCancelar ?>";
     }
 
+    function limparCampos() {
+        document.getElementById('txtTotalUniEsforco').value = '<?=$somaUndEsforco?>';
+        document.getElementById('txtDistribuida').value = '';
+        document.getElementById('txtCargaPadrao').value = '<?=$strCargaPadrao?>';
+    }
+
+    function realizarAjaxDadosCarga(){
+
+
+        var params = {
+            idUsuarioParticipante: document.getElementById('hdnIdUsuarioParticipanteLupa').value,
+            idParam: idParam,
+            numCargaPadrao : numCargaPadrao,
+            numPercentualTele : numPercentualTele,
+            staFrequencia : staFrequencia,
+            idTipoControle : <?php echo $idTipoControle ?>
+        };
+
+        $.ajax({
+            url: '<?=$strUrlBuscarDadosCarga?>',
+            type: 'POST',
+            data: params,
+            dataType: 'XML',
+            success: function (r) {
+
+                //Carga Padrão
+                    var valorCarga = $(r).find('ValorCarga').text();
+                    var cargaPadrao = valorCarga + ' - ' + strStaFrequencia;
+                    document.getElementById('txtCargaPadrao').value = cargaPadrao;
+
+                    var valorUndEs = $(r).find('ValorUndEs').text();
+                    var cargaDisti = valorUndEs;
+                    document.getElementById('txtDistribuida').value = cargaDisti;
+
+                    totalUniesforco = parseInt(cargaDisti) + parseInt(selecionadaDist);
+                    document.getElementById('txtTotalUniEsforco').value = totalUniesforco;
+
+            },
+            error: function (e) {
+                console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
+            }
+        });
+
+    }
 
     <?if(0){?></script><?}
 
@@ -336,7 +487,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <?
         //PaginaSEI::getInstance()->montarBarraLocalizacao($strTitulo);
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('30em');
+        PaginaSEI::getInstance()->abrirAreaDados('auto');
+
         //PaginaSEI::getInstance()->montarAreaValidacao();
         ?>
         <div>
@@ -353,13 +505,45 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                     <img id="imgLupaDistribuicao" onclick="objLupaUsuarioParticipante.selecionar(700,500);" src="/infra_css/imagens/lupa.gif" alt="Selecionar Usuário Participante" title="Selecionar Usuário Participante" class="infraImg">
                     <img id="imgExcluirDistribuicao" onclick="objLupaUsuarioParticipante.remover();" src="/infra_css/imagens/remover.gif" alt="Remover Usuário Participante" title="Remover Usuário Participante" class="infraImg">
                 </div>
-
             </div>
 
-            <div style="clear: both;"></div>
+
+                    <div id="divCargaPadrao">
+                        <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional" >Carga Padrão:</label>
+                        <br>
+                        <input type="text" id="txtCargaPadrao" name="txtCargaPadrao" class="infraText" style="width: 90%" value="<?=$strCargaPadrao?>" disabled/>
+                    </div>
+
+            <div id="divCarga">
+                    <div id="divDistribuidaMes">
+                        <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional" >Carga já Distribuída no Período:</label>
+                        <br>
+                        <input type="text" id="txtDistribuida" name="txtDistribuida" class="infraText" style="width: 77%" disabled/>
+                    </div>
+                    <div id="divMais">
+                        <span id="spnMais">+</span>
+                    </div>
+                    <div id="divSelecionadaDist">
+                        <label id="lblSelecionadaDist" for="txtSelecionadaDist" class="infraLabelOpcional" >Carga selecionada para Distribuição:</label>
+                        <br>
+                        <input type="text" id="txtSelecionadaDist" name="txtSelecionadaDist" class="infraText" style="width: 68%" value="<?=$somaUndEsforco?>" disabled/>
+                    </div>
+                    <div id="divIgual">
+                        <span id="spnIgual">=</span>
+                    </div>
+
+                    <div id="divTotalUniEsforco">
+                        <label id="lblTotalUniEsforco" for="txtTotalUniEsforco" class="infraLabelOpcional" >Total Unidade de Esforço:</label>
+                        <br>
+                        <input type="text" id="txtTotalUniEsforco" name="txtTotalUniEsforco" class="infraText" style="width: 90%" value="<?=$somaUndEsforco?>" disabled/>
+                    </div>
+            </div>
+
+
+
 
 <?php
-$width = $isTelaProcesso ? '85%' : '60%';
+$width = $isTelaProcesso ? '85%' : '80%';
 if($countDistribuicao > 0){ ?>
             <div id="divTabelaProcessos">
 
@@ -369,6 +553,7 @@ if($countDistribuicao > 0){ ?>
                     <th class="infraTh" style="display: none;">ID do Processo</th>
                     <th class="infraTh" style="display: none;">ID do Controle do Dsmp</th>
                     <th class="infraTh" align="center">Processo</th>
+                    <th class="infraTh" align="center">Unidade de Esforço</th>
                     <th class="infraTh" align="center">Último Responsável</th>
                     <th class="infraTh" align="center">Ações</th>
                 </tr>

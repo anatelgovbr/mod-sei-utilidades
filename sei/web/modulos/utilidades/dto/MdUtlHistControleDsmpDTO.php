@@ -41,6 +41,8 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Atual', 'dth_atual');
 
+   $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Final', 'dth_final');
+
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdAtendimento', 'id_atendimento');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'TipoAcao', 'tipo_acao');
@@ -50,6 +52,8 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'PrazoTarefa', 'dth_prazo_tarefa');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaAtendimentoDsmp', 'sta_atendimento_dsmp');
+
+   $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAcaoConcluida', 'sin_acao_concluida');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimaFila', 'sin_ultima_fila');
 

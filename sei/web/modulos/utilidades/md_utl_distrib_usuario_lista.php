@@ -25,6 +25,7 @@ $selFilaCampo         = array_key_exists('selFilaUtlDist', $_POST) ? $_POST['sel
 $selTipoProcessoCampo = array_key_exists('selTipoProcessoUtlDist', $_POST) ? $_POST['selTipoProcessoUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selTipoProcessoUtlDist');
 $selResponsavelCampo  = array_key_exists('selResponsavelUtlDist', $_POST) ? $_POST['selResponsavelUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selResponsavelUtlDist');
 $selStatusCampo       = array_key_exists('selStatusUtlDist', $_POST) ? $_POST['selStatusUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selStatusUtlDist');
+$selAtividadeCampo    = array_key_exists('selAtividadeUtlDist', $_POST) ? $_POST['selAtividadeUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlDist');
 
 $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'txtDocumento'=> $txtDocumentoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso'=> $selTipoProcessoCampo, 'selResponsavel' => $selResponsavelCampo, 'selStatus'=> $selStatusCampo);
 
@@ -32,8 +33,11 @@ $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'txtDocumento'=> $txtD
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
 $objMdUtlAdmTpCtrlUsuRN    = new MdUtlAdmRelTpCtrlDesempUsuRN();
-$objMdUtlControleDsmpRN  = new MdUtlControleDsmpRN();
+$objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
+$objMdUtlRelTriagemAtvRN   = new MdUtlRelTriagemAtvRN();
+$objMdUtlAdmUtlTpCtrlRN    = new MdUtlAdmTpCtrlDesempRN();
+$objMdUtlAdmTpCtrlDTO      = new MdUtlAdmTpCtrlDesempDTO();
 
 $idTipoControle            = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 $arrObjsFilaDTO            = $objFilaRN->getFilasTipoControle($idTipoControle);
@@ -56,6 +60,14 @@ if (!is_null($idTipoControle)) {
     $objMdUtlAdmUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
     $isParametrizado = $objMdUtlAdmUtlTpCtrlRN->verificaTipoControlePossuiParametrizacao($idTipoControle);
 }
+
+$objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+$objMdUtlAdmTpCtrlDTO->retStrStaFrequencia();
+$objMdUtlAdmTpCtrlDTO->setNumMaxRegistrosRetorno(1);
+$objDTOTipoControle = $objMdUtlAdmUtlTpCtrlRN->consultar($objMdUtlAdmTpCtrlDTO);
+
+$staFrequencia = !is_null($objDTOTipoControle) ? $objDTOTipoControle->getStrStaFrequencia() : '';
+
 
 if (!is_null($idTipoControle) && $isParametrizado) {
     $isGestorSipSei = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorSipSei();
@@ -85,6 +97,8 @@ if (!is_null($idTipoControle) && $isParametrizado) {
     $selStatus = count($idsStatusPermitido) > 0 || $isGestorSipSei ? MdUtlControleDsmpINT::montarSelectStatus($selStatusCampo, false, $idsStatusPermitido) : null;
     $arrObjsTpProcesso = $objMdUtlControleDsmpRN->getTiposProcessoTipoControle($idTipoControle);
     $selTipoProcesso = $isPermiteAssociacao  ? InfraINT::montarSelectArrInfraDTO(null, null, $selTipoProcessoCampo, $arrObjsTpProcesso, 'IdTipoProcedimento', 'NomeProcedimento') : '';
+
+
 }
 
 $strTitulo = 'Distribuição';
@@ -121,6 +135,9 @@ $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fe
                                         Fe<span class="infraTeclaAtalho">c</span>har</button>';
 $numRegistros = 0;
 if (!is_null($idTipoControle) && $isParametrizado) {
+
+    $objDTOCombo = $objMdUtlControleDsmpRN->getObjDTOParametrizadoDistrib(array($arrObjsFilaUsuDTO, $isGestorSipSei, $idTipoControle, array()));
+
     //Configuração da Paginação
     if((count($arrObjsFilaDTO) == 0 && !$isGestorSipSei) || !$isPermiteAssociacao){
         $objDTO = null;
@@ -128,8 +145,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO = $objMdUtlControleDsmpRN->getObjDTOParametrizadoDistrib(array($arrObjsFilaUsuDTO, $isGestorSipSei, $idTipoControle, $arrPostDados));
     }
 
-    if (!is_null($objDTO)) {
-
+    if(!is_null($objDTO)) {
         $objDTO->retNumIdMdUtlAdmRelControleDsmp();
         $objDTO->retNumIdMdUtlControleDsmp();
         $objDTO->retNumIdUnidade();
@@ -144,17 +160,63 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO->retDthAtual();
         $objDTO->retStrSiglaUsuarioDistribuicao();
         $objDTO->retNumIdMdUtlAnalise();
-        
+        $objDTO->retNumIdMdUtlTriagem();
+
+        if ($selAtividadeCampo != '') {
+            $idsTriagem = $objMdUtlControleDsmpRN->pesquisarAtividade($objDTO);
+
+            if (count($idsTriagem) > 0) {
+                $objDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
+            } else {
+                $objDTO = null;
+            }
+        }
+    }
+    $count = 0;
+    //Combo de Atividade
+    if(!is_null($objDTOCombo)) {
+        $objDTOCombo->retNumIdMdUtlTriagem();
+        $arrObjsCombo = $objMdUtlControleDsmpRN->listarProcessos($objDTOCombo);
+
+        $idTriagemCombo = InfraArray::converterArrInfraDTO($arrObjsCombo, 'IdMdUtlTriagem');
+        $idTriagemCombo = MdUtlControleDsmpINT::removeNullsTriagem($idTriagemCombo);
+
+        $arrayObjs = [];
+        $count = count($idTriagemCombo);
+    }
+
+    if ($count > 0) {
+
+        $arrObjsTriagemAtividade = $objMdUtlRelTriagemAtvRN->getObjsTriagemAtividade($idTriagemCombo);
+        $selAtividade = MdUtlAdmAtividadeINT::montarSelectAtividadesTriagem($selAtividadeCampo, $arrObjsTriagemAtividade);
+
+        foreach ($arrObjsTriagemAtividade as $obj) {
+            if (array_key_exists($obj->getNumIdMdUtlTriagem(), $arrayObjs)) {
+                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = array();
+            } else {
+                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = $obj->getStrNomeAtividade();
+            }
+        }
+
+    } else {
+        $selAtividade = '';
+    }
+
+    //Fim da Combo de Atividade
+
+    if (!is_null($objDTO)) {
+
         PaginaSEI::getInstance()->prepararOrdenacao($objDTO, 'ProtocoloProcedimentoFormatado', InfraDTO::$TIPO_ORDENACAO_ASC);
         PaginaSEI::getInstance()->prepararPaginacao($objDTO, 200);
 
-        $arrObjs      = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
+        $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
         $numRegistros = count($arrObjs);
 
         PaginaSEI::getInstance()->processarPaginacao($objDTO);
 
-        //Tabela de resultado.
         if ($numRegistros > 0) {
+
+            //Tabela de resultado.
             $displayNoneCheck = $isPermiteAssociacao ? '' : 'style="display:none"';
             $strResultado .= '<table width="99%" class="infraTable" summary="Processos" id="tbCtrlProcesso">';
             $strResultado .= '<caption class="infraCaption">';
@@ -164,9 +226,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
             //Cabeçalho da Tabela
             $strResultado .= '<tr>';
-            $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
+            $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh utlSelecionarTodos" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
             $strResultado .= '<th class="infraTh" width="18%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="19%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tipo de Processo', 'IdTipoProcedimento', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="19%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
 
@@ -189,20 +251,31 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
             for ($i = 0; $i < $numRegistros; $i++) {
 
-                $strId            = $arrObjs[$i]->getDblIdProcedimento();
-                $strProcesso      = $arrObjs[$i]->getStrProtocoloProcedimentoFormatado();
-                $strFila          = $arrObjs[$i]->getStrNomeFila();
-                $strTpProcesso    = $arrObjs[$i]->getNumIdTipoProcedimento();
-                $nomeTpProcesso   = $arrObjs[$i]->getStrNomeTipoProcedimento();
-                $strStatus        = trim($arrObjs[$i]->getStrStaAtendimentoDsmp());
+                $strId             = $arrObjs[$i]->getDblIdProcedimento();
+                $strProcesso       = $arrObjs[$i]->getStrProtocoloProcedimentoFormatado();
+                $strFila           = $arrObjs[$i]->getStrNomeFila();
+                $strTpProcesso     = $arrObjs[$i]->getNumIdTipoProcedimento();
+                $nomeTpProcesso    = $arrObjs[$i]->getStrNomeTipoProcedimento();
+                $uniEsforco        = $arrObjs[$i]->getNumUnidadeEsforco();
+                $strStatus         = trim($arrObjs[$i]->getStrStaAtendimentoDsmp());
                 $numIdControleDsmp = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
-                $arrSituacao      = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
-                $linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_distrib_usuario_listar&id_procedimento=' . $strId . '');
-                $data             = explode(' ', $arrObjs[$i]->getDthAtual());
-                $dataFormatada    = $data[0];
-                $bolRegistroAtivo = true;
+                $numIdTriagem      = $arrObjs[$i]->getNumIdMdUtlTriagem();
+                $strNomeAtividade  = array_key_exists($numIdTriagem, $arrayObjs) ? $arrayObjs[$numIdTriagem] : '';
+                $linkAtvTriagem    = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_atividade_triagem_listar&acao_origem=md_utl_distrib_usuario_listar&id_triagem=' . $numIdTriagem . '');
 
-                $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha">' : ($strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">');
+                if(is_array($strNomeAtividade)){
+                    $strNomeAtividade = '<a href="#" onclick="infraAbrirJanela(\'' . $linkAtvTriagem . '\',\'urlAtividadeTriagemMult\',650,500,)" alt="Múltiplas" title="Múltiplas" class="ancoraPadraoAzul"> Múltiplas </a>';;
+                }
+               
+
+                $arrSituacao       = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
+                $linkProcedimento  = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_distrib_usuario_listar&id_procedimento=' . $strId . '');
+                $data              = explode(' ', $arrObjs[$i]->getDthAtual());
+                $dataFormatada     = $data[0];
+                $bolRegistroAtivo  = true;
+
+
+                $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha ">' : ($strCssTr == '<tr class="infraTrClara ">' ? '<tr class="infraTrEscura ">' : '<tr class="infraTrClara ">');
                 $strCssTr = in_array($strId, $arrIdProcedimentoDistrib) ? '<tr class="infraTrAcessada">' : $strCssTr;
                 $strResultado .= $strCssTr;
 
@@ -218,12 +291,12 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
                 //Linha Nome
                 $strResultado .= '<td class="tdNomeProcesso">';
-                $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul">' . $strProcesso . '</a>';
+                $strResultado .= '<a href="#" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul">' . $strProcesso . '</a>';
                 $strResultado .= '</td>';
 
-                //Linha Descrição
-                $strResultado .= '<td class="tdTipoProcesso">';
-                $strResultado .= PaginaSEI::tratarHTML($nomeTpProcesso);
+                //Linha Atividade
+                $strResultado .= '<td class="tdNomeAtividade">';
+                $strResultado .= $strNomeAtividade;
                 $strResultado .= '</td>';
 
                 //Linha Fila Padrão
@@ -233,12 +306,12 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
                 //Linha Unidade de Esforço
                 $strResultado .= '<td class="tdUniEsforco">';
-                $strResultado .=  $arrObjs[$i]->getNumUnidadeEsforco();
+                $strResultado .= PaginaSEI::tratarHTML($uniEsforco);
                 $strResultado .= '</td>';
 
                 //Linha Responsável
                 $strResultado .= '<td class="tdResponsavel">';
-                $strResultado .= '<a class="ancoraSigla" href="javascript:void(0);" alt="' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeUsuarioDistribuicao()) . '" title="' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeUsuarioDistribuicao()) . '">' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrSiglaUsuarioDistribuicao()) . '</a>';
+                $strResultado .= '<a class="ancoraSigla" href="#" alt="' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeUsuarioDistribuicao()) . '" title="' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeUsuarioDistribuicao()) . '">' . PaginaSEI::tratarHTML($arrObjs[$i]->getStrSiglaUsuarioDistribuicao()) . '</a>';
                 $strResultado .= '</td>';
 
                 //Linha Fila Status
@@ -342,36 +415,48 @@ if (0) { ?>
             position: absolute;
             margin-left: 14.8%;
             margin-top: 10px;
-            width: 11.5%;
+            width: 14.5%;
         }
 
         #divFila {
             position: absolute;
-            margin-left: 25%;
+            margin-left: 27.5%;
             margin-top: 8px;
             width: 20.5%;
         }
 
         #divTipoProcesso {
             position: absolute;
-            margin-left: 42%;
+            margin-left: 44.5%;
             margin-top: 8px;
             width: 22%;
         }
 
         #divResponsavel {
             position: absolute;
-            margin-left: 60.1%;
+            margin-left: 62.5%;
             margin-top: 8px;
             width: 23%;
         }
 
-
         #divStatus {
             position: absolute;
-            margin-left: 79%;
+            margin-left: 81.4%;
             margin-top: 8px;
-            width: 20%;
+            width: 18%;
+        }
+
+        #divAtividade{
+            position: absolute;
+            margin-top: 54px;
+        }
+
+        #divTotalUnidade{
+            margin-top: 12%;
+        }
+
+        #spnTotalUnidade{
+            font-size: 1.2em;
         }
 
         <?
@@ -389,6 +474,8 @@ if (0){ ?>
         var msg59 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_59); ?>';
         var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
         var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
+        var totalUnidade = 0;
+        var count = 0;
 
         function inicializar() {
 
@@ -407,6 +494,8 @@ if (0){ ?>
                 window.location.href = urlCtrlProcessos;
                 return false;
             }
+
+            configuraCkeckbox();
 
             if ('<?= $_GET['acao'] ?>' == 'md_utl_distrib_usuario_selecionar') {
                 infraReceberSelecao();
@@ -443,9 +532,15 @@ if (0){ ?>
         function distribuir(multiplo, idSelecionado, idStatus, idFila){
             var numeroRegistroTela = '<?= $numRegistros ?>';
             var isValido = true;
+            var staFrequencia = '<?=$staFrequencia?>';
 
             if(numeroRegistroTela == 0){
                 alert(msg59);
+                return false;
+            }
+            
+            if(staFrequencia == 0){
+                alert('A Frequência de Distribuição não está parametrizada no Tipo de Controle desta Unidade. Converse com o Gestor da sua área!');
                 return false;
             }
 
@@ -459,6 +554,9 @@ if (0){ ?>
                 document.getElementById('frmTpControleLista').action = '<?=$strLinkDistribuir?>';
                 document.getElementById('frmTpControleLista').submit();
             }
+
+
+
         }
 
         function enviarStatusFila(multiplo, idStatus, idFila){
@@ -524,6 +622,88 @@ if (0){ ?>
                 document.getElementById('hdnDistribuicao').value = json;
             }
         }
+
+        function configuraCkeckbox(){
+                //seleção unica
+                var atributos = document.getElementsByClassName('infraCheckbox');
+
+                for(i = 0; i < atributos.length; i++) {
+                    atributos[i].removeAttribute('onclick');
+                }
+
+                for (i = 0; i < atributos.length; i++) {
+                    atributos[i].addEventListener('click', function (e) {
+                        infraSelecionarItens(e.target, 'Infra');
+                        getUnidadeEsforco(e.target);
+                    });
+                }
+
+                //seleção multipla
+                var atributoMult = document.getElementsByClassName('utlSelecionarTodos')[0].children[1];
+
+                atributoMult.removeAttribute('onclick');
+                atributoMult.addEventListener('click', function (e) {
+                    infraSelecaoMultipla('Infra');
+                    getUnidadeEsforcoMultiplo(e);
+                });
+
+            setTimeout(controlaChecksInicializacao, '10')
+            }
+
+        function controlaChecksInicializacao(){
+
+            var objsMarcados = document.getElementsByClassName('infraTrMarcada');
+            var total        = 0;
+
+            if(objsMarcados.length > 0){
+
+                for (var i = 0; i < objsMarcados.length; i++) {
+                    var undEsfor = parseInt(objsMarcados[i].children[5].innerText);
+                    total += undEsfor;
+                }
+                document.getElementById('spnTotalUnidade').innerHTML =  total;
+            }
+
+        }
+
+
+        function getUnidadeEsforco(obj) {
+
+            var trPrincipal = obj.parentElement.parentElement;
+            var valorUniEsforco = parseInt(trPrincipal.children[5].innerText);
+            var totalUnidade = parseInt(document.getElementById('spnTotalUnidade').innerHTML);
+
+
+
+            if(obj.checked == true){
+                totalUnidade += valorUniEsforco;
+            }else{
+
+                console.log(totalUnidade);
+                totalUnidade -= valorUniEsforco;
+            }
+
+            document.getElementById('spnTotalUnidade').innerHTML =  totalUnidade;
+
+        }
+
+        function getUnidadeEsforcoMultiplo(ev){
+
+            var objs = document.getElementsByClassName('infraTrMarcada');
+
+
+            if($.trim(ev.target.title) != 'Selecionar Tudo'){
+                var somaUniEsforco = 0;
+                for (var i = 0; i < objs.length; i++) {
+                    somaUniEsforco += parseInt(objs[i].children[5].innerText);
+                }
+
+            }else{
+                    somaUniEsforco = 0;
+            }
+
+            document.getElementById('spnTotalUnidade').innerHTML =  somaUniEsforco;
+        }
         
 
         <?php if (0){ ?>
@@ -543,7 +723,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
         <?php
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('7em');
+        PaginaSEI::getInstance()->abrirAreaDados('auto');
         ?>
         <div class="bloco" id="divProcesso">
             <label id="lblProcesso" for="txtProcessoUtlDist" class="infraLabelOpcional">
@@ -608,6 +788,21 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                     tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <?= $selStatus ?>
             </select>
+        </div>
+
+        <div id="divAtividade">
+            <label id="lblAtividade" for="selAtividadeUtlDist" accesskey="" class="infraLabelOpcional">Atividade:</label>
+            <select id="selAtividadeUtlDist" style="width: 138px;" name="selAtividadeUtlDist" class="infraSelect padraoSelect"
+                    onchange="pesquisar();"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                <option value=""></option>
+                <?=$selAtividade?>
+            </select>
+        </div>
+
+        <div id="divTotalUnidade">
+            <label id="lblTotalUnidade" class="infraLabelOpcional">Total de Unidade de Esforço Selecionadas:</label>
+            <span id="spnTotalUnidade">0</span>
         </div>
 
         <input type="hidden" id="hdnSelStatus" name="hdnSelStatus" value=""/>

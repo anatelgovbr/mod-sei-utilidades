@@ -11,10 +11,10 @@ require_once dirname(__FILE__) . '/../../../SEI.php';
 class MdUtlAtualizadorSeiRN extends InfraRN
 {
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.0.0';
+    private $versaoAtualDesteModulo = '1.1.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0');
+    private $historicoVersoes = array('1.0.0','1.1.0');
 
     public function __construct(){
         parent::__construct();
@@ -105,12 +105,16 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $strVersaoModuloUtilidades = $objInfraParametro->getValor($this->nomeParametroModulo, false);
 
             //VERIFICANDO QUAL VERSAO DEVE SER INSTALADA NESTA EXECUCAO
-			if (InfraString::isBolVazia($strVersaoModuloUtilidades)) {
+            if (InfraString::isBolVazia($strVersaoModuloUtilidades)) {
                 $this->instalarv100();
+                $this->instalarv110();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
-            }
-            else {
+            } elseif ($strVersaoModuloUtilidades == '1.0.0') {
+                $this->instalarv110();
+                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+                $this->finalizar('FIM', false);
+            } else {
                 $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v ' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
                 $this->finalizar('FIM', false);
             }
@@ -780,6 +784,65 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->logar('ADICIONANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( \'1.0.0\',  \'' . $this->nomeParametroModulo . '\' )');
+    }
+
+    protected function instalarv110(){
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+        //testando versao do framework
+        $numVersaoInfraRequerida = '1.502';
+        $versaoInfraFormatada = (int) str_replace('.','', VERSAO_INFRA);
+        $versaoInfraReqFormatada = (int) str_replace('.','', $numVersaoInfraRequerida);
+
+        if ($versaoInfraFormatada < $versaoInfraReqFormatada){
+            $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL '.VERSAO_INFRA.', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A '.$numVersaoInfraRequerida.')',true);
+        }
+
+        //checando BDs suportados
+        if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
+            !(BancoSEI::getInstance() instanceof InfraSqlServer) &&
+            !(BancoSEI::getInstance() instanceof InfraOracle)) {
+            $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
+        }
+
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+        //Correção Análise
+        $objInfraMetaBD->excluirChaveEstrangeira('md_utl_rel_analise_produto', 'fk5_md_utl_rel_analise_produto');
+        $objInfraMetaBD->adicionarColuna('md_utl_rel_analise_produto', 'valor', $objInfraMetaBD->tipoTextoVariavel(50), 'null');
+
+        $objMdUtlRelAnaliseRN = new MdUtlRelAnaliseProdutoRN();
+        $objMdUtlRelAnaliseRN->preencherProtocoloFormatadoDoc();
+
+        //Correção de Datas para tabelas Gerais
+
+        //Triagem
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_triagem','md_utl_triagem',array('id_usuario'),'usuario',array('id_usuario'));
+
+        //Analise
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_analise','md_utl_analise',array('id_usuario'),'usuario',array('id_usuario'));
+
+        //Revisao
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_revisao','md_utl_revisao',array('id_usuario'),'usuario',array('id_usuario'));
+
+        //Correção do Histórico
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'dth_final', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'sin_acao_concluida', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $objMdUtlHistCtrlDsmpRN = new MdUtlHistControleDsmpRN();
+        $objMdUtlHistCtrlDsmpRN->preencherCamposGeraisControleDesempenho();
+
+        $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'dth_final', $objInfraMetaBD->tipoDataHora(), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'sin_acao_concluida', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+
+        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
     }
 }
 

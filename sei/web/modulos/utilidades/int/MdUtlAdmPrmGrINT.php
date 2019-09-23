@@ -33,9 +33,8 @@ class MdUtlAdmPrmGrINT extends InfraINT {
 
     $select = '<option value="0"></option>';
 
-    $arrFrequencia = array( MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO =>'Diário',
-                            MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL => 'Mensal',
-                            MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL => 'Semanal' );
+    $arrFrequencia = self::retornaArrPadraoFrequenciaDiaria();
+
     foreach ($arrFrequencia as $key=>$frequencia){
 
         $add= '';
@@ -47,8 +46,18 @@ class MdUtlAdmPrmGrINT extends InfraINT {
         $select.='<option '.$add.' value="'.$key.'">'.$frequencia.'</option>';
     }
 
+
+      
     return $select;
   }
+
+    public static function retornaArrPadraoFrequenciaDiaria(){
+        $arrFrequencia = array( MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO => MdUtlAdmPrmGrRN::$STR_FREQUENCIA_DIARIO,
+            MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL => MdUtlAdmPrmGrRN::$STR_FREQUENCIA_MENSAL,
+            MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL => MdUtlAdmPrmGrRN::$STR_FREQUENCIA_SEMANAL );
+
+        return $arrFrequencia;
+    }
 
     public static function montarSelectSinRetorno($valorSelecionado =''){
 

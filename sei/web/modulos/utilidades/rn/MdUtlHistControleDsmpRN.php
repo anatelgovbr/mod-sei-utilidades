@@ -163,18 +163,22 @@ class MdUtlHistControleDsmpRN extends InfraRN {
   }
 
   protected function controlarHistoricoDesempenhoControlado(Array $arrParams){
+
      $arrObjs            = array_key_exists(0, $arrParams) ? $arrParams[0] : null;
      $arrIdsProcedimento = array_key_exists(1, $arrParams) ? $arrParams[1] : null;
      $sinFila            = array_key_exists(2, $arrParams) ? $arrParams[2] : 'N';
      $sinResponsavel     = array_key_exists(3, $arrParams) ? $arrParams[3] : 'N';
+     $sinAcaoConcluida   = array_key_exists(4, $arrParams) ? $arrParams[4] : 'N';
+
      $arrRetorno         = array();
 
       //Busca os objetos cadastrados para esses ids Procedimento
       if(count($arrObjs) > 0){
           $isAtualizarUltsFilas    = $sinFila == 'S';
           $isAtualizarUltsResponsv = $sinResponsavel == 'S';
+          $isAtualizacaoValida = $isAtualizarUltsResponsv || $isAtualizarUltsFilas;
 
-          if($isAtualizarUltsResponsv || $isAtualizarUltsFilas) {
+          if($isAtualizacaoValida && count($arrIdsProcedimento) > 0) {
               $this->controlarFlagsHistorico(array($arrIdsProcedimento, $isAtualizarUltsFilas, $isAtualizarUltsResponsv));
           }
 
@@ -182,6 +186,8 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $objHistoricoDTO = $this->_clonarObjControleDsmp($objDTO);
                 $objHistoricoDTO->setStrSinUltimaFila($sinFila);
                 $objHistoricoDTO->setStrSinUltimoResponsavel($sinResponsavel);
+                $objHistoricoDTO->setStrSinAcaoConcluida($sinAcaoConcluida);
+                $objHistoricoDTO->setDthFinal(InfraData::getStrDataHoraAtual());
                 $idProc = $objHistoricoDTO->getDblIdProcedimento();
                 $arrRetorno[$idProc]['UNIDADE_ESFORCO'] = $objHistoricoDTO->getNumUnidadeEsforco();
                 $arrRetorno[$idProc]['ID_TRIAGEM'] = $objHistoricoDTO->getNumIdMdUtlTriagem();
@@ -405,6 +411,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $strTipoAcao      = '';
         $strUltimaFila    = 'S';
         $idFila           = array_key_exists('hdnIdFilaAtiva', $_POST) ? $_POST['hdnIdFilaAtiva'] : null;
+        $undEsforco       = $arrRetorno[$idProcedimento]['UNIDADE_ESFORCO'];
 
         switch ($idEuFinalizacao){
             case  MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO:
@@ -431,8 +438,10 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $idRevisao     = $novoId;
                 $strUltimaFila = 'N';
                 $idFila        = $idFilaParam;
+                $undEsforco    = 0;
                 break;
         }
+
         $status = trim($status);
         $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
         $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
@@ -444,14 +453,17 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $objMdUtlHistControleDsmpDTO->setNumIdMdUtlTriagem($idTriagem);
         $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($idAnalise);
         $objMdUtlHistControleDsmpDTO->setNumIdMdUtlRevisao($idRevisao);
-        $objMdUtlHistControleDsmpDTO->setNumUnidadeEsforco($arrRetorno[$idProcedimento]['UNIDADE_ESFORCO']);
+        $objMdUtlHistControleDsmpDTO->setNumUnidadeEsforco($undEsforco);
         $objMdUtlHistControleDsmpDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+        $objMdUtlHistControleDsmpDTO->setDthFinal(InfraData::getStrDataHoraAtual());
         $objMdUtlHistControleDsmpDTO->setStrStaAtendimentoDsmp($status);
         $objMdUtlHistControleDsmpDTO->setStrSinUltimaFila($strUltimaFila);
         $objMdUtlHistControleDsmpDTO->setStrSinUltimoResponsavel('N');
         $objMdUtlHistControleDsmpDTO->setStrDetalhe($strDetalhe);
         $objMdUtlHistControleDsmpDTO->setNumIdAtendimento($idAtendimento);
         $objMdUtlHistControleDsmpDTO->setStrTipoAcao($strTipoAcao);
+        $objMdUtlHistControleDsmpDTO->setStrSinAcaoConcluida('N');
+
 
         $this->cadastrar($objMdUtlHistControleDsmpDTO);
     }
@@ -566,4 +578,226 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         return ($countAtivos || $countHistorico);
     }
 
+    protected function preencherCamposGeraisControleDesempenhoConectado()
+    {
+        $arrDadosTriagem     = array();
+        $arrDadosAnalise     = array();
+        $arrDadosRevisao     = array();
+
+        $objMdUtlHsControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objMdUtlHsControleDsmpDTO->retNumIdUnidade();
+        $objMdUtlHsControleDsmpDTO->retDblIdProcedimento();
+
+        $countHistorico = $this->contar($objMdUtlHsControleDsmpDTO);
+
+        $arrRetorno = array();
+
+        if ($countHistorico > 0) {
+            $arrObjs    = $this->listar($objMdUtlHsControleDsmpDTO);
+            foreach($arrObjs as $objDTO){
+                $arrRetorno[$objDTO->getDblIdProcedimento()][$objDTO->getNumIdUnidade()]= true;
+            }
+        }
+
+        if (count($arrRetorno) > 0) {
+            foreach ($arrRetorno as $idProcedimento => $arrProcedimento) {
+                foreach ($arrProcedimento as $idUnidade => $arrUnidade) {
+                    if (!is_null($idUnidade) && !is_null($idProcedimento)) {
+                        $objMdUtlHsControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                        $objMdUtlHsControleDsmpDTO->setDblIdProcedimento($idProcedimento);
+                        $objMdUtlHsControleDsmpDTO->setNumIdUnidade($idUnidade);
+                        $objMdUtlHsControleDsmpDTO->retTodos();
+                        $objMdUtlHsControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+
+                        if ($this->contar($objMdUtlHsControleDsmpDTO) > 0) {
+                            $arrObjsHistoricoDTO = $this->listar($objMdUtlHsControleDsmpDTO);
+                            $objControleDsmpDTO  = $this->_getUltimoObjAtivo($idProcedimento, $idUnidade);
+                            $this->_preencherDadosConjuntoObjHistorico($arrObjsHistoricoDTO, $objControleDsmpDTO);
+                            $this->_preencherArrGeraisTriagAnaliseRev($arrObjsHistoricoDTO, $objControleDsmpDTO, $arrDadosTriagem, $arrDadosAnalise, $arrDadosRevisao);
+                        }
+                    }
+                }
+            }
+
+            $this->_salvarDadosTriagem($arrDadosTriagem);
+            $this->_salvarDadosAnalise($arrDadosAnalise);
+            $this->_salvarDadosRevisao($arrDadosRevisao);
+        }
+    }
+
+    private function _salvarDadosTriagem($arrDadosTriagem)
+    {
+        if (count($arrDadosTriagem) > 0) {
+            $objRN = new MdUtlTriagemRN();
+            foreach ($arrDadosTriagem as $key => $dadoTriagem) {
+                if (!is_null($key) && $key != '') {
+                    $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+                    $objMdUtlTriagemDTO->setNumIdMdUtlTriagem($key);
+                    $objMdUtlTriagemDTO->setDthAtual($dadoTriagem['DTH_ATUAL']);
+                    $objMdUtlTriagemDTO->setNumIdUsuario($dadoTriagem['ID_USUARIO']);
+                    $objRN->alterar($objMdUtlTriagemDTO);
+                }
+            }
+        }
+    }
+
+    private function _salvarDadosAnalise($arrDadosAnalise)
+    {
+        if (count($arrDadosAnalise) > 0) {
+            $objRN = new MdUtlAnaliseRN();
+            foreach ($arrDadosAnalise as $key => $dado) {
+                if (!is_null($key) && $key != '') {
+                    $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+                    $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($key);
+                    $objMdUtlAnaliseDTO->setDthAtual($dado['DTH_ATUAL']);
+                    $objMdUtlAnaliseDTO->setNumIdUsuario($dado['ID_USUARIO']);
+                    $objRN->alterar($objMdUtlAnaliseDTO);
+                }
+            }
+        }
+    }
+
+    private function _salvarDadosRevisao($arrDadosRevisao){
+      if(count($arrDadosRevisao) > 0) {
+          $objRN = new MdUtlRevisaoRN();
+          foreach ($arrDadosRevisao as $key => $dado) {
+              if (!is_null($key) && $key != '') {
+                  $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+                  $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($key);
+                  $objMdUtlRevisaoDTO->setDthAtual($dado['DTH_ATUAL']);
+                  $objMdUtlRevisaoDTO->setNumIdUsuario($dado['ID_USUARIO']);
+                  $objRN->alterar($objMdUtlRevisaoDTO);
+              }
+          }
+      }
+    }
+
+
+    private function _preencherArrGeraisTriagAnaliseRev($arrObjsHistoricoDTO, $objControleDsmpDTO, &$arrDadosTriagem, &$arrDadosAnalise, &$arrDadosRevisao){
+
+        $arrObjsReverseHsDTO = array_reverse($arrObjsHistoricoDTO);
+
+        foreach($arrObjsReverseHsDTO as $objDTO){
+            $this->_preencherArrPrincipal($objDTO, 'IdMdUtlTriagem', $objDTO->getNumIdMdUtlTriagem(), $arrDadosTriagem);
+            $this->_preencherArrPrincipal($objDTO, 'IdMdUtlAnalise', $objDTO->getNumIdMdUtlAnalise(), $arrDadosAnalise);
+            $this->_preencherArrPrincipal($objDTO, 'IdMdUtlRevisao', $objDTO->getNumIdMdUtlRevisao(), $arrDadosRevisao);
+        }
+
+        if(!is_null($objControleDsmpDTO)) {
+            $this->_preencherArrPrincipal($objControleDsmpDTO, 'IdMdUtlTriagem', $objControleDsmpDTO->getNumIdMdUtlTriagem(), $arrDadosTriagem);
+            $this->_preencherArrPrincipal($objControleDsmpDTO, 'IdMdUtlAnalise', $objControleDsmpDTO->getNumIdMdUtlAnalise(), $arrDadosAnalise);
+            $this->_preencherArrPrincipal($objControleDsmpDTO, 'IdMdUtlRevisao', $objControleDsmpDTO->getNumIdMdUtlRevisao(), $arrDadosRevisao);
+        }
+
+    }
+
+    private function _preencherArrPrincipal($objDTO, $atributo, $idSearch, &$arrDados){
+        if((!is_null($objDTO->get($atributo))) && (!array_key_exists($idSearch, $arrDados))){
+            $arrDados[$idSearch]['DTH_ATUAL'] = $objDTO->getDthAtual();
+            $arrDados[$idSearch]['ID_USUARIO'] = $objDTO->getNumIdUsuarioAtual();
+        }
+    }
+
+
+    private function _preencherDadosConjuntoObjHistorico($arrObjs, $objControleDsmpDTO){
+      $dthFinalAtual       = null;
+      $ultimaDthFinal      = !is_null($objControleDsmpDTO) ?  $objControleDsmpDTO->getDthAtual() : null;
+      $isStatusIndicaConcl = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$FLUXO_FINALIZADO);
+      $statusAtual         = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrStaAtendimentoDsmp() : null;
+      $acaoConcluida       =  !is_null($statusAtual) && in_array($statusAtual, $isStatusIndicaConcl) ? true : false;
+      $isStatusConclusao   = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_REVISAO, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
+
+
+        foreach ($arrObjs as $objDTO){
+            //Get Valores
+            $statusHsAtual   = $objDTO->getStrStaAtendimentoDsmp();
+
+            //Preenche Data Final
+            $dthFinalAtual = $statusHsAtual == MdUtlControleDsmpRN::$FLUXO_FINALIZADO ? $objDTO->getDthAtual() : $ultimaDthFinal;
+
+            if(is_null($dthFinalAtual)){
+                $dthFinalAtual = $objDTO->getDthAtual();
+            }
+
+            $objDTO->setDthFinal($dthFinalAtual);
+            $ultimaDthFinal = $objDTO->getDthAtual();
+
+            //Preenche e Controla ações Concluídas
+            $isAcaoConcluidaPadrao       = in_array($statusHsAtual, $isStatusConclusao) && $acaoConcluida;
+            $isAcaoVoltarParaResponsavel = $objDTO->getStrDetalhe() == MdUtlRevisaoRN::$STR_VOLTAR_PARA_RESPONSAVEL && ($statusHsAtual == MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM || $statusHsAtual == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
+
+            if($isAcaoConcluidaPadrao){
+                $objDTO->setStrSinAcaoConcluida('S');
+                $acaoConcluida = false;
+            }else{
+                $objDTO->setStrSinAcaoConcluida('N');
+            }
+
+            $acaoConcluida = in_array($statusHsAtual, $isStatusIndicaConcl) ? true : $acaoConcluida;
+
+            if($isAcaoVoltarParaResponsavel){
+                $acaoConcluida = true;
+            }
+
+            //Altera o Objeto Final
+            $this->alterar($objDTO);
+        }
+    }
+
+    private function _getUltimoObjAtivo($idProcedimento, $idUnidade){
+        $objDTORetorno = null;
+        $objDTO = new MdUtlControleDsmpDTO();
+        $objDTO->setNumIdUnidade($idUnidade);
+        $objDTO->setDblIdProcedimento($idProcedimento);
+        $objDTO->setNumMaxRegistrosRetorno(1);
+        $objDTO->retTodos();
+        $objRN = new MdUtlControleDsmpRN();
+
+        if($objRN->contar($objDTO) > 0){
+            $objDTORetorno = $objRN->consultar($objDTO);
+        }
+
+        return $objDTORetorno;
+    }
+
+    protected function buscarUnidadeEsforcoHistConectado($arrParams){
+        $idUsuarioParticipante = array_key_exists(0, $arrParams) ? $arrParams[0] : null;
+        $idTipoControle        = array_key_exists(1, $arrParams) ? $arrParams[1] : null;
+        $arrDatas              = array_key_exists(2, $arrParams) ? $arrParams[2] : null;
+        $dtInicio              = $arrDatas['DT_INICIAL'];
+        $dtFim                 = $arrDatas['DT_FINAL'];
+
+        $numUnidEsforcoHist    = 0;
+        $dtInicio = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtInicio);
+        $dtFim = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtFim);
+
+        if(!is_null($idUsuarioParticipante) && !is_null($idTipoControle)) {
+
+            $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+            $objMdUtlHistControleDsmpDTO->setNumIdUsuarioDistribuicao($idUsuarioParticipante);
+            $objMdUtlHistControleDsmpDTO->setStrSinAcaoConcluida('S');
+            $objMdUtlHistControleDsmpDTO->setStrStaAtendimentoDsmp(array(MdUtlControleDsmpRN::$EM_REVISAO, MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE), InfraDTO::$OPER_IN);
+            $objMdUtlHistControleDsmpDTO->retNumUnidadeEsforco();
+            $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+            $objMdUtlHistControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+
+            $objMdUtlHistControleDsmpDTO->adicionarCriterio(array('Atual', 'Atual', 'Atual'),
+                array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_MAIOR_IGUAL, InfraDTO::$OPER_MENOR_IGUAL),
+                array(null, $dtInicio, $dtFim),
+                array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
+
+            $countHs = $this->contar($objMdUtlHistControleDsmpDTO);
+
+            if ($countHs > 0) {
+                $arrUnidEsforcoHist = $this->listar($objMdUtlHistControleDsmpDTO);
+
+                foreach ($arrUnidEsforcoHist as $objs) {
+                    $numUnidEsforcoHist += $objs->getNumUnidadeEsforco();
+                }
+            }
+        }
+
+
+        return $numUnidEsforcoHist;
+    }
 }
