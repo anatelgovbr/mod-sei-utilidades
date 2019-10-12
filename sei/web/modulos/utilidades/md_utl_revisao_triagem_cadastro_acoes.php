@@ -9,11 +9,11 @@ $objTriagemDTO     = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
 $strInformComp     = $objTriagemDTO->getStrInformacaoComplementar();
 
 $MdUtlRelTriagemAtvRN  = new MdUtlRelTriagemAtvRN();
-$MdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+$objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
 
-$MdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
-$MdUtlRelTriagemAtvDTO->retTodos();
-$MdUtlRelTriagemAtvDTO->retStrNomeAtividade();
+$objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
+$objMdUtlRelTriagemAtvDTO->retTodos();
+$objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
 
 if ($isConsultar) {
 
@@ -32,19 +32,61 @@ if ($isConsultar) {
     $strInformCompRevisao = $MdUtlRevisao ? $MdUtlRevisao->getStrInformacoesComplementares() : '';
     $strEncaminhamento = $MdUtlRevisao ? $MdUtlRevisao->getStrStaEncaminhamentoRevisao() : '';
 
-    $MdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
+    $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
     $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
 
     if ($MdUtlRevisao) {
-        $MdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($MdUtlRevisao->getNumIdMdUtlRevisao());
-        $MdUtlRelRevisTrgAnlsDTO->retTodos();
-        $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($MdUtlRelRevisTrgAnlsDTO);
+        $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($MdUtlRevisao->getNumIdMdUtlRevisao());
+        $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+        $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
     }
-
 }
 
-    $numRegistro = $MdUtlRelTriagemAtvRN->contar($MdUtlRelTriagemAtvDTO);
-    $MdUtlRelTriagemAtv = $MdUtlRelTriagemAtvRN->listar($MdUtlRelTriagemAtvDTO);
+if ($isEdicao) {
+
+    $MdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+    $MdUtlRevisaoRN = new MdUtlRevisaoRN();
+
+    $idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+
+    $MdUtlRevisaoDTO->setNumIdMdUtlRevisao($idRevisao);
+    $MdUtlRevisaoDTO->retTodos();
+
+    $MdUtlRevisao = $MdUtlRevisaoRN->consultar($MdUtlRevisaoDTO);
+
+    $strInformCompRevisao = $MdUtlRevisao ? $MdUtlRevisao->getStrInformacoesComplementares() : '';
+    $strEncaminhamento = '';
+
+    $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
+    $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
+
+    $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
+    $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+    $objMdUtlRelRevisTrgAnlsDTO->retNumIdMdUtlAdmAtividade();
+
+    //array com as atividades da triagem da última revisão
+    $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
+
+    $objUltimoRelTriagemAtvRN  = new MdUtlRelTriagemAtvRN();
+    $objUltimoRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+
+    $arrObjIguais = [];
+
+    $idsRelAtividadesAntigas = InfraArray::converterArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelTriagemAtv');
+    if(count($idsRelAtividadesAntigas) > 0) {
+        $arrObjRelAtividadesDTOAntigos = $objUltimoRelTriagemAtvRN->getObjsRelTriagemAtividade($idsRelAtividadesAntigas);
+
+    }
+}
+
+if ($MdUtlRevisao) {
+    $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($MdUtlRevisao->getNumIdMdUtlRevisao());
+    $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+    $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
+}
+
+    $numRegistro = $MdUtlRelTriagemAtvRN->contar($objMdUtlRelTriagemAtvDTO);
+    $MdUtlRelTriagemAtv = $MdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
 
     $strResultado="";
 
@@ -68,21 +110,48 @@ if ($isConsultar) {
     for ($i = 0 ; $i < $numRegistro ; $i++){
 
             $displayJustificativa = 'style="display: none"';
+            $strObservacao = '';
+            $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, null);
+            $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle,  null);
 
             $idMdUtlRelTriagemAtv = $MdUtlRelTriagemAtv[$i]->getNumIdMdUtlRelTriagemAtv();
 
             if($isConsultar) {
                 if($arrMdUtlRelRevisTrgAnls) {
-                    $MdUtlRelRevisTrgAnls = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelTriagemAtv', $idMdUtlRelTriagemAtv);
-                    $strObservacao = $MdUtlRelRevisTrgAnls[0]->getStrObservacao();
-                    $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpRevisao());
-                    
-                    if ($MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao() > 0) {
-                        $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao());
+                    $objMdUtlRelRevisTrgAnls = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelTriagemAtv', $idMdUtlRelTriagemAtv);
+                    $strObservacao = count($objMdUtlRelRevisTrgAnls) > 0 ? $objMdUtlRelRevisTrgAnls[0]->getStrObservacao() : '';
+                    $idTpRevisao = count($objMdUtlRelRevisTrgAnls) > 0 ? $objMdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpRevisao() : null;
+                    $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $idTpRevisao);
+
+                    if (count($objMdUtlRelRevisTrgAnls) > 0 && $objMdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao() > 0) {
+                        $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $objMdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao());
                         $displayJustificativa = '';
                     }
                 }
-            }
+            } else {
+
+             if($isEdicao) {
+
+                 if (count($arrMdUtlRelRevisTrgAnls) > 0 && $arrMdUtlRelRevisTrgAnls != null) {
+
+                     $arrDadosAntigaRevisaoDTO = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlAdmAtividade', $MdUtlRelTriagemAtv[$i]->getNumIdMdUtlAdmAtividade());
+
+                     if(count($arrDadosAntigaRevisaoDTO) > 0 && $arrDadosAntigaRevisaoDTO[0] != null) {
+
+                        $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpRevisao());
+
+                        if ($arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpJustRevisao() > 0) {
+                            $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpJustRevisao());
+                            $strObservacao = $arrDadosAntigaRevisaoDTO[0]->getStrObservacao();
+                            $displayJustificativa = '';
+                        }
+
+                     MdUtlRevisaoINT::setObjUtilizadoTriagemRevisao($arrMdUtlRelRevisTrgAnls, $arrDadosAntigaRevisaoDTO);
+                     }
+                 }
+             }
+           }
+
             $validarSelect = $displayJustificativa == '' ? 'style="width:100%"' : $displayJustificativa;
             $strResultado .= '<tr class="infraTrClara">';
             $strResultado .= '<td style="display: none" >'.$idMdUtlRelTriagemAtv.'</td>';

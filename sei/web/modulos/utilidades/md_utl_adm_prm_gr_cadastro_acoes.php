@@ -26,7 +26,7 @@ $strTbUsuarioPart   = '';
 $strDesabilitar     = '';
 $strLupaTpProcesso  = '';
 //controle css da tabela dinamica usuario participante
-$heigthAreaDados    = 31;
+$heigthAreaDados    = 45;
 $qtdUsuario         = 0;
 $idMdUtlAdmPrmGr    = 0;
 
@@ -44,6 +44,12 @@ if($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() > 0) {
     $selSinRetono           = $objMdUtlAdmPrmGrDTO->getStrSinRetornoUltFila();
     $idMdUtlAdmPrmGr        = $objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmPrmGr();
     $selFilaPadrao          = $objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmFila();
+    $selRespTctDilacao      = $objMdUtlAdmPrmGrDTO->getStrRespTacitaDilacao();
+    $selRespTctSuspencao    = $objMdUtlAdmPrmGrDTO->getStrRespTacitaSuspensao();
+    $selRespTctInterrupcao  = $objMdUtlAdmPrmGrDTO->getStrRespTacitaInterrupcao();
+    $numPrzSuspensao        = $objMdUtlAdmPrmGrDTO->getNumPrazoMaxSuspensao();
+    $numPrzInterrupcao      = $objMdUtlAdmPrmGrDTO->getNumPrazoMaxInterrupcao();
+    $selInicioPeriodo       = $objMdUtlAdmPrmGrDTO->getNumInicioPeriodo();
 
     $mdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
 
@@ -89,11 +95,21 @@ switch ($_GET['acao']) {
 
 
         $objMdUtlAdmPrmGrDTO->setDblPercentualTeletrabalho($_POST['txtPercentualTeletrabalho']);
-        $objMdUtlAdmPrmGrDTO->setStrSinRetornoUltFila($_POST['selRetorno']);
+        $sinRetornoUltimaFila = $_POST['selRetorno'] != '' ? $_POST['selRetorno'] : null;
+
+        $objMdUtlAdmPrmGrDTO->setStrSinRetornoUltFila($sinRetornoUltimaFila);
         $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
 
+        /** Alterar com os dados reais dos campos - Dados abaixo mocados para permitir parametrização */
+        $objMdUtlAdmPrmGrDTO->setStrRespTacitaDilacao($_POST['selDilacao']);
+        $objMdUtlAdmPrmGrDTO->setStrRespTacitaSuspensao($_POST['selSuspensao']);
+        $objMdUtlAdmPrmGrDTO->setNumPrazoMaxSuspensao($_POST['przSuspensao']);
+        $objMdUtlAdmPrmGrDTO->setStrRespTacitaInterrupcao($_POST['selInterrupcao']);
+        $objMdUtlAdmPrmGrDTO->setNumPrazoMaxInterrupcao($_POST['przInterrupcao']);
+        $objMdUtlAdmPrmGrDTO->setNumInicioPeriodo($_POST['selInicioPeriodo']);
 
         if (!empty($_POST)) {
+
             try {
                 $objMdUtlAdmPrmGrRN->cadastrarParametrizacao($idMdUtlAdmPrmGr, $idTipoControleUtl, $objMdUtlAdmPrmGrDTO, $objMdUtlAdmTpCtrlDesempDTO);
                     //PaginaSEI::getInstance()->adicionarMensagem('Parâmetro Geral "' . $objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmPrmGr() . '" cadastrado com sucesso.');
@@ -115,8 +131,14 @@ switch ($_GET['acao']) {
   $selTpJornada     ='';
 
   $strItensSelStaFrequencia = MdUtlAdmPrmGrINT::montarSelectStaFrequencia($selStaFrequencia);
-  $strItensSelSinRetono     = MdUtlAdmPrmGrINT::montarSelectSinRetorno($selSinRetono);
+  $strItensSelSinRetono     = MdUtlAdmPrmGrINT::montarSelectSinRetornoUltimaFila($selSinRetono);
   $strItensSelTpPresenca    = MdUtlAdmPrmGrUsuINT::montarSelectStaTipoPresenca($selTpPresenca);
   $strItensSelTpJornada     = MdUtlAdmPrmGrUsuINT::montarSelectStaTipoJornada($selTpJornada);
   $strFilaPadrao            = MdUtlAdmPrmGrINT::montarSelectFilaPadrao($selFilaPadrao,$idTipoControleUtl);
-//$strItensSelMdUtlAdmFila = MdUtlAdmFilaINT::montarSelect???????('null','&nbsp;',$objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmFila());
+  $strItensSelRespDilacao = MdUtlAdmPrmGrINT::montarSelectRespostaTacita($selRespTctDilacao);
+  $strItensSelRespSuspensao   = MdUtlAdmPrmGrINT::montarSelectRespostaTacita($selRespTctSuspencao);
+  $strItensSelRespInterrupcao = MdUtlAdmPrmGrINT::montarSelectRespostaTacita($selRespTctInterrupcao);
+  $strItensSelInicioPeriodo   = MdUtlAdmPrmGrINT::montarSelectInicioPeriodo($selStaFrequencia, $selInicioPeriodo);
+  $strItensSelFimPeriodo   = MdUtlAdmPrmGrINT::montarSelectFimPeriodo($selInicioPeriodo);
+
+  //$strItensSelMdUtlAdmFila = MdUtlAdmFilaINT::montarSelect???????('null','&nbsp;',$objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmFila());

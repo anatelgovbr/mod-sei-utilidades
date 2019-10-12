@@ -215,7 +215,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             //Linhas
             $strCssTr = '<tr class="infraTrEscura">';
 
-            $arrSituacao = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
+            $arrSituacao = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
 
             for ($i = 0; $i < $numRegistros; $i++) {
 

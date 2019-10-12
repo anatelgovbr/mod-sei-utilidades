@@ -20,17 +20,21 @@ if (0){ ?>
         var isBolAlterar = false;
         var heigthTamanhoDivAreaPart = null ;
         var msg11 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
-        var msg12 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Tipo de Processo'); ?>'
-        var msg13 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_13, 'Usuário Participante'); ?>'
-        var msg14 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_14); ?>'
+        var msg14 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_14); ?>';
         var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
+        var msg12 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Tipo de Processo'); ?>';
+        var msg13 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_13, 'Usuário Participante'); ?>';
+        var msg14 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_14); ?>';
         var msg10Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10); ?>';
+        var msg15Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_15); ?>'
+        var msg98Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_98); ?>'
 
         function carregarComponenteUsuario(){
             // ================= INICIO - JS para selecao de usuarios participantes =============================
 
             objAutoCompletarUsuario = new infraAjaxAutoCompletar('hdnIdUsuario','txtUsuario','<?=$strLinkAjaxUsuario?>');
             objAutoCompletarUsuario.limparCampo = true;
+            objAutoCompletarUsuario.tamanhoMinimo = 3;
 
             objAutoCompletarUsuario.prepararExecucao = function(){
                 return 'palavras_pesquisa='+document.getElementById('txtUsuario').value;
@@ -81,6 +85,7 @@ if (0){ ?>
                 return 'palavras_pesquisa='+document.getElementById('txtTpProcesso').value;
             };
 
+            objAutoCompletarTpProcesso.tamanhoMinimo = 3;
             objAutoCompletarTpProcesso.processarResultado = function(id,descricao,complemento){
 
                 if (id!=''){
@@ -140,15 +145,44 @@ if (0){ ?>
             var cargaPadrao = document.getElementById('txtCargaPadrao').value;
             var tpProcesso  = document.getElementById('hdnTpProcesso').value;
             var tbUsuario   = document.getElementById('tbUsuario');
+            var cargaPadrao        = document.getElementById('txtCargaPadrao').value;
+            var tpProcesso         = document.getElementById('hdnTpProcesso').value;
+            var tbUsuario          = document.getElementById('tbUsuario');
+            var selDilacao         = document.getElementById('selDilacao').selectedIndex;
+            var selSuspensao       = document.getElementById('selSuspensao').selectedIndex;
+            var iptPrzSuspensao    = document.getElementById('przSuspensao').value;
+            var selInterrupcao     = document.getElementById('selInterrupcao').selectedIndex;
+            var iptPrzInterrupcao  = document.getElementById('przInterrupcao').value;
+            var przSuspensao       = document.getElementById('przSuspensao').value;
+            var przInterrupcao     = document.getElementById('przInterrupcao').value;
+            var msg = '';
             var selFrequencia = document.getElementById('selStaFrequencia').value;
+            var inicioPeriodo = document.getElementById('selInicioPeriodo').value;
 
 
-            if(cargaPadrao == '' || cargaPadrao <1 ){
+
+          if(cargaPadrao == '' || cargaPadrao <1 ){
                 var msg = setMensagemPersonalizada(msg11, ['Carga Padrão de Unidade de Esforço']);
                 alert(msg);
                 document.getElementById('txtCargaPadrao').focus();
                 return false;
             }
+
+
+            if(selFrequencia == 0){
+                var msg = setMensagemPersonalizada(msg11, ['Frequência de distribuição']);
+                alert(msg);
+                document.getElementById('selStaFrequencia').focus();
+                return false;
+            }
+
+            if(inicioPeriodo == '' || inicioPeriodo == 0){
+                var msg = setMensagemPersonalizada(msg11, ['Início do Período']);
+                alert(msg);
+                document.getElementById('selInicioPeriodo').focus();
+                return false;
+            }
+
             if(tpProcesso == '' ){
 
                 alert(msg12);
@@ -156,16 +190,58 @@ if (0){ ?>
                 return false;
             }
 
-            if(tbUsuario.rows.length == 1){
-                alert(msg13);
-                document.getElementById('txtUsuario').focus();
+
+            if(selDilacao == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Resposta Tácita para Dilação de Prazo']);
+                alert(msg);
+                document.getElementById('selDilacao').focus();
                 return false;
             }
 
-            if(selFrequencia == 0){
-                var msg = setMensagemPersonalizada(msg11, ['Frequência de distribuição']);
+            if(selSuspensao == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Resposta Tácita para Suspensão de Prazo']);
                 alert(msg);
-                document.getElementById('selStaFrequencia').focus();
+                document.getElementById('selSuspensao').focus();
+                return false;
+            }
+
+            if(selInterrupcao == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Resposta Tácita para Interrupção de Prazo']);
+                alert(msg);
+                document.getElementById('selInterrupcao').focus();
+                return false;
+            }
+
+            if(iptPrzSuspensao == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Prazo máximo de Suspensão']);
+                alert(msg);
+                document.getElementById('przSuspensao').focus();
+                return false;
+            }
+
+
+            if(iptPrzInterrupcao == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Prazo máximo de Interrupção']);
+                alert(msg);
+                document.getElementById('przInterrupcao').focus();
+                return false;
+            }
+
+            if(przSuspensao == 0){
+                msg = setMensagemPersonalizada(msg15Padrao, ['Prazo máximo de Suspensão']);
+                alert(msg);
+                return false;
+            }
+
+            if(przInterrupcao == 0){
+                msg = setMensagemPersonalizada(msg15Padrao, ['Prazo máximo de Interrupção']);
+                alert(msg);
+                return false;
+            }
+
+            if(tbUsuario.rows.length == 1){
+                alert(msg13);
+                document.getElementById('txtUsuario').focus();
                 return false;
             }
 
@@ -177,8 +253,8 @@ if (0){ ?>
                 document.getElementById("frmMdUtlAdmPrmGrCadastro").submit();
                 return true;
             }
-
         }
+
 
         function verificarVinculoUsuario(idUsuario,idVinculo){
             //se idVinculo = 0, novo usuario não cadastrado ainda , que foi excluido
@@ -214,11 +290,13 @@ if (0){ ?>
                                 }
                             }
 
-                            objTabelaDinamicaUsuario.atualizaHdn();
-                            var linha = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
-                            objTabelaDinamicaUsuario.controlarFluxoUsuarioPart(idUsuario);
+                            //objTabelaDinamicaUsuario.atualizaHdn();
+                            //var linha = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
+                            //objTabelaDinamicaUsuario.controlarFluxoUsuarioPart(idUsuario);
 
-                            objTabelaDinamicaUsuario.removerLinha(linha);
+                            var row = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
+                            objTabelaDinamicaUsuario.removerLinha(row);
+
                             verificaTabela(1);
                             infraGetElementById('divInfraAreaDados1').style.height=heigthTamanhoDivAreaPart+'em';
                         }
@@ -234,7 +312,8 @@ if (0){ ?>
 
                 var linha = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
                 objTabelaDinamicaUsuario.removerLinha(linha);
-                objTabelaDinamicaUsuario.atualizaHdn();
+              
+        
                 verificaTabela(1);
                 infraGetElementById('divInfraAreaDados1').style.height=heigthTamanhoDivAreaPart+'em';
 
@@ -570,7 +649,7 @@ if (0){ ?>
 
                                 var row = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
                                 objTabelaDinamicaUsuario.removerLinha(row);
-                                objTabelaDinamicaUsuario.atualizaHdn();
+                         
                                 isBolAlterar = false;
                                 flag=false;
                                 infraGetElementById('selUsuario').disabled = false;
@@ -682,7 +761,9 @@ if (0){ ?>
         function validarPercentual(obj,campo){
 
             if(obj.value > 100 ){
-                alert('O '+campo+' deve ser entre 0 e 100.');
+   
+                var msg = setMensagemPersonalizada(msg98Padrao, [campo]);
+                alert(msg);
                 obj.value = '';
                 obj.focus();
                 return false;
@@ -710,6 +791,99 @@ if (0){ ?>
                 if(bolFatorReducao)
                     bolFatorReducao = false;
             }
+        }
+
+        function validarValorDosPrazos(obj){
+            var valor = parseInt(obj.value);
+            var id    = obj.id;
+            var msg = '';
+
+            if(valor == 0){
+
+                if(id == 'przSuspensao'){
+                    msg = setMensagemPersonalizada(msg15Padrao, ['Prazo máximo de Suspensão']);
+                    alert(msg);
+                }
+
+                if(id == 'przInterrupcao'){
+                    msg = setMensagemPersonalizada(msg15Padrao, ['Prazo máximo de Interrupção']);
+                    alert(msg);
+                }
+
+                obj.value = '';
+                obj.focus;
+                return false;
+            }
+
+            return true;
+        }
+
+        function montarPeriodo(){
+            var frequencia = document.getElementById('selStaFrequencia').value;
+            var inicioPeriodo = document.getElementById('selInicioPeriodo');
+            var fimPeriodo = document.getElementById('selFimPeriodo');
+            fimPeriodo.value = '0';
+            inicioPeriodo.disabled = false;
+
+            if(frequencia == '0'){
+                inicioPeriodo.value = '0';
+                inicioPeriodo.disabled = true;
+                fimPeriodo.value = '0';
+                fimPeriodo.disabled = true;
+            }
+
+            if(frequencia != '0'){
+
+                if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO?>'){
+                    inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO)?>';
+                }
+
+                if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL?>'){
+                    inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL)?>';
+                }
+
+                if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL?>'){
+                    inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL)?>';
+                }
+            }
+            montarFimPeriodo();
+        }
+
+        function montarFimPeriodo(){
+            var inicioPeriodo = document.getElementById('selInicioPeriodo');
+            var indexInicioPeriodo = document.getElementById('selInicioPeriodo').selectedIndex;
+            var valInicioPeriodo = document.getElementById('selInicioPeriodo').options[indexInicioPeriodo].value;
+            var fimPeriodo = document.getElementById('selFimPeriodo');
+
+            if(inicioPeriodo.value == '0'){
+                fimPeriodo.value = '0';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO)?>';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO)?>';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA)?>';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES)?>';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES)?>';
+            }
+
+            if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES?>'){
+                fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES)?>';
+            }
+
+            fimPeriodo.disabled = true;
         }
 
         <?

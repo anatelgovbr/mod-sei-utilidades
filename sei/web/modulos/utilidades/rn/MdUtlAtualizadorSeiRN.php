@@ -11,10 +11,10 @@ require_once dirname(__FILE__) . '/../../../SEI.php';
 class MdUtlAtualizadorSeiRN extends InfraRN
 {
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.1.0';
+    private $versaoAtualDesteModulo = '1.2.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0','1.1.0');
+    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0');
 
     public function __construct(){
         parent::__construct();
@@ -76,7 +76,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $this->inicializar('INICIANDO A INSTALAÇÃO/ATUALIZAÇÃO DO '.$this->nomeDesteModulo.' NO SEI VERSÃO '.SEI_VERSAO);
 
             //testando versao do framework
-			$numVersaoInfraRequerida = '1.502';
+            $numVersaoInfraRequerida = '1.502';
             $versaoInfraFormatada = (int) str_replace('.','', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int) str_replace('.','', $numVersaoInfraRequerida);
 
@@ -85,14 +85,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
 
             //checando BDs suportados
-			if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
+            if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
                 !(BancoSEI::getInstance() instanceof InfraSqlServer) &&
                 !(BancoSEI::getInstance() instanceof InfraOracle)) {
-					$this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
+                $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
             }
 
             //checando permissoes na base de dados
-			$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+            $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
             if (count($objInfraMetaBD->obterTabelas('sei_teste')) == 0) {
                 BancoSEI::getInstance()->executarSql('CREATE TABLE sei_teste (id ' . $objInfraMetaBD->tipoNumero() . ' null)');
@@ -108,10 +108,16 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             if (InfraString::isBolVazia($strVersaoModuloUtilidades)) {
                 $this->instalarv100();
                 $this->instalarv110();
+                $this->instalarv120();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
             } elseif ($strVersaoModuloUtilidades == '1.0.0') {
                 $this->instalarv110();
+                $this->instalarv120();
+                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+                $this->finalizar('FIM', false);
+            } elseif ($strVersaoModuloUtilidades == '1.1.0') {
+                $this->instalarv120();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
             } else {
@@ -124,9 +130,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             InfraDebug::getInstance()->setBolEcho(false);
 
         } catch (Exception $e) {
-            
-			var_dump($e);
-			InfraDebug::getInstance()->setBolLigado(true);
+
+            var_dump($e);
+            InfraDebug::getInstance()->setBolLigado(true);
             InfraDebug::getInstance()->setBolDebugInfra(true);
             InfraDebug::getInstance()->setBolEcho(true);
             $this->logar($e->getTraceAsString());
@@ -789,22 +795,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
     protected function instalarv110(){
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
-        //testando versao do framework
-        $numVersaoInfraRequerida = '1.502';
-        $versaoInfraFormatada = (int) str_replace('.','', VERSAO_INFRA);
-        $versaoInfraReqFormatada = (int) str_replace('.','', $numVersaoInfraRequerida);
-
-        if ($versaoInfraFormatada < $versaoInfraReqFormatada){
-            $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL '.VERSAO_INFRA.', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A '.$numVersaoInfraRequerida.')',true);
-        }
-
-        //checando BDs suportados
-        if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
-            !(BancoSEI::getInstance() instanceof InfraSqlServer) &&
-            !(BancoSEI::getInstance() instanceof InfraOracle)) {
-            $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
-        }
-
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
         //Correção Análise
@@ -843,6 +833,210 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+    }
+
+    protected function instalarv120()
+    {
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+        $this->logar('CRIANDO USUÁRIO DO MÓDULO DE UTILIDADES');
+        $objRN = new MdUtlUsuarioRN();
+        $objRN->realizarInsercoesUsuarioModuloUtl();
+
+        $this->logar('ALTERANDO para not null as Datas finais e Usuários da tabela de Triagem, Revisão e Análise');
+        $objMdUtlTriagemRN = new MdUtlTriagemRN();
+        $objMdUtlAnaliseRN = new MdUtlAnaliseRN();
+        $objMdUtlRevisaoRN = new MdUtlRevisaoRN();
+
+        $objUsuarioRN = new MdUtlUsuarioRN();
+        $objUsuarioDTO = $objUsuarioRN->getObjUsuarioUtilidades();
+        $idUsuario = $objUsuarioDTO->getNumIdUsuario();
+
+        $objMdUtlTriagemRN->checarDadosTriagem($idUsuario);
+        $objMdUtlAnaliseRN->checarDadosAnalise($idUsuario);
+        $objMdUtlRevisaoRN->checarDadosRevisao($idUsuario);
+
+        $objInfraMetaBD->alterarColuna('md_utl_triagem', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_triagem', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
+
+        $objInfraMetaBD->alterarColuna('md_utl_analise', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_analise', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
+
+        $objInfraMetaBD->alterarColuna('md_utl_revisao', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_revisao', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
+
+        $this->logar('ALTERANDO A TABELA md_utl_adm_prm_gr');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'resp_tacita_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'resp_tacita_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoFixo(3), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'prazo_max_suspensao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'prazo_max_interrupcao', $objInfraMetaBD->tipoNumero(), 'NULL');
+
+        $this->logar('ALTERANDO A TABELA md_utl_adm_fila');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_fila', 'resp_tacita_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+
+        $this->logar('ALTERANDO A TABELA md_utl_adm_just_prazo');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_just_prazo', 'sin_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_just_prazo', 'sin_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_just_prazo', 'sin_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
+
+        $this->logar('CRIANDO A TABELA md_utl_ajuste_prazo');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_ajuste_prazo (
+                id_md_utl_ajuste_prazo ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sta_tipo_solicitacao ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				dth_prazo_solicitacao ' . $objInfraMetaBD->tipoDataHora() . ' NOT NULL,
+				dth_prazo_inicial ' . $objInfraMetaBD->tipoDataHora() . ' NOT NULL,
+				id_md_utl_adm_just_prazo ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sta_solicitacao ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				observacao ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NULL,
+				dias_uteis_excedentes ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+        );
+
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_ajuste_prazo', 1);
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_ajuste_prazo', 'pk_md_utl_ajuste_prazo', array('id_md_utl_ajuste_prazo'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_ajuste_prazo', 'md_utl_ajuste_prazo', array('id_md_utl_adm_just_prazo'), 'md_utl_adm_just_prazo', array('id_md_utl_adm_just_prazo'));
+
+        $this->logar('ALTERANDO A TABELA md_utl_hist_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'id_md_utl_ajuste_prazo', $objInfraMetaBD->tipoNumero(), 'NULL');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk9_md_utl_hist_controle_dsmp', 'md_utl_hist_controle_dsmp', array('id_md_utl_ajuste_prazo'), 'md_utl_ajuste_prazo', array('id_md_utl_ajuste_prazo'));
+
+        $this->logar('ALTERANDO A TABELA md_utl_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'id_md_utl_ajuste_prazo', $objInfraMetaBD->tipoNumero(), 'NULL');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk9_md_utl_controle_dsmp', 'md_utl_controle_dsmp', array('id_md_utl_ajuste_prazo'), 'md_utl_ajuste_prazo', array('id_md_utl_ajuste_prazo'));
+
+        /*Atualizando o valor iniciar de Justificativa de Prazo */
+        $objMdUtlAdmJustPrazoDTO = new MdUtlAdmJustPrazoDTO();
+        $objMdUtlAdmJustPrazoDTO->retTodos();
+        $objMdUtlAdmJustPrazoRN = new MdUtlAdmJustPrazoRN();
+        $count = $objMdUtlAdmJustPrazoRN->contar($objMdUtlAdmJustPrazoDTO);
+        if ($count > 0) {
+            $arrObjs = $objMdUtlAdmJustPrazoRN->listar($objMdUtlAdmJustPrazoDTO);
+
+            foreach ($arrObjs as $objDTO) {
+                $objDTO->setStrSinDilacao('N');
+                $objDTO->setStrSinInterrupcao('N');
+                $objDTO->setStrSinSuspensao('N');
+                $objMdUtlAdmJustPrazoRN->alterar($objDTO);
+            }
+        }
+
+        //Alterando os campos para not null
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
+
+
+        $strDescricao = 'Script para Reprovação/Aprovação dos Ajustes de Prazo';
+        $strComando   = 'MdUtlAgendamentoAutomaticoRN::aprovarReprovarAjustesPrazo';
+        $this->_cadastrarNovoAgendamento($strDescricao, $strComando);
+
+        //Iniciando as alteração da 1.2
+        $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'tipo_acao', $objInfraMetaBD->tipoTextoVariavel(100), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_controle_dsmp', 'tipo_acao', $objInfraMetaBD->tipoTextoVariavel(100), 'not null');
+
+        $this->logar('CRIANDO A TABELA md_utl_adm_hist_prm_gr_usu');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_hist_prm_gr_usu (
+				id_md_utl_adm_hist_prm_gr_usu ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_prm_gr ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_usuario ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sta_tipo_presenca ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				fator_desemp_diferenciado ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+				sta_tipo_jornada ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				fator_reducao_jornada ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+				dth_inicial ' . $objInfraMetaBD->tipoDataHora() . ' NULL,
+				dth_final ' . $objInfraMetaBD->tipoDataHora() . ' NULL, 
+				id_usuario_atual ' . $objInfraMetaBD->tipoNumero() . ' NULL) '
+        );
+
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_hist_prm_gr_usu', 1);
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_hist_prm_gr_usu', 'pk_md_utl_adm_hist_prm_gr_usu', array('id_md_utl_adm_hist_prm_gr_usu'));
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu',
+            array('id_md_utl_adm_prm_gr'), 'md_utl_adm_prm_gr', array('id_md_utl_adm_prm_gr'));
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu',
+            array('id_usuario'), 'usuario', array('id_usuario'));
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk3_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu',
+            array('id_usuario_atual'), 'usuario', array('id_usuario'));
+
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr','inicio_periodo',$objInfraMetaBD->tipoNumero(),'null');
+
+        $objMdUtlAdmHistPrmGrUsuRN = new MdUtlAdmHistPrmGrUsuRN();
+        $objMdUtlAdmHistPrmGrUsuRN->migrarDadosExistentesParamHistorico();
+
+        $objInfraMetaBD->alterarColuna('md_utl_adm_hist_prm_gr_usu', 'dth_inicial', $objInfraMetaBD->tipoDataHora(), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_hist_prm_gr_usu', 'id_usuario_atual', $objInfraMetaBD->tipoNumero(), 'not null');
+
+        $objMdUtlAtividadeRN = new MdUtlAdmAtividadeRN();
+        $objMdUtlAtividadeRN->preencherCorretamenteHabilitarRevisao();
+
+        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade','sin_atv_rev_amostragem', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+
+        $objInfraMetaBD->alterarColuna('md_utl_adm_fila_prm_gr_usu', 'percentual_revisao', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
+        $objMdUtlAdmFilaPrmGrUsuRN->alterarDadosTipoRevisao();
+
+        $strDescricao = 'Script para retornar o Status no Final da Suspensão ou Interrupção';
+        $strComando   = 'MdUtlAgendamentoAutomaticoRN::retornarStatusFinal';
+        $this->_cadastrarNovoAgendamento($strDescricao, $strComando);
+
+        $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+        $objMdUtlAdmPrmGrRN->parametrizaInicioFimDoPeriodo();
+
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'sin_associar_fila', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'id_md_utl_adm_fila', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_revisao', 'md_utl_revisao', array('id_md_utl_adm_fila'), 'md_utl_adm_fila', array('id_md_utl_adm_fila'));
+
+        $strDescricao = 'Script Responsável por Associar Processos a Fila de forma Automática.';
+        $strComando   = 'MdUtlAgendamentoAutomaticoRN::associarProcessoFila';
+        $strPeriodicidadeComplemento = '7,8,9,10,11,12,13,14,15,16,17,18,19,20';
+        $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
+
+        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','sin_retorno_ult_fila', $objInfraMetaBD->tipoTextoFixo(1), null);
+
+        $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+        $objMdUtlControleDsmpRN->corrigirCampoUltimaFila();
+
+        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+    }
+
+    private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = 'neijobson@anatel.gov.br', $strPeriodicidade = null){
+
+        $msgLogar = 'Inserção de Novo Agendamento: '.$strDescricao;
+        $this->logar($msgLogar);
+
+        if(is_null($strPeriodicidade)){
+            $strPeriodicidade = InfraAgendamentoTarefaRN::$PERIODICIDADE_EXECUCAO_HORA;
+        }
+
+        if (!is_null($strDescricao) && !is_null($strComando)) {
+
+            $strComando = trim($strComando);
+
+            $infraAgendamentoDTO = new InfraAgendamentoTarefaDTO();
+            $infraAgendamentoDTO->retTodos();
+            $infraAgendamentoDTO->setStrDescricao($strDescricao);
+            $infraAgendamentoDTO->setStrComando($strComando);
+
+            $infraAgendamentoDTO->setStrSinAtivo('S');
+            $infraAgendamentoDTO->setStrStaPeriodicidadeExecucao($strPeriodicidade);
+            $infraAgendamentoDTO->setStrPeriodicidadeComplemento($strPeriodicidadeComplemento);
+            $infraAgendamentoDTO->setStrParametro(null);
+            $infraAgendamentoDTO->setDthUltimaExecucao(null);
+            $infraAgendamentoDTO->setDthUltimaConclusao(null);
+            $infraAgendamentoDTO->setStrSinSucesso('S');
+            $infraAgendamentoDTO->setStrEmailErro($strEmailErro);
+
+            $infraAgendamentoRN = new InfraAgendamentoTarefaRN();
+            $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+        }
     }
 }
 

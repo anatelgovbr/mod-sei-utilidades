@@ -22,7 +22,7 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function getVersao()
     {
-        return '1.1.0';
+        return '1.2.0';
     }
 
     public function getInstituicao()
@@ -240,13 +240,28 @@ class UtilidadesIntegracao extends SeiIntegracao
                 return true;
 
             case 'md_utl_meus_processos_dsmp_listar':
+            case 'md_utl_meus_processos_dsmp_retornar':
                 require_once dirname(__FILE__) . '/md_utl_meus_processos_dsmp_lista.php';
+                return true;
+
+            case 'md_utl_ajuste_prazo_cadastrar':
+            case 'md_utl_ajuste_prazo_alterar':
+            case 'md_utl_ajuste_prazo_consultar':
+                require_once dirname(__FILE__) . '/md_utl_ajuste_prazo_cadastro.php';
+                return true;
+
+            case 'md_utl_gestao_solicitacoes_listar':
+            case 'md_utl_gestao_ajust_prazo_aprovar':
+            case 'md_utl_gestao_ajust_prazo_reprovar':
+                require_once dirname(__FILE__) . '/md_utl_gestao_ajust_prazo_lista.php';
                 return true;
 
             case 'md_utl_atividade_triagem_listar':
                 require_once dirname(__FILE__) . '/md_utl_atividade_triagem_lista.php';
                 return true;
+
         }
+
 
         return false;
     }
@@ -272,12 +287,12 @@ class UtilidadesIntegracao extends SeiIntegracao
                 break;
 
             case 'md_utl_adm_tipo_processo_auto_completar':
-                $arrObjTipoProcessoDTO = TipoProcedimentoINT::autoCompletarTipoProcedimento($_POST['palavras_pesquisa']);
+                $arrObjTipoProcessoDTO = MdUtlAdmPrmGrINT::autoCompletarTipoProcedimento($_POST['palavras_pesquisa']);
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjTipoProcessoDTO, 'IdTipoProcedimento', 'Nome');
                 break;
 
             case 'md_utl_adm_processo_parametrizado_auto_completar':
-                $arrObjTipoProcessoDTO = MdUtlAdmRelPrmGrProcINT::autoCompletarTipoProcedimentoPorParametrizacao($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl']);
+                $arrObjTipoProcessoDTO = MdUtlAdmRelPrmGrProcINT::autoCompletarTipoProcedimentoPorParametrizacao($_POST['palavras_pesquisa'], $_GET['id_parametro']);
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjTipoProcessoDTO, 'IdTipoProcedimento', 'NomeProcedimento');
                 break;
 
@@ -345,9 +360,19 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $xml = MdUtlControleDsmpINT::validarTrocaTipoAtividade($_POST['id_atividade']);
                 break;
 
-            case 'md_utl_buscar_dados_carga_usuario':
-                $xml = MdUtlAdmPrmGrUsuINT::buscarDadosCargaUsuario($_POST['idUsuarioParticipante'], $_POST['idParam'], $_POST['numCargaPadrao'], $_POST['numPercentualTele'], $_POST['staFrequencia'], $_POST['idTipoControle']);
+            case 'calcular_prazo_data_just':
+                $xml = MdUtlAjustePrazoINT::calcularPrazoJustificativa($_POST['prazoDias'], $_POST['idControle'], $_POST['tipoSolicitacao'], $_POST['prazoData'],  $_POST['isPrazo'], $_POST['prazoInicial']);
                 break;
+
+            case 'md_utl_buscar_dados_carga_usuario':
+                $xml = MdUtlAdmPrmGrUsuINT::buscarDadosCargaUsuario($_POST['idUsuarioParticipante'], $_POST['idParam'], $_POST['numCargaPadrao'], $_POST['numPercentualTele'], $_POST['staFrequencia'], $_POST['idTipoControle'], $_POST['inicioPeriodo']);
+                break;
+
+            case 'md_utl_usuario_auto_completar':
+                $arrObjUsuarioDTO = MdUtlAdmPrmGrINT::autoCompletarUsuarios($_POST['id_orgao'],$_POST['palavras_pesquisa'],false,false,true,false);
+                $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjUsuarioDTO, 'IdUsuario', 'Sigla');
+                break;
+
         }
 
         return $xml;

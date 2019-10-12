@@ -451,6 +451,22 @@ class MdUtlRegrasGeraisRN extends InfraRN
             $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
         }
     }
+
+    public function validarPrazoJustificativa($tipoSolicitacao, $prazoDias, $idControleDesemp){
+        $isValido = true;
+
+        if ($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
+            $objTriagemRN = new MdUtlTriagemRN();
+            $isValido = $objTriagemRN->validaPrazoMaximoDiasJustificativa(array($prazoDias, $idControleDesemp));
+        }
+
+        if ($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_INTERRUPCAO || $tipoSolicitacao ==  MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO) {
+            $objPrmGrRN = new MdUtlAdmPrmGrRN();
+            $isValido = $objPrmGrRN->validaPrazoMaximoDiasJustificativa(array($prazoDias, $tipoSolicitacao));
+        }
+
+        return $isValido;
+    }
 }
 
 ?>

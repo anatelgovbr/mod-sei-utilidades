@@ -262,6 +262,7 @@ class MdUtlAdmRelTpCtrlDesempUndRN extends InfraRN {
         $objMdUtlAdmTpCtrlUndDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
         $objMdUtlAdmTpCtrlUndDTO->retNumIdMdUtlAdmTpCtrlDesemp();
         $objMdUtlAdmTpCtrlUndDTO->retStrNomeTipoControle();
+        $objMdUtlAdmTpCtrlUndDTO->retNumIdMdUtlAdmPrmGr();
 
         $count = $objMdUtlAdmTpCtrlUndRN->contar($objMdUtlAdmTpCtrlUndDTO);
 

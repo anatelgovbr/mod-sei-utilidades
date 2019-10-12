@@ -321,7 +321,9 @@ PaginaSEI::getInstance()->abrirJavaScript();
 ?>
 <?if(0){?><script type="text/javascript"><?}?>
 
-function inicializar(){
+  var msg100Padrao = <?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_100)?>;
+
+  function inicializar(){
   if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_selecionar'){
     infraReceberSelecao();
     document.getElementById('btnFecharSelecao').focus();
@@ -340,17 +342,18 @@ function acaoDesativar(id,desc){
   }
 }
 
-function acaoDesativacaoMultipla(){
-  if (document.getElementById('hdnInfraItensSelecionados').value==''){
-    alert('Nenhum Tipo de Ausência selecionado.');
-    return;
+  function acaoDesativacaoMultipla(){
+    if (document.getElementById('hdnInfraItensSelecionados').value==''){
+      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
+      alert(msg);
+      return;
+    }
+    if (confirm("Confirma desativação dos Tipos de Ausência selecionados?")){
+      document.getElementById('hdnInfraItemId').value='';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkDesativar?>';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
+    }
   }
-  if (confirm("Confirma desativação dos Tipos de Ausência selecionados?")){
-    document.getElementById('hdnInfraItemId').value='';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkDesativar?>';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-  }
-}
 <? } ?>
 
 <? if ($bolAcaoReativar){ ?>
@@ -362,17 +365,18 @@ function acaoReativar(id,desc){
   }
 }
 
-function acaoReativacaoMultipla(){
-  if (document.getElementById('hdnInfraItensSelecionados').value==''){
-    alert('Nenhum Tipo de Ausência selecionado.');
-    return;
+  function acaoReativacaoMultipla(){
+    if (document.getElementById('hdnInfraItensSelecionados').value==''){
+      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
+      alert(msg);
+      return;
+    }
+    if (confirm("Confirma reativação dos Tipos de Ausência selecionados?")){
+      document.getElementById('hdnInfraItemId').value='';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkReativar?>';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
+    }
   }
-  if (confirm("Confirma reativação dos Tipos de Ausência selecionados?")){
-    document.getElementById('hdnInfraItemId').value='';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkReativar?>';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-  }
-}
 <? } ?>
 
 <? if ($bolAcaoExcluir){ ?>
@@ -384,17 +388,18 @@ function acaoExcluir(id,desc){
   }
 }
 
-function acaoExclusaoMultipla(){
-  if (document.getElementById('hdnInfraItensSelecionados').value==''){
-    alert('Nenhum Tipo de Ausência selecionado.');
-    return;
+  function acaoExclusaoMultipla(){
+    if (document.getElementById('hdnInfraItensSelecionados').value==''){
+      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
+      alert(msg);
+      return;
+    }
+    if (confirm("Confirma exclusão dos Tipos de Ausência selecionados?")){
+      document.getElementById('hdnInfraItemId').value='';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkExcluir?>';
+      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
+    }
   }
-  if (confirm("Confirma exclusão dos Tipos de Ausência selecionados?")){
-    document.getElementById('hdnInfraItemId').value='';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkExcluir?>';
-    document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-  }
-}
 <? } ?>
 
 function fechar(){

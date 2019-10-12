@@ -8,8 +8,13 @@ var objAutoCompletarMembros = null;
 var objTabelaDinamicaUsuParticipante    = null;
 var viewConsulta                        = false;
 var idTpCtrl    = <?=$idTipoControle?>;
-var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
-var msg12       = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Membro'); ?>';
+var msg10Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10)?>';
+var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11)?>';
+var msg12Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12)?>';
+var msg98Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_98)?>';
+var msg99Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_99)?>';
+var msg46Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_46)?>';
+var msg55Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_55)?>';
 
 function inicializar() {
     if ('<?=$_GET['acao']?>'=='md_utl_adm_jornada_cadastrar'){
@@ -62,7 +67,7 @@ function controlarHdnTipoAjuste(){
 
 function onSubmitForm(){
 
-  var txtNome = document.getElementById('txtNome');
+    var txtNome = document.getElementById('txtNome');
     if($.trim(txtNome.value) == '')
     {
         var msg = setMensagemPersonalizada(msg11Padrao, ['Nome']);
@@ -80,14 +85,6 @@ function onSubmitForm(){
         txtDesc.focus();
         return false;
     }
-
-    // var tpCtrl = document.getElementById('selTpCtrlDesempenho');
-    // if(tpCtrl.value == '')
-    // {
-    //     alert('Informe o Tipo de Controle de Desempenho.');
-    //     tpCtrl.focus();
-    //     return false;
-    // }
 
     var percAjuste = document.getElementById('txtPercentualAjuste');
     if(percAjuste.value == '')
@@ -129,21 +126,11 @@ function onSubmitForm(){
     var optionsMembros = document.getElementById('selMembros').options;
     var vlEspecifico   = document.getElementById('hdnTpAjusteEspecifico').value;
     if( optionsMembros.length == 0 && tpAjuste.value == vlEspecifico){
-        alert(msg12);
+        var msg = setMensagemPersonalizada(msg12Padrao, ['Membro']);
+        alert(msg);
         document.getElementById('selMembros').focus();
         return false;
     }
-
-    // var selTpControle = document.getElementById("selTpCtrlDesempenho");
-    // var isParametrizado = selTpControle.options[selTpControle.selectedIndex].getAttribute('parametros') == 'S';
-    // if(!isParametrizado){
-    //     alert('O Tipo de Controle selecionado não está parametrizado. Realize a parametrização do mesmo para incluir uma Jornada.');
-    //     selTpControle.focus();
-    //     return false;
-    // }
-    
-    
-    // document.getElementById('selTpCtrlDesempenho').disabled = false;
 
 }
 
@@ -185,7 +172,7 @@ function carregarComponenteMembros(linkAjax, linkLupa){
 
     objAutoCompletarMembros = new infraAjaxAutoCompletar('hdnIdMembrosLupa','txtMembros', linkAjax);
     objAutoCompletarMembros.limparCampo = true;
-
+    objAutoCompletarMembros.tamanhoMinimo = 3;
     objAutoCompletarMembros.prepararExecucao = function(){
         return 'palavras_pesquisa='+document.getElementById('txtMembros').value;
     };
@@ -197,7 +184,8 @@ function carregarComponenteMembros(linkAjax, linkLupa){
 
             for(var i=0;i < options.length;i++){
                 if (options[i].value == id){
-                    alert('Usuário Participante já consta na lista.');
+                    var msg = setMensagemPersonalizada(msg10Padrao, ['Usuário Participante']);
+                    alert(msg);
                     break;
                 }
             }
@@ -226,7 +214,8 @@ function validarValorPercentual(obj){
     var valorPercentual = obj.value;
 
     if(valorPercentual > 100){
-        alert('O Percentual de Ajuste deve ser entre 0 e 100.');
+        var msg = setMensagemPersonalizada(msg98Padrao, ['de Ajuste']);
+        alert(msg);
         obj.value = '';
         obj.focus();
         return false;
@@ -344,12 +333,13 @@ function zerarValoresSelectedMembros(remover){
 
 function removerMembros(){
 // var tpCtrl = document.getElementById('selTpCtrlDesempenho').value;
-var tpCtrl = idTpCtrl;
+    var tpCtrl = idTpCtrl;
     if(objLupaMembros == null){
         if(tpCtrl != '') {
             realizarAjaxBuscarLinks(false, true, true);
         }else {
-            alert('Não existem itens para esta ação.');
+            var msg = setMensagemPersonalizada(msg99Padrao);
+            alert(msg);
         }
     }else{
         objLupaMembros.remover();
@@ -359,7 +349,8 @@ var tpCtrl = idTpCtrl;
 function validarDataJornada(obj){
     var validar = infraValidarData(obj, false);
     if(!validar){
-        alert('Data Inválida!');
+        var msg = setMensagemPersonalizada(msg46Padrao);
+        alert(msg);
         obj.value = '';
         obj.focus();
     }
@@ -378,7 +369,8 @@ function validarDataJornada(obj){
         {
             dtInicio.value = '';
             dtFim.value = '';
-            alert('A Data Inicial deve ser menor que a Data Final.');
+            var msg = setMensagemPersonalizada(msg55Padrao);
+            alert(msg);
             dtInicio.focus();
             return false;
         }
@@ -402,12 +394,12 @@ function returnDateTime(valor){
 }
 
 function controlarVisualizacaoPercentual(obj){
-    var txtPercentualRevisao = document.getElementById('txtPercentualRevisao');
+    var txtTipoRevisao = document.getElementById('txtTipoRevisao');
     if(obj.checked){
-        txtPercentualRevisao.removeAttribute('disabled');
+        txtTipoRevisao.removeAttribute('disabled');
     }else{
-        txtPercentualRevisao.setAttribute('disabled', 'disabled');
-        txtPercentualRevisao.value = '0';
+        txtTipoRevisao.setAttribute('disabled', 'disabled');
+        txtTipoRevisao.value = '0';
     }
 }
 
@@ -430,7 +422,7 @@ function validarDuplicidade(){
         alert(msgFim);
     }
 
-   return msg == '';
+    return msg == '';
 }
 
 function validarAdicionarParticipante(){
@@ -440,7 +432,8 @@ function validarAdicionarParticipante(){
     var isAnalista  = document.getElementById('rdoAnalista').checked;
 
     if(arrUsuarios.length == 0){
-        alert('Informe ao menos um Usuário Participante.');
+        var msg = setMensagemPersonalizada(msg12Padrao ['Usuário Participante']);
+        alert(msg);
         return false;
     }
 
@@ -501,7 +494,7 @@ function realizarProcessoAddUsuarioPart(retornoAjax){
     var isAnalista   = document.getElementById('rdoAnalista').checked;
     var vlAnalista   = isAnalista ? 'Sim' : 'Não';
     var sinAnalista  = isAnalista ? 'S' : 'N';
-    var vlPercentual = isAnalista ? document.getElementById('txtPercentualRevisao').value : '0';
+    var vlTipoRevisao = isAnalista ? document.getElementById('txtTipoRevisao').value : '0';
 
     for (var i = 0; i < arrUsuarios.length; i++) {
         var idVinculo   = arrUsuarios[i].value;
@@ -517,7 +510,7 @@ function realizarProcessoAddUsuarioPart(retornoAjax){
             sinTriador,
             vlAnalista,
             sinAnalista,
-            vlPercentual,
+            vlTipoRevisao,
             vlRevisor,
             sinRevisor
         ];
@@ -552,9 +545,9 @@ function zerarCamposMembrosParticipantes() {
         }
     }
 
-    //Limpando o percentual
-    document.getElementById('txtPercentualRevisao').setAttribute('disabled','disabled');
-    document.getElementById('txtPercentualRevisao').value = 0;
+    //Limpando o TipoRevisao
+    document.getElementById('txtTipoRevisao').setAttribute('disabled','disabled');
+    document.getElementById('txtTipoRevisao').value = 0;
 }
 
 
@@ -564,7 +557,8 @@ function validarValorPercentual(obj){
     var valorPercentual = obj.value;
 
     if(valorPercentual > 100){
-        alert('O Percentual de Ajuste deve ser entre 0 e 100.');
+        var msg = setMensagemPersonalizada(msg98Padrao, ['de Ajuste']);
+        alert(msg);
         obj.value = '';
         obj.focus();
         return false;
@@ -579,9 +573,6 @@ function habilitarUltimaJornada(obj){
         document.getElementById('rdoDstUltimaJornada').checked = false;
     }
 }
-
-
-
 
 
 <?php if(0){ ?>

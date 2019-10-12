@@ -36,8 +36,8 @@ if(0){?><style><?}?>
     div[id^="divOpcoes"] {
         position: absolute;
         width: 1%;
-        left: 60.5%;
-        top: 60%;
+        left: 41%;
+        top: 47%;
     }
 
     div[id^="divOpcoesUnica"] {
@@ -51,5 +51,9 @@ if(0){?><style><?}?>
     #divTpProcesso {
         margin-top: 75px;
     }
+
+#selFila{
+    width: 40%;
+}
 
 <?if(0){?></style><?}?>

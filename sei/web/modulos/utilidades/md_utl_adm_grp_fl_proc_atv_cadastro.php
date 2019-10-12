@@ -11,32 +11,29 @@ try {
   require_once dirname(__FILE__).'/../../SEI.php';
 
   session_start();
+  SessaoSEI::getInstance()->validarLink();
 
-  //////////////////////////////////////////////////////////////////////////////
-  //InfraDebug::getInstance()->setBolLigado(false);
-  //InfraDebug::getInstance()->setBolDebugInfra(true);
-  //InfraDebug::getInstance()->limpar();
-  //////////////////////////////////////////////////////////////////////////////
+  PaginaSEI::getInstance()->verificarSelecao('md_utl_adm_grp_fl_proc_atv_selecionar');
+
+  SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
+
+
   $idTpCtrl    = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTpCtrlUtl'];
   $idGrpFila   = array_key_exists('id_md_utl_adm_grp_fila', $_GET) ? $_GET['id_md_utl_adm_grp_fila'] : $_POST['hdnIdMdAdmGrpFila'];
+
   $objTpControleUtlRN    = new MdUtlAdmTpCtrlDesempRN();
   $objTipoControleUtlDTO = $objTpControleUtlRN->buscarObjTpControlePorId($idTpCtrl);
+  $idParametro           = $objTpControleUtlRN->verificaIdParametrizacao($idTpCtrl);
 
   $strLinkTpProcessoSelecaoUnica   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_rel_prm_gr_proc_selecionar&tipo_selecao=1&id_object=objLupaTpProcesso&id_tipo_controle='.$idTpCtrl);
   $strLinkAtividadeSelecao         = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_selecionar&tipo_selecao=2&id_object=objLupaAtividade&id_tipo_controle_utl='.$idTpCtrl);
-  $strLinkAjaxTpProcesso           = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_processo_parametrizado_auto_completar&id_tipo_controle_utl='.$idTpCtrl);
+  $strLinkAjaxTpProcesso           = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_processo_parametrizado_auto_completar&id_parametro='.$idParametro);
   $strLinkAjaxAtividade            = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_atividade_auto_completar&id_tipo_controle_utl='.$idTpCtrl);
 
   $objMdUtlAdmGrpFilaRN   = new MdUtlAdmGrpFilaRN();
   $objMdUtlAdmGrpFilaDTO  = $objMdUtlAdmGrpFilaRN->buscarObjGrpFilaPorId($idGrpFila);
   $nomeGrupoAtividade     = $objMdUtlAdmGrpFilaDTO->getStrNomeGrupoAtividade();
   $nomeFila               = $objMdUtlAdmGrpFilaDTO->getStrNomeFila();
-
-  SessaoSEI::getInstance()->validarLink();
-
-  PaginaSEI::getInstance()->verificarSelecao('md_utl_adm_grp_fl_proc_atv_selecionar');
-
-  SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
 
   $objMdUtlAdmGrpFlProcAtvDTO = new MdUtlAdmGrpFlProcAtvDTO();
 
@@ -224,8 +221,7 @@ PaginaSEI::getInstance()->abrirAreaDados('4em');
         <label id="lblTpProcesso" for="selTpProcesso" accesskey="" class="infraLabelObrigatorio">
           Tipo Processo: <img align="top" style="height:16px; width:16px;" id="imgAjuda"
                                 src="/infra_css/imagens/ajuda.gif" name="ajuda"
-                                onmouseover="return infraTooltipMostrar('Selecionar um tipo de processo que será tratado no tipo de controle. ' +
-                                 'Se o tipo de processo estiver desabilitado, significa que ele esta em uso em outro tipo de controle com mesmo conjunto de unidades.');"
+                                onmouseover="return infraTooltipMostrar('Selecione o Tipo de Processo que será cadastrado no Grupo de Atividades.');"
                                 onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
         </label>
         <div class="clear"></div>
@@ -244,7 +240,7 @@ PaginaSEI::getInstance()->abrirAreaDados('auto');
         <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">
             Atividades: <img align="top" style="height:16px; width:16px;" id="imgAjuda"
                              src="/infra_css/imagens/ajuda.gif" name="ajuda"
-                             onmouseover="return infraTooltipMostrar('Selecionar uma ou múltiplas atividades que serão tratadas no tipo de controle. ');"
+                             onmouseover="return infraTooltipMostrar('Selecione uma ou múltiplas Atividades que serão cadastradas no Grupo de Atividades.');"
                              onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
 
         </label>

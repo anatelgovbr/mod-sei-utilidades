@@ -10,8 +10,10 @@ try {
     PaginaSEI::getInstance()->verificarSelecao('md_utl_controle_dsmp_listar');
     SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
     $isTelaProcesso = $_GET['acao_origem'] == 'md_utl_controle_dsmp_listar' || (array_key_exists('hdnIsTelaProcesso', $_POST) && $_POST['hdnIsTelaProcesso'] == '1');
+    $isChamadaPropriaTela =$_GET['acao_origem'] == 'md_utl_distrib_usuario_cadastrar' ? '1' : '0';
+
     $strUrlBuscarDadosCarga = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_buscar_dados_carga_usuario');
-    
+
     if($isTelaProcesso){
         PaginaSEI::getInstance()->setTipoPagina(PaginaSEI::$TIPO_PAGINA_SIMPLES);
     }
@@ -46,10 +48,15 @@ try {
         $idStatus        = array_key_exists('hdnSelStatus', $_POST) && $_POST['hdnSelStatus'] != '' ? trim($_POST['hdnSelStatus']): null;
         $isStrStatus     = array_key_exists('selStatus', $_POST) && $_POST['selStatus'] != '';
         $idFila          = array_key_exists('hdnSelFila', $_POST) && $_POST['hdnSelFila'] != '' ? trim($_POST['hdnSelFila']) : null;
+        if(is_null($idFila)){
+           $idFila = $_POST['hdnIdFila'];
+        }
+
         $strLinkCancelar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_distrib_usuario_listar&acao_origem=' . $_GET['acao']);
         $idTipoControle  = isset($_GET['id_tp_controle_desmp']) ? $_GET['id_tp_controle_desmp'] : $_POST['hdnIdTipoControleUtl'];
         $idProcedimentoTelaProc = 0;
     }
+
 
     //variaveis para campos de selecao
     $strLinkUsuarioParticipante     = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_usuario_selecionar&tipo_selecao=1&id_tipo_controle_utl='. $idTipoControle .'&is_bol_distribuicao=1&id_fila='. $idFila .'&id_status='. $idStatus .'&id_object=objLupaUsuarioParticipante');
@@ -75,17 +82,90 @@ try {
                 $strTitulo  = 'Distribuição de Processo'.$plural.' para Revisão';
             }
 
+
+            $objMdUtlControleDsmpDTO->retTodos();
+            $objMdUtlControleDsmpDTO->retStrNomeTipoProcesso();
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlControleDsmp($idsDistribuicao, InfraDTO::$OPER_IN);
+            $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+            $objMdUtlControleDsmpDTO->retNumUnidadeEsforco();
+
+            $countDistribuicao  =  $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO);
+            if($countDistribuicao > 0) {
+                $arrObjs = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+
+                $idsProcesso = InfraArray::converterArrInfraDTO($arrObjs, 'IdProcedimento');
+                $arrUltimosResponsaveis = $objMdUtlHistControleDsmpRN->getUltimosResponsaveisPorProcesso(array($idsProcesso));
+
+                foreach ($arrObjs as $obj) {
+                    $idProcedimento = $obj->getDblIdProcedimento();
+                    $idControleDsmp = $obj->getNumIdMdUtlControleDsmp();
+                    $numUndEsforco  = $obj->getNumUnidadeEsforco();
+
+                    $somaUndEsforco += $numUndEsforco;
+
+                    //Formatando Protocolo
+                    $protocoloFormatado = $obj->getStrProtocoloProcedimentoFormatado();
+                    $nomeProcesso = $obj->getStrNomeTipoProcesso();
+                    $urlProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_distrib_usuario_cadastrar&id_procedimento=' . $idProcedimento . '');
+                    $hrefLinkProcesso = htmlentities('<a onclick="window.open(\'' . $urlProcedimento . '\')" alt="' . $nomeProcesso . '" title="' . $nomeProcesso . '" class="ancoraPadraoAzul">' . $protocoloFormatado . '</a>');
+
+                    //Formatando Usuário
+                    $arrDadosUsuario = array_key_exists($idProcedimento, $arrUltimosResponsaveis) ? $arrUltimosResponsaveis[$idProcedimento] : array();
+                    $nomeUsuario     = array_key_exists('NOME', $arrDadosUsuario) ? $arrDadosUsuario['NOME'] : '';
+                    $siglaUsuario    = array_key_exists('SIGLA', $arrDadosUsuario) ? $arrDadosUsuario['SIGLA'] : '';
+                    $linkUsuario     = $nomeUsuario != ''  && $siglaUsuario != '' ? htmlentities('<a class="ancoraSigla" alt="' . $nomeUsuario . '" title="' . $nomeUsuario . '">' . $siglaUsuario . '</a>') : '';
+
+                    $arrStrGridProcesso[] = array($idProcedimento, $idControleDsmp, $hrefLinkProcesso, $numUndEsforco, $linkUsuario);
+
+                }
+
+                $strGridProcesso = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrStrGridProcesso);
+            }
+
+            $arrComandos = array();
+
+            //Botões de ação do topo
+            $arrComandos[] = '<button type="submit" accesskey="S" id="sbmSalvar" name="sbmSalvar" class="botaoSalvar infraButton">
+                                    <span class="infraTeclaAtalho">S</span>alvar</button>';
+
+            $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="cancelar()" class="infraButton">
+                                <span class="infraTeclaAtalho">C</span>ancelar</button>';
+
+            $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+            $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
+
+            $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+            $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+            $objMdUtlAdmTpCtrlDesempDTO->retNumCargaPadrao();
+            $objMdUtlAdmTpCtrlDesempDTO->retStrStaFrequencia();
+            $objMdUtlAdmTpCtrlDesempDTO->retNumPercentualTeletrabalho();
+            $objMdUtlAdmTpCtrlDesempDTO->retNumInicioPeriodoParametrizado();
+
+            $objDTO = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+            $idPrmGr           = $objDTO->getNumIdMdUtlAdmPrmGr();
+            $numCargaPadrão    = $objDTO->getNumCargaPadrao();
+            $strStaFrequencia  = $objDTO->getStrStaFrequencia();
+            $numPercentualTele = $objDTO->getNumPercentualTeletrabalho();
+            $inicioPeriodoParametrizado = $objDTO->getNumInicioPeriodoParametrizado();
+
+            $arrFrequencia = MdUtlAdmPrmGrINT::retornaArrPadraoFrequenciaDiaria();
+            $strFrequencia = $arrFrequencia[$strStaFrequencia];
+
+            $strCargaPadrao = $numCargaPadrão .' - '. $strFrequencia;
+
+
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['txtUsuarioParticipante'] != '') {
-                    $objMdUtlControleDsmpRN->incluirNovaDistribuicao($idStatus);
-                    $isTelaProcesso = $_POST['hdnIsTelaProcesso'] == 1;
+                $objMdUtlControleDsmpRN->incluirNovaDistribuicao($idStatus);
+                $isTelaProcesso = $_POST['hdnIsTelaProcesso'] == 1;
 
-                    if($isTelaProcesso){
-                        header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimentoTelaProc));
-                    }else {
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . PaginaSEI::getInstance()->getAcaoRetorno() . '&acao_origem=' . $_GET['acao']));
-                    }
+                if($isTelaProcesso){
+                    header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimentoTelaProc));
+                }else {
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . PaginaSEI::getInstance()->getAcaoRetorno() . '&acao_origem=' . $_GET['acao']));
+                }
 
-                    die;
+                die;
             }
 
             break;
@@ -93,79 +173,13 @@ try {
         default:
             throw new InfraException("Ação '".$_GET['acao']."' não reconhecida.");
     }
-    $objMdUtlControleDsmpDTO->retTodos();
-    $objMdUtlControleDsmpDTO->retStrNomeTipoProcesso();
-    $objMdUtlControleDsmpDTO->setNumIdMdUtlControleDsmp($idsDistribuicao, InfraDTO::$OPER_IN);
-    $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
-    $objMdUtlControleDsmpDTO->retNumUnidadeEsforco();
-
-    $countDistribuicao  =  $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO);
-    if($countDistribuicao > 0) {
-        $arrObjs = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
-
-        $idsProcesso = InfraArray::converterArrInfraDTO($arrObjs, 'IdProcedimento');
-        $arrUltimosResponsaveis = $objMdUtlHistControleDsmpRN->getUltimosResponsaveisPorProcesso(array($idsProcesso));
-
-        foreach ($arrObjs as $obj) {
-            $idProcedimento = $obj->getDblIdProcedimento();
-            $idControleDsmp = $obj->getNumIdMdUtlControleDsmp();
-            $numUndEsforco  = $obj->getNumUnidadeEsforco();
-
-            $somaUndEsforco += $numUndEsforco;
-
-            //Formatando Protocolo
-            $protocoloFormatado = $obj->getStrProtocoloProcedimentoFormatado();
-            $nomeProcesso = $obj->getStrNomeTipoProcesso();
-            $urlProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_distrib_usuario_cadastrar&id_procedimento=' . $idProcedimento . '');
-            $hrefLinkProcesso = htmlentities('<a onclick="window.open(\'' . $urlProcedimento . '\')" alt="' . $nomeProcesso . '" title="' . $nomeProcesso . '" class="ancoraPadraoAzul">' . $protocoloFormatado . '</a>');
-
-            //Formatando Usuário
-            $arrDadosUsuario = array_key_exists($idProcedimento, $arrUltimosResponsaveis) ? $arrUltimosResponsaveis[$idProcedimento] : array();
-            $nomeUsuario     = array_key_exists('NOME', $arrDadosUsuario) ? $arrDadosUsuario['NOME'] : '';
-            $siglaUsuario    = array_key_exists('SIGLA', $arrDadosUsuario) ? $arrDadosUsuario['SIGLA'] : '';
-            $linkUsuario     = $nomeUsuario != ''  && $siglaUsuario != '' ? htmlentities('<a class="ancoraSigla" alt="' . $nomeUsuario . '" title="' . $nomeUsuario . '">' . $siglaUsuario . '</a>') : '';
-
-            $arrStrGridProcesso[] = array($idProcedimento, $idControleDsmp, $hrefLinkProcesso, $numUndEsforco, $linkUsuario);
-           
-        }
-
-        $strGridProcesso = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrStrGridProcesso);
-    }
-
-    if($_POST['txtUsuarioParticipante'] == ''){
-
-        $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
-        $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
-
-        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
-        $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
-        $objMdUtlAdmTpCtrlDesempDTO->retNumCargaPadrao();
-        $objMdUtlAdmTpCtrlDesempDTO->retStrStaFrequencia();
-        $objMdUtlAdmTpCtrlDesempDTO->retNumPercentualTeletrabalho();
-
-        $objDTO = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
-
-        $idPrmGr           = $objDTO->getNumIdMdUtlAdmPrmGr();
-        $numCargaPadrão    = $objDTO->getNumCargaPadrao();
-        $strStaFrequencia  = $objDTO->getStrStaFrequencia();
-        $numPercentualTele = $objDTO->getNumPercentualTeletrabalho();
-
-        $arrFrequencia = MdUtlAdmPrmGrINT::retornaArrPadraoFrequenciaDiaria();
-        $strFrequencia = $arrFrequencia[$strStaFrequencia];
-
-        $strCargaPadrao = $numCargaPadrão .' - '. $strFrequencia;
-
-    }
 
 
-    $arrComandos = array();
 
-    //Botões de ação do topo
-    $arrComandos[] = '<button type="submit" accesskey="S" id="sbmSalvar" name="sbmSalvar" class="botaoSalvar infraButton">
-                                    <span class="infraTeclaAtalho">S</span>alvar</button>';
 
-    $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="cancelar()" class="infraButton">
-                                <span class="infraTeclaAtalho">C</span>ancelar</button>';
+
+
+
 
 }catch(Exception $e){
     PaginaSEI::getInstance()->processarExcecao($e);
@@ -283,6 +297,7 @@ if(0){?><script><?}?>
     var staFrequencia     = '<?php echo $strStaFrequencia?>';
     var strStaFrequencia  = '<?php echo $strFrequencia?>';
     var selecionadaDist   = '<?php echo $somaUndEsforco?>';
+    var inicioPeriodo     =  '<?php echo $inicioPeriodoParametrizado; ?>';
 
     function inicializar() {
         var count = "<?=$countDistribuicao?>";
@@ -376,7 +391,7 @@ if(0){?><script><?}?>
     function realizarDistribuicao(){
         var selParticipante = document.getElementById('txtUsuarioParticipante').value;
         var tdCount = document.getElementsByClassName('infraTd').length;
-        
+
         if(selParticipante == ''){
             alert('Preencha o Usuário Participante!');
             return false;
@@ -397,7 +412,7 @@ if(0){?><script><?}?>
 
         objAutoCompletarUsuarioParticipante = new infraAjaxAutoCompletar('hdnIdUsuarioParticipanteLupa','txtUsuarioParticipante','<?=$strLinkAjaxUsuarioParticipante?>');
         objAutoCompletarUsuarioParticipante.limparCampo = true;
-
+        objAutoCompletarUsuarioParticipante.tamanhoMinimo = 3;
         objAutoCompletarUsuarioParticipante.prepararExecucao = function(){
             return 'palavras_pesquisa='+document.getElementById('txtUsuarioParticipante').value;
         };
@@ -407,7 +422,7 @@ if(0){?><script><?}?>
             if (id!=''){
                 document.getElementById('hdnIdUsuarioParticipanteLupa').value = id;
                 document.getElementById('txtUsuarioParticipante').value = descricao;
-              //chamar a função responsavel por carregar os campos do participante - Ajax
+                //chamar a função responsavel por carregar os campos do participante - Ajax
                 realizarAjaxDadosCarga();
             }else{
                 limparCampos();
@@ -415,7 +430,7 @@ if(0){?><script><?}?>
         }
 
         objLupaUsuarioParticipante.finalizarSelecao = function(){
-              objAutoCompletarUsuarioParticipante.selecionar(document.getElementById('hdnIdUsuarioParticipanteLupa').value,document.getElementById('txtUsuarioParticipante').value);
+            objAutoCompletarUsuarioParticipante.selecionar(document.getElementById('hdnIdUsuarioParticipanteLupa').value,document.getElementById('txtUsuarioParticipante').value);
             //chamar a função responsavel por carregar os campos do participante - Lupa
             realizarAjaxDadosCarga();
         }
@@ -446,6 +461,7 @@ if(0){?><script><?}?>
             numCargaPadrao : numCargaPadrao,
             numPercentualTele : numPercentualTele,
             staFrequencia : staFrequencia,
+            inicioPeriodo : inicioPeriodo,
             idTipoControle : <?php echo $idTipoControle ?>
         };
 
@@ -457,16 +473,16 @@ if(0){?><script><?}?>
             success: function (r) {
 
                 //Carga Padrão
-                    var valorCarga = $(r).find('ValorCarga').text();
-                    var cargaPadrao = valorCarga + ' - ' + strStaFrequencia;
-                    document.getElementById('txtCargaPadrao').value = cargaPadrao;
+                var valorCarga = $(r).find('ValorCarga').text();
+                var cargaPadrao = valorCarga + ' - ' + strStaFrequencia;
+                document.getElementById('txtCargaPadrao').value = cargaPadrao;
 
-                    var valorUndEs = $(r).find('ValorUndEs').text();
-                    var cargaDisti = valorUndEs;
-                    document.getElementById('txtDistribuida').value = cargaDisti;
+                var valorUndEs = $(r).find('ValorUndEs').text();
+                var cargaDisti = valorUndEs;
+                document.getElementById('txtDistribuida').value = cargaDisti;
 
-                    totalUniesforco = parseInt(cargaDisti) + parseInt(selecionadaDist);
-                    document.getElementById('txtTotalUniEsforco').value = totalUniesforco;
+                totalUniesforco = parseInt(cargaDisti) + parseInt(selecionadaDist);
+                document.getElementById('txtTotalUniEsforco').value = totalUniesforco;
 
             },
             error: function (e) {
@@ -487,6 +503,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <?
         //PaginaSEI::getInstance()->montarBarraLocalizacao($strTitulo);
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+
         PaginaSEI::getInstance()->abrirAreaDados('auto');
 
         //PaginaSEI::getInstance()->montarAreaValidacao();
@@ -515,22 +532,22 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                     </div>
 
             <div id="divCarga">
-                    <div id="divDistribuidaMes">
-                        <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional" >Carga já Distribuída no Período:</label>
-                        <br>
-                        <input type="text" id="txtDistribuida" name="txtDistribuida" class="infraText" style="width: 77%" disabled/>
-                    </div>
-                    <div id="divMais">
-                        <span id="spnMais">+</span>
-                    </div>
-                    <div id="divSelecionadaDist">
-                        <label id="lblSelecionadaDist" for="txtSelecionadaDist" class="infraLabelOpcional" >Carga selecionada para Distribuição:</label>
-                        <br>
-                        <input type="text" id="txtSelecionadaDist" name="txtSelecionadaDist" class="infraText" style="width: 68%" value="<?=$somaUndEsforco?>" disabled/>
-                    </div>
-                    <div id="divIgual">
-                        <span id="spnIgual">=</span>
-                    </div>
+                <div id="divDistribuidaMes">
+                    <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional" >Carga já Distribuída no Período:</label>
+                    <br>
+                    <input type="text" id="txtDistribuida" name="txtDistribuida" class="infraText" style="width: 77%" disabled/>
+                </div>
+                <div id="divMais">
+                    <span id="spnMais">+</span>
+                </div>
+                <div id="divSelecionadaDist">
+                    <label id="lblSelecionadaDist" for="txtSelecionadaDist" class="infraLabelOpcional" >Carga selecionada para Distribuição:</label>
+                    <br>
+                    <input type="text" id="txtSelecionadaDist" name="txtSelecionadaDist" class="infraText" style="width: 68%" value="<?=$somaUndEsforco?>" disabled/>
+                </div>
+                <div id="divIgual">
+                    <span id="spnIgual">=</span>
+                </div>
 
                     <div id="divTotalUniEsforco">
                         <label id="lblTotalUniEsforco" for="txtTotalUniEsforco" class="infraLabelOpcional" >Total Unidade de Esforço:</label>
@@ -582,6 +599,7 @@ if($countDistribuicao > 0){ ?>
         <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
         <input type="hidden" id="hdnIdFila" name="hdnIdFila" value="<?php echo $idFila; ?>"/>
         <input type="hidden" id="hdnSelStatus" name="hdnSelStatus" value="<?php echo $idStatus;?>"/>
+
         <input type="hidden" id="hdnSelParticipante" name="hdnSelParticipante">
 
         <!-- Controle da Tela de Processo -->

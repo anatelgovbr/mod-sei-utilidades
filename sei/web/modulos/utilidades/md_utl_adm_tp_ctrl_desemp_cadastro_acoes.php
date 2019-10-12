@@ -96,6 +96,7 @@ switch($_GET['acao']){
             $objTipoControleUtilidadesUnidadeDTO->retTodos();
             $objTipoControleUtilidadesUnidadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($_GET['id_tipo_controle_utilidades']);
             $objTipoControleUtilidadesUnidadeDTO->retStrSiglaUnidade();
+            $objTipoControleUtilidadesUnidadeDTO->retStrDescricaoUnidade();
             $objTipoControleUtilidadesUnidadeDTO->setOrdStrSiglaUnidade(InfraDTO::$TIPO_ORDENACAO_ASC);
 
             $objRelTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
@@ -107,7 +108,7 @@ switch($_GET['acao']){
             $objUnidadeRN = new UnidadeRN();
 
             for($x = 0;$x<count($arrUnidades);$x++){
-                $strItensSelUnidades .= "<option value='" . $arrUnidades[$x]->getNumIdUnidade() .  "'>" . $arrUnidades[$x]->getStrSiglaUnidade() . "</option>";
+                $strItensSelUnidades .= "<option value='" . $arrUnidades[$x]->getNumIdUnidade() .  "'>" . $arrUnidades[$x]->getStrSiglaUnidade() .' - '.$arrUnidades[$x]->getStrDescricaoUnidade(); "</option>";
             }
 
             //consultar os gestores relacionados
@@ -116,6 +117,7 @@ switch($_GET['acao']){
             $objTipoControleUtilidadesUsuarioDTO->setNumIdMdUtlAdmTpCtrlDesemp($_GET['id_tipo_controle_utilidades']);
             $objTipoControleUtilidadesUsuarioDTO->setOrdStrNomeUsuario(InfraDTO::$TIPO_ORDENACAO_ASC);
             $objTipoControleUtilidadesUsuarioDTO->retStrNomeUsuario();
+            $objTipoControleUtilidadesUsuarioDTO->retStrSiglaUsuario();
 
             $objRelTipoControleUtilidadesUsuarioRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
             $arrGestoresDTO = $objRelTipoControleUtilidadesUsuarioRN->listar( $objTipoControleUtilidadesUsuarioDTO );
@@ -125,7 +127,7 @@ switch($_GET['acao']){
             $objUsuarioRN = new UsuarioRN();
 
             for($x = 0;$x<count($arrGestoresDTO);$x++){
-                 $strItensSelGestores .= "<option value='" . $arrGestoresDTO[$x]->getNumIdUsuario() .  "'>" . $arrGestoresDTO[$x]->getStrNomeUsuario() . "</option>";
+                 $strItensSelGestores .= "<option value='" . $arrGestoresDTO[$x]->getNumIdUsuario() .  "'>" . $arrGestoresDTO[$x]->getStrNomeUsuario().' (' .$arrGestoresDTO[$x]->getStrSiglaUsuario().')'."</option>";
             }
 
         } else {

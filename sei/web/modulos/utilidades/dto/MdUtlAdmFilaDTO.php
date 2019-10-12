@@ -33,6 +33,8 @@ class MdUtlAdmFilaDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrazoTarefa', 'prazo_tarefa');
 
+      $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaDilacao', 'resp_tacita_dilacao');
+
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
     $this->configurarPK('IdMdUtlAdmFila',InfraDTO::$TIPO_PK_NATIVA);

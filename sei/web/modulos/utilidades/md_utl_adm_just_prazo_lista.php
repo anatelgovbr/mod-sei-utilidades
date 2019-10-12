@@ -67,7 +67,7 @@ try {
       die;
 
     case 'md_utl_adm_just_prazo_reativar':
-      $strTitulo = 'Reativar Justificativas de Dilação de Prazo';
+      $strTitulo = 'Reativar Justificativas de Ajuste de Prazo';
       if ($_GET['acao_confirmada']=='sim'){
         try{
           $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
@@ -90,7 +90,7 @@ try {
 
 
     case 'md_utl_adm_just_prazo_selecionar':
-      $strTitulo = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Justificativa de Dilação de Prazo','Selecionar Justificativas de Dilação de Prazo');
+      $strTitulo = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Justificativa de Ajuste de Prazo','Selecionar Justificativas de Ajuste de Prazo');
 
       //Se cadastrou alguem
       if ($_GET['acao_origem']=='md_utl_adm_just_prazo_cadastrar'){
@@ -101,7 +101,7 @@ try {
       break;
 
     case 'md_utl_adm_just_prazo_listar':
-      $strTitulo = 'Justificativa de Dilação de Prazo';
+      $strTitulo = 'Justificativa de Ajuste de Prazo';
       break;
 
     default:
@@ -178,11 +178,11 @@ try {
       $strResultado = '';
 
     if ($_GET['acao']!='md_utl_adm_just_prazo_reativar'){
-      $strSumarioTabela = 'Tabela de Justificativas de Dilação de Prazo.';
-      $strCaptionTabela = 'Justificativas de Dilação de Prazo';
+      $strSumarioTabela = 'Tabela de Justificativas de Ajuste de Prazo.';
+      $strCaptionTabela = 'Justificativas de Ajuste de Prazo';
     }else{
-      $strSumarioTabela = 'Tabela de Justificativas de Dilação de Prazo Inativas.';
-      $strCaptionTabela = 'Justificativas de Dilação de Prazo Inativas';
+      $strSumarioTabela = 'Tabela de Justificativas de Ajuste de Prazo Inativas.';
+      $strCaptionTabela = 'Justificativas de Ajuste de Prazo Inativas';
     }
 
     $displayNone = 'style="display:none"';
@@ -213,11 +213,11 @@ try {
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmJustPrazoDTO[$i]->getNumIdMdUtlAdmJustPrazo());
 
       if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_just_prazo='.$arrObjMdUtlAdmJustPrazoDTO[$i]->getNumIdMdUtlAdmJustPrazo().'&id_tipo_controle_utl='.$idTipoControle).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Justificativa de Dilação de Prazo" alt="Consultar Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_just_prazo='.$arrObjMdUtlAdmJustPrazoDTO[$i]->getNumIdMdUtlAdmJustPrazo().'&id_tipo_controle_utl='.$idTipoControle).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Justificativa de Ajuste de Prazo" alt="Consultar Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_just_prazo='.$arrObjMdUtlAdmJustPrazoDTO[$i]->getNumIdMdUtlAdmJustPrazo().'&id_tipo_controle_utl='.$idTipoControle).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Justificativa de Dilação de Prazo" alt="Alterar Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_just_prazo='.$arrObjMdUtlAdmJustPrazoDTO[$i]->getNumIdMdUtlAdmJustPrazo().'&id_tipo_controle_utl='.$idTipoControle).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Justificativa de Ajuste de Prazo" alt="Alterar Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -226,16 +226,16 @@ try {
       }
 
       if ($arrObjMdUtlAdmJustPrazoDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Justificativa de Dilação de Prazo" alt="Desativar Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Justificativa de Ajuste de Prazo" alt="Desativar Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
       }
 
       if ($arrObjMdUtlAdmJustPrazoDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Justificativa de Dilação de Prazo" alt="Reativar Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Justificativa de Ajuste de Prazo" alt="Reativar Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
       }
 
 
       if ($bolAcaoExcluir){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Justificativa de Dilação de Prazo" alt="Excluir Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strNome.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Justificativa de Ajuste de Prazo" alt="Excluir Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
       }
 
       $strResultado .= '</td></tr>'."\n";
@@ -266,11 +266,12 @@ PaginaSEI::getInstance()->abrirStyle();
         top: 0%;
         position: absolute;
     }
-    #txtNome{
-        top: 20%;
-        position: absolute;
-        width: 25%;
-    }
+  #txtNome{
+    top: 20%;
+    position: absolute;
+    width: 25%;
+    margin-top: 1%;
+  }
     #lblDescricao{
 
         top: 0%;
@@ -278,13 +279,14 @@ PaginaSEI::getInstance()->abrirStyle();
         margin-left: 27%;
 
     }
-    #txtDescricao{
+  #txtDescricao{
 
-        top: 20%;
-        position: absolute;
-        margin-left: 27%;
-        width: 30%;
-    }
+    top: 20%;
+    position: absolute;
+    margin-left: 27%;
+    width: 30%;
+    margin-top: 1%;
+  }
 <?if(0){?></style><?}?>
 <?
 PaginaSEI::getInstance()->fecharStyle();
@@ -309,7 +311,7 @@ function inicializar(){
 
 <? if ($bolAcaoDesativar){ ?>
 function acaoDesativar(id,desc){
-  var msg = setMensagemPersonalizada(msg71, ['Justificativa de Dilação de Prazo', desc]);
+  var msg = setMensagemPersonalizada(msg71, ['Justificativa de Ajuste de Prazo', desc]);
   if (confirm(msg)){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmJustPrazoLista').action='<?=$strLinkDesativar?>';
@@ -321,7 +323,7 @@ function acaoDesativar(id,desc){
 
 <? if ($bolAcaoReativar){ ?>
 function acaoReativar(id,desc){
-    var msg = setMensagemPersonalizada(msg73, ['Justificativa de Dilação de Prazo', desc]);
+    var msg = setMensagemPersonalizada(msg73, ['Justificativa de Ajuste de Prazo', desc]);
   if (confirm(msg)){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmJustPrazoLista').action='<?=$strLinkReativar?>';
@@ -333,7 +335,7 @@ function acaoReativar(id,desc){
 
 <? if ($bolAcaoExcluir){ ?>
 function acaoExcluir(id,desc){
-  var msg = setMensagemPersonalizada(msg75, ['Justificativa de Dilação de Prazo', desc]);
+  var msg = setMensagemPersonalizada(msg75, ['Justificativa de Ajuste de Prazo', desc]);
   if (confirm(msg)){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmJustPrazoLista').action='<?=$strLinkExcluir?>';
@@ -352,7 +354,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 <form id="frmMdUtlAdmJustPrazoLista" method="POST" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
   <?
   PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-  PaginaSEI::getInstance()->abrirAreaDados('8em');
+  PaginaSEI::getInstance()->abrirAreaDados('4em');
   ?>
     <label id="lblNome" for="txtNome" accesskey="" class="infraLabelOpcional">Justificativa:</label>
     <input type="text" id="txtNome" name="txtNome" class="infraText" value="<?=$_POST['txtNome']?>" onkeypress="return infraMascaraTexto(this,event,100);" maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />

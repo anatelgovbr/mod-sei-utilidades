@@ -17,7 +17,7 @@ if (isset($_SESSION['IDS_PROCEDIMENTOS_DISTRIBUICAO'])) {
 }
 
 
-PaginaSEI::getInstance()->salvarCamposPost(array('txtProcessoUtlDist','txtDocumento', 'selFilaUtlDist', 'selTipoProcessoUtlDist','selResponsavelUtlDist', 'selStatusUtlDist'));
+PaginaSEI::getInstance()->salvarCamposPost(array('txtProcessoUtlDist','txtDocumento', 'selFilaUtlDist', 'selTipoProcessoUtlDist','selResponsavelUtlDist', 'selStatusUtlDist', 'selAtividadeUtlDist'));
 
 $txtProcessoCampo     = array_key_exists('txtProcessoUtlDist', $_POST) ? $_POST['txtProcessoUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('txtProcessoUtlDist');
 $txtDocumentoCampo    = array_key_exists('txtDocumentoUtlDist', $_POST) ? $_POST['txtDocumentoUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('txtDocumentoUtlDist');
@@ -474,6 +474,7 @@ if (0){ ?>
         var msg59 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_59); ?>';
         var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
         var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
+        var msg96 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_96); ?>';
         var totalUnidade = 0;
         var count = 0;
 
@@ -589,6 +590,32 @@ if (0){ ?>
             }
 
             return true;
+        }
+
+        function validoDistribuicao(){
+            var linhas    = document.getElementsByClassName('infraTrMarcada');
+            var msgInicio = msg96;
+            var valido    = true;
+
+            for(var i = 0; i < linhas.length; i++) {
+                var idStatus = $(linhas[i]).find('.tdIdStatus').text();
+
+                if(idStatus == idStatusSuspensao || idStatus == idStatusInterrupcao ){
+                    if(valido){
+                        msgInicio  += "\n";
+                    }
+
+                    valido = false;
+                    msgInicio  += "\n";
+                    msgInicio +=  " - " + $(linhas[i]).find('.tdNomeProcessoFormatado').text();
+                }
+            }
+
+            if(!valido){
+                alert(msgInicio);
+            }
+
+            return valido;
         }
 
 

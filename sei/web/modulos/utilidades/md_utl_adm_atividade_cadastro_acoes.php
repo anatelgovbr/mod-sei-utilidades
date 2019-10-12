@@ -41,11 +41,12 @@ if($idAtividade>0){
     $strPrzRevisaoAtv   = $_POST['txtRevAtividade'] ? $_POST['txtRevAtividade'] : $mdUtlAdmAtividade->getNumPrzRevisaoAtv() ;
 
     $rdnTpAtividade     = $_POST['rdnTpAtivdade'] ? $_POST['rdnTpAtivdade'] : $mdUtlAdmAtividade->getStrSinAnalise() ;
+    
+    $chkAmostragem  = $_POST['chkAtvRevAmost'] ? $_POST['chkAtvRevAmost'] : $mdUtlAdmAtividade->getStrSinAtvRevAmostragem() =='S'?'checked="checked"': null ;
 
     if($rdnTpAtividade == 'S'){
 
         $rdnComAnalise  = 'checked="checked"';
-        $chkAmostragem  = $_POST['chkAtvRevAmost'] ? $_POST['chkAtvRevAmost'] : $mdUtlAdmAtividade->getStrSinAtvRevAmostragem() =='S'?'checked="checked"': null ;
 
         $strItensTabela = $mdUtlAdmAtvSerieProdRN->retornarItensTabelasDinamica($idAtividade);
         $strItensTabela = $_POST['hdnTbProdutoEsperado'] ? $_POST['hdnTbProdutoEsperado']:PaginaSEI::getInstance()->gerarItensTabelaDinamica($strItensTabela);

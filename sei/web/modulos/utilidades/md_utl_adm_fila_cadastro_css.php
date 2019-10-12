@@ -46,7 +46,7 @@ margin-left: 7px;
 width: 10%;
 }
 
-#divPercentualRevisao{
+#divTipoRevisao{
 width: 134px;
 margin-top: 7%;
 margin-left: 95px;
@@ -89,6 +89,10 @@ margin-left: 73.7%;
 .tamanhoBtnAjuda{
 width: 16px;
 height: 16px;
+}
+
+#selDilacao{
+width: 25.5%;
 }
 
 

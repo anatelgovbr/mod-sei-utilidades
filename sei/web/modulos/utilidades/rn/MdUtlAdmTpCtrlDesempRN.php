@@ -244,9 +244,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
 
       $objMdUtlAdmTpCtrlDesempBD = new MdUtlAdmTpCtrlDesempBD($this->getObjInfraIBanco());
       $ret = $objMdUtlAdmTpCtrlDesempBD->listar($objMdUtlAdmTpCtrlDesempDTO);
-
       //Auditoria
-
       return $ret;
 
     } catch (Exception $e) {
@@ -739,6 +737,95 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
 
     return $idParametro;
   }
+
+  protected function validaNovosDadosParametrizacaoConectado($idTipoControle){
+
+
+    $objMdUtlAdmTpControleDTO = new MdUtlAdmTpCtrlDesempDTO();
+    $objMdUtlAdmTpControleRN = new MdUtlAdmTpCtrlDesempRN();
+    $objMdUtlAdmTpControleDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+    $objMdUtlAdmTpControleDTO->retNumIdMdUtlAdmPrmGr();
+    $objMdUtlAdmTpControleDTO->setNumMaxRegistrosRetorno(1);
+
+    $objMdUtlAdmTpControleDTO->retStrRespTacitaDilacao();
+    $objMdUtlAdmTpControleDTO->retStrRespTacitaInterrupcao();
+    $objMdUtlAdmTpControleDTO->retStrRespTacitaSuspensao();
+
+    $objMdUtlAdmTpControleDTO->retStrPrazoMaxSuspensao();
+    $objMdUtlAdmTpControleDTO->retStrPrazoMaxInterrupcao();
+    $objMdUtlAdmTpControleDTO->setParametroFk(InfraDTO::$TIPO_FK_OBRIGATORIA);
+
+    $objMdUtlAdmTpControleDTO = $objMdUtlAdmTpControleRN->consultar($objMdUtlAdmTpControleDTO);
+    
+
+    $isPrazoSusNull =   $objMdUtlAdmTpControleDTO->getStrPrazoMaxSuspensao() == 0 || is_null($objMdUtlAdmTpControleDTO->getStrPrazoMaxSuspensao());
+    $isPrazoIntNull =   $objMdUtlAdmTpControleDTO->getStrPrazoMaxInterrupcao() == 0 || is_null($objMdUtlAdmTpControleDTO->getStrPrazoMaxInterrupcao());
+
+    if($isPrazoIntNull || $isPrazoSusNull || is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaSuspensao()) ||  is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaInterrupcao()) || is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaDilacao())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  protected function getTiposProcessoTodosTipoControleConectado()
+  {
+      $objMdUtlAdmPrmGrProcRN = new MdUtlAdmRelPrmGrProcRN();
+      $objMdUtlAdmPrmGrProcDTO = new MdUtlAdmRelPrmGrProcDTO();
+      $objMdUtlAdmPrmGrProcDTO->retNumIdTipoProcedimento();
+      $count = $objMdUtlAdmPrmGrProcRN->contar($objMdUtlAdmPrmGrProcDTO);
+
+      if ($count > 0) {
+              $idsArr = InfraArray::converterArrInfraDTO($objMdUtlAdmPrmGrProcRN->listar($objMdUtlAdmPrmGrProcDTO), 'IdTipoProcedimento');
+              return $idsArr;
+      }
+
+      return null;
+  }
+
+  private function _retornaTiposProcessoParametrizados(){
+      $objMdUtlAdmPrmGrProcRN = new MdUtlAdmRelPrmGrProcRN();
+      $objMdUtlAdmPrmGrProcDTO = new MdUtlAdmRelPrmGrProcDTO();
+      $objMdUtlAdmPrmGrProcDTO->retTodos();
+
+      $count = $objMdUtlAdmPrmGrProcRN->contar($objMdUtlAdmPrmGrProcDTO);
+
+      if ($count > 0) {
+          return $objMdUtlAdmPrmGrProcRN->listar($objMdUtlAdmPrmGrProcDTO);
+      }
+
+      return null;
+  }
+
+  protected function getObjTipoControlePorPrmConectado(){
+      $arrRetorno = array();
+      $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+      $objMdUtlTpCtrlDTO->setNumIdMdUtlAdmPrmGr(null, InfraDTO::$OPER_DIFERENTE);
+      $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+      $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+
+      $count = $this->contar($objMdUtlTpCtrlDTO);
+
+      $arrObjsPrmDTO = $this->_retornaTiposProcessoParametrizados();
+
+      if($count > 0) {
+          $arrObjs = $this->listar($objMdUtlTpCtrlDTO);
+          $arrTipoControle = array();
+            foreach($arrObjs as $objDTO){
+                $arrTipoControle[$objDTO->getNumIdMdUtlAdmPrmGr()] =    $objDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+            }
+
+           foreach($arrObjsPrmDTO as $objDTO2){
+               $idTipoControle = $arrTipoControle[$objDTO2->getNumIdMdUtlAdmParamGr()];
+               $arrRetorno[$idTipoControle][$objDTO2->getNumIdTipoProcedimento()] = $objDTO2->getNumIdMdUtlAdmParamGr();
+           }
+
+      }
+
+      return $arrRetorno;
+  }
+
+
 
 
 }

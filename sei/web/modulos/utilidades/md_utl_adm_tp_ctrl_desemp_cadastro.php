@@ -53,7 +53,7 @@ $strLinkAjaxTipoProcesso = SessaoSEI::getInstance()->assinarLink('controlador_aj
 
 $strLinkGestoresSelecao     = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=usuario_selecionar&tipo_selecao=2&id_object=objLupaGestores');
 //$strLinkGestoresSelecao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=usuario_selecionar&tipo_selecao=2&id_object=objLupaGestores');
-$strLinkAjaxGestor = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=usuario_auto_completar');
+$strLinkAjaxGestor = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_usuario_auto_completar');
 
 // ======================= INICIO JS
 require_once('md_utl_adm_tp_ctrl_desemp_cadastro_js.php');

@@ -17,26 +17,50 @@ if (isset($_SESSION['IDS_PROCEDIMENTOS_DISTRIBUICAO'])) {
     unset($_SESSION['IDS_PROCEDIMENTOS_DISTRIBUICAO']);
 }
 
+$isProcessoConcluido = array_key_exists('is_processo_concluido', $_GET) ? $_GET['is_processo_concluido'] : 0;
+$isProcessoAutorizadoConcluir = array_key_exists('hdnIsConcluirProcesso', $_POST) ? $_POST['hdnIsConcluirProcesso'] : 0;
 
-PaginaSEI::getInstance()->salvarCamposPost(array('txtProcessoUtlMs', 'selFilaUtlMs', 'selTipoProcessoUtlMs', 'selStatusUtlMs'));
+PaginaSEI::getInstance()->salvarCamposPost(array('txtProcessoUtlMs', 'selFilaUtlMs', 'selTipoProcessoUtlMs', 'selStatusUtlMs', 'selAtividadeUtlMs'));
 
 $txtProcessoCampo     = array_key_exists('txtProcessoUtlMs', $_POST) ? $_POST['txtProcessoUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('txtProcessoUtlMs');
 $selFilaCampo         = array_key_exists('selFilaUtlMs', $_POST) ? $_POST['selFilaUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selFilaUtlMs');
 $selTipoProcessoCampo = array_key_exists('selTipoProcessoUtlMs', $_POST) ? $_POST['selTipoProcessoUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selTipoProcessoUtlMs');
 $selStatusCampo       = array_key_exists('selStatusUtlMs', $_POST) ? $_POST['selStatusUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selStatusUtlMs');
-$selAtividadeCampo    = array_key_exists('selAtividadeUtlDist', $_POST) ? $_POST['selAtividadeUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlDist');
+$selAtividadeCampo    = array_key_exists('selAtividadeUtlMs', $_POST) ? $_POST['selAtividadeUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlMs');
 
 $somaUndEsforco = '';
+$idProcedimentoMeusProcessos = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 
-$arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso'=> $selTipoProcessoCampo, 'selStatus'=> $selStatusCampo);
-
-//Id tipo de controle
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
 $objMdUtlAdmTpCtrlUsuRN    = new MdUtlAdmRelTpCtrlDesempUsuRN();
 $objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objMdUtlRelTriagemAtvRN   = new MdUtlRelTriagemAtvRN();
+$objMdUtlHistControleRN    = new MdUtlHistControleDsmpRN();
+$objRegrasGerais           = new MdUtlRegrasGeraisRN();
+
+if($idProcedimentoMeusProcessos != null && $idProcedimentoMeusProcessos != '') {
+    $objProcedimentoDTO = $objRegrasGerais->getObjProcedimentoPorId($idProcedimentoMeusProcessos);
+    $strNumeroProcedimento = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado();
+    $msg107 = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_107, array($strNumeroProcedimento, SessaoSEI::getInstance()->getStrSiglaUnidadeAtual()));
+}else{
+    $msg107 = '';
+}
+
+if($isProcessoAutorizadoConcluir == 1){
+    $_POST['hdnIsConcluirProcesso'] = 0;
+    $isProcessoAutorizadoConcluir = 0;
+
+    $objEntradaConcluirProcessoAPI = new EntradaConcluirProcessoAPI();
+    $objEntradaConcluirProcessoAPI->setIdProcedimento($idProcedimentoMeusProcessos);
+
+    $objSEIRN = new SeiRN();
+    $objSEIRN->concluirProcesso($objEntradaConcluirProcessoAPI);
+}
+
+
+$arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso'=> $selTipoProcessoCampo, 'selStatus'=> $selStatusCampo);
 
 $idTipoControle            = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 $arrObjsFilaDTO            = $objFilaRN->getFilasTipoControle($idTipoControle);
@@ -75,7 +99,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $selFila = count($idsFilasPermitidasUsBasico) > 0 ? $selFila = MdUtlAdmFilaINT::montarSelectFilas($selFilaCampo, $arrObjsFilaDTO, $idsFilasPermitidasUsBasico) : null;
     }
 
-    $selStatus         =  count($idsStatusPermitido) > 0 || $isGestorSipSei ? MdUtlControleDsmpINT::montarSelectStatus($selStatusCampo, false, $idsStatusPermitido): null;
+    $selStatus         =  count($idsStatusPermitido) > 0 || $isGestorSipSei ? MdUtlControleDsmpINT::montarSelectStatusMeusProcessos($selStatusCampo, false, $idsStatusPermitido): null;
     $arrObjsTpProcesso = $objMdUtlControleDsmpRN->getTiposProcessoTipoControle($idTipoControle);
     $selTipoProcesso   = $isPermiteAssociacao  ? InfraINT::montarSelectArrInfraDTO(null, null, $selTipoProcessoCampo, $arrObjsTpProcesso, 'IdTipoProcedimento', 'NomeProcedimento') : '';
 }
@@ -86,6 +110,28 @@ switch ($_GET['acao']) {
 
     //region Listar
     case 'md_utl_meus_processos_dsmp_listar':
+
+        break;
+    //endregion
+
+    //region Retorno
+    case 'md_utl_meus_processos_dsmp_retornar':
+        $idProcedimento = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : null;
+     
+
+        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+        $objMdUtlControleDsmpDTO->setDblIdProcedimento($idProcedimento);
+        $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objMdUtlControleDsmpDTO->retTodos();
+        $objMdUtlControleDsmpDTO->retNumDiasUteisExcedentes();
+        $objMdUtlControleDsmpDTO = $objMdUtlControleDsmpRN->consultar($objMdUtlControleDsmpDTO);
+
+$idStatus = $objMdUtlControleDsmpDTO->getStrStaAtendimentoDsmp();
+
+        if ($idStatus == MdUtlControleDsmpRN::$INTERROMPIDO || $idStatus == MdUtlControleDsmpRN::$SUSPENSO) {
+            $objMdUtlControleRN = new MdUtlControleDsmpRN();
+            $objMdUtlControleRN->retornaStatusImpedido(array($objMdUtlControleDsmpDTO));
+        }
 
         break;
     //endregion
@@ -118,8 +164,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO = $objMdUtlControleDsmpRN->getObjDTOParametrizadoMeusProcessos(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $idTipoControle, $arrPostDados));
     }
 
-
     if(!is_null($objDTO)) {
+
+        $objDTO->retNumIdMdUtlAjustePrazo();
         $objDTO->retNumIdMdUtlAdmRelControleDsmp();
         $objDTO->retNumIdMdUtlControleDsmp();
         $objDTO->retNumIdUnidade();
@@ -136,10 +183,14 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO->retStrSiglaUsuarioDistribuicao();
         $objDTO->retNumIdMdUtlAnalise();
         $objDTO->retNumIdMdUtlTriagem();
+        $objDTO->retStrStaSolicitacaoAjustePrazo();
         $objDTO->retNumIdUsuarioDistribuicao();
 
+        $objMdUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
+        $isDadosParametrizados = $objMdUtlTpCtrlRN->validaNovosDadosParametrizacao($idTipoControle);
 
         if ($selAtividadeCampo != '') {
+            $objDTO->setStrValorAtividadeSelectUtl($selAtividadeCampo);
             $idsTriagem = $objMdUtlControleDsmpRN->pesquisarAtividade($objDTO);
 
             if (count($idsTriagem) > 0) {
@@ -186,6 +237,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         PaginaSEI::getInstance()->prepararOrdenacao($objDTO, 'ProtocoloProcedimentoFormatado', InfraDTO::$TIPO_ORDENACAO_ASC);
         PaginaSEI::getInstance()->prepararPaginacao($objDTO, 200);
 
+ 
         $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
         $numRegistros = count($arrObjs);
 
@@ -204,17 +256,19 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             $strResultado .= '<tr>';
             $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
             $strResultado .= '<th class="infraTh" width="18%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="16%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="14%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
 
             $strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Fila', 'NomeFila', $arrObjs) . '</th>';
             $strResultado .= '<th class="infraTh" width="10%" style="text-align: left">'. PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Unidade de Esforço', 'UnidadeEsforco', $arrObjs) .' </th>';
             $strResultado .= '<th class="infraTh" width="14%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Status', 'StaAtendimentoDsmp', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="14%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Data Registro Status', 'Atual', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="14%">'  . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo', 'PrazoTarefa',$arrObjs) . ' </th>';
+            $strResultado .= '<th class="infraTh" width="12%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Data Registro Status', 'Atual', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="10%">'  . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo', 'PrazoTarefa',$arrObjs) . ' </th>';
+            $strResultado .= '<th class="infraTh" style="11%">Ações</th>';
             $strResultado .= '<th class="infraTh" style="display: none">Última Fila</th>';
             $strResultado .= '</tr>';
+
 
 
             //Linhas
@@ -233,6 +287,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $numIdControleDsmp  = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
                 $numUndEsforco      = $arrObjs[$i]->getNumUnidadeEsforco();
                 $numIdTriagem       = $arrObjs[$i]->getNumIdMdUtlTriagem();
+             
+                $numUndEsforco      = $arrObjs[$i]->getNumUnidadeEsforco();
+                $numIdTriagem       = $arrObjs[$i]->getNumIdMdUtlTriagem();
                 $strNomeAtividade   = array_key_exists($numIdTriagem, $arrayObjs) ? $arrayObjs[$numIdTriagem] : '';
                 $linkAtvTriagem     = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_atividade_triagem_listar&acao_origem=md_utl_distrib_usuario_listar&id_triagem=' . $numIdTriagem . '');
 
@@ -240,19 +297,35 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                     $strNomeAtividade = '<a href="javascript:void(0);" onclick="infraAbrirJanela(\'' . $linkAtvTriagem . '\',\'urlAtividadeTriagemMult\',650,500,)" alt="Múltiplas" title="Múltiplas" class="ancoraPadraoAzul"> Múltiplas </a>';;
                 }
 
-                $arrSituacao        = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
+                $objStatusAnterior  = $objMdUtlHistControleRN->getStatusAnterior($strId);
+                $statusAnterior = !is_null($objStatusAnterior) ? $objStatusAnterior->getStrStaAtendimentoDsmp() : null;
+
+
+
+                $arrSituacao        = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
                 $linkProcedimento   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $strId . '');
                 $data               = explode(' ', $arrObjs[$i]->getDthAtual());
                 $dataFormatada      = $data[0];
                 $dataPrazo          = explode(' ', $arrObjs[$i]->getDthPrazoTarefa());
                 $dataPrazoFormatada = $dataPrazo[0];
+
+                $dataAtual = InfraData::getStrDataAtual();
+                $isDataPermitida = InfraData::compararDatasSimples($dataAtual, $dataPrazoFormatada) >= 0;
+
                 $bolRegistroAtivo   = true;
 
-                $isPossuiAnalise  = $objMdUtlControleDsmpRN->verificaTriagemPossuiAnalise($arrObjs[$i]);
-                $arrCtrlUrls      = MdUtlControleDsmpINT::retornaUrlsAcessoDsmp($strStatus, $isPossuiAnalise, $strId, $idFila, $arrObjs[$i]->getNumIdUsuarioDistribuicao(), true);
-                $linkStatus       = MdUtlControleDsmpINT::retornaLinkStatus($arrCtrlUrls, $strStatus);
+                $isPossuiAnalise = $objMdUtlControleDsmpRN->verificaTriagemPossuiAnalise($arrObjs[$i]);
+                $arrCtrlUrls     = MdUtlControleDsmpINT::retornaUrlsAcessoDsmp($strStatus, $isPossuiAnalise, $strId, $idFila, $arrObjs[$i]->getNumIdUsuarioDistribuicao(), true);
+                $linkStatus      = MdUtlControleDsmpINT::retornaLinkStatus($arrCtrlUrls, $strStatus);
                 
-                $status            = !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
+                $status          = !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
+
+                    
+                if($strStatus == MdUtlControleDsmpRN::$SUSPENSO){
+                    $dataPrazoFormatada = 'Prazo Suspenso';
+                } else if ($strStatus == MdUtlControleDsmpRN::$INTERROMPIDO) {
+                    $dataPrazoFormatada = 'Prazo Interrompido';
+                }
 
                 $somaUndEsforco   += $numUndEsforco;
 
@@ -308,6 +381,10 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 //Linha Controle Dsmp
                 $strResultado .= '<td class="tdIdControleDsmp" style="display: none">';
                 $strResultado .= $numIdControleDsmp;
+                $strResultado .= '</td>';
+
+                $strResultado .= '<td style="text-align: center">';
+                $strResultado .= MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados, $strId, $statusAnterior);
                 $strResultado .= '</td>';
 
                 $strResultado .= '</tr>';
@@ -422,29 +499,67 @@ if (0) { ?>
 
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
+require_once 'md_utl_geral_js.php';
+
 if (0){ ?>
     <script type="text/javascript"><?}?>
-        
+
+        var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24)?>';
+        var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
+
         function inicializar() {
 
             var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
             var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
             var tpCtrl = document.getElementById('hdnIdTipoControleUtl').value;
+            var isProcessoConcl  = '<?php echo $isProcessoConcluido ?>';
+            var msgConclusao = '<?php echo $msg107 ?>';
 
             if (tpCtrl == 0) {
-                alert('Esta Unidade não está associada a nenhum Tipo de Controle de Desempenho.');
+                alert(msg24);
                 window.location.href = urlCtrlProcessos;
                 return false;
             }
 
             if (idParam == 0) {
-                alert('O Tipo de Controle desta Unidade não está Parametrizado!');
+                alert(msg25);
                 window.location.href = urlCtrlProcessos;
                 return false;
             }
 
 
-            addEnter();   
+            if(isProcessoConcl == 1){
+                if(confirm(msgConclusao)){
+                    document.getElementById('hdnIsConcluirProcesso').value = 1;
+                    document.getElementById("frmTpControleLista").submit();
+                }
+            }
+        
+            addEnter();
+        }
+
+        function confirmarRetorno(strStatus, $strUrlLink) {
+
+        var msg105padrao     = '<?=MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_105)?>';
+
+                if(strStatus == '<?=MdUtlControleDsmpRN::$SUSPENSO?>') {
+                    var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_SUSPENSO?>']);
+                    var validar = confirm(msg);
+                    if (validar == true) {
+                        document.getElementById('frmTpControleLista').action = $strUrlLink;
+                        document.getElementById('frmTpControleLista').submit();
+                    }
+                }
+            
+                if(strStatus == '<?=MdUtlControleDsmpRN::$INTERROMPIDO?>'){
+                    var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_INTERROMPIDO?>']);
+                    var validar = confirm(msg);
+                    if(validar == true){
+                        document.getElementById('frmTpControleLista').action = $strUrlLink;
+                        document.getElementById('frmTpControleLista').submit();
+                    }
+                }
+
         }
         
 
@@ -541,8 +656,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         </div>
 
         <div id="divAtividade" style="margin-left: 72%; margin-top: 0.8%;">
-            <label id="lblAtividade" for="selAtividadeUtlDist" accesskey="" class="infraLabelOpcional">Atividade:</label>
-            <select id="selAtividadeUtlDist" name="selAtividadeUtlDist" class="infraSelect padraoSelect" style="width: 54%"
+            <label id="lblAtividade" for="selAtividadeUtlMs" accesskey="" class="infraLabelOpcional">Atividade:</label>
+            <select id="selAtividadeUtlMs" name="selAtividadeUtlMs" class="infraSelect padraoSelect" style="width: 54%"
                     onchange="pesquisar();"
                     tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <option value=""></option>
@@ -559,6 +674,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" id="hdnUrlControleProcessos" name="hdnUrlControleProcessos"
                value="<?php echo SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']); ?>"/>
 
+        <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
+        <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?php echo $idProcedimentoMeusProcessos ?>"/>
 
         <?php
         PaginaSEI::getInstance()->fecharAreaDados();

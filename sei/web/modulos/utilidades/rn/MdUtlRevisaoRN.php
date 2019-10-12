@@ -20,6 +20,10 @@ class MdUtlRevisaoRN extends InfraRN {
     public static $VOLTAR_PARA_RESPONSAVEL = 'R';
     public static $STR_VOLTAR_PARA_RESPONSAVEL = 'Voltar para o Responsável';
 
+    //Associar processo em fila após a Revisão
+    public static $ASSOCIAR_SIM = 'S';
+    public static $ASSOCIAR_NAO = 'N';
+
   public function __construct(){
     parent::__construct();
   }
@@ -152,6 +156,8 @@ class MdUtlRevisaoRN extends InfraRN {
       $objRevisaoDTO->setStrStaEncaminhamentoRevisao($_POST['selEncaminhamento']);
       $objRevisaoDTO->setDthAtual(InfraData::getStrDataHoraAtual());
       $objRevisaoDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+      $objRevisaoDTO->setStrSinAssociarFila($_POST['selAssociarProcFila']);
+      $objRevisaoDTO->setNumIdMdUtlAdmFila($_POST['selFila']);
 
       $objRevisaoDTO->retTodos();
 
@@ -177,6 +183,27 @@ class MdUtlRevisaoRN extends InfraRN {
             $count = $this->contar($objRevisaoDTO);
             if($count > 0){
                 $this->desativar($this->listar($objRevisaoDTO));
+            }
+        }
+    }
+
+    protected function checarDadosRevisaoControlado($idUsuario){
+        /*Busca id do usuário de utilidades para agendamento automático do sistema*/
+
+        $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+        $objMdUtlRevisaoDTO->adicionarCriterio(array('Atual','IdUsuario'),array(InfraDTO::$OPER_IGUAL,InfraDTO::$OPER_IGUAL),array(null, null),InfraDTO::$OPER_LOGICO_OR);
+        $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+        $objRN = new MdUtlRevisaoRN();
+        $numRegistros = $objRN->contar($objMdUtlRevisaoDTO);
+
+        if ($numRegistros > 0) {
+            $arrDadosRevisao = $objRN->listar($objMdUtlRevisaoDTO);
+            foreach ($arrDadosRevisao as $dadoRevisao) {
+                $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+                $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($dadoRevisao->getNumIdMdUtlRevisao());
+                $objMdUtlRevisaoDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+                $objMdUtlRevisaoDTO->setNumIdUsuario($idUsuario);
+                $objRN->alterar($objMdUtlRevisaoDTO);
             }
         }
     }

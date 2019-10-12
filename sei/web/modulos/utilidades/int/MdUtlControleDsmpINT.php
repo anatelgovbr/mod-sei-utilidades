@@ -25,6 +25,8 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_ANALISE;
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE]  = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
+        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO]  = MdUtlControleDsmpRN::$STR_SUSPENSO;
+        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO]  = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
 
         return $arrRetorno;
     }
@@ -44,12 +46,37 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE]  = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
         $arrRetorno[MdUtlControleDsmpRN::$FLUXO_FINALIZADO]  = MdUtlControleDsmpRN::$STR_FLUXO_FINALIZADO;
         $arrRetorno[MdUtlControleDsmpRN::$REMOCAO_FILA]  = MdUtlControleDsmpRN::$STR_REMOCAO_FILA;
+        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO]  = MdUtlControleDsmpRN::$STR_SUSPENSO;
+        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO]  = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
 
         return $arrRetorno;
     }
 
     public static function montarSelectStatus($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false){
         $arrDados = self::retornaArrSituacoesControleDsmp();
+
+        $html = '<option value=""></option>';
+
+        foreach ($arrDados as $key => $status) {
+            $isAguardandoFilaValido =($key != MdUtlControleDsmpRN::$AGUARDANDO_FILA || $key == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isAguardandoFila);
+            $isStatusValido         = $idsStatusPermitido && in_array($key, $idsStatusPermitido) || !$idsStatusPermitido;
+            if ($isAguardandoFilaValido && $isStatusValido) {
+                $selected = '';
+
+                if ($valorSelecionado != '' && $valorSelecionado != null && $valorSelecionado == $key) {
+                    $selected = 'selected=selected';
+                }
+
+                $html .= '<option ' . $selected . ' value="' . $key . '">' . $status . '</option>';
+
+            }
+        }
+
+        return $html;
+    }
+
+    public static function montarSelectStatusMeusProcessos($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false){
+        $arrDados = self::retornaArrSituacoesControleDsmpCompleto();
 
         $html = '<option value=""></option>';
 
@@ -118,7 +145,6 @@ class MdUtlControleDsmpINT extends InfraINT {
         }
 
         $arrVisualizacao = array();
-
         switch ($idStatus){
             case MdUtlControleDsmpRN::$AGUARDANDO_FILA:
                 $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
@@ -341,6 +367,7 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrStatusTriagem = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
         $arrStatusAnalise = array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
         $arrStatusRevisao = array(MdUtlControleDsmpRN::$EM_REVISAO);
+        $arrStatusEspera = array(MdUtlControleDsmpRN::$SUSPENSO, MdUtlControleDsmpRN::$INTERROMPIDO);
 
         if(in_array($idStatus, $arrStatusTriagem)){
             return $arrCtrlUrls['TRIAGEM'];
@@ -352,6 +379,10 @@ class MdUtlControleDsmpINT extends InfraINT {
 
         if(in_array($idStatus, $arrStatusRevisao)){
             return $arrCtrlUrls['REVISAO'];
+        }
+
+        if(in_array($idStatus, $arrStatusEspera)){
+                return '#';
         }
 
         return '';
@@ -385,7 +416,83 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $idsTriagem;
     }
 
-    public static function formatarDatasComDoisDigitos($dataFormato){
+    public static function retornaSelectTipoSolicitacao(){
+        $arr = array();
+        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO]     = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_DILACAO;
+        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO]   = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_SUSPENSAO;
+        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_INTERRUPCAO] = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_INTERRUPCAO;
+        return $arr;
+    }
+
+    public static function getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $idPrazoExistente, $staSolicitacao, $numIdControleDsmp, $isDadosParametrizados, $strIdProcedimento, $statusAnterior)
+
+    {
+        $strResultado = '';
+
+
+        $arrStatusNaoPermitidos = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
+
+        $strUrl =  PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_retornar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_procedimento=' . $strIdProcedimento));
+        if (!in_array($strStatus, $arrStatusNaoPermitidos)) {
+
+            if ($isDadosParametrizados) {
+                if (is_null($idPrazoExistente)) {
+                    if ($isDataPermitida) {
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                    }
+                } else {
+
+                    if ($staSolicitacao == MdUtlAjustePrazoRN::$PENDENTE_RESPOSTA && $isDataPermitida) {
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_alteracao.png" title="Alterar Ajuste de Prazo" alt="Alterar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                    }
+
+                    if ($strStatus == MdUtlControleDsmpRN::$SUSPENSO || $strStatus == MdUtlControleDsmpRN::$INTERROMPIDO && !is_null($statusAnterior)) {
+
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_consulta.png" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+
+                        if ($statusAnterior == MdUtlControleDsmpRN::$EM_REVISAO) {
+                            $strResultado .= '<a id="retornarRevisao" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/retornar_processo.png" title="Retornar para Revisão" alt="Retornar para Revisão" class="infraImg" /></a>&nbsp;';
+                        } else if ($statusAnterior == MdUtlControleDsmpRN::$EM_ANALISE || MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE) {
+                            $strResultado .= '<a id="retornarAnalise" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/retornar_processo.png" title="Retornar para Análise" alt="Retornar para Análise" class="infraImg" /></a>&nbsp;';
+                        }
+
+
+                    } else {
+                        if ($staSolicitacao == MdUtlAjustePrazoRN::$APROVADA || $staSolicitacao == MdUtlAjustePrazoRN::$REPROVADA) {
+                            if ($isDataPermitida) {
+                                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                            }
+                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_consulta.png" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                        }
+                    }
+                }
+            } else {
+                if ($isDataPermitida) {
+                    $strResultado .= '<a href="#" onclick="alert(\'' . MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_87) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                }
+            }
+        }
+
+
+        return $strResultado;
+    }
+
+
+    public static function montarSelectTipoSolicitacao($idSelecionado = null){
+        $select = '<option value=""></option>';
+        $arr = self::retornaSelectTipoSolicitacao();
+        $idSelecionado = trim($idSelecionado);
+
+        foreach ($arr as $key => $value){
+
+            $selected =  !is_null($idSelecionado) && $key == $idSelecionado ? 'selected="selected"' : '';
+            $select .= '<option '.$selected.' value="'.$key.'"> '.$value.' </option>';
+        }
+
+        return $select;
+    }
+
+ public static function formatarDatasComDoisDigitos($dataFormato){
         $arrData = explode('/',$dataFormato);
         $dia = str_pad($arrData[0], 2, '0', STR_PAD_LEFT);
         $mes = str_pad($arrData[1], 2, '0', STR_PAD_LEFT);

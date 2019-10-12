@@ -11,9 +11,17 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 
 class MdUtlAdmFilaRN extends InfraRN {
 
-  public static $TRIADOR = 'T';
-  public static $ANALISTA = 'A';
-  public static $REVISOR = 'R';
+      public static $TRIADOR = 'T';
+      public static $ANALISTA = 'A';
+      public static $REVISOR = 'R';
+
+      public static $TOTAL = '1';
+      public static $STR_TOTAL = 'Total';
+      public static $POR_ATIVIDADE = '2';
+      public static $STR_POR_ATIVIDADE = 'Por Atividade';
+      public static $SEM_REVISAO = '3';
+      public static $STR_SEM_REVISAO = 'Sem Revisão';
+    
 
   public function __construct(){
     parent::__construct();
@@ -125,12 +133,11 @@ class MdUtlAdmFilaRN extends InfraRN {
 
       $objInfraException->lancarValidacoes();
 
-
-
+       $arrTbUsuarioParticipante = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnUsuarioParticipante']);
       $objMdUtlAdmFilaBD = new MdUtlAdmFilaBD($this->getObjInfraIBanco());
       $objMdUtlAdmFilaBD->alterar($objMdUtlAdmFilaDTO);
 
-      $arrTbUsuarioParticipante = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnUsuarioParticipante']);
+
       $this->excluirRelacionamentos($objMdUtlAdmFilaDTO->getNumIdMdUtlAdmFila());
       $this->_cadastrarRelacionamentos($arrTbUsuarioParticipante, $objMdUtlAdmFilaDTO);
       //Auditoria
@@ -323,9 +330,17 @@ class MdUtlAdmFilaRN extends InfraRN {
       $idVinculo    = array_key_exists(0, $usuParticipante) ? $usuParticipante[0] : null;
       $sinTriador   = array_key_exists(3, $usuParticipante) ? $usuParticipante[3] : null;
       $sinAnalista  = array_key_exists(5, $usuParticipante) ? $usuParticipante[5] : null;
-      $vlPercentual = array_key_exists(6, $usuParticipante) ? $usuParticipante[6] : null;
+      $vlTipoRevisao = array_key_exists(6, $usuParticipante) ? $usuParticipante[6] : null;
       $sinRevisor   = array_key_exists(8, $usuParticipante) ? $usuParticipante[8] : null;
-      $vlPercentual = $vlPercentual == null ? 0 : $vlPercentual;
+       if($vlTipoRevisao == MdUtlAdmFilaRN::$STR_TOTAL){
+            $vlTipoRevisao = MdUtlAdmFilaRN::$TOTAL;
+        }
+        if($vlTipoRevisao == MdUtlAdmFilaRN::$STR_POR_ATIVIDADE){
+            $vlTipoRevisao = MdUtlAdmFilaRN::$POR_ATIVIDADE;
+        }
+        if($vlTipoRevisao == MdUtlAdmFilaRN::$STR_SEM_REVISAO){
+            $vlTipoRevisao = MdUtlAdmFilaRN::$SEM_REVISAO;
+        }
 
       if(!is_null($idVinculo))
       {
@@ -336,8 +351,8 @@ class MdUtlAdmFilaRN extends InfraRN {
         $objMdUtlFilaUsuDTO->setStrSinTriador($sinTriador);
         $objMdUtlFilaUsuDTO->setStrSinAnalista($sinAnalista);
         $objMdUtlFilaUsuDTO->setStrSinRevisor($sinRevisor);
-        $objMdUtlFilaUsuDTO->setNumPercentualRevisao($vlPercentual);
-
+        $objMdUtlFilaUsuDTO->setNumTipoRevisao($vlTipoRevisao);
+          
         $objMdUtlFilaUsuRN->cadastrar($objMdUtlFilaUsuDTO);
       }
     }
@@ -572,4 +587,5 @@ class MdUtlAdmFilaRN extends InfraRN {
 
     }
 
+  
 }

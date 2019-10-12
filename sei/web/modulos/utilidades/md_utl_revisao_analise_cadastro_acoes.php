@@ -6,53 +6,81 @@
  * Time: 16:34
  */
 
-$objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
-$objMdUtlAnaliseRN  = new MdUtlAnaliseRN();
 
+$objMdUtlAnaliseRN  = new MdUtlAnaliseRN();
+$objMdUtlRevisaoRN  = new MdUtlRevisaoRN();
+
+$arrObjRelAnaliseProdutoDTOAntigos = array();
+$displayJustificativa = 'style="display: none"';
+$strResultado         ="";
+$idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+
+$objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
 $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($idMdUtlAnalise);
 $objMdUtlAnaliseDTO->retTodos();
-
 $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
 $strInformComp = $objMdUtlAnalise->getStrInformacoesComplementares();
 
 $objMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
 $objMdUtlRelAnaliseProdutoRN  = new MdUtlRelAnaliseProdutoRN();
-
 $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlAnalise($objMdUtlAnalise->getNumIdMdUtlAnalise());
 $objMdUtlRelAnaliseProdutoDTO->retTodos(true);
+$arrMdUtlRelAnaliseProduto   = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
 
-$objMdUtlRelAnaliseProduto = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
-
-$strResultado="";
-$numRegistro = count($objMdUtlRelAnaliseProduto);
-
-if($isConsultar){
-
+if ($isConsultar) {
     $disabled = 'disabled="disabled"';
-    $idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+    $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+    $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($idRevisao);
+    $objMdUtlRevisaoDTO->retTodos();
 
-    $MdUtlRevisaoDTO = new MdUtlRevisaoDTO();
-    $MdUtlRevisaoRN  = new MdUtlRevisaoRN();
+    $objMdUtlRevisaoDTO = $objMdUtlRevisaoRN->consultar($objMdUtlRevisaoDTO);
+    $strInformCompRevisao = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
+    $strEncaminhamento = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrStaEncaminhamentoRevisao() : '';
 
-    $MdUtlRevisaoDTO->setNumIdMdUtlRevisao($idRevisao);
-    $MdUtlRevisaoDTO->retTodos();
+    $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
+    $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
 
-    $MdUtlRevisao = $MdUtlRevisaoRN->consultar($MdUtlRevisaoDTO);
-    $strInformCompRevisao = !is_null($MdUtlRevisao) ?  $MdUtlRevisao->getStrInformacoesComplementares() : '';
-    $strEncaminhamento = !is_null($MdUtlRevisao) ? $MdUtlRevisao->getStrStaEncaminhamentoRevisao() : '';
-
-    $MdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
-    $MdUtlRelRevisTrgAnlsRN  = new MdUtlRelRevisTrgAnlsRN();
-
-    if(!is_null($MdUtlRevisao)) {
-        $MdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
-        $MdUtlRelRevisTrgAnlsDTO->retTodos();
-        $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($MdUtlRelRevisTrgAnlsDTO);
+    if (!is_null($objMdUtlRevisaoDTO)) {
+        $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
+        $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+        $arrMdUtlRelRevisTrgAnls = $objMdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
     }
-
 }
 
+if ($isEdicao) {
+    $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+    $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($idRevisao);
+    $objMdUtlRevisaoDTO->retTodos();
 
+    $objMdUtlRevisaoDTO = $objMdUtlRevisaoRN->consultar($objMdUtlRevisaoDTO);
+
+    $strInformCompRevisao = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
+    $strEncaminhamento = '';
+
+    $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
+    $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
+
+    $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
+    $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+    $arrMdUtlRelRevisTrgAnlsEdicaoDTO = $objMdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
+
+    $objMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
+    $novaListaRelRevisTrgAnls = [];
+
+    $idsRelProdutoAntigos = InfraArray::converterArrInfraDTO($arrMdUtlRelRevisTrgAnlsEdicaoDTO, 'IdMdUtlRelAnaliseProduto');
+    if (count($idsRelProdutoAntigos) > 0) {
+        $arrObjRelAnaliseProdutoDTOAntigos = $objMdUtlRelAnaliseProdutoRN->getArrObjPorIds($idsRelProdutoAntigos);
+
+    }
+}
+
+if (!is_null($objMdUtlRevisaoDTO)) {
+    $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
+    $objMdUtlRelRevisTrgAnlsDTO->retTodos();
+    $arrMdUtlRelRevisTrgAnls = $objMdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
+}
+
+$numRegistro = count($arrMdUtlRelAnaliseProduto);
 
 if($numRegistro > 0) {
 
@@ -74,41 +102,73 @@ if($numRegistro > 0) {
         $strResultado .= '</tr>';
 
         $hdnTbRevisaoAnalise = "";
-        for ($i = 0; $i < $numRegistro; $i++) {
 
+        for ($i = 0; $i < $numRegistro; $i++) {
             $displayJustificativa = 'style="display: none"';
-            $idMdUtlRelAnaliseProduto = $objMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelAnaliseProduto();
+            $strObservacao  = '';
+            $strDocumento   = '';
+            $selRevisao     = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, null);
+            $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle,  null);
+
+            $idMdUtlRelAnaliseProduto = $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelAnaliseProduto();
+            $bolDocSei = $arrMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() != "" ? true : false;
 
             if ($isConsultar) {
-                $MdUtlRelRevisTrgAnls = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelAnaliseProduto', $idMdUtlRelAnaliseProduto);
+                $arrMdUtlRelRevisTrgAnlsCompleto = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelAnaliseProduto', $idMdUtlRelAnaliseProduto);
 
-                $strObservacao = $MdUtlRelRevisTrgAnls[0]->getStrObservacao();
-                $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpRevisao());
+                if(count($arrMdUtlRelRevisTrgAnlsCompleto) > 0) {
+                    $strObservacao = $arrMdUtlRelRevisTrgAnlsCompleto[0]->getStrObservacao();
+                    $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $arrMdUtlRelRevisTrgAnlsCompleto[0]->getNumIdMdUtlAdmTpRevisao());
 
-                if ($MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao() > 0) {
-                    $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $MdUtlRelRevisTrgAnls[0]->getNumIdMdUtlAdmTpJustRevisao());
-                    $displayJustificativa = '';
+                    if ($arrMdUtlRelRevisTrgAnlsCompleto[0]->getNumIdMdUtlAdmTpJustRevisao() > 0) {
+                        $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $arrMdUtlRelRevisTrgAnlsCompleto[0]->getNumIdMdUtlAdmTpJustRevisao());
+                        $displayJustificativa = '';
+                    }
+                }
+            }
+
+
+            if ($isEdicao) {
+                $arrMdRelAtividadeIgualDTO = InfraArray::filtrarArrInfraDTO($arrObjRelAnaliseProdutoDTOAntigos, 'IdMdUtlAdmAtividade', $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlAdmAtividade());
+                $strAtributoSearch = $bolDocSei ? 'IdDocumento' : 'IdMdUtlAdmTpProduto';
+                $valorSearch = $bolDocSei ? $arrMdUtlRelAnaliseProduto[$i]->getDblIdDocumento() : $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlAdmTpProduto();
+                $arrMdRelIgualDTO = InfraArray::filtrarArrInfraDTO($arrMdRelAtividadeIgualDTO, $strAtributoSearch, $valorSearch);
+
+                if (count($arrMdRelIgualDTO) > 0 && $arrMdRelIgualDTO[0] != null) {
+
+                    $arrDadosAntigaRevisaoDTO = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelAnaliseProduto', $arrMdRelIgualDTO[0]->getNumIdMdUtlRelAnaliseProduto());
+
+                    if (count($arrDadosAntigaRevisaoDTO) > 0 && $arrDadosAntigaRevisaoDTO[0] != null) {
+                        $selRevisao = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle, $arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpRevisao());
+
+                        if ($arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpJustRevisao() != null) {
+                            $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle, $arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlAdmTpJustRevisao());
+                            $strObservacao = $arrDadosAntigaRevisaoDTO[0]->getStrObservacao();
+
+                            $displayJustificativa = '';
+                        }
+                    }
+
+                    MdUtlRevisaoINT::setObjUtilizadoAnaliseRevisao($arrObjRelAnaliseProdutoDTOAntigos, $arrMdRelIgualDTO);
                 }
             }
 
             $strResultado .= '<tr class="infraTrClara">';
             $strResultado .= '<td style="display: none" >' . $idMdUtlRelAnaliseProduto . '</td>';
-            $strResultado .= '<td>' . $objMdUtlRelAnaliseProduto[$i]->getStrNomeAtividade() . '</td>';
+            $strResultado .= '<td>' . $arrMdUtlRelAnaliseProduto[$i]->getStrNomeAtividade() . '</td>';
 
-            $bolDocSei = $objMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() != "" ? true : false;
-            $strProduto = $bolDocSei ? $objMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() : $objMdUtlRelAnaliseProduto[$i]->getStrNomeProduto();
+            $strProduto = $bolDocSei ? $arrMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() : $arrMdUtlRelAnaliseProduto[$i]->getStrNomeProduto();
             $strResultado .= '<td>' . $strProduto . '</td>';
 
-            $strDocumento = "";
             if ($bolDocSei) {
-                $dblIdDocumento = $objMdUtlRelAnaliseProduto[$i]->getDblIdDocumento();
-                $strDocumento = $strProduto . " (" . $objMdUtlRelAnaliseProduto[$i]->getStrDocumentoFormatado() . ")";
+                $dblIdDocumento = $arrMdUtlRelAnaliseProduto[$i]->getDblIdDocumento();
+                $strDocumento = $strProduto . " (" . $arrMdUtlRelAnaliseProduto[$i]->getStrDocumentoFormatado() . ")";
             }
 
             $strAcoesDocumento = '<a href="#" onclick="infraAbrirJanela(\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=documento_visualizar&acao_origem=arvore_visualizar&acao_retorno=arvore_visualizar&id_procedimento=' . $idProcedimento . '&id_documento=' . $dblIdDocumento . '&arvore=1') . '\',\'janelaCancelarAssinaturaExterna\',850,600,\'location=0,status=1,resizable=1,scrollbars=1\')" tabindex="' . $numTabBotao . '" class="botaoSEI">' . $strDocumento . '</a>';
 
             $strResultado .= '<td>' . $strAcoesDocumento . '</td>';
-            $strResultado .= '<td align="center"><img src="modulos/utilidades/imagens/obsAnalise.png" title="' . $objMdUtlRelAnaliseProduto[$i]->getStrObservacaoAnalise() . '" alt="teste" class="infraImg" style="width: 16px;height: 16px"/></td>';
+            $strResultado .= '<td align="center"><img src="modulos/utilidades/imagens/obsAnalise.png" title="' . $arrMdUtlRelAnaliseProduto[$i]->getStrObservacaoAnalise() . '" alt="teste" class="infraImg" style="width: 16px;height: 16px"/></td>';
             $strResultado .= '<td>';
             $strResultado .= '<select campo="R" style="width:95%" class="infraSelect" ' . $disabled . ' id="selRev_' . $idMdUtlRelAnaliseProduto . '" name="selRev_' . $idMdUtlRelAnaliseProduto . '" onchange="verificarJustificativa(this);" >' . $selRevisao . '</select>';
             $strResultado .= '</td>';
@@ -126,8 +186,8 @@ if($numRegistro > 0) {
             $hdnTbRevisaoAnalise .= "±selRev_" . $idMdUtlRelAnaliseProduto;
             $hdnTbRevisaoAnalise .= "±selJust_" . $idMdUtlRelAnaliseProduto;
             $hdnTbRevisaoAnalise .= "±obs_" . $idMdUtlRelAnaliseProduto;
-
         }
+
         $strResultado .= '</table>';
     }
 }

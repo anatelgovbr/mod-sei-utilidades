@@ -169,6 +169,7 @@ if (0){?><script type="text/javascript"><?}?>
             return 'palavras_pesquisa=' + document.getElementById('txtAtividade').value;
         };
 
+        objAutoCompletarAtividade.tamanhoMinimo = 3;
         objAutoCompletarAtividade.processarResultado = function (id, descricao, complemento) {
 
             if (id != '') {
@@ -199,6 +200,7 @@ if (0){?><script type="text/javascript"><?}?>
         };
 
         objLupaAtividade = new infraLupaSelect('selAtividade', 'hdnAtividade', '<?=$strLinkAtividadeSelecao?>');
+
         objLupaAtividade.processarRemocao = function () {
 
             if (isAlterar && idMdUtlAdmPrmGrUsu != 0) {
@@ -229,7 +231,6 @@ if (0){?><script type="text/javascript"><?}?>
 
     function carregarComponenteTpProcesso() {
 
-        // ================= INICIO - JS para selecao de gestores =============================
         objLupaTpProcesso = new infraLupaText('txtTpProcesso','hdnIdTpProcesso','<?=$strLinkTpProcessoSelecaoUnica?>');
 
         objLupaTpProcesso.finalizarSelecao = function(){
@@ -238,7 +239,7 @@ if (0){?><script type="text/javascript"><?}?>
   
         objAutoCompletarTipoProcesso = new infraAjaxAutoCompletar('hdnIdTpProcesso','txtTpProcesso','<?=$strLinkAjaxTpProcesso?>');
         objAutoCompletarTipoProcesso.limparCampo = false;
-  
+        objAutoCompletarTipoProcesso.tamanhoMinimo = 3;
         objAutoCompletarTipoProcesso.prepararExecucao = function(){
             return 'palavras_pesquisa='+ $.trim(document.getElementById('txtTpProcesso').value);
         };

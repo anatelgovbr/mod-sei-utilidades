@@ -9,15 +9,24 @@ if(0){?><script type="text/javascript"><?}?>
     var msg10 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10, 'Fila') ?>';
     var msg18 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_18, 'Fila') ?>';
 
-    function inicializar(){
-        carregarComponenteFilaUnica();
+    function inicializar() {
+        var idAlteracao = '<?php echo array_key_exists('id_md_utl_adm_grp_fila', $_GET) ? $_GET['id_md_utl_adm_grp_fila'] : 0?>';
+        if ('<?=$_GET['acao']?>' == 'md_utl_adm_grp_fila_cadastrar') {
 
-        if ('<?=$_GET['acao']?>'=='md_utl_adm_grp_fila_cadastrar'){
-            carregarComponenteFila();
+            if(idAlteracao == 0) {
+                carregarComponenteFila();
+            }else{
+                carregarComponenteFilaUnica();
+            }
+
             document.getElementById('txtNome').focus();
-        } else if ('<?=$_GET['acao']?>'=='md_utl_adm_grp_fila_consultar'){
+        } else if ('<?=$_GET['acao']?>' == 'md_utl_adm_grp_fila_alterar') {
+            carregarComponenteFilaUnica();
+            document.getElementById('txtNome').focus();
+        } else if ('<?=$_GET['acao']?>' == 'md_utl_adm_grp_fila_consultar') {
+            carregarComponenteFilaUnica();
             infraDesabilitarCamposAreaDados();
-        }else{
+        } else {
             document.getElementById('btnCancelar').focus();
         }
         infraEfeitoTabelas(true);
@@ -51,7 +60,7 @@ if(0){?><script type="text/javascript"><?}?>
 
         objAutoCompletarFila = new infraAjaxAutoCompletar('hdnIdFila','txtFila','<?=$strLinkAjaxFila?>');
         objAutoCompletarFila.limparCampo = true;
-
+        objAutoCompletarFila.tamanhoMinimo = 3;
         objAutoCompletarFila.prepararExecucao = function(){
             return 'palavras_pesquisa='+document.getElementById('txtFila').value;
         };
@@ -88,39 +97,29 @@ if(0){?><script type="text/javascript"><?}?>
         objLupaFila = new infraLupaSelect('selFila','hdnFila','<?=$strLinkFilaSelecao?>');
     }
 
-    function carregarComponenteFilaUnica(){
-        // ================= INICIO - JS para selecao de gestores =============================
+    function carregarComponenteFilaUnica() {
+        objLupaFilaUnica = new infraLupaText('selFila', 'hdnFila', '<?=$strLinkFilaSelecaoUnica?>');
 
-        objAutoCompletarFilaUnica = new infraAjaxAutoCompletar('hdnIdFila','txtFila','<?=$strLinkAjaxFila?>');
-        objAutoCompletarFilaUnica.limparCampo = true;
+        objLupaFilaUnica.finalizarSelecao = function () {
+            objAutoCompletarTipoProcesso.selecionar(document.getElementById('hdnFila').value, document.getElementById('selFila').value);
+        }
 
-        objAutoCompletarFilaUnica.prepararExecucao = function(){
-            return 'palavras_pesquisa='+document.getElementById('txtFila').value;
+        objAutoCompletarFilaUnica = new infraAjaxAutoCompletar('hdnFila', 'selFila', '<?=$strLinkAjaxFila?>');
+        objAutoCompletarFilaUnica.limparCampo = false;
+        objAutoCompletarFilaUnica.tamanhoMinimo = 3;
+        objAutoCompletarFilaUnica.prepararExecucao = function () {
+            return 'palavras_pesquisa=' + $.trim(document.getElementById('selFila').value);
         };
 
-        objAutoCompletarFilaUnica.processarResultado = function(id,descricao,complemento){
-
-            if (id!=''){
-
-                infraGetElementById('txtFila').value   = descricao;
-                infraGetElementById('hdnIdFila').value = id;
-            }
-        };
-
-        objLupaFilaUnica = new infraLupaSelect('selFila','hdnFila','<?=$strLinkFilaSelecaoUnica?>');
-
-        objLupaFilaUnica.processarSelecao = function (obj){
-
-
-            var select = infraGetElementById('selFila');
-
-            while(select.options.length > 0){
-                select.remove(0);
+        objAutoCompletarFilaUnica.processarResultado = function (id, descricao, complemento) {
+            if (id != '') {
+                document.getElementById('hdnFila').value = id;
+                document.getElementById('selFila').value = descricao;
             }
 
-            return true;
-        };
+        }
 
+        objAutoCompletarFilaUnica.selecionar('<?=$strIdFila?>','<?=PaginaSEI::getInstance()->formatarParametrosJavascript($strNomeFila);?>');
 
     }
 

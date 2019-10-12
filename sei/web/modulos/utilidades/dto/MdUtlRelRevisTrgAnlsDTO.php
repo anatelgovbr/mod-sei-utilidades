@@ -35,7 +35,9 @@ class MdUtlRelRevisTrgAnlsDTO extends InfraDTO {
 
     $this->configurarFK('IdMdUtlAdmTpJustRevisao', 'md_utl_adm_tp_just_revisao', 'id_md_utl_adm_tp_just_revisao', InfraDTO::$TIPO_FK_OPCIONAL);
     $this->configurarFK('IdMdUtlAdmTpRevisao', 'md_utl_adm_tp_revisao', 'id_md_utl_adm_tp_revisao');
-    $this->configurarFK('IdMdUtlRelAnaliseProduto', 'md_utl_rel_analise_produto', 'id_md_utl_rel_analise_produto');
-    $this->configurarFK('IdMdUtlRelTriagemAtv', 'md_utl_rel_triagem_atv', 'id_md_utl_rel_triagem_atv');
+    $this->configurarFK('IdMdUtlRelAnaliseProduto', 'md_utl_rel_analise_produto', 'id_md_utl_rel_analise_produto', InfraDTO::$TIPO_FK_OPCIONAL);
+    $this->configurarFK('IdMdUtlRelTriagemAtv', 'md_utl_rel_triagem_atv reltratv', 'reltratv.id_md_utl_rel_triagem_atv', InfraDTO::$TIPO_FK_OPCIONAL);
+
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmAtividade', 'reltratv.id_md_utl_adm_atividade', 'md_utl_rel_triagem_atv reltratv');
   }
 }

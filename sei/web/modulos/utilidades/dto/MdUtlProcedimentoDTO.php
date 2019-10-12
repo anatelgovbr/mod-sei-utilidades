@@ -28,6 +28,7 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
         $this->configurarFK('IdProtocoloDoc', 'protocolo pd', 'pd.id_protocolo');
         $this->configurarFK('IdProcedimento', 'atividade atv', 'atv.id_protocolo');
         $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario', InfraDTO::$TIPO_FK_OPCIONAL);
+        $this->configurarFK('IdMdUtlAjustePrazo', 'md_utl_ajuste_prazo mdap', 'mdap.id_md_utl_ajuste_prazo', InfraDTO::$TIPO_FK_OPCIONAL);
 
         //$this->configurarFK('IdDocumento', 'documento d', 'd.id_documento');
 
@@ -73,6 +74,11 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
             'UnidadeEsforco',
             'cpf.unidade_esforco',
+            'md_utl_controle_dsmp cpf');
+
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
+            'IdMdUtlRevisao',
+            'cpf.id_md_utl_revisao',
             'md_utl_controle_dsmp cpf');
 
         //Get dados da tabela Fila
@@ -151,11 +157,23 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'cpf.id_md_utl_triagem',
             'md_utl_controle_dsmp cpf');
 
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
+            'IdMdUtlAjustePrazo',
+            'cpf.id_md_utl_ajuste_prazo',
+            'md_utl_controle_dsmp cpf');
+
+        //Get Dados Ajuste Prazo
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,
+            'StaSolicitacaoAjustePrazo',
+            'mdap.sta_solicitacao',
+            'md_utl_ajuste_prazo mdap');
+
 
         //Get Dados do Usuário da Distribuição
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuarioDistribuicao','ud.nome','usuario ud');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SiglaUsuarioDistribuicao','ud.sigla','usuario ud');
 
+        $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'ValorAtividadeSelectUtl');
     }
 
     public function getControleDsmpTIPOFK() {

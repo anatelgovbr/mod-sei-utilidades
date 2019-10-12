@@ -84,11 +84,11 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         </a>
         <br>
         <div id="divRadiosAnalise">
-        <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeComAnalise" value="S" <?=$rdnComAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
-        <label id="lblComAnalise"  class="infraLabelOpicional">Com Análise</label>
-        <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeSemAnalise" value="N" <?=$rdnSemAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
-        <label id="lblSemAnalise" class="infraLabelOpicional">Sem Análise</label>
-            </div>
+            <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeComAnalise" value="S" <?=$rdnComAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
+            <label id="lblComAnalise"  class="infraLabelOpicional">Com Análise</label>
+            <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeSemAnalise" value="N" <?=$rdnSemAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
+            <label id="lblSemAnalise" class="infraLabelOpicional">Sem Análise</label>
+        </div>
     </div>
     <br>
     <div class="bloco blocoExibir" id="divComAnalise" >
@@ -143,8 +143,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         </br>
     <div class="bloco blocoExibir" id="divAtvRevAmost" >
         <input type="checkbox" <?=$chkAmostragem?> <?=$strDesabilitar?> name="chkAtvRevAmost" id="chkAtvRevAmost">
-        <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Revisão por Amostragem</label>
-        <a style="" id="btAjudaAtvRevAmost" <?=PaginaSEI::montarTitleTooltip('A Atividade passará por Revisão por amostragem.')?>
+        <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Revisão</label>
+        <a style="" id="btAjudaAtvRevAmost" <?=PaginaSEI::montarTitleTooltip('A Atividade passará por Revisão.')?>
            tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
             <img id="imgAjudaAtvRevAmost" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
         </a>

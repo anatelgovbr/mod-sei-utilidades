@@ -33,17 +33,18 @@ class MdUtlAdmRelPrmGrProcINT extends InfraINT {
     return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlAdmRelPrmGrProcDTO, array('IdMdUtlAdmParamGr','IdTipoProcedimento'), 'IdMdUtlAdmParamGr');
   }
 
-  public static function autoCompletarTipoProcedimentoPorParametrizacao($strPalavrasPesquisa, $idTpProcedimento){
+  public static function autoCompletarTipoProcedimentoPorParametrizacao($strPalavrasPesquisa, $idParametro){
     
     $strPalavrasPesquisa = trim($strPalavrasPesquisa);
     
     if ($strPalavrasPesquisa != ''){
       $objTipoProcedimentoDTO = new MdUtlAdmRelPrmGrProcDTO();
       $objTipoProcedimentoDTO->retTodos();
-      $objTipoProcedimentoDTO->setNumIdMdUtlAdmParamGr($idTpProcedimento);
+      $objTipoProcedimentoDTO->setNumIdMdUtlAdmParamGr($idParametro);
       $objTipoProcedimentoDTO->retStrNomeProcedimento();
       $objTipoProcedimentoDTO->setOrdStrNomeProcedimento(InfraDTO::$TIPO_ORDENACAO_ASC);
-      
+      $objTipoProcedimentoDTO->setNumMaxRegistrosRetorno(50);
+
       $objTipoProcedimentoRN = new MdUtlAdmRelPrmGrProcRN();
       $arrObjTipoProcedimentoDTO = $objTipoProcedimentoRN->listar($objTipoProcedimentoDTO);
     

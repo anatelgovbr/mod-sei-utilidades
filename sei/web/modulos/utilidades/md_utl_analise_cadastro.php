@@ -38,6 +38,9 @@ $isCadastrar       = false;
 $disabledConsultar ="";
 $strTitulo         = 'Análise ';
 $displayFila       = "display:none";
+$isRetriagem       = array_key_exists('id_retriagem', $_GET) ? $_GET['id_retriagem'] : $_POST['hdnIdRetriagem'];
+$isProcessoConcluido = 0;
+
 
 ///rNS
 $objMdUtlControleDsmpRN      = new MdUtlControleDsmpRN();
@@ -67,7 +70,9 @@ $idTriagem                = $objControleDsmpDTO->getNumIdMdUtlTriagem();
 
 //Urls
 $strUrlValidarDocumentoSEI = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_documento_sei');
-
+$strUrlRetriagem           = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem=md_utl_processo_listar&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1');
+$strUrlRtgAnlCorrecao      = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem=md_utl_processo_listar&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1');
+$strDetalhamento           = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento);
 $idsAtividades = $objTriagemRN->getIdsAtividadesTriagem($idTriagem);
 
 
@@ -110,6 +115,10 @@ switch ($_GET['acao']) {
             $arrComandos[] = '<button type="submit" accesskey="s" id="btnSalvar" value="salvar" class="infraButton botaoSalvar">
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
+            $arrComandos[] = '<button type="button" accesskey="t" id="btnRetriagem" value="Retriagem" onclick="Retriagem();" class="infraButton">
+                                    Re<span class="infraTeclaAtalho">t</span>riagem
+                            </button>';
+
             $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
                                     <span class="infraTeclaAtalho">C</span>ancelar
                             </button>';
@@ -117,19 +126,18 @@ switch ($_GET['acao']) {
 
         $disabled="";
         if(!empty($_POST)){
-
+          
             try {
                 $objRn = new MdUtlAnaliseRN();
-                $sucesso = $objRn->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado));
+                $isProcessoConcluido = $objRn->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado, false));
 
-             if($sucesso) {
-                    if($isPgPadrao == 0) {
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
-                    }else{
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
-                    }
-                    die;
+                if ($isPgPadrao == 0) {
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
+                } else {
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }
+                die;
+
             }catch(Exception $e){
                 throw new InfraException('Erro cadastrando .',$e);
             }
@@ -160,6 +168,7 @@ switch ($_GET['acao']) {
         break;
 
     case 'md_utl_analise_alterar':
+        
         $isAlterar = true;
         $arrObjsPreenchidos = $objMdUtlRelTriagemAtvRN->listarComAnalise($idMdUtlAnalise);
 
@@ -213,12 +222,16 @@ switch ($_GET['acao']) {
 
 
 
-        $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="abrirModalRevisao();" class="infraButton">
-                                    <span class="infraTeclaAtalho">R</span>evisão
-                            </button>';
-
         $arrComandos[] = '<button type="submit" accesskey="s" id="btnSalvar" value="salvar" class="infraButton botaoSalvar">
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
+
+        $arrComandos[] = '<button type="button" accesskey="t" id="btnRetriagem" value="Retriagem" onclick="RetriagemAnlCorrecao();" class="infraButton">
+                                     Re<span class="infraTeclaAtalho">t</span>riagem
+                            </button>';
+
+        $arrComandos[] = '<button type="button" accesskey="r" id="btnFecharSelecao" value="Cancelar" onclick="abrirModalRevisao();" class="infraButton">
+                                    <span class="infraTeclaAtalho">R</span>evisão
+                            </button>';
 
         $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
                                     <span class="infraTeclaAtalho">C</span>ancelar
@@ -232,6 +245,7 @@ switch ($_GET['acao']) {
 
         if(!empty($_POST)){
 
+
             try {
 
                 $objRevisaoRN  = new MdUtlRevisaoRN();
@@ -240,12 +254,12 @@ switch ($_GET['acao']) {
                 $objRevisaoRN->desativar(array($objRevisaoDTO));
                 $objMdUtlAnaliseRN->desativar(array($objMdUtlAnaliseDTO));
 
-                $sucesso = $objMdUtlAnaliseRN->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado));
+                $isProcessoConcluido = $objMdUtlAnaliseRN->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado, true));
 
                 if($isPgPadrao == 0) {
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }else{
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }
 
             }catch(Exception $e){
@@ -520,6 +534,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" name="hdnStaPermiteAssociarAnalise" id="hdnStaPermiteAssociarAnalise" value="<?php echo MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA ?>"/>
         <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
         <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
+        <input type="hidden" name="hdnIdRetriagem" id="hdnIdRetriagem"/>
+        <input type="hidden" name="hdnIdRtgAnlCorrecao" id="hdnIdRtgAnlCorrecao"/>
+
 <?php
 
 

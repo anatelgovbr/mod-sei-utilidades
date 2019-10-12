@@ -27,7 +27,7 @@ try {
 }
 
 $strLinkUsuarioSelecao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=usuario_selecionar&tipo_selecao=2&id_object=objLupaUsuario');
-$strLinkAjaxUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=usuario_auto_completar');
+$strLinkAjaxUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_usuario_auto_completar');
 $strLinkAjaxVincUsuFila = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_prm_vinculo_usuario_fila');
 $strUrlBuscarNomesUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_prm_buscar_nome_usuario');
 
@@ -58,7 +58,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <?
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
         //PaginaSEI::getInstance()->montarAreaValidacao();
-        PaginaSEI::getInstance()->abrirAreaDados('36em');
+        PaginaSEI::getInstance()->abrirAreaDados('36em; overflow:unset;');
         ?>
         <label id="lblCargaPadrao" for="txtCargaPadrao" accesskey="" class="infraLabelObrigatorio" >Carga Padrão de
             Unidade de Esforço:</label>
@@ -78,11 +78,35 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             <img id="imgAjudalStaFrequencia" border="0" style="width: 16px;height: 16px; margin-left: 20px!important;"
                  src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
         </a>
-        <select id="selStaFrequencia" name="selStaFrequencia" class="infraSelect"
+        <select id="selStaFrequencia" name="selStaFrequencia" class="infraSelect" onchange="montarPeriodo()"
                 tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
             <?= $strItensSelStaFrequencia ?>
         </select>
+        <!---->
 
+        <label id="lblInicioPeriodo" for="selInicioPeriodo" accesskey="" class="infraLabelObrigatorio">Início do Período:</label>
+        <a style="" id="btnInicioPeriodo" <?= PaginaSEI::montarTitleTooltip('Informa a frequência da distribuição das tarefas.') ?>
+           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <img id="imgAjudaInicioPeriodo" border="0" style="width: 16px;height: 16px;"
+                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+        </a>
+        <select id="selInicioPeriodo" name="selInicioPeriodo" class="infraSelect" onchange="montarFimPeriodo()"
+                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <?= $strItensSelInicioPeriodo ?>
+        </select>
+
+        <label id="lblFimPeriodo" for="selFimPeriodo" accesskey="" class="infraLabelOpcional">Fim do Período:</label>
+        <a style="" id="btnFimPeriodo" <?= PaginaSEI::montarTitleTooltip('Informa a frequência da distribuição das tarefas.') ?>
+           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <img id="imgAjudaFimPeriodo" border="0" style="width: 16px;height: 16px;"
+                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+        </a>
+        <select id="selFimPeriodo" name="selFimPeriodo" class="infraSelect" disabled
+                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <?= $strItensSelFimPeriodo ?>
+        </select>
+
+        <!---->
         <label id="lblPercentualTeletrabalho" for="txtPercentualTeletrabalho" accesskey="" class="infraLabelOpcional">Percentual
             de Desempenho a Maior para Teletrabalho:</label>
         <a style="" id="btnPercentualTeletrabalho" <?= PaginaSEI::montarTitleTooltip('Informa o percentual de desempenho. Esse valor será acrescido para a distribuição das tarefas de servidor em teletrabalho.') ?>
@@ -141,9 +165,82 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             <input type="hidden" id="hdnIdTpProcesso" name="hdnIdTpProcesso" value="" />
 
         </div>
+            <!-- SPRINT 11 -->
+            <div id="blocoRespTacita" >
+                <fieldset class="infraFieldset" style="padding-bottom: 3%; margin-top: 25px;" >
+                    <legend class="infraLegend" >Resposta Tácita para Solicitação de Ajuste de Prazo</legend>
+                    </br>
+
+                    <!-- Resposta tácita para dilação de prazo-->
+                    <div>
+                        <label id="lblDilacao" for="selDilacao" accesskey="" class="infraLabelObrigatorio">Resposta Tácita para Dilação de Prazo: </label>
+                        <a id="hintDilacao" <?= PaginaSEI::montarTitleTooltip('Informa o Tipo de Resposta Tácita para Solicitação de Dilação de Prazo.') ?>
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <img id="imgDilacao" border="0" style="width: 16px;height: 16px;margin-left: 2px;"
+                                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+                        </a>
+                        <select id="selDilacao" name="selDilacao" class="infraSelect"
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?=$strItensSelRespDilacao?>
+                        </select>
+                    </div>
+                    <!-- Resposta tácita para suspensão de prazo-->
+                    <div>
+                        <label id="lblSuspensao" for="selSuspensao" accesskey="" class="infraLabelObrigatorio">Resposta Tácita para Suspensão de Prazo: </label>
+                        <a id="hintSuspensao" <?= PaginaSEI::montarTitleTooltip('Informa o Tipo de Resposta Tácita para Solicitação de Suspensão de Prazo.') ?>
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <img id="imgSuspensao" border="0" style="width: 16px;height: 16px;margin-left: 2px;"
+                                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+                        </a>
+                        <select id="selSuspensao" name="selSuspensao" class="infraSelect"
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?=$strItensSelRespSuspensao?>
+                        </select>
+                    </div>
+                    <!-- Prazo máximo de suspensão de prazo-->
+                    <div>
+                        <label id="lblPrzSuspensao" for="przSuspensao" accesskey="" class="infraLabelObrigatorio">Prazo máximo de Suspensão: </label>
+                        <a id="hintPrzSuspensao" <?= PaginaSEI::montarTitleTooltip('Informa o Prazo Máximo em dias úteis para Suspensão de Prazo.') ?>
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <img id="imgPrzSuspensao" border="0" style="width: 16px;height: 16px;"
+                                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+                        </a>
+                        <input type="text" id="przSuspensao" name="przSuspensao" utlsomentenumeropaste="true"
+                               maxlength="3" onkeypress="return infraMascaraNumero(this, event, 3)" onchange="validarValorDosPrazos(this)"
+                               class="infraText" value="<?= PaginaSEI::tratarHTML($numPrzSuspensao); ?>" />
+                    </div>
+                    <!-- Resposta tácita para interrupção de prazo-->
+                    <div>
+                        <label id="lblInterrupcao" for="selInterrupcao" accesskey="" class="infraLabelObrigatorio">Resposta Tácita para Interrupção de Prazo: </label>
+                        <a id="hintInterrupcao" <?= PaginaSEI::montarTitleTooltip('Informa o Tipo de Resposta Tácita para Solicitação de Interrupção de Prazo.') ?>
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <img id="imgInterrupcao" border="0" style="width: 16px;height: 16px;margin-left: 2px;"
+                                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+                        </a>
+                        <select id="selInterrupcao" name="selInterrupcao" class="infraSelect"
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?=$strItensSelRespInterrupcao?>
+                        </select>
+                    </div>
+                    <!-- Prazo máximo de interrupção de prazo-->
+                    <div>
+                        <label id="lblPrzInterrupcao" for="przInterrupcao" accesskey="" class="infraLabelObrigatorio">Prazo máximo de Interrupção: </label>
+                        <a id="hintPrzInterrupcao" <?= PaginaSEI::montarTitleTooltip('Informa o Prazo Máximo em dias úteis para Interrupção de Prazo.') ?>
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <img id="imgPrzInterrupcao" border="0" style="width: 16px;height: 16px;"
+                                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
+                        </a>
+                        <input type="text" id="przInterrupcao" name="przInterrupcao" utlsomentenumeropaste="true"
+                               maxlength="3" onkeypress="return infraMascaraNumero(this, event, 3)" onchange="validarValorDosPrazos(this)"
+                               class="infraText" value="<?= PaginaSEI::tratarHTML($numPrzInterrupcao); ?>" />
+                    </div>
+                </fieldset>
+            </div>
+
+            <!-- FIM SPRINT 11 -->
         <?
         PaginaSEI::getInstance()->fecharAreaDados();
-        PaginaSEI::getInstance()->abrirAreaDados($heigthAreaDados.'em')
+        PaginaSEI::getInstance()->abrirAreaDados($heigthAreaDados.'em; overflow:unset');
         ?>
         <div id="blocoUsuario"  >
         <fieldset class="infraFieldset" style="padding-bottom: 4%" >
@@ -206,7 +303,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             </select>
             <div id="divRedJornada" style="display: none;">
                 <label id="lblFtReduc" for="txtFtReduc" accesskey="" class="infraLabelObrigatorio">Fator de Redução da Jornada:</label>
-                <a  id="btnFtReduc" <?= PaginaSEI::montarTitleTooltip('Informar o percentual de redução para o servidor quando o tipo de jornada for igual a reduzido.') ?>
+                <a  id="btnFtReduc" <?= PaginaSEI::montarTitleTooltip('Informar o percentual de redução de jornada para o servidor quando o tipo de jornada for igual a reduzido.') ?>
                     tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                     <img id="imgAjudaFtReduc" border="0" style="width: 16px;height: 16px;"
                          src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>

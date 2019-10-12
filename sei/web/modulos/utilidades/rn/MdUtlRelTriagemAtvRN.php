@@ -194,10 +194,10 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
         $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
 
             $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
+            $objMdUtlRelTriagemAtvDTO->setOrdStrNomeAtividade(InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
             $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
             $objMdUtlRelTriagemAtvDTO->retTodos();
-
 
         $count = $objMdUtlRelTriagemAtvRN->contar($objMdUtlRelTriagemAtvDTO);
 
@@ -208,5 +208,27 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
         
         return null;
     }
-}
 
+    protected function getObjsRelTriagemAtividadeConectado($idsTriagem)
+    {
+
+        $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+        $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
+
+        $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlRelTriagemAtv($idsTriagem, InfraDTO::$OPER_IN);
+        $objMdUtlRelTriagemAtvDTO->setOrdStrNomeAtividade(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
+        $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
+        $objMdUtlRelTriagemAtvDTO->retTodos();
+
+
+        $count = $objMdUtlRelTriagemAtvRN->contar($objMdUtlRelTriagemAtvDTO);
+
+        if ($count > 0) {
+            $arrObjs = $objMdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
+            return $arrObjs;
+        }
+
+        return null;
+    }
+}

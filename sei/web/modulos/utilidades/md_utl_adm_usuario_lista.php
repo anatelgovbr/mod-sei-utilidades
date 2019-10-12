@@ -203,11 +203,15 @@ try {
 
  //Para a Distribuição
     if($isBolDistribuicao == '1' && $possuiRegistrosDist){
+
       $objUsuarioRN     = new MdUtlAdmPrmGrUsuRN();
       $arrObjUsuarioDTO = $objUsuarioRN->pesquisarUsuarioParametros($objUsuarioDTO);
     }
 
-    $arrObjUsuarioDTO = InfraArray::distinctArrInfraDTO($arrObjUsuarioDTO, 'IdUsuario');
+    if(!is_null($arrObjUsuarioDTO)) {
+        $arrObjUsuarioDTO = InfraArray::distinctArrInfraDTO($arrObjUsuarioDTO, 'IdUsuario');
+    }
+
 
     PaginaSEI::getInstance()->processarPaginacao($objUsuarioDTO);
 
@@ -296,7 +300,7 @@ try {
         $idMain        = !is_null($isBolUsuario) && $isBolUsuario == '1' ? $arrObjUsuarioDTO[$i]->getNumIdUsuario() : $arrObjUsuarioDTO[$i]->getNumIdMdUtlAdmPrmGrUsu();
 
         if ($bolCheck) {
-          $nomeSigla     = $arrObjUsuarioDTO[$i]->getStrSigla() . ' (' . $arrObjUsuarioDTO[$i]->getStrNome() . ')';
+          $nomeSigla     = $arrObjUsuarioDTO[$i]->getStrNome() . ' (' . $arrObjUsuarioDTO[$i]->getStrSigla() . ')';
           $strResultado .= '<td valign="top">' . PaginaSEI::getInstance()->getTrCheck($i, $idMain, $nomeSigla) . '</td>';
         }
 
@@ -371,6 +375,8 @@ PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
 ?>
+<?if(0){?><script type="text/javascript"><?}?>
+  var msg100Padrao  = '<?=MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_100)?>';
 
 function inicializar(){
   if ('<?=$_GET['acao']?>'=='md_utl_adm_usuario_selecionar'){
@@ -436,19 +442,20 @@ function acaoExcluir(id,desc){
   }
 }
 
-function acaoExclusaoMultipla(){
-  if (document.getElementById('hdnInfraItensSelecionados').value==''){
-    alert('Nenhum usuário selecionado.');
-    return;
+  function acaoExclusaoMultipla(){
+    if (document.getElementById('hdnInfraItensSelecionados').value==''){
+      var msg = setMensagemPersonalizada(msg100Padrao, ['Usuário']);
+      alert(msg);
+      return;
+    }
+    if (confirm("Confirma exclusão dos usuários selecionados?")){
+      document.getElementById('hdnInfraItemId').value='';
+      document.getElementById('frmUsuarioLista').action='<?=$strLinkExcluir?>';
+      document.getElementById('frmUsuarioLista').submit();
+    }
   }
-  if (confirm("Confirma exclusão dos usuários selecionados?")){
-    document.getElementById('hdnInfraItemId').value='';
-    document.getElementById('frmUsuarioLista').action='<?=$strLinkExcluir?>';
-    document.getElementById('frmUsuarioLista').submit();
-  }
-}
-<? } ?>
-
+  <? } ?>
+  <?if(0){?></script><?}?>
 <?
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();

@@ -41,7 +41,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_28 = 'Não é possível @VALOR1@ esta Atividade pois a mesma está vinculado a uma Triagem em Fluxo de Atendimento no Controle de Desempenho.';
     public static $MSG_UTL_29 = 'Número SEI Inválido!';
     public static $MSG_UTL_30 = 'O Número SEI informado não pertence a este Processo.';
-    public static $MSG_UTL_31 = 'O número SEI informado possui um Tipo de Documento diferente do Produto esperado.';
+    public static $MSG_UTL_31 = 'O Número SEI informado possui um Tipo de Documento diferente do Produto esperado.';
     public static $MSG_UTL_32 = 'Os documentos permitidos para realizar este cadastro devem ser Internos ou Externos.';
     public static $MSG_UTL_33 = 'Não é possível @VALOR1@ este Tipo de Justificativa pois o mesmo está vinculado a uma Revisão.';
     public static $MSG_UTL_34 = 'Não é possível @VALOR1@ este Tipo de Documento pois o mesmo está vinculado a uma Atividade no Controle de Desempenho.';
@@ -56,7 +56,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_43 = 'Não é possível @VALOR1@ esta Unidade pois a mesma está vinculada a um Tipo de Controle de Desempenho.';
     public static $MSG_UTL_44 = 'Não é possível @VALOR1@ esta Atividade pois a mesma está vinculada a um Grupo de Atividade.';
     public static $MSG_UTL_45 = 'Não é possível @VALOR1@ esta Unidade pois a mesma está vinculada um Fluxo de Atendimento no Controle de Desempenho.';
-    public static $MSG_UTL_46 = 'Data Inválida';
+    public static $MSG_UTL_46 = 'Data Inválida.';
     public static $MSG_UTL_47 = 'O Prazo para Resposta não pode ser anterior a Data de Hoje.';
     public static $MSG_UTL_48 = 'Todas as Atividades precisam conter o mesmo Tipo de Análise para serem finalizadas.';
     public static $MSG_UTL_49 = 'Informe ao menos uma @VALOR1@.';
@@ -95,7 +95,29 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_82 = 'Não é possível remover este usuário, pois o mesmo possui vinculo com uma ou mais Filas.';
     public static $MSG_UTL_83 = 'Não é possível remover este usuário, pois o mesmo possui vinculo ativo com o Controle de Desempenho.';
     public static $MSG_UTL_84 = 'Os processos listados abaixo não estão associados à nenhuma Fila para realizar a exclusão da mesma remova-os da seleção:';
-    public static $MSG_UTL_85 = 'O processo @VALOR1@ não possui uma Fila atual para realizar a remoção.';
+    public static $MSG_UTL_85 = 'O Processo @VALOR1@ não possui uma Fila atual para realizar a remoção.';
+    public static $MSG_UTL_86 = 'O Prazo solicitado para @VALOR1@ é maior que o prazo permitido! Entre em contato com o Gestor do Tipo de Controle da sua área.';
+    public static $MSG_UTL_87 = 'Não foram encontrados parâmetros de Ajuste de prazo. Converse com o Gestor do Tipo de Controle da sua área.';
+    public static $MSG_UTL_88 = 'Selecione ao menos um processo para realizar a Distribuição!';
+    public static $MSG_UTL_89 = 'Não é possível @VALOR1@ esta Justificativa de Ajuste de Prazo pois a mesma está vinculada a uma Solicitação de Ajuste de Prazo.';
+    public static $MSG_UTL_90 = 'O Prazo informado deve ser maior que a Data Atual.';
+    public static $MSG_UTL_91 = 'Informe um Dia Útil!';
+    public static $MSG_UTL_92 = 'O processo @VALOR1@ já está distribuido para este usuário.';
+    public static $MSG_UTL_93 = 'Os Processos listados abaixo já estão distribuidos para este usuário.\n\n Segue lista:';
+    public static $MSG_UTL_94 = 'O Prazo Solicitado deve ser maior que o Prazo Atual!';
+    public static $MSG_UTL_95 = 'Não foi encontrada justificativa ativa para o Tipo de Solicitação selecionado. Converse com o Gestor do Tipo de Controle da sua área.';
+    public static $MSG_UTL_96 = 'Os processos listados abaixo estão com o Status diferente do permitido para Distribuição, remova-os da seleção:';
+    public static $MSG_UTL_97 = 'Não é possível remover este usuário, pois o mesmo possui vinculo com uma ou mais Distribuições.';
+    public static $MSG_UTL_98 = 'O Percentual @VALOR1@ deve ser entre 0 e 100.';
+    public static $MSG_UTL_99 = 'Não existem itens para esta ação.';
+    public static $MSG_UTL_100 = 'Nenhum @VALOR1@ selecionado.';
+    public static $MSG_UTL_101 = 'Os registros indicados não possuem o status informado! Favor selecionar novamente.';
+    public static $MSG_UTL_102 = 'Não foi possível enviar e-mail ao servidor por que o email não está cadastrado no contato do Servidor.';
+    public static $MSG_UTL_103 = 'Confirma a @VALOR1@ do Ajuste de Prazo no Processo @VALOR2@?';
+    public static $MSG_UTL_104 = 'O Usuário logado não está parametrizado no Tipo de Controle desta Unidade.';
+    public static $MSG_UTL_105 = 'Confirma o retorno do processo no Status atual @VALOR1@ para o Status anterior?';
+
+    public static $MSG_UTL_107 = 'Confirma a Conclusão do Processo "@VALOR1@" na Unidade "@VALOR2@"?';
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;

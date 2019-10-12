@@ -29,6 +29,18 @@ class MdUtlAdmPrmGrDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRetornoUltFila', 'sin_retorno_ult_fila');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaDilacao', 'resp_tacita_dilacao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaSuspensao', 'resp_tacita_suspensao');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrazoMaxSuspensao', 'prazo_max_suspensao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaInterrupcao', 'resp_tacita_interrupcao');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrazoMaxInterrupcao', 'prazo_max_interrupcao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'InicioPeriodo', 'inicio_periodo');
+
+
+
     $this->configurarPK('IdMdUtlAdmPrmGr',InfraDTO::$TIPO_PK_NATIVA);
 
   }

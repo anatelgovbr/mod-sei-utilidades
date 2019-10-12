@@ -141,9 +141,15 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
     }
   }
 
-  protected function listarConectado(MdUtlAdmPrmGrUsuDTO $objMdUtlAdmPrmGrUsuDTO) {
+  protected function listarConectado($objMdUtlAdmPrmGrUsuDTO) {
     try {
 
+        $objMdUtlAdmPrmGrUsuBD = new MdUtlAdmPrmGrUsuBD($this->getObjInfraIBanco());
+
+        if(is_array($objMdUtlAdmPrmGrUsuDTO)){
+            $sql = $objMdUtlAdmPrmGrUsuBD->listar($objMdUtlAdmPrmGrUsuDTO[0], true);
+                print_r($sql);exit;
+        }
       //Valida Permissao
       SessaoSEI::getInstance()->validarPermissao('md_utl_adm_prm_gr_usu_listar');
 
@@ -152,7 +158,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
       //$objInfraException->lancarValidacoes();
 
-      $objMdUtlAdmPrmGrUsuBD = new MdUtlAdmPrmGrUsuBD($this->getObjInfraIBanco());
+
       $ret = $objMdUtlAdmPrmGrUsuBD->listar($objMdUtlAdmPrmGrUsuDTO);
 
       //Auditoria
@@ -189,10 +195,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
   protected function pesquisarUsuarioParametrosConectado(MdUtlAdmPrmGrUsuDTO $objUsuarioDTO) {
     try {
 
-      //Valida Permissao
-      /////////////////////////////////////////////////////////////////
       SessaoSEI::getInstance()->validarAuditarPermissao('usuario_listar',__METHOD__,$objUsuarioDTO);
-      /////////////////////////////////////////////////////////////////
 
       if ($objUsuarioDTO->isSetStrSigla()){
         if (!InfraString::isBolVazia($objUsuarioDTO->getStrSigla())) {
@@ -315,23 +318,16 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
       return array('itensTabela'=>$arrUsuarioParticipante,'qtdUsuario'=>count($arrUsuarioParticipante));
   }
 
-  protected function excluirUsuarioParticipanteControlado($arrUsuario){
-
+  public function excluirUsuarioParticipante($idsUsuariosExcl, $idsVinculadosBd){
 
       $arrGrUsuDTO = array();
-      for ($i= 0 ; $i<count($arrUsuario);$i++){
-          if($arrUsuario[$i][8]>0) {
-              $arrIds[] =$arrUsuario[$i][8];
-              $mdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
-              $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu($arrUsuario[$i][8]);
-              $arrGrUsuDTO [] = $mdUtlAdmPrmGrUsuDTO;
-
-          }
+      foreach($idsUsuariosExcl as $idUsuario){
+              $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+              $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu($idsVinculadosBd[$idUsuario]);
+              $arrGrUsuDTO [] = $objMdUtlAdmPrmGrUsuDTO;
       }
 
-      $this->excluirControlado($arrGrUsuDTO);
-
-
+      $this->excluir($arrGrUsuDTO);
   }
 
  protected  function usuarioLogadoIsUsuarioParticipanteConectado($idPrmTpCtrl){
@@ -414,10 +410,10 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
         switch ($staFrequencia){
             case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
                 $numFrequencia = 1;
-
                 break;
 
             case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
+
                 $dataAtualFormatada = implode('-',$dataAtualFormatada);
                 $dataPrimeiroDiaSemana = $dataAtualFormatada;
 

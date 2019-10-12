@@ -8,13 +8,9 @@
 
 $idTpCtrl                   = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTpCtrlUtl'];
 $strLinkFilaSelecao         = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_selecionar&tipo_selecao=2&id_object=objLupaFila&id_tipo_controle_utl='.$idTpCtrl);
-$strLinkFilaSelecaoUnica    = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_selecionar&tipo_selecao=2&id_object=objLupaFilaUnica&id_tipo_controle_utl='.$idTpCtrl);
+$strLinkFilaSelecaoUnica    = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_selecionar&tipo_selecao=1&id_object=objLupaFilaUnica&id_tipo_controle_utl='.$idTpCtrl);
 $strLinkAjaxFila            = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_fila_auto_completar&id_tipo_controle_utl='.$idTpCtrl);
-//////////////////////////////////////////////////////////////////////////////
-//InfraDebug::getInstance()->setBolLigado(false);
-//InfraDebug::getInstance()->setBolDebugInfra(true);
-//InfraDebug::getInstance()->limpar();
-//////////////////////////////////////////////////////////////////////////////
+
 
 SessaoSEI::getInstance()->validarLink();
 
@@ -27,7 +23,8 @@ $objTpControleUtlRN    = new MdUtlAdmTpCtrlDesempRN();
 $objTipoControleUtlDTO = $objTpControleUtlRN->buscarObjTpControlePorId($idTpCtrl);
 $nomeTpCtrl            = $objTipoControleUtlDTO->getStrNome();
 $arrComandos           = array();
-
+$strIdFila             = null;
+$strNomeFila           = null;
 
 $idMdAdmGrpFila = isset($_GET['id_md_utl_adm_grp_fila'])?$_GET['id_md_utl_adm_grp_fila'] : $_POST['hdnIdMdAdmGrpFila'];
 $mdUtlAdmGrpFilaDTO = new MdUtlAdmGrpFilaDTO();
@@ -43,6 +40,9 @@ if($idMdAdmGrpFila > 0) {
     $mdUtlAdmGrpFilaDTO = $mdUtlAdmGrpFilaRN->consultar($mdUtlAdmGrpFilaDTO);
 
     $arrFila = array($mdUtlAdmGrpFilaDTO->getNumIdMdUtlAdmFila(),$mdUtlAdmGrpFilaDTO->getStrNomeFila());
+
+    $strIdFila = $mdUtlAdmGrpFilaDTO->getNumIdMdUtlAdmFila();
+    $strNomeFila = $mdUtlAdmGrpFilaDTO->getStrNomeFila();
 
     $idMdAdmGrp = $mdUtlAdmGrpFilaDTO->getNumIdMdUtlAdmGrp();
 

@@ -32,7 +32,7 @@ $strTitulo       = 'Triagem ';
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objTriagemRN              = new MdUtlTriagemRN();
 $objRegrasGerais           = new MdUtlRegrasGeraisRN();
-$objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
+$objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objRelTriagemAtvRN        = new MdUtlRelTriagemAtvRN();
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmPrmGrRN        = new MdUtlAdmPrmGrRN();
@@ -44,6 +44,9 @@ $idTipoProcedimento        = $objProcedimentoDTO->getNumIdTipoProcedimento();
 $isBuscaDados              = $_GET['acao'] == 'md_utl_triagem_alterar' || $_GET['acao'] == 'md_utl_triagem_consultar';
 $idTriagem                 = null;
 $objTriagemDTO             = null;
+$isRetriagem               = array_key_exists('id_retriagem', $_GET) ? $_GET['id_retriagem'] : $_POST['hdnIdRetriagem'];
+$isRtgAnlCorrecao          = array_key_exists('isRtgAnlCorrecao', $_GET) ? $_GET['isRtgAnlCorrecao'] : $_POST['hdnIdRtgAnlCorrecao'];
+$isAnalise                 = false;
 
 if($isBuscaDados) {
     $objControleDsmpDTO = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
@@ -52,7 +55,13 @@ if($isBuscaDados) {
     {
         $objTriagemDTO = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
     }
+    $idAtendimento = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
+    if ($idAtendimento == MdUtlControleDsmpRN::$EM_ANALISE){
+        $isAnalise = true;
+    }
 }
+
+
 
 //Urls
 $strLinkAtividadeSelecao   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_selecionar&tipo_selecao=2&id_object=objLupaAtividade&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento.'&acao_origem='.$acaoPrincipal);
@@ -61,7 +70,7 @@ $strLinkAjaxAtividade      = SessaoSEI::getInstance()->assinarLink('controlador_
 $strLinkGrupoAtividadeSelecao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_selecionar&tipo_selecao=2&id_object=objLupaGrupoAtividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strLinkAjaxGrupoAtividade    = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_grp_fila_auto_completar&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strUrlAjaxValidarGrupoAtvAtividade = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_grupo_atividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
-
+$strDetalhamento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1');
 
 $isConsultar                  = false;
 $strGridTriagem               = '';
@@ -98,14 +107,15 @@ switch ($_GET['acao']) {
 
         if(!empty($_POST)){
             $idProcedimento = array_key_exists('hdnIdProcedimento', $_POST) ? $_POST['hdnIdProcedimento'] : null;
+
             if(!is_null($idProcedimento)){
                 try{
-                    $objTriagemRN->cadastrarDadosTriagem($_POST);
+                    $isProcessoConcluido = $objTriagemRN->cadastrarDadosTriagem($_POST);
 
                     if($isPgPadrao == 0) {
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                     }else{
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                     }
 
                     die;
@@ -166,20 +176,29 @@ switch ($_GET['acao']) {
         break;
 
     case 'md_utl_triagem_alterar':
-        $strLinkIniciarRevisao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_revisao_triagem_consultar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento.'&id_revisao='.$objControleDsmpDTO->getNumIdMdUtlRevisao());
+
+        if($isRetriagem == 1){
+            $strLinkIniciarRevisao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_revisao_analise_consultar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento);
+        }else {
+            $strLinkIniciarRevisao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_revisao_triagem_consultar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&id_revisao=' . $objControleDsmpDTO->getNumIdMdUtlRevisao());
+        }
+
+
         $arrObjsRel            = $objRelTriagemAtvRN->getObjsPorIdTriagem($idTriagem);
 
-        $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="abrirModalRevisao();" class="infraButton">
-                                    <span class="infraTeclaAtalho">R</span>evisão
-                            </button>';
+        if(!$isAnalise) {
+            $arrComandos[] = '<button type="button" accesskey="r" id="btnFecharSelecao" value="Revisao" onclick="abrirModalRevisao();" class="infraButton">
+                                            <span class="infraTeclaAtalho">R</span>evisão
+                                    </button>';
+        }
 
         $arrComandos[] = '<button type="submit" accesskey="s" id="btnSalvar" value="salvar" class="infraButton botaoSalvar">
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
 
         $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
-                                    <span class="infraTeclaAtalho">C</span>ancelar
-                            </button>';
+                                    <span class="infraTeclaAtalho">C</span>ancelar</button>';
+
 
 
         if(!is_null($objTriagemDTO) && (is_array($arrObjsRel) && !is_null($arrObjsRel))) {
@@ -221,8 +240,15 @@ switch ($_GET['acao']) {
             }
         }
 
+
+
         if(!empty($_POST)){
-            $idProcedimento = array_key_exists('hdnIdProcedimento', $_POST) ? $_POST['hdnIdProcedimento'] : null;
+            $idProcedimento   = array_key_exists('hdnIdProcedimento', $_POST) ? $_POST['hdnIdProcedimento'] : null;
+            $idRetriagem      = array_key_exists('hdnIdRetriagem', $_POST) ? $_POST['hdnIdRetriagem'] : null;
+            $idRtgAnlCorrecao = array_key_exists('hdnIdRtgAnlCorrecao', $_POST) ? $_POST['hdnIdRtgAnlCorrecao'] : null;
+            $isPossuiAnalise  = array_key_exists('hdnIsPossuiAnalise', $_POST) ? $_POST['hdnIsPossuiAnalise'] : null;
+            $isFilaAtiva      = array_key_exists('hdnIdFilaAtiva', $_POST) ? $_POST['hdnIdFilaAtiva'] : null;
+
             if(!is_null($idProcedimento)){
                 try{
 
@@ -232,17 +258,33 @@ switch ($_GET['acao']) {
                     $objRevisaoRN = new MdUtlRevisaoRN();
                     $idRevisao     = $objControleDsmpDTO->getNumIdMdUtlRevisao();
                     $objRevisaoDTO = $objRevisaoRN->buscarObjRevisaoPorId($idRevisao);
-                    $objRevisaoRN->desativar(array($objRevisaoDTO));
+                    
+                    if(!is_null($objRevisaoDTO)) {
+                        $objRevisaoRN->desativar(array($objRevisaoDTO));
+                    }
 
                     $dados = $_POST;
                     $dados['isCorrecaoTriagem'] = true;
-                    $objTriagemRN->cadastrarDadosTriagem($dados);
+                    $isProcessoConcluido = $objTriagemRN->cadastrarDadosTriagem($dados);
+
 
                     if($isPgPadrao == 0) {
-                        header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
+                        if($idRetriagem == 1){
+                            if($isPossuiAnalise == 'N'){
+                                header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
+                            }
+                            else if($isRtgAnlCorrecao == 1){
+                                    header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_analise_alterar&id_procedimento=' . $idProcedimento.'&id_fila='.$isFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1'));
+                            }else {
+                                header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_cadastrar&acao_origem=md_utl_analise_cadastrar&id_procedimento=' . $idProcedimento . '&id_fila=' . $isFilaAtiva . '&id_retriagem=1'));
+                            }
+                        }else{
+                            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
+                        }
                     }else{
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
                     }
+                    
 
                     die;
 
@@ -383,7 +425,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
         <div id="divGrupoAtividade" <?php echo $isConsultar ? 'style="display:none"' : '' ?>>
             <label id="lblGrupoAtividade" for="selGrupoAtividade" accesskey="" class="infraLabelOpcional">Grupo de Atividade:</label>
-            <a id="btnGrupoAtividade" <?= PaginaSEI::montarTitleTooltip('Selecionar um ou múltiplos tipos de processos que serão tratados no tipo de controle. Se o tipo de processo estiver desabilitado, significa que ele esta em uso em outro tipo de controle com mesmo conjunto de unidades.') ?>
+            <a id="btnGrupoAtividade" <?= PaginaSEI::montarTitleTooltip('Selecione um Grupo de Atividade.') ?>
                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <img id="imgAjudaGrupoAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
@@ -410,7 +452,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
         <div id="divAtividade" <?php echo $isConsultar ? 'style="display:none"' : '' ?>>
             <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">Atividades:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip('Selecionar um ou múltiplos tipos de processos que serão tratados no tipo de controle. Se o tipo de processo estiver desabilitado, significa que ele esta em uso em outro tipo de controle com mesmo conjunto de unidades.') ?>
+            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip('Selecione uma ou múltiplas Atividades.') ?>
                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
@@ -526,6 +568,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" name="hdnStaPermiteAssociarFila" id="hdnStaPermiteAssociarFila" value="<?php echo MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA ?>"/>
         <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
         <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
+        <input type="hidden" name="hdnIdRetriagem" id="hdnIdRetriagem" value="<?php echo $isRetriagem?>">
+        <input type="hidden" name="hdnIdRtgAnlCorrecao" id="hdnIdRtgAnlCorrecao" value="<?php echo $isRtgAnlCorrecao?>">
 
         <?php
 

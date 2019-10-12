@@ -13,7 +13,7 @@ class MdUtlAdmPermissaoRN extends InfraRN
 
     public static $NOME_GESTOR_CTRL_UTL = 'Gestor de Controle de Desempenho';
     public static $DESC_GESTOR_CTRL_UTL = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
-    
+
     public function __construct()
     {
         parent::__construct();
@@ -46,6 +46,7 @@ class MdUtlAdmPermissaoRN extends InfraRN
 
     protected function isGestorConectado()
     {
+        
       return SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_fila_selecionar');
     }
 

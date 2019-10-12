@@ -8,8 +8,11 @@ $arrComandos = array();
 //Id tipo de controle
 $idTipoControle        = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTipoControleUtl'];
 $objTpControleUtlRN    = new MdUtlAdmTpCtrlDesempRN();
+$objControleDsmpRN     = new MdUtlControleDsmpRN();
 $objTipoControleUtlDTO = $objTpControleUtlRN->buscarObjTpControlePorId($idTipoControle);
 $strSelectMembros      = MdUtlAdmFilaINT::montarSelectMembros();
+$strItensSelRespDilacao = MdUtlAdmPrmGrINT::montarSelectRespostaTacita();
+$strItensSelTipoRevisao = MdUtlAdmFilaINT::montarSelectTipoRevisao();
 
 
 if(is_null($objTipoControleUtlDTO)){
@@ -26,6 +29,7 @@ $idFila                = array_key_exists('id_fila_utl',$_GET) ? $_GET['id_fila_
 $strUrlBuscarNomesUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_fila_buscar_nome_usuario');
 $strUrlValidarVinculoUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_prm_vinculo_usuario_parametrizado_fila');
 $isAlterar                   = 0;
+$idAparente = 0;
 
 
 switch($_GET['acao']){
@@ -63,12 +67,14 @@ switch($_GET['acao']){
         $strDesabilitar = 'disabled="disabled"';
         $objFilaDTO = new MdUtlAdmFilaDTO();
 
+
         if (!is_null($idFila)){
 
             $objFilaDTO->setNumIdMdUtlAdmFila($idFila);
             $objFilaDTO->retTodos();
             $objFilaRN = new MdUtlAdmFilaRN();
             $objFilaDTO = $objFilaRN->consultar($objFilaDTO);
+            $strItensSelRespDilacao = MdUtlAdmPrmGrINT::montarSelectRespostaTacita($objFilaDTO->getStrRespTacitaDilacao());
 
             if ($objFilaDTO==null){
                 throw new InfraException("Registro não encontrado.");
@@ -83,17 +89,48 @@ switch($_GET['acao']){
             $objFilaUsuarioDTO->setOrdStrSigla(InfraDTO::$TIPO_ORDENACAO_DESC);
             $objFilaUsuarioRN = new MdUtlAdmFilaPrmGrUsuRN();
             $objArrFilaUsuarioDTO = $objFilaUsuarioRN->listar( $objFilaUsuarioDTO );
-       //     $objFilaDTO->setArrObjRelFilaUnidadeDTO( $arrUnidades );
-         
-    
+            //     $objFilaDTO->setArrObjRelFilaUnidadeDTO( $arrUnidades );
+
+            $idsUsuarioFila = InfraArray::converterArrInfraDTO($objArrFilaUsuarioDTO, 'IdUsuario');
+
+            $arrUsuariosVinculados = $objControleDsmpRN->getArrVinculosExistentes(array($idsUsuarioFila, $idFila));
+
             $arrGrid = array();
+          
             foreach($objArrFilaUsuarioDTO as $objVincUsuario){
+                $idAparente++;
                 $strAnalista = $objVincUsuario->getStrSinAnalista() == 'S' ? 'Sim' : 'Não';
                 $strTriador  = $objVincUsuario->getStrSinTriador() == 'S' ? 'Sim' : 'Não';
                 $strRevisor  = $objVincUsuario->getStrSinRevisor() == 'S' ? 'Sim' : 'Não';
-                $htmlDadosUsuario  = '<a alt="'.$objVincUsuario->getStrNomeUsuario().'" title="'.$objVincUsuario->getStrNomeUsuario().'" class="ancoraSigla"> '.$objVincUsuario->getStrSigla().' </a>';
+                $vlTipoRevisao = $objVincUsuario->getNumTipoRevisao();
 
-                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(), htmlentities($htmlDadosUsuario), $strTriador,  $objVincUsuario->getStrSinTriador(), $strAnalista, $objVincUsuario->getStrSinAnalista(), $objVincUsuario->getNumPercentualRevisao(), $strRevisor, $objVincUsuario->getStrSinRevisor());
+                if($vlTipoRevisao == 0){
+                    $vlTipoRevisao = '';
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$TOTAL){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_TOTAL;
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$POR_ATIVIDADE){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_POR_ATIVIDADE;
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$SEM_REVISAO){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_SEM_REVISAO;
+                }
+
+
+                $htmlDadosUsuario  = '<a alt="'.$objVincUsuario->getStrNomeUsuario().'" title="'.$objVincUsuario->getStrNomeUsuario().'" class="ancoraSigla"> '.$objVincUsuario->getStrSigla().' </a>';
+                $isPossuiVinculo   = in_array($objVincUsuario->getNumIdUsuario(), $arrUsuariosVinculados) ? 1 : 0;
+
+                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(),
+                    htmlentities($htmlDadosUsuario),
+                    $strTriador,  $objVincUsuario->getStrSinTriador(),
+                    $strAnalista, $objVincUsuario->getStrSinAnalista(),
+                    $vlTipoRevisao,
+                    $strRevisor,
+                    $objVincUsuario->getStrSinRevisor(),
+                    $objVincUsuario->getStrNomeUsuario().' ('.$objVincUsuario->getStrSigla().')',
+                    $isPossuiVinculo,
+                    $idAparente);
 
             }
 
@@ -110,6 +147,7 @@ switch($_GET['acao']){
             $objFilaDTO->setStrDescricao($_POST['txaDescricao']);
             $objFilaDTO->setStrUndEsforcoTriagem($_POST['txtUndEsforcoTriagem']);
             $objFilaDTO->setNumPrazoTarefa($_POST['txtPrazoTarefa']);
+            $objFilaDTO->setStrRespTacitaDilacao($_POST['selDilacao']);
             $objFilaDTO->setStrSinDistribuicaoAutomatica($sinDstAutomatica);
             $objFilaDTO->setStrSinDistribuicaoUltUsuario($sinDstUltFila);
 
@@ -117,15 +155,15 @@ switch($_GET['acao']){
             $objFilaRN = new MdUtlAdmFilaRN();
 
             $arrObjFilaUsuarioParticipanteDTO = array();
-      /*      $arrTbUsuarioParticipante = PaginaSEI::getInstance()->getArrValuesSelect($_POST['hdnUsuarioParticipante']);
+            /*      $arrTbUsuarioParticipante = PaginaSEI::getInstance()->getArrValuesSelect($_POST['hdnUsuarioParticipante']);
 
-            for($x = 0; $x < count($arrTbUsuarioParticipante); $x++){
-                $objFilaUsuarioDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
-                $objFilaUsuarioDTO->setNumIdUsuario($arrTbUsuarioParticipante[$x]);
-                array_push( $arrObjFilaUsuarioParticipanteDTO, $objFilaUsuarioDTO );
-            }
+                  for($x = 0; $x < count($arrTbUsuarioParticipante); $x++){
+                      $objFilaUsuarioDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
+                      $objFilaUsuarioDTO->setNumIdUsuario($arrTbUsuarioParticipante[$x]);
+                      array_push( $arrObjFilaUsuarioParticipanteDTO, $objFilaUsuarioDTO );
+                  }
 
-            $objFilaDTO->setArrObjRelFilaUsuarioDTO($arrObjFilaUsuarioParticipanteDTO);*/
+                  $objFilaDTO->setArrObjRelFilaUsuarioDTO($arrObjFilaUsuarioParticipanteDTO);*/
 
         }
 
@@ -155,6 +193,7 @@ switch($_GET['acao']){
             $objFilaDTO->retTodos();
             $objFilaRN = new MdUtlAdmFilaRN();
             $objFilaDTO = $objFilaRN->consultar($objFilaDTO);
+            $strItensSelRespDilacao = MdUtlAdmPrmGrINT::montarSelectRespostaTacita($objFilaDTO->getStrRespTacitaDilacao());
 
             if ($objFilaDTO==null){
                 throw new InfraException("Registro não encontrado.");
@@ -178,9 +217,23 @@ switch($_GET['acao']){
                 $strAnalista = $objVincUsuario->getStrSinAnalista() == 'S' ? 'Sim' : 'Não';
                 $strTriador  = $objVincUsuario->getStrSinTriador() == 'S' ? 'Sim' : 'Não';
                 $strRevisor  = $objVincUsuario->getStrSinRevisor() == 'S' ? 'Sim' : 'Não';
+                $vlTipoRevisao = $objVincUsuario->getNumTipoRevisao();
+
+                if($vlTipoRevisao == 0){
+                    $vlTipoRevisao = '';
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$TOTAL){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_TOTAL;
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$POR_ATIVIDADE){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_POR_ATIVIDADE;
+                }
+                if($vlTipoRevisao == MdUtlAdmFilaRN::$SEM_REVISAO){
+                    $vlTipoRevisao = MdUtlAdmFilaRN::$STR_SEM_REVISAO;
+                }
                 $htmlDadosUsuario  = '<a alt="'.$objVincUsuario->getStrNomeUsuario().'" title="'.$objVincUsuario->getStrNomeUsuario().'" class="ancoraSigla"> '.$objVincUsuario->getStrSigla().' </a>';
 
-                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(), htmlentities($htmlDadosUsuario), $strTriador,  $objVincUsuario->getStrSinTriador(), $strAnalista, $objVincUsuario->getStrSinAnalista(), $objVincUsuario->getNumPercentualRevisao(), $strRevisor, $objVincUsuario->getStrSinRevisor());
+                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(), htmlentities($htmlDadosUsuario), $strTriador,  $objVincUsuario->getStrSinTriador(), $strAnalista, $objVincUsuario->getStrSinAnalista(), $vlTipoRevisao, $strRevisor, $objVincUsuario->getStrSinRevisor());
 
             }
 
@@ -195,4 +248,5 @@ switch($_GET['acao']){
         throw new InfraException("Ação '".$_GET['acao']."' não reconhecida.");
 }
 
+  
 ?>

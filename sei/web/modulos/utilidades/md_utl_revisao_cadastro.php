@@ -6,7 +6,6 @@
  * Time: 14:20
  */
 
-
 try {
     require_once dirname(__FILE__) . '/../../SEI.php';
 
@@ -28,24 +27,71 @@ try {
     $strTitulo       = 'Análise ';
 
 //Tipo de Controle e Procedimento
-    $objTriagemRN              = new MdUtlTriagemRN();
-    $objRegrasGerais           = new MdUtlRegrasGeraisRN();
-    $objTriagemDTO             = new MdUtlTriagemDTO();
-    $objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
-    $objRelTpCtrlUndRN         = new MdUtlAdmRelTpCtrlDesempUndRN();
+    $objTriagemRN                = new MdUtlTriagemRN();
+    $objRegrasGerais             = new MdUtlRegrasGeraisRN();
+    $objTriagemDTO               = new MdUtlTriagemDTO();
+    $objFilaRN                   = new MdUtlAdmFilaRN();
+    $objRelTpCtrlUndRN           = new MdUtlAdmRelTpCtrlDesempUndRN();
+    $objMdUtlRelRevsTrgAnlRN     = new MdUtlRelRevisTrgAnlsRN();
+    $objMdUtlControleDsmpRN      = new MdUtlControleDsmpRN();
+    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+    $objMdUtlHistControleDsmpRN  = new MdUtlHistControleDsmpRN();
+    $objMdUtlRevDTO              = new MdUtlRevisaoDTO();
+    $objMdUtlRevRN               = new MdUtlRevisaoRN();
+    $objMdUtlFilaRN              = new MdUtlAdmFilaRN();
 
     $idTipoControle            = $objRelTpCtrlUndRN->getTipoControleUnidadeLogada();
     $isAnalise                 = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_analise_consultar';
+
+    $isEdicao                  = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_triagem_cadastrar';
     $idFilaAtiva               = $_GET['id_fila'];
-    $objControleDsmpDTO         = $objMdUtlControleDsmpRN->getObjControleDsmpAtivoRevisao(array($idProcedimento, $isAnalise));
+    $selectFila                = '';
 
+    $objControleDsmpDTO        = $objMdUtlControleDsmpRN->getObjControleDsmpAtivoRevisao(array($idProcedimento, $isAnalise));
+
+    $idRevisao                 = $objControleDsmpDTO->getNumIdMdUtlRevisao();
     $idMdUtlAnalise            = $objControleDsmpDTO->getNumIdMdUtlAnalise();
-    $idMdUtlControleDsmp        = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
+    $idMdUtlControleDsmp       = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
     $valorUndEsforco           = $objControleDsmpDTO->getNumUnidadeEsforco();
-    $isConsultar               = false;
+    $idStatus                  = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
 
-    $selRevisao     = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle);
-    $selJustRevisao = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle);
+    $isUsuarioPertenceFila     = false;
+    $isConsultar               = false;
+    $isUsuarioDistribuido      = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+    $strAcao = $_GET['acao'];
+
+    if (strrpos($strAcao, 'consultar') && strrpos($strAcao, 'analise')) {
+
+        $statusRevisaoConsultar = array(MdUtlControleDsmpRN::$EM_REVISAO);
+
+        if (!$isUsuarioDistribuido && in_array($idStatus, $statusRevisaoConsultar)) {
+
+            $idMdUtlAnaliseAntigo = $objMdUtlHistControleDsmpRN->getIdAnaliseAnterior(array($idMdUtlAnalise, $idProcedimento));
+
+            if (!is_null($idMdUtlAnaliseAntigo)) {
+                $idMdUtlAnalise = $idMdUtlAnaliseAntigo;
+            }
+        }
+    }
+
+    $selRevisao      = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle);
+    $selJustRevisao  = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle);
+    $arrObjsFilaDTO  = $objFilaRN->getFilasTipoControle($idTipoControle);
+    $selFila         = MdUtlAdmFilaINT::montarSelectFilas($selFila, $arrObjsFilaDTO, null, true);
+    $optionAssociar  = MdUtlRevisaoINT::montarSelectSinRetorno();
+
+    if($idMdUtlAnalise != '' || !is_null($idMdUtlAnalise)){
+        $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise() != null ? 'S' : 'N';
+        $idAssocFila  = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise();
+        $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
+        $selFila      = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
+    } else {
+        $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem() != null ? 'S' : 'N';
+        $idAssocFila  = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem();
+        $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
+        $selFila      = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
+    }
+
     $arrComandos    = array();
 
     $strTitulo='Revisão';
@@ -58,14 +104,15 @@ try {
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
+
             if(isset($_POST) && count($_POST) >0){
 
                 $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
-                $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
+                $isProcessoConcluido = $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
                 if($isPgPadrao == 0) {
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }else{
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }
                 die;
             }
@@ -80,12 +127,12 @@ try {
             if(isset($_POST) && count($_POST) >0){
 
                 $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
-                $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
+                $isProcessoConcluido    = $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
 
                 if($isPgPadrao == 0) {
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }else{
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento));
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
                 }
                 die;
             }
@@ -94,7 +141,7 @@ try {
         case 'md_utl_revisao_analise_consultar':
             $isConsultar = true;
 
-            if($_GET['acao_origem']== 'md_utl_analise_alterar'){
+            if($_GET['acao_origem']== 'md_utl_analise_alterar' || $_GET['acao_origem']== 'md_utl_triagem_alterar'){
                 $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.close();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
             }else {
                 $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.history.back();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
@@ -127,8 +174,6 @@ try {
     PaginaSEI::getInstance()->processarExcecao($e);
 }
 
-
-
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
@@ -143,6 +188,33 @@ if(0){?><style><?}?>
 
     .inputObservacao{
         width: 97%;
+    }
+
+    #divPrincipalEncaminhamento{
+        width: 100%;
+    }
+
+    #divEncaminhamentoAnl{
+        margin-top: 1.8%;
+        display: inline-block;
+    }
+
+    #divFila{
+        display: inline-block;
+        margin-left: 45px;
+        width: 260px;
+    }
+
+    #selEncaminhamento{
+        width: 200px;
+    }
+
+    #selAssociarProcFila{
+        width: 260px;
+    }
+
+    #selFila{
+        width: 200px;
     }
 
     #txaInformacaoComplementarAnlTri{
@@ -161,7 +233,7 @@ if(0){?><script type="text/javascript"><?}?>
     var msg52       = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_52); ?>';
     var msg53       = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_53); ?>';
     var msg54       = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_54); ?>';
-
+    var vlFluxoFim  = '<?php echo MdUtlRevisaoRN::$FLUXO_FINALIZADO ?>';
 
     function verificarJustificativa(sel) {
 
@@ -181,9 +253,7 @@ if(0){?><script type="text/javascript"><?}?>
             infraGetElementById("selJust_"+idSel).value = "";
             infraGetElementById("obs_"+idSel).value = "";
         }
-
     }
-
 
     function salvar(){
 
@@ -191,7 +261,15 @@ if(0){?><script type="text/javascript"><?}?>
         var option = selectEncaminhamento.children[selectEncaminhamento.selectedIndex];
         var encaminhamentoDetalhe = option.textContent;
 
-       var valido = true;
+        var selectAssociarFila = document.querySelector('#selAssociarProcFila');
+        var optionAssociarFila = selectAssociarFila.children[selectAssociarFila.selectedIndex];
+        var associarFila = optionAssociarFila.textContent;
+
+        var selectFilaEscolhida = document.querySelector('#selFila');
+        var optionFila = selectFilaEscolhida.children[selectFilaEscolhida.selectedIndex];
+        var fila = optionFila.textContent;
+
+        var valido = true;
 
         valido = validarSelects();
 
@@ -200,16 +278,48 @@ if(0){?><script type="text/javascript"><?}?>
         }
 
         var encaminhamento = infraGetElementById('selEncaminhamento').value;
-        if(valido && encaminhamento == ''){
-            valido = false;
-            var msg = setMensagemPersonalizada(msg11Padrao, ['Encaminhamento da Revisão']);
-            alert(msg);
+        var associarFilaSelect = infraGetElementById('selAssociarProcFila').value;
+        var selectFila = infraGetElementById('selFila').value;
+
+        if(valido){
+            if(encaminhamento == '') {
+                valido = false;
+                var msg = setMensagemPersonalizada(msg11Padrao, ['Encaminhamento da Revisão']);
+                alert(msg);
+            }
         }
 
         if(valido){
+            if(encaminhamento == vlFluxoFim){
+                if(associarFilaSelect == ''){
+                    valido = false;
+                    var msg = setMensagemPersonalizada(msg11Padrao, ['Associar Processos em Fila Após a Revisão']);
+                    alert(msg);
+                }
+
+                if(valido && associarFilaSelect == 'S'){
+                    if(selectFila == ''){
+                        valido = false;
+                        var msg = setMensagemPersonalizada(msg11Padrao, ['Fila']);
+                        alert(msg);
+                    }
+                }
+            }
+        }
+
+        if(valido){
+            var isPossuiFila = document.getElementById('selFila').value != '';
+
+            if(isPossuiFila) {
+                var nomeFila = document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText;
+                document.getElementById('hdnSelFila').value = nomeFila.trim();
+            }
+
             bloquearBotaoSalvar();
             document.getElementById('hdnEncaminhamento').value = encaminhamentoDetalhe;
-           infraGetElementById('frmRevisaoCadastro').submit();
+            document.getElementById('hdnAssociarFila').value = associarFila;
+            document.getElementById('hdnFila').value = fila;
+            infraGetElementById('frmRevisaoCadastro').submit();
         }
     }
 
@@ -229,7 +339,6 @@ if(0){?><script type="text/javascript"><?}?>
 
     function exibirCampoObservacao(){
         var inputs = document.getElementsByClassName('inputObservacao');
-
         for(var i = 0; i < inputs.length; i++ ){
             var input = inputs[i].id;
 
@@ -243,6 +352,7 @@ if(0){?><script type="text/javascript"><?}?>
     function inicializar(){
        exibirCampoObservacao();
     }
+
     function validarSelects() {
 
         var arrSel = document.getElementsByTagName('Select');
@@ -267,10 +377,37 @@ if(0){?><script type="text/javascript"><?}?>
                 }
             }
         }
-
         return true;
     }
 
+    function validarFila(val){
+        if(val === 'S'){
+            document.getElementById('divFila').style.display = 'inline-block' ;
+            document.getElementById('selFila').innerHTML = '<?=$selFila?>';
+        }else{
+            document.getElementById('divFila').style.display='none';
+            document.getElementById('selFila').value = '';
+        }
+    }
+
+    function encaminhamento(val){
+        $selectFila = document.getElementById('selFila').value;
+        $valAssocFila = '<?=$selAssocFila?>';
+       
+        if(val === 'X'){
+            document.getElementById('selAssociarProcFila').innerHTML = '<?=$optionAssociar?>';
+            validarFila($valAssocFila);
+            document.getElementById('divPrincipalEncaminhamento').style.display = 'inline-block' ;
+            if($selectFila){
+            document.getElementById('divFila').style.display = 'inline-block' ;
+            }
+        }else{
+            document.getElementById('divPrincipalEncaminhamento').style.display='none';
+            document.getElementById('divFila').style.display='none';
+            document.getElementById('selAssociarProcFila').value = '';
+            document.getElementById('selFila').value = '';
+        }
+    }
 
     <?if(0){?></script><?}
 PaginaSEI::getInstance()->fecharJavaScript();
@@ -284,12 +421,15 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
            ) ?>">
 
         <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistro);
+
+           PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistro);
+
         PaginaSEI::getInstance()->abrirAreaDados('auto');
 
         echo $divInfComplementar;
 
         ?>
+
         <div id="divInformacaoComplementarRevisao" style="margin-top: 1.8%">
             <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelOpcional"
                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
@@ -307,9 +447,33 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
             <?php
             $option = MdUtlRevisaoINT::montarSelectEncaminhamentoRevisao($strEncaminhamento);
             ?>
-            <select class="infraSelect" style="width: 30%" name="selEncaminhamento" <?=$disabled?> id="selEncaminhamento">
+            <select class="infraSelect" name="selEncaminhamento"  id="selEncaminhamento" <?=$disabled?> onchange="encaminhamento(this.value)">
                 <?=$option?>
             </select>
+        </div>
+
+        <div id="divPrincipalEncaminhamento" style="display: none;">
+            <div id="divEncaminhamentoAnl">
+
+                <div style="margin-top: 1.8%">
+                    <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
+                           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        Associar Processo em Fila após a Revisão:
+                    </label>
+
+                    <select class="infraSelect" name="selAssociarProcFila"  id="selAssociarProcFila" <?=$disabled?> onchange="validarFila(this.value);">
+                        <?=$optionAssociar?>
+                    </select>
+                </div>
+
+            </div>
+
+            <div id="divFila" style="display: none;">
+                <label id="lblFila" for="selFila" class="infraLabelObrigatorio">Fila:</label>
+                <select id="selFila" name="selFila" <?=$disabled?> class="infraSelect">
+                    <?= $selFila ?>
+                </select>
+            </div>
         </div>
 
         <input type="hidden" id="hdnTbRevisaoAnalise" name="hdnTbRevisaoAnalise"   value="<?=$hdnTbRevisaoAnalise?>"/>
@@ -318,7 +482,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
         <input type="hidden" id="hdnIdTpCtrl"         name="hdnIdTpCtrl"           value="<?=$idTipoControle?>"/>
         <input type="hidden" id="hdnUndEsforco"       name="hdnUndEsforco"         value="<?=$valorUndEsforco?>"/>
         <input type="hidden" id="hdnEncaminhamento" name="hdnEncaminhamento" value="">
+        <input type="hidden" id="hdnAssociarFila" name="hdnAssociarFila" value="">
+        <input type="hidden" id="hdnFila" name="hdnFila" value="">
         <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
+        <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
 
         <?php
 
@@ -326,13 +493,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
         PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
         ?>
 
-
     </form>
 
 <?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
-
-
-
-

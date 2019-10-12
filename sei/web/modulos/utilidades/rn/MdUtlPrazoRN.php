@@ -40,6 +40,28 @@ class MdUtlPrazoRN extends InfraRN
         return $strData;
     }
 
+    public function retornaProximoDiaUtil($strData)
+    {
+        $strDataFinal = InfraData::calcularData((365), InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $strData);
+
+        $this->_removerTimeDate($strData);
+        $arrFeriados  = $this->recuperarFeriados($strData, $strDataFinal);
+
+        $count = 0;
+        while (InfraData::obterDescricaoDiaSemana($strData) == 'sábado' ||
+            InfraData::obterDescricaoDiaSemana($strData) == 'domingo' ||
+            in_array($strData, $arrFeriados)) {
+            $strData = InfraData::calcularData(1, InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $strData);
+
+            $count++;
+            if($count == 10){
+                break;
+            }
+        }
+
+        return $strData;
+    }
+
     public function retornaQtdDiaUtil($dtPrazoInicial, $dtPrazoFinal, $isSomarDia = true)
     {
 
@@ -177,10 +199,10 @@ class MdUtlPrazoRN extends InfraRN
         return $arrFeriados;
     }
 
-    public function retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana)
+    public function retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana, $primeiroDiaSemana = 'segunda-feira')
     {
         $count = 0;
-        while (InfraData::obterDescricaoDiaSemana($dataPrimeiroDiaSemana) != 'segunda-feira') {
+        while (InfraData::obterDescricaoDiaSemana($dataPrimeiroDiaSemana) != $primeiroDiaSemana) {
             $dataPrimeiroDiaSemana = date('d-m-Y', strtotime('-1 days', strtotime($dataPrimeiroDiaSemana)));
 
             $count++;
@@ -192,33 +214,89 @@ class MdUtlPrazoRN extends InfraRN
         return $dataPrimeiroDiaSemana;
     }
 
-    public function getDatasPorFrequencia($staFrequencia){
+    public function retornaPrimeiraOcorrenciaDiaSemana($dataPrimeiroDiaSemana, $diaSemana = 'segunda-feira'){
+      $count = 0;
+        while (InfraData::obterDescricaoDiaSemana($dataPrimeiroDiaSemana) != $diaSemana) {
+            $dataPrimeiroDiaSemana = date('d-m-Y', strtotime('+1 days', strtotime($dataPrimeiroDiaSemana)));
+
+            $count++;
+            if ($count == 20) {
+                break;
+            }
+        }
+
+        return $dataPrimeiroDiaSemana;
+    }
+
+    public function getDatasPorFrequencia($inicioPeriodo){
 
         $dataAtual = InfraData::getStrDataAtual();
         $dataAtualFormatada = explode('/', $dataAtual);
         $mesAtual      = $dataAtualFormatada[1];
         $anoAtual      = $dataAtualFormatada[2];
 
-        switch ($staFrequencia){
-            case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
-                $dtInicial = $dataAtual;
-                $dtFinal   = $dataAtual;
-                break;
+           switch ($inicioPeriodo){
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO:
+                   $dtInicial = $dataAtual;
+                   $dtFinal   = $dataAtual;
+                   break;
 
-            case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
-                $dataAtualFormatada = implode('-',$dataAtualFormatada);
-                $dataPrimeiroDiaSemana = $dataAtualFormatada;
-                $dtInicial = MdUtlPrazoRN::retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
-                $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dtInicial)));
-                $dtInicial =  str_replace('-','/', $dtInicial);
-                break;
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO:
+                   $dataAtualFormatada = implode('-',$dataAtualFormatada);
+                   $dataPrimeiroDiaSemana = $dataAtualFormatada;
+                   $dtInicial = $this->retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana, 'domingo');
+                   $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dtInicial)));
+                   $dtInicial = str_replace('-','/', $dtInicial);
+                   break;
 
-            case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
-                $numDias = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
-                $dtInicial = 01 . '/' . $mesAtual . '/' . $anoAtual;
-                $dtFinal   = $numDias . '/' . $mesAtual . '/' . $anoAtual;
-                break;
-        }
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA:
+                   $dataAtualFormatada = implode('-',$dataAtualFormatada);
+                   $dataPrimeiroDiaSemana = $dataAtualFormatada;
+                   $dtInicial = $this->retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
+                   $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dtInicial)));
+                   $dtInicial =  str_replace('-','/', $dtInicial);
+                   break;
+
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES:
+                   $ultimoDiaMes = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
+                   $dtInicial =  '01 /' . $mesAtual . '/' . $anoAtual;
+                   $dtFinal   = $ultimoDiaMes . '/' . $mesAtual . '/' . $anoAtual;
+                   break;
+
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES:
+                   //Data Inicial
+                   $dtInicialMes = '01/'.$mesAtual.'/'.$anoAtual;
+                   $dtInicial = $this->retornaProximoDiaUtil($dtInicialMes);
+                   $dtInicialFormt =  str_replace('/','-', $dtInicial);
+
+                   //Data Final
+                   $inicioProximoMes = (date('d/m/Y', strtotime('+1 month', strtotime($dtInicialFormt))));
+                   $primeiroDiaUtilMes = $this->retornaProximoDiaUtil($inicioProximoMes);
+                   $primeiroDiaUtilMes = str_replace('/','-', $primeiroDiaUtilMes);
+                   $dtFinal   = date('d/m/Y', strtotime('-1 day', strtotime($primeiroDiaUtilMes)));
+
+                   break;
+
+               case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES:
+                   //Data Inicial
+                   $dtInicialMes = '01-'.$mesAtual.'-'.$anoAtual;
+                   $dtInicial = $this->retornaPrimeiraOcorrenciaDiaSemana($dtInicialMes);
+                   $dtInicial = str_replace('-','/', $dtInicial);
+
+                   //Data Final
+                   $inicioProximoMes = (date('d/m/Y', strtotime('+1 month', strtotime($dtInicialMes))));
+                   $inicioProximoMes = str_replace('/','-', $inicioProximoMes);
+                   $primeiroDiaUtilProxMes = $this->retornaPrimeiraOcorrenciaDiaSemana($inicioProximoMes);
+                   $dtFinal = (date('d/m/Y', strtotime('-1 day', strtotime($primeiroDiaUtilProxMes))));
+                    break;
+
+
+               default:
+                   $ultimoDiaMes = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
+                   $dtInicial =  '01 /' . $mesAtual . '/' . $anoAtual;
+                   $dtFinal   = $ultimoDiaMes . '/' . $mesAtual . '/' . $anoAtual;
+                   break;
+           }
 
         $dtInicial = $dtInicial. ' 00:00:00';
         $dtFinal   = $dtFinal. ' 23:59:59';
@@ -226,5 +304,7 @@ class MdUtlPrazoRN extends InfraRN
 
         return $arrRetorno;
     }
+
+
 
 }

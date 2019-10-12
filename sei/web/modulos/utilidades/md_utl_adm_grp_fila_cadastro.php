@@ -1,6 +1,5 @@
 <?php
 /**
- * Created by PhpStorm.
  * User: jhon.carvalho
  * Date: 05/09/2018
  * Time: 11:43
@@ -41,8 +40,10 @@ require_once 'md_utl_adm_grp_fila_cadastro_js.php';
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
+
+$strLinkAction = SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao']);
 ?>
-    <form id="frmMdUtlAdmTpJustRevisaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+    <form id="frmMdUtlAdmTpJustRevisaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?php echo $strLinkAction; ?>">
         <?
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
         //PaginaSEI::getInstance()->montarAreaValidacao();
@@ -64,7 +65,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
         <div id="divTpProcesso">
             <label id="lblFila" for="selFila" accesskey="" class="infraLabelObrigatorio">Filas:</label>
-            <a  id="btnFila" <?= PaginaSEI::montarTitleTooltip('Selecionar um ou múltiplos tipos de processos que serão tratados no tipo de controle. Se o tipo de processo estiver desabilitado, significa que ele esta em uso em outro tipo de controle com mesmo conjunto de unidades.') ?>
+            <a  id="btnFila" <?= PaginaSEI::montarTitleTooltip('Selecione as Filas que serão cadastradas no Grupo de Atividades.') ?>
                 tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <img id="imgAjudaFila" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
@@ -93,9 +94,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
             </a>
             <div class="clear"></div>
             <input type="hidden" id="txtFila" name="txtFila" class="infraText" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-            <select id="selFila" name="selFila" size="1" multiple="true" style="width: 40%;margin-top: 0%;" class="infraSelect">
+            <input id="selFila" name="selFila">
                 <?=$strItensSelFila?>
-            </select>
+            </input>
             <div id="divOpcoesUnica">
                 <img id="imgLupaFilaUnica" onclick="objLupaFilaUnica.selecionar(700,500);" src="/infra_css/imagens/lupa.gif" alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg" />
                 <img id="imgExcluirFilaUnica" onclick="objLupaFilaUnica.remover();" src="/infra_css/imagens/remover.gif" alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg" />

@@ -190,7 +190,12 @@ function controlarExibicaoEncaminhamento(){
 }
 
 function fechar() {
-    window.history.back();
+
+    if("<?=$isRtgAnlCorrecao?>" == 1){
+        location.href = "<?=$strDetalhamento?>";
+    }else{
+        window.history.back();
+    }
 }
 
 function selecionarAtividade(){
@@ -203,7 +208,7 @@ function carregarComponenteGrupoAtividade(){
 
     objAutoCompletarGrupoAtividade = new infraAjaxAutoCompletar('hdnIdGrupoAtividade','txtGrupoAtividade','<?=$strLinkAjaxGrupoAtividade?>');
     objAutoCompletarGrupoAtividade.limparCampo = true;
-
+    objAutoCompletarGrupoAtividade.tamanhoMinimo = 3;
     objAutoCompletarGrupoAtividade.prepararExecucao = function(){
         validarAtividade();
         return 'palavras_pesquisa=' + document.getElementById('txtGrupoAtividade').value;
@@ -446,7 +451,7 @@ function carregarComponenteAtividade(){
 
     objAutoCompletarAtividade = new infraAjaxAutoCompletar('hdnIdAtividade','txtAtividade','<?=$strLinkAjaxAtividade?>');
     objAutoCompletarAtividade.limparCampo = true;
-
+    objAutoCompletarAtividade.tamanhoMinimo = 3;
     objAutoCompletarAtividade.prepararExecucao = function(){
         var idsGrupoAtividade = document.getElementById('hdnGrupoAtividade').value;
         if(idsGrupoAtividade != '') {
@@ -510,6 +515,7 @@ function validarTipoAnaliseAtividade(){
 
 function onSubmitForm(){
    var valido =  true;
+   var isRetriagem = document.getElementById('hdnIdRetriagem').value;
 
    valido = utlValidarObrigatoriedade();
 
@@ -519,6 +525,17 @@ function onSubmitForm(){
             alert(msg48);
        }
    }
+
+    if(valido){
+        if(isRetriagem){
+            var isAnalise = document.getElementById('tbAtividade').rows[1].cells[4].innerText;
+            if(isAnalise == 'N'){
+                if(!confirm('As atividade selecionadas na Retriagem são do Tipo sem Análise, portanto o processo não está mais em Análise. Confirma a Retriagem?')){
+                    valido = false;
+                }
+            }
+        }
+    }
 
     if(valido){
         bloquearBotaoSalvar();

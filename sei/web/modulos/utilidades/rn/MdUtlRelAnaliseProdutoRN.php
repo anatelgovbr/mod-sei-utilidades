@@ -146,4 +146,12 @@ class MdUtlRelAnaliseProdutoRN extends InfraRN{
         }
     }
 
+    protected function getArrObjPorIdsConectado($arrIds){
+        $objMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
+        $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlRelAnaliseProduto($arrIds, InfraDTO::$OPER_IN);
+        $objMdUtlRelAnaliseProdutoDTO->retTodos(true);
+
+        return $this->listar($objMdUtlRelAnaliseProdutoDTO);
+    }
+
 }

@@ -11,10 +11,11 @@ require_once dirname(__FILE__).'/../web/Sip.php';
 class MdUtlAtualizadorSipRN extends InfraRN {
 
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.1.0';
+    private $versaoAtualDesteModulo = '1.2.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0','1.1.0');
+    
+    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0');
 
     private $nomeGestorControleDesempenho = 'Gestor de Controle de Desempenho';
     private $descricaoGestorControleDesempenho = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
@@ -111,15 +112,21 @@ class MdUtlAtualizadorSipRN extends InfraRN {
             if (InfraString::isBolVazia($strVersaoModuloUtl)){
                 $this->instalarv100();
                 $this->instalarv110();
+                $this->instalarv120();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
             } else if ( $strVersaoModuloUtl == '1.0.0' ) {
                 $this->instalarv110();
+                $this->instalarv120();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
-            } else {
+            } else if ( $strVersaoModuloUtl == '1.1.0' ) {
+                $this->instalarv120();
+                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
+                $this->finalizar('FIM', false);
+            }else {
                 //se a versão instalada já é a atual, então não instala nada e avisa
-				$this->logar('A VERSÃO MAIS ATUAL DO '.$this->nomeDesteModulo.' (v'.$this->versaoAtualDesteModulo.') JÁ ESTÁ INSTALADA.');
+                $this->logar('A VERSÃO MAIS ATUAL DO '.$this->nomeDesteModulo.' (v'.$this->versaoAtualDesteModulo.') JÁ ESTÁ INSTALADA.');
                 $this->finalizar('FIM', false);
             }
 
@@ -128,8 +135,8 @@ class MdUtlAtualizadorSipRN extends InfraRN {
             InfraDebug::getInstance()->setBolEcho(false);
 
         } catch (Exception $e) {
-            
-			InfraDebug::getInstance()->setBolLigado(false);
+
+            InfraDebug::getInstance()->setBolLigado(false);
             InfraDebug::getInstance()->setBolDebugInfra(false);
             InfraDebug::getInstance()->setBolEcho(false);
             throw new InfraException('Erro atualizando versão.', $e);
@@ -138,7 +145,7 @@ class MdUtlAtualizadorSipRN extends InfraRN {
     }
 
     //Contem atualizações da versao 1.0.0
-	protected function instalarv100(){
+    protected function instalarv100(){
 
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO '.$this->nomeDesteModulo.' NA BASE DO SIP');
 
@@ -761,6 +768,69 @@ class MdUtlAtualizadorSipRN extends InfraRN {
             30);
 
         BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+    }
+
+    protected function instalarv120(){
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
+
+        $numIdSistemaSei = $this->_getIdSistema();
+        $numIdPerfilSeiAdmin          = $this->_getIdPerfil($numIdSistemaSei);
+        $numIdPerfilSeiGestorUtl      = $this->_getIdPerfil($numIdSistemaSei, $this->nomeGestorControleDesempenho);
+        $numIdPerfilSeiBasico  = $this->_getIdPerfil($numIdSistemaSei, 'Básico');
+        $numIdMenuSei          = $this->_getIdMenu($numIdSistemaSei);
+        $numIdItemMenuSeiContr = $this->_getIdItemMenuControleDesempenho($numIdSistemaSei, true);
+
+        $arrAuditoria = array();
+
+        $this->logar('CRIANDO RECURSOS QUE SERÃO CHAMADOS VIA MENU');
+        $objMdUtlGestaoSolicitacaoListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_gestao_solicitacoes_listar');
+
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Gestao de Solicitao em Gestor');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_gestao_ajust_prazo_aprovar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_gestao_ajust_prazo_reprovar');
+
+        $this->logar('ATUALIZANDO RECURSOS, MENUS E PERFIS DO '. $this->nomeDesteModulo .' NA BASE DO SIP...');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_ajuste_prazo_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_ajuste_prazo_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_ajuste_prazo_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_ajuste_prazo_consultar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_ajuste_prazo_listar');
+
+
+        $this->logar('CRIANDO e VINCULANDO RECURSO DE MENU A PERFIL - Controle de Processos ao Gestor');
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiGestorUtl,
+            $numIdMenuSei,
+            $numIdItemMenuSeiContr,
+            $objMdUtlGestaoSolicitacaoListar->getNumIdRecurso(),
+            'Gestão de Solicitações',
+            40);
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Histórico de Parametrização em Gestor');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_adm_hist_prm_gr_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_adm_hist_prm_gr_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_adm_hist_prm_gr_consultar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiGestorUtl, 'md_utl_adm_hist_prm_gr_listar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Histórico de Parametrização em Administrador');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdmin, 'md_utl_adm_hist_prm_gr_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdmin, 'md_utl_adm_hist_prm_gr_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdmin, 'md_utl_adm_hist_prm_gr_consultar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdmin, 'md_utl_adm_hist_prm_gr_listar');
+
+        array_push($arrAuditoria,
+            '\'md_utl_gestao_ajust_prazo_aprovar\'',
+            '\'md_utl_gestao_ajust_prazo_reprovar\'',
+            '\'md_utl_ajuste_prazo_cadastrar\'',
+            '\'md_utl_ajuste_prazo_alterar\'',
+            '\'md_utl_ajuste_prazo_desativar\'',
+            '\'md_utl_adm_hist_prm_gr_cadastrar\'',
+            '\'md_utl_adm_hist_prm_gr_alterar\'');
+
+        $this->_cadastrarAuditoria($numIdSistemaSei, $arrAuditoria);
+
+        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
     }
 
     private function adicionarRecursoPerfil($numIdSistema, $numIdPerfil, $strNome, $strCaminho = null){

@@ -131,14 +131,14 @@ class MdUtlAdmAtividadeINT extends InfraINT {
 
     public static function autoCompletarAtividade($strPalavrasPesquisa, $idTpCtrl){
 
-      $mdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
+       $mdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
         $mdUtlAdmAtividadeRN = new MdUtlAdmAtividadeRN();
 
         $mdUtlAdmAtividadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
         $mdUtlAdmAtividadeDTO->setStrSinAtivo('S');
         $mdUtlAdmAtividadeDTO->retTodos();
         $mdUtlAdmAtividadeDTO->setNumMaxRegistrosRetorno(50);
-
+        $mdUtlAdmAtividadeDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
 
         if (!InfraString::isBolVazia($strPalavrasPesquisa)){
 
@@ -170,7 +170,6 @@ class MdUtlAdmAtividadeINT extends InfraINT {
     {
 
         $objTriagemAtividadeDTO = InfraArray::distinctArrInfraDTO($arrObjsTriagemAtividade, 'IdMdUtlAdmAtividade');
-
 
         return parent::montarSelectArrInfraDTO(null, null, $selAtividadeCampo, $objTriagemAtividadeDTO, 'IdMdUtlAdmAtividade', 'NomeAtividade');
     }

@@ -35,7 +35,7 @@ try {
   switch($_GET['acao']){
     case 'md_utl_adm_tp_just_revisao_cadastrar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Novo Tipo de Justificativa - '.$nomeTpCtrl;
+      $strTitulo = 'Nova Justificativa de Revisão - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="submit" accesskey="S" name="sbmCadastrarMdUtlAdmTpJustRevisao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
       $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
@@ -59,7 +59,7 @@ try {
 
     case 'md_utl_adm_tp_just_revisao_alterar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Alterar Tipo de Justificativa - '.$nomeTpCtrl;
+      $strTitulo = 'Alterar Justificativa de Revisão - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="submit" accesskey="S" name="sbmAlterarMdUtlAdmTpJustRevisao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
       $strDesabilitar = 'disabled="disabled"';
 
@@ -85,7 +85,7 @@ try {
         try{
           $objMdUtlAdmTpJustRevisaoRN = new MdUtlAdmTpJustRevisaoRN();
           $objMdUtlAdmTpJustRevisaoRN->alterar($objMdUtlAdmTpJustRevisaoDTO);
-          PaginaSEI::getInstance()->adicionarMensagem('Tipo de Justificativa "'.$objMdUtlAdmTpJustRevisaoDTO->getNumIdMdUtlAdmTpJustRevisao().'" alterado com sucesso.');
+          PaginaSEI::getInstance()->adicionarMensagem('Justificativa de Revisão "'.$objMdUtlAdmTpJustRevisaoDTO->getNumIdMdUtlAdmTpJustRevisao().'" alterado com sucesso.');
           header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.PaginaSEI::getInstance()->montarAncora($objMdUtlAdmTpJustRevisaoDTO->getNumIdMdUtlAdmTpJustRevisao())));
           die;
         }catch(Exception $e){
@@ -96,7 +96,7 @@ try {
 
     case 'md_utl_adm_tp_just_revisao_consultar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Consultar Tipo de Justificativa - '.$nomeTpCtrl;
+      $strTitulo = 'Consultar Justificativa de Revisão - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" value="Fechar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao'].PaginaSEI::getInstance()->montarAncora($_GET['id_md_utl_adm_tp_justificativa'])).'\';" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
       $objMdUtlAdmTpJustRevisaoDTO->setNumIdMdUtlAdmTpJustRevisao($_GET['id_md_utl_adm_tp_justificativa']);
       $objMdUtlAdmTpJustRevisaoDTO->setBolExclusaoLogica(false);
@@ -199,8 +199,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     //PaginaSEI::getInstance()->montarAreaValidacao();
     PaginaSEI::getInstance()->abrirAreaDados('4.5em');
     ?>
-    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Tipo de Justificativa:</label>
-    <a href="javascript:void(0);" id="ancAjudaNome" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome do Tipo de Justificativa da Revisão que irá aparecer ao se cadastrar um Tipo de Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
+    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Justificativa de Revisão:</label>
+    <a href="javascript:void(0);" id="ancAjudaNome" style="margin-left: 21px;" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome da Justificativa de Revisão que irá aparecer ao se cadastrar um Tipo de Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
 
     <input type="text" id="txtNome" name="txtNome" maxlength="50" class="infraText"  value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpJustRevisaoDTO->getStrNome());?>" onkeypress="return infraMascaraTexto(this,event,50);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
     <?
@@ -208,7 +208,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     PaginaSEI::getInstance()->abrirAreaDados('12em');
     ?>
     <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:</label>
-    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que define o Tipo de Justificativa da Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
+    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que define a Justificativa de Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
     <textarea type="text" id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,250);" maxlength="250" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?=PaginaSEI::tratarHTML($objMdUtlAdmTpJustRevisaoDTO->getStrDescricao());?></textarea>
     <?
     PaginaSEI::getInstance()->fecharAreaDados();

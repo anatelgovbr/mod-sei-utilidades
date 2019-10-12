@@ -28,4 +28,36 @@ class MdUtlAdmJustPrazoINT extends InfraINT {
 
     return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlAdmJustPrazoDTO, 'IdMdUtlAdmJustPrazo', 'IdMdUtlAdmJustPrazo');
   }
+
+  public static function montarSelectJustificativa($idTpControle, $tipoSolicitacao = null, $idSelect = null){
+    $select = '';
+    if(!is_null($tipoSolicitacao)){
+      $objMdUtlAdmJustPrazoDTO = new MdUtlAdmJustPrazoDTO();
+
+      if($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
+        $objMdUtlAdmJustPrazoDTO->setStrSinDilacao('S');
+      }
+
+      if($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO) {
+        $objMdUtlAdmJustPrazoDTO->setStrSinSuspensao('S');
+      }
+
+      if($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_INTERRUPCAO) {
+        $objMdUtlAdmJustPrazoDTO->setStrSinInterrupcao('S');
+      }
+
+      $objMdUtlAdmJustPrazoDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpControle);
+      $objMdUtlAdmJustPrazoDTO->setStrSinAtivo('S');
+      $objMdUtlAdmJustPrazoDTO->retTodos();
+      $objMdUtlAdmJustPrazoRN = new MdUtlAdmJustPrazoRN();
+
+      if($objMdUtlAdmJustPrazoRN->contar($objMdUtlAdmJustPrazoDTO) > 0) {
+        $arrObjs = $objMdUtlAdmJustPrazoRN->listar($objMdUtlAdmJustPrazoDTO);
+        return parent::montarSelectArrInfraDTO(' ', '', $idSelect, $arrObjs, 'IdMdUtlAdmJustPrazo', 'Nome');
+      }
+
+    }
+
+    return $select;
+  }
 }

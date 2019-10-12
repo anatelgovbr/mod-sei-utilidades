@@ -55,6 +55,7 @@ class MdUtlAdmFilaPrmGrUsuINT extends InfraINT {
             $objUsuarioDTO->setNumIdUsuario($idsUsuario, InfraDTO::$OPER_IN);
             $objUsuarioDTO->setStrPalavrasPesquisa($strPalavrasPesquisa);
             $objUsuarioDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+            $objUsuarioDTO->setNumMaxRegistrosRetorno(50);
             $pesquisa = $objUsuarioRN->pesquisar($objUsuarioDTO);
 
 

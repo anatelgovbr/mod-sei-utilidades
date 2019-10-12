@@ -36,6 +36,7 @@ class MdUtlRelTriagemAtvDTO extends InfraDTO {
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PrazoExecucaoAtividade', 'atv.prz_execucao_atv', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PrazoRevisaoAtividade', 'atv.prz_revisao_atv', 'md_utl_adm_atividade atv');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinAtvRevAmostragem','atv.sin_atv_rev_amostragem','md_utl_adm_atividade atv');
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'NomeAtividade', 'atv.nome', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'VlUndEsforcoAtv', 'atv.und_esforco_atv', 'md_utl_adm_atividade atv');

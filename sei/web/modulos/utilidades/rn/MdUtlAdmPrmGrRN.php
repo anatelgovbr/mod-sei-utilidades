@@ -12,18 +12,48 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 class MdUtlAdmPrmGrRN extends InfraRN {
 
     //Frenquencia de distribuição
-  public static $FREQUENCIA_DIARIO  = 'D';
-  public static $STR_FREQUENCIA_DIARIO  = 'Diário';
-    
-  public static $FREQUENCIA_SEMANAL = 'S';
-  public static $STR_FREQUENCIA_SEMANAL = 'Semanal';
-    
-  public static $FREQUENCIA_MENSAL  = 'M';
-  public static $STR_FREQUENCIA_MENSAL  = 'Mensal';
+    public static $FREQUENCIA_DIARIO  = 'D';
+    public static $STR_FREQUENCIA_DIARIO  = 'Diário';
+
+    public static $FREQUENCIA_INICIO_DIARIO  = '1';
+    public static $STR_FREQUENCIA_INICIO_DIARIO  = '00h00';
+    public static $STR_FREQUENCIA_FIM_DIARIO  = '23h59';
+
+    public static $FREQUENCIA_SEMANAL = 'S';
+    public static $STR_FREQUENCIA_SEMANAL = 'Semanal';
+
+    public static $FREQUENCIA_INICIO_SEMANAL_DOMINGO = '2';
+    public static $STR_FREQUENCIA_INICIO_SEMANAL_DOMINGO = 'Domingo 00h00';
+    public static $STR_FREQUENCIA_FIM_SEMANAL_DOMINGO = 'Sábado 23h59';
+
+    public static $FREQUENCIA_INICIO_SEMANAL_SEGUNDA = '3';
+    public static $STR_FREQUENCIA_INICIO_SEMANAL_SEGUNDA = 'Segunda 00h00';
+    public static $STR_FREQUENCIA_FIM_SEMANAL_SEGUNDA = 'Domingo 23h59';
+
+    public static $FREQUENCIA_MENSAL  = 'M';
+    public static $STR_FREQUENCIA_MENSAL  = 'Mensal';
+
+    public static $FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES = '4';
+    public static $STR_FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES = 'Primeiro dia do mês 00h00';
+    public static $STR_FREQUENCIA_MENSAL_ULTIMO_DIA_MES = 'Último dia do mês 23h59';
+
+    public static $FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES = '5';
+    public static $STR_FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES = 'Primeiro dia útil do mês 00h00';
+    public static $STR_FREQUENCIA_MENSAL_ULTIMO_DIA_UTIL_MES = 'Dia anterior ao primeiro dia útil do mês seguinte 23h59';
+
+    public static $FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES = '6';
+    public static $STR_FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES = 'Primeira segunda feira do mês 00h00';
+    public static $STR_FREQUENCIA_MENSAL_ULTIMA_SEGUNDA_MES = 'Dia anterior à primeira segunda feira do mês seguinte 23h59';
 
     //Retorno para última Fila
-  public static $RETORNO_SIM = 'S';
-  public static $RETORNO_NAO = 'N';
+    public static $RETORNO_SIM = 'S';
+    public static $RETORNO_NAO = 'N';
+
+    //Resposta Tácita
+    public static $APROVACAO_TACITA      = 'A';
+    public static $STR_APROVACAO_TACITA  = 'Aprovação Tácita';
+    public static $REPROVACAO_TACITA     = 'R';
+    public static $STR_REPROVACAO_TACITA = 'Reprovação Tácita';
 
 
   public function __construct(){
@@ -275,7 +305,6 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
       }
 
-
       // Cadastros dos tipos de Processos
       for ($i = 0; $i < count($arrTpProcesso); $i++) {
 
@@ -287,103 +316,184 @@ class MdUtlAdmPrmGrRN extends InfraRN {
       }
   }
 
-  private function _cadastrarRelParametrizacaoUsuario($bolAlterar, $arrUsuarioPart, $idMdUtlAdmPrmGr){
-      $arrUsuarioPartRemovido  = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbUsuarioRemove']);
+  private function _cadastrarAlterarUsuariosParticipantes($idsUsuarios, $arrDadosUsuario ,$idMdUtlAdmPrmGr, $isAlteracao = false){
+      $objMdUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+      $arrObjs = array();
 
-      $mdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+      if (count($idsUsuarios) > 0) {
+          foreach($idsUsuarios as $idUsuario){
+              $novosDados = $arrDadosUsuario[$idUsuario];
 
-      if (!$bolAlterar) {
-          // Cadastros dos Usuarios participantes
-          for ($i = 0; $i < count($arrUsuarioPart); $i++) {
-              $mdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
-              $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
-              $mdUtlAdmPrmGrUsuDTO->setNumIdUsuario($arrUsuarioPart[$i][0]);
-              $mdUtlAdmPrmGrUsuDTO->setStrStaTipoPresenca($arrUsuarioPart[$i][3]);
+              $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+              $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
+              $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario($idUsuario);
+              $objMdUtlAdmPrmGrUsuDTO->setStrStaTipoPresenca($novosDados['TIPO_PRESENCA']);
+              $objMdUtlAdmPrmGrUsuDTO->setNumFatorDesempDiferenciado($novosDados['FATOR_DESEMPENHO']);
+              $objMdUtlAdmPrmGrUsuDTO->setStrStaTipoJornada($novosDados['TIPO_JORNADA']);
+              $objMdUtlAdmPrmGrUsuDTO->setNumFatorReducaoJornada($novosDados['FATOR_REDUCAO']);
 
-              if ($arrUsuarioPart[$i][3] != '') {
-                  $fatorDesempDif = str_replace("%", "", $arrUsuarioPart[$i][4]);
-                  $mdUtlAdmPrmGrUsuDTO->setNumFatorDesempDiferenciado($fatorDesempDif);
+              if($isAlteracao && $novosDados['ID_VINCULADO'] != null){
+                  $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu($novosDados['ID_VINCULADO']);
+                  $objDTO = $objMdUtlAdmPrmGrUsuRN->alterar($objMdUtlAdmPrmGrUsuDTO);
+                  $objDTO = $objMdUtlAdmPrmGrUsuDTO;
+              }else{
+                  $objDTO = $objMdUtlAdmPrmGrUsuRN->cadastrar($objMdUtlAdmPrmGrUsuDTO);
               }
 
-              $mdUtlAdmPrmGrUsuDTO->setStrStaTipoJornada($arrUsuarioPart[$i][6]);
-
-              if ($arrUsuarioPart[$i][5] != '') {
-                  $fatorReducaoJornada = str_replace("%", "", $arrUsuarioPart[$i][7]);
-                  $mdUtlAdmPrmGrUsuDTO->setNumFatorReducaoJornada($fatorReducaoJornada);
-              }
-
-              $mdUtlAdmPrmGrUsuRN->cadastrar($mdUtlAdmPrmGrUsuDTO);
+              $arrObjs[]=$objDTO;
           }
-      }else{
-
-          $arrUsuarioNovo = array();
-          $arrUsuarioAlterar = array();
-
-          for ($i = 0; $i < count($arrUsuarioPart); $i++) {
-              if ($arrUsuarioPart[$i][8] == 'undefined' || $arrUsuarioPart[$i][8] == 0) {
-                  $arrUsuarioNovo[] = $arrUsuarioPart[$i];
-              } else {
-                  $arrUsuarioAlterar[] = $arrUsuarioPart[$i];
-              }
-          }
-
-          //remove os usuarios participantes que não tem nenhum vinculo com a fila
-          if (count($arrUsuarioPartRemovido) > 0) {
-              $mdUtlAdmPrmGrUsuRN->excluirUsuarioParticipante($arrUsuarioPartRemovido);
-          }
-
-          if (count($arrUsuarioNovo) > 0) {
-              // Cadastros dos Usuarios participantes
-              for ($i = 0; $i < count($arrUsuarioNovo); $i++) {
-                  $mdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
-                  $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
-                  $mdUtlAdmPrmGrUsuDTO->setNumIdUsuario($arrUsuarioNovo[$i][0]);
-                  $mdUtlAdmPrmGrUsuDTO->setStrStaTipoPresenca($arrUsuarioNovo[$i][3]);
-
-                  if ($arrUsuarioPart[$i][4] != '') {
-                      $fatorDesempDif = str_replace("%", "", $arrUsuarioNovo[$i][4]);
-                      $mdUtlAdmPrmGrUsuDTO->setNumFatorDesempDiferenciado($fatorDesempDif);
-                  }
-
-                  $mdUtlAdmPrmGrUsuDTO->setStrStaTipoJornada($arrUsuarioNovo[$i][6]);
-
-                  if ($arrUsuarioPart[$i][5] != '') {
-                      $fatorReducaoJornada = str_replace("%", "", $arrUsuarioNovo[$i][7]);
-                      $mdUtlAdmPrmGrUsuDTO->setNumFatorReducaoJornada($fatorReducaoJornada);
-                  }
-
-                  $mdUtlAdmPrmGrUsuRN->cadastrar($mdUtlAdmPrmGrUsuDTO);
-              }
-          }
-
-          if (count($arrUsuarioAlterar) > 0) {
-              // Alterar os Usuarios participantes
-              for ($i = 0; $i < count($arrUsuarioAlterar); $i++) {
-                  $mdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
-                  $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
-                  $mdUtlAdmPrmGrUsuDTO->setNumIdUsuario($arrUsuarioAlterar[$i][0]);
-                  $mdUtlAdmPrmGrUsuDTO->setStrStaTipoPresenca($arrUsuarioAlterar[$i][3]);
-
-                  if ($arrUsuarioPart[$i][4] != '') {
-                      $fatorDesempDif = str_replace("%", "", $arrUsuarioAlterar[$i][4]);
-                      $mdUtlAdmPrmGrUsuDTO->setNumFatorDesempDiferenciado($fatorDesempDif);
-                  }
-
-                  $mdUtlAdmPrmGrUsuDTO->setStrStaTipoJornada($arrUsuarioAlterar[$i][6]);
-
-                  if ($arrUsuarioPart[$i][7] != '') {
-                      $fatorReducaoJornada = str_replace("%", "", $arrUsuarioAlterar[$i][7]);
-                      $mdUtlAdmPrmGrUsuDTO->setNumFatorReducaoJornada($fatorReducaoJornada);
-                  }
-                  $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu($arrUsuarioAlterar[$i][8]);
-
-                  $mdUtlAdmPrmGrUsuRN->alterar($mdUtlAdmPrmGrUsuDTO);
-              }
-          }
-
       }
 
 
+      return $arrObjs;
+  }
+
+    private function _verificarIdsAlterados($arrObjsUsuariosBd, $arrDadosUsuarioTela)
+    {
+        $idsUsuariosAlterados = array();
+        if (count($arrObjsUsuariosBd) > 0) {
+            foreach ($arrObjsUsuariosBd as $objBdDTO) {
+                $idUsuarioBd = $objBdDTO->getNumIdUsuario();
+                if (array_key_exists($idUsuarioBd, $arrDadosUsuarioTela)) {
+                    $dadoUsuario     = $arrDadosUsuarioTela[$idUsuarioBd];
+                    $isTipoPresnAlt  = $this->_isDadoAlterado($objBdDTO, 'StaTipoPresenca', $arrDadosUsuarioTela, 'TIPO_PRESENCA');
+                    $isFatorDesemAlt = $this->_isDadoAlterado($objBdDTO, 'FatorDesempDiferenciado', $arrDadosUsuarioTela, 'FATOR_DESEMPENHO');
+                    $isTipoJornadAlt = $this->_isDadoAlterado($objBdDTO, 'StaTipoJornada', $arrDadosUsuarioTela, 'TIPO_JORNADA');
+                    $isFatorDsmAlt   = $this->_isDadoAlterado($objBdDTO, 'FatorReducaoJornada', $arrDadosUsuarioTela, 'FATOR_REDUCAO');
+
+                    if($isTipoPresnAlt || $isFatorDesemAlt || $isTipoJornadAlt || $isFatorDsmAlt){
+                        $idsUsuariosAlterados[] = $idUsuarioBd;
+                    }
+                }
+            }
+        }
+
+        return $idsUsuariosAlterados;
+    }
+
+    private function _isDadoAlterado($objDTO, $strAtributo, $arrDadosUsuarioTela, $strAtributoArr)
+    {
+        $dadoBanco = strtoupper($objDTO->get($strAtributo));
+        $idUsuarioBd = $objDTO->getNumIdUsuario();
+        $dadoTela = array_key_exists($idUsuarioBd, $arrDadosUsuarioTela) ? $arrDadosUsuarioTela[$idUsuarioBd][$strAtributoArr] : null;
+
+        if ($dadoTela != null) {
+            return $dadoTela != $dadoBanco;
+        }
+
+        return false;
+
+    }
+
+  private function _cadastrarRelParametrizacaoUsuario($isBolAlterarParametrizacao, $arrUsuarioPart, $idMdUtlAdmPrmGr){
+      $idsUsuariosExcl  = array();
+      $idsUsuariosAlter = array();
+
+      $objMdUtlAdmPrmGrUsuRN  = new MdUtlAdmPrmGrUsuRN();
+      $funcFirstElement = function ($value) {
+          reset($value);
+          return current($value);
+      };
+
+      $arrObjsUsuariosBd = $isBolAlterarParametrizacao ? $this->_getAntigosUsuariosCadastrados($idMdUtlAdmPrmGr) : array();
+      $idsVinculadosBd   = count($arrObjsUsuariosBd) > 0 ? InfraArray::converterArrInfraDTO($arrObjsUsuariosBd,  'IdMdUtlAdmPrmGrUsu', 'IdUsuario') : array();
+      $arrDadosUsuario   = $this->_prepararArrDadosParametrizados($arrUsuarioPart, $arrObjsUsuariosBd, $idsVinculadosBd);
+
+      $idsUsuariosTela   = array_map($funcFirstElement, $arrUsuarioPart);
+
+      if($isBolAlterarParametrizacao) {
+          $idsUsuariosBd = count($arrObjsUsuariosBd) > 0 ? InfraArray::converterArrInfraDTO($arrObjsUsuariosBd, 'IdUsuario') : array();
+          $idsUsuariosNovos = array_diff($idsUsuariosTela, $idsUsuariosBd);
+          $idsUsuariosExcl = array_diff($idsUsuariosBd, $idsUsuariosTela);
+          $idsUsuariosAlter = $this->_verificarIdsAlterados($arrObjsUsuariosBd, $arrDadosUsuario);
+      }else{
+         $idsUsuariosNovos = $idsUsuariosTela;
+      }
+
+      if(count($idsUsuariosNovos) > 0){
+          $arrObjsParametrizados = $this->_cadastrarAlterarUsuariosParticipantes($idsUsuariosNovos, $arrDadosUsuario, $idMdUtlAdmPrmGr);
+          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados);
+      }
+
+
+      if(count($idsUsuariosAlter) > 0){
+          $arrObjsParametrizados = $this->_cadastrarAlterarUsuariosParticipantes($idsUsuariosAlter, $arrDadosUsuario, $idMdUtlAdmPrmGr, true);
+          $this->_cadastrarDataFinalUsuarios($idMdUtlAdmPrmGr, $idsUsuariosAlter);
+          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados);
+      }
+
+
+      if(count($idsUsuariosExcl) > 0){
+          $objMdUtlAdmPrmGrUsuRN->excluirUsuarioParticipante($idsUsuariosExcl, $idsVinculadosBd);
+          $this->_cadastrarDataFinalUsuarios($idMdUtlAdmPrmGr, $idsUsuariosExcl);
+      }
+
+  }
+
+  private function _cadastrarNovoUsuarioHistorico($arrObjsParametrizados){
+      if(count($arrObjsParametrizados) > 0) {
+          $objHistoricoRN = new MdUtlAdmHistPrmGrUsuRN();
+          foreach($arrObjsParametrizados as $objDTOParametrizado) {
+              if(!is_null($objDTOParametrizado)) {
+                  $objHistoricoDTO = $objHistoricoRN->clonarObjParametroParaHistorico($objDTOParametrizado);
+                  $objHistoricoDTO->setDthInicial(InfraData::getStrDataHoraAtual());
+                  $objHistoricoDTO->setNumIdUsuarioAtual(SessaoSEI::getInstance()->getNumIdUsuario());
+                  $objHistoricoRN->cadastrar($objHistoricoDTO);
+              }
+          }
+      }
+  }
+
+  private function _cadastrarDataFinalUsuarios($idMdUtlAdmPrmGr, $idsUsuariosAlter){
+      $objMdUtlHistAdmPrmGrUsuRN  = new MdUtlAdmHistPrmGrUsuRN();
+      $objMdUtlHistAdmPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+      $objMdUtlHistAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
+      $objMdUtlHistAdmPrmGrUsuDTO->setNumIdUsuario($idsUsuariosAlter, InfraDTO::$OPER_IN);
+      $objMdUtlHistAdmPrmGrUsuDTO->retNumIdMdUtlAdmHistPrmGrUsu();
+      $objMdUtlHistAdmPrmGrUsuDTO->setDthFinal(null);
+
+      $count = $objMdUtlHistAdmPrmGrUsuRN->contar($objMdUtlHistAdmPrmGrUsuDTO);
+      if($count > 0) {
+          $arrObjs = $objMdUtlHistAdmPrmGrUsuRN->listar($objMdUtlHistAdmPrmGrUsuDTO);
+          foreach($arrObjs as $objDTO){
+              $objDTO->setDthFinal(InfraData::getStrDataHoraAtual());
+              $objMdUtlHistAdmPrmGrUsuRN->alterar($objDTO);
+          }
+      }
+  }
+
+    private function _prepararArrDadosParametrizados($arrUsuarioPart, $arrObjsUsuariosBd, $idsVinculadosBd){
+      $arrDadosUsuario = array();
+
+        if(count($arrUsuarioPart) > 0){
+            foreach($arrUsuarioPart as $arrUsuarioTela){
+                $idUsuario = $arrUsuarioTela[0];
+                $arrDadosUsuario[$idUsuario]['TIPO_PRESENCA']    = $arrUsuarioTela[3];
+                $arrDadosUsuario[$idUsuario]['FATOR_DESEMPENHO'] = $arrUsuarioTela[3] == MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO ? str_replace("%", "", $arrUsuarioTela[4]) : null;
+                $arrDadosUsuario[$idUsuario]['TIPO_JORNADA']     = $arrUsuarioTela[6];
+                $arrDadosUsuario[$idUsuario]['FATOR_REDUCAO']    = $arrUsuarioTela[6] == MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_REDUZIDO ? str_replace("%", "", $arrUsuarioTela[7]) : null;
+                $arrDadosUsuario[$idUsuario]['ID_VINCULADO']     = array_key_exists($idUsuario, $idsVinculadosBd)  ? $idsVinculadosBd[$idUsuario] : null;
+            }
+        }
+
+
+        return $arrDadosUsuario;
+    }
+
+
+
+  private function _getAntigosUsuariosCadastrados($idMdUtlAdmPrmGr){
+      if(!is_null($idMdUtlAdmPrmGr)) {
+          $objMdUtlPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+          $objMdUtlPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+          $objMdUtlPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
+          $objMdUtlPrmGrUsuDTO->retTodos();
+          $arrObjs = $objMdUtlPrmGrUsuRN->listar($objMdUtlPrmGrUsuDTO);
+
+          return $arrObjs;
+      }
+
+      return null;
   }
 
   public function cadastrarParametrizacao($idMdUtlAdmPrmGr, $idTipoControleUtl, $objMdUtlAdmPrmGrDTO, $objMdUtlAdmTpCtrlDTO){
@@ -405,11 +515,6 @@ class MdUtlAdmPrmGrRN extends InfraRN {
       $idMdUtlAdmPrmGr = $this->_cadastrarAlterarParametrizacao($idMdUtlAdmPrmGr, $objMdUtlAdmPrmGrDTO, $objMdUtlAdmTpCtrlDTO);
       $this->_cadastrarRelParametrizacaoTpProcesso($bolAlterar, $idMdUtlAdmPrmGr, $arrTpProcesso);
       $this->_cadastrarRelParametrizacaoUsuario($bolAlterar, $arrUsuarioPart, $idMdUtlAdmPrmGr);
-
-
-    if($bolAlterar) {
-        //$this->_controlarStatusUtilidadesProcessos($arrIdsTpProcessoOrigin, $arrIdsTpProcesso, $idTipoControleUtl);
-    }
 
   }
 
@@ -456,4 +561,56 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
       return false;
   }
+
+    public function validaPrazoMaximoDiasJustificativaConectado($arrParams){
+        $qtdDias     = array_key_exists(0, $arrParams) ? $arrParams[0] : null;
+        $tipoSolic   = array_key_exists(1, $arrParams) ? $arrParams[1] : null;
+
+        $objTpCtrlUtlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+        $objTpControle     = $objTpCtrlUtlUndRN->getObjTipoControleUnidadeLogada();
+
+        $objMdUtlPrmGrDTO  = new MdUtlAdmPrmGrDTO();
+        $objMdUtlPrmGrDTO->setNumIdMdUtlAdmPrmGr($objTpControle->getNumIdMdUtlAdmPrmGr());
+        $objMdUtlPrmGrDTO->retNumPrazoMaxInterrupcao();
+        $objMdUtlPrmGrDTO->retNumIdMdUtlAdmPrmGr();
+        $objMdUtlPrmGrDTO->retNumPrazoMaxSuspensao();
+        $objMdUtlPrmGrDTO->setNumMaxRegistrosRetorno(1);
+        $objMdUtlPrmGrDTO = $this->consultar($objMdUtlPrmGrDTO);
+
+        $prazoBd = $tipoSolic == MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO ? $objMdUtlPrmGrDTO->getNumPrazoMaxSuspensao(): $objMdUtlPrmGrDTO->getNumPrazoMaxInterrupcao();
+
+        if($qtdDias > $prazoBd){
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function parametrizaInicioFimDoPeriodoControlado(){
+        $objMdUtlPrmGrDTO = new MdUtlAdmPrmGrDTO();
+        $objMdUtlPrmGrDTO->retTodos();
+        $objMdUtlPrmGrDTO->setNumInicioPeriodo(null);
+
+        $arrObjDTO = $this->listar($objMdUtlPrmGrDTO);
+
+        foreach ($arrObjDTO as $objDTO) {
+
+            if(!is_null($objDTO->getStrStaFrequencia())) {
+
+                if ($objDTO->getStrStaFrequencia() == self::$FREQUENCIA_DIARIO) {
+                    $objDTO->setNumInicioPeriodo(self::$FREQUENCIA_INICIO_DIARIO);
+                }
+
+                if ($objDTO->getStrStaFrequencia() == self::$FREQUENCIA_SEMANAL) {
+                    $objDTO->setNumInicioPeriodo(self::$FREQUENCIA_INICIO_SEMANAL_DOMINGO);
+                }
+
+                if ($objDTO->getStrStaFrequencia() == self::$FREQUENCIA_MENSAL) {
+                    $objDTO->setNumInicioPeriodo(self::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES);
+                }
+
+                $this->alterar($objDTO);
+            }
+        }
+    }
 }

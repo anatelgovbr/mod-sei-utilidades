@@ -26,7 +26,7 @@ class MdUtlAdmFilaPrmGrUsuDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinTriador', 'sin_triador');
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRevisor', 'sin_revisor');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PercentualRevisao', 'percentual_revisao');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TipoRevisao', 'percentual_revisao');
 
     $this->configurarPK('IdMdUtlAdmFilaPrmGrUsu', InfraDTO::$TIPO_PK_NATIVA);
 

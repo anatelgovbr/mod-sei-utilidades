@@ -68,14 +68,14 @@ class MdUtlHistControleDsmpRN extends InfraRN {
     }
   }
 
-  protected function consultarConectado(MdUtlHistControleDsmpDTO $objMdUtlHistControleDsmpDTO){
+  protected function consultarConectado($objMdUtlHistControleDsmpDTO){
     try {
 
       //Valida Permissao
       SessaoSEI::getInstance()->validarPermissao('md_utl_hist_controle_dsmp_consultar');
 
-      $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD($this->getObjInfraIBanco());
-      $ret = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD($this->getObjInfraIBanco());
+         $ret = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
 
       //Auditoria
 
@@ -169,6 +169,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
      $sinFila            = array_key_exists(2, $arrParams) ? $arrParams[2] : 'N';
      $sinResponsavel     = array_key_exists(3, $arrParams) ? $arrParams[3] : 'N';
      $sinAcaoConcluida   = array_key_exists(4, $arrParams) ? $arrParams[4] : 'N';
+     $idUnidade          = array_key_exists(5, $arrParams) ? $arrParams[5] : SessaoSEI::getInstance()->getNumIdUnidadeAtual();
 
      $arrRetorno         = array();
 
@@ -179,7 +180,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
           $isAtualizacaoValida = $isAtualizarUltsResponsv || $isAtualizarUltsFilas;
 
           if($isAtualizacaoValida && count($arrIdsProcedimento) > 0) {
-              $this->controlarFlagsHistorico(array($arrIdsProcedimento, $isAtualizarUltsFilas, $isAtualizarUltsResponsv));
+              $this->controlarFlagsHistorico(array($arrIdsProcedimento, $isAtualizarUltsFilas, $isAtualizarUltsResponsv, $idUnidade));
           }
 
             foreach($arrObjs as $objDTO){
@@ -195,6 +196,10 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $arrRetorno[$idProc]['ID_REVISAO'] = $objHistoricoDTO->getNumIdMdUtlRevisao();
                 $arrRetorno[$idProc]['ID_USUARIO_ATRIBUICAO'] = $objHistoricoDTO->getNumIdUsuarioDistribuicao();
                 $arrRetorno[$idProc]['ID_ATENDIMENTO'] = $objHistoricoDTO->getNumIdAtendimento();
+                $arrRetorno[$idProc]['STATUS'] = $objHistoricoDTO->getStrStaAtendimentoDsmp();
+                $arrRetorno[$idProc]['ID_AJUST_PRAZO'] = $objHistoricoDTO->getNumIdMdUtlAjustePrazo();
+                $arrRetorno[$idProc]['DTH_PRAZO_TAREFA'] = $objHistoricoDTO->getDthPrazoTarefa();
+           
                 $this->cadastrar($objHistoricoDTO);
             }
       }
@@ -203,6 +208,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
   }
 
   protected function controlarHistoricoDesempenhoParametrizacaoConectado($arrObjs){
+
       foreach($arrObjs as $objDTO){
           $objHistoricoDTO = $this->_clonarObjControleDsmp($objDTO);
           $objHistoricoDTO->setStrSinUltimaFila('S');
@@ -240,10 +246,11 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $arrIdsProcedimento   = array_key_exists(0, $arrDados) ? $arrDados[0] : null;
         $atualizarFila        = array_key_exists(1, $arrDados) ? $arrDados[1] : null;
         $atualizarResponsavel = array_key_exists(2, $arrDados) ? $arrDados[2] : null;
+        $idUnidade            = array_key_exists(3, $arrDados) ? $arrDados[3] : SessaoSEI::getInstance()->getNumIdUnidadeAtual();
 
         $arrObjs                  = null;
         $objMdUtlHsControleDsmpDTO = new MdUtlHistControleDsmpDTO();
-        $objMdUtlHsControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objMdUtlHsControleDsmpDTO->setNumIdUnidade($idUnidade);
         $objMdUtlHsControleDsmpDTO->setDblIdProcedimento($arrIdsProcedimento, InfraDTO::$OPER_IN);
         $objMdUtlHsControleDsmpDTO->retTodos();
 
@@ -412,6 +419,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $strUltimaFila    = 'S';
         $idFila           = array_key_exists('hdnIdFilaAtiva', $_POST) ? $_POST['hdnIdFilaAtiva'] : null;
         $undEsforco       = $arrRetorno[$idProcedimento]['UNIDADE_ESFORCO'];
+        $dtNova           = date('d/m/Y H:i:s', strtotime('+1 second'));
 
         switch ($idEuFinalizacao){
             case  MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO:
@@ -420,14 +428,17 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                     $idAtendimento = $objHistoricoRN->controlarIdAtendimento($idProcedimento);
                 }
                 $status = MdUtlControleDsmpRN::$REMOCAO_FILA;
+                $dtNova           = date('d/m/Y H:i:s', strtotime('+2 second'));
                 break;
             case MdUtlControleDsmpRN::$CONCLUIR_REVISAO:
                 $strTipoAcao   = MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO;
                 $idRevisao     = $novoId;
+                $dtNova        = date('d/m/Y H:i:s', strtotime('+2 second'));
                 break;
             case MdUtlControleDsmpRN::$CONCLUIR_ANALISE:
                 $strTipoAcao   = MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE;
                 $idAnalise     = $novoId;
+                $dtNova        = date('d/m/Y H:i:s', strtotime('+2 second'));
                 break;
             case MdUtlControleDsmpRN::$CONCLUIR_TRIAGEM:
                 $strTipoAcao   = MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM;
@@ -439,6 +450,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $strUltimaFila = 'N';
                 $idFila        = $idFilaParam;
                 $undEsforco    = 0;
+                $dtNova        = date('d/m/Y H:i:s', strtotime('+2 second'));
                 break;
         }
 
@@ -454,8 +466,8 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($idAnalise);
         $objMdUtlHistControleDsmpDTO->setNumIdMdUtlRevisao($idRevisao);
         $objMdUtlHistControleDsmpDTO->setNumUnidadeEsforco($undEsforco);
-        $objMdUtlHistControleDsmpDTO->setDthAtual(InfraData::getStrDataHoraAtual());
-        $objMdUtlHistControleDsmpDTO->setDthFinal(InfraData::getStrDataHoraAtual());
+        $objMdUtlHistControleDsmpDTO->setDthAtual($dtNova);
+        $objMdUtlHistControleDsmpDTO->setDthFinal($dtNova);
         $objMdUtlHistControleDsmpDTO->setStrStaAtendimentoDsmp($status);
         $objMdUtlHistControleDsmpDTO->setStrSinUltimaFila($strUltimaFila);
         $objMdUtlHistControleDsmpDTO->setStrSinUltimoResponsavel('N');
@@ -603,10 +615,17 @@ class MdUtlHistControleDsmpRN extends InfraRN {
             foreach ($arrRetorno as $idProcedimento => $arrProcedimento) {
                 foreach ($arrProcedimento as $idUnidade => $arrUnidade) {
                     if (!is_null($idUnidade) && !is_null($idProcedimento)) {
-                        $objMdUtlHsControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                   $objMdUtlHsControleDsmpDTO = new MdUtlHistControleDsmpDTO();
                         $objMdUtlHsControleDsmpDTO->setDblIdProcedimento($idProcedimento);
                         $objMdUtlHsControleDsmpDTO->setNumIdUnidade($idUnidade);
-                        $objMdUtlHsControleDsmpDTO->retTodos();
+                        $objMdUtlHsControleDsmpDTO->retDthAtual();
+                        $objMdUtlHsControleDsmpDTO->retStrStaAtendimentoDsmp();
+                        $objMdUtlHsControleDsmpDTO->retNumIdUsuarioAtual();
+                        $objMdUtlHsControleDsmpDTO->retNumIdMdUtlTriagem();
+                        $objMdUtlHsControleDsmpDTO->retNumIdMdUtlAnalise();
+                        $objMdUtlHsControleDsmpDTO->retNumIdMdUtlRevisao();
+                        $objMdUtlHsControleDsmpDTO->retStrDetalhe();
+                        $objMdUtlHsControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
                         $objMdUtlHsControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
 
                         if ($this->contar($objMdUtlHsControleDsmpDTO) > 0) {
@@ -635,6 +654,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                     $objMdUtlTriagemDTO->setNumIdMdUtlTriagem($key);
                     $objMdUtlTriagemDTO->setDthAtual($dadoTriagem['DTH_ATUAL']);
                     $objMdUtlTriagemDTO->setNumIdUsuario($dadoTriagem['ID_USUARIO']);
+                    $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
                     $objRN->alterar($objMdUtlTriagemDTO);
                 }
             }
@@ -651,6 +671,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                     $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($key);
                     $objMdUtlAnaliseDTO->setDthAtual($dado['DTH_ATUAL']);
                     $objMdUtlAnaliseDTO->setNumIdUsuario($dado['ID_USUARIO']);
+                    $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
                     $objRN->alterar($objMdUtlAnaliseDTO);
                 }
             }
@@ -666,6 +687,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                   $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($key);
                   $objMdUtlRevisaoDTO->setDthAtual($dado['DTH_ATUAL']);
                   $objMdUtlRevisaoDTO->setNumIdUsuario($dado['ID_USUARIO']);
+                  $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
                   $objRN->alterar($objMdUtlRevisaoDTO);
               }
           }
@@ -799,5 +821,72 @@ class MdUtlHistControleDsmpRN extends InfraRN {
 
 
         return $numUnidEsforcoHist;
+    }
+
+    protected function getStatusAnteriorConectado($idProcedimento, $idUnidade = null){
+
+        if($idUnidade == null){
+            $idUnidade = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+        }
+        
+        $objHistoricoDTO = new MdUtlHistControleDsmpDTO();
+        $objHistoricoDTO->setDblIdProcedimento($idProcedimento);
+        $objHistoricoDTO->setNumIdUnidade($idUnidade);
+        $objHistoricoDTO->setStrStaAtendimentoDsmp(array(MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_ANALISE,  MdUtlControleDsmpRN::$EM_REVISAO), InfraDTO::$OPER_IN);
+        $objHistoricoDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+        $objHistoricoDTO->setNumMaxRegistrosRetorno(1);
+        $objHistoricoDTO->retTodos();
+
+        $count = $this->contar($objHistoricoDTO);
+        
+        if ($count > 0){
+            $arrObjHistoricoDTO = $this->consultar($objHistoricoDTO);
+        }
+     
+        return $arrObjHistoricoDTO;
+    }
+
+    protected function getStatusAnteriorEmCorrecaoConectado($idProcedimento, $idUnidade = null){
+
+        if($idUnidade == null){
+            $idUnidade = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+        }
+
+        $objHistoricoDTO = new MdUtlHistControleDsmpDTO();
+        $objHistoricoDTO->setDblIdProcedimento($idProcedimento);
+        $objHistoricoDTO->setNumIdUnidade($idUnidade);
+        $objHistoricoDTO->setStrStaAtendimentoDsmp(array( MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE), InfraDTO::$OPER_IN);
+        $objHistoricoDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+        $objHistoricoDTO->setNumMaxRegistrosRetorno(1);
+        $objHistoricoDTO->retTodos();
+
+        $count = $this->contar($objHistoricoDTO);
+
+        if ($count > 0){
+            $arrObjHistoricoDTO = $this->consultar($objHistoricoDTO);
+        }
+
+        return $arrObjHistoricoDTO;
+    }
+
+    protected function getIdAnaliseAnteriorConectado($arrParams)
+    {
+        $idAnalise = array_key_exists(0, $arrParams) ? $arrParams[0] : null;
+        $idProcedimento = array_key_exists(1, $arrParams) ? $arrParams[1] : null;
+
+        $objControleHistDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objControleHistDsmpDTO->setDblIdProcedimento($idProcedimento);
+        $objControleHistDsmpDTO->setNumMaxRegistrosRetorno(1);
+        $objControleHistDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+        $objControleHistDsmpDTO->setNumIdMdUtlAnalise($idAnalise, InfraDTO::$OPER_DIFERENTE);
+        $objControleHistDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objControleHistDsmpDTO->retNumIdMdUtlAnalise();
+        $objControleHistDsmpDTO = $this->consultar($objControleHistDsmpDTO);
+
+        if (!is_null($objControleHistDsmpDTO)) {
+            return $objControleHistDsmpDTO->getNumIdMdUtlAnalise();
+        }
+
+        return null;
     }
 }

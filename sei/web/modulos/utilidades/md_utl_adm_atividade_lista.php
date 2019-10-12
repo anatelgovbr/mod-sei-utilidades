@@ -174,13 +174,13 @@ try {
     }
   }
 
-  if($isSelecionar){
+
       $selTpAnalise = array_key_exists('selTipoAnalise', $_POST) && $_POST['selTipoAnalise'] != '' ? $_POST['selTipoAnalise'] : null;
       if(!is_null($selTpAnalise)){
           $objMdUtlAdmAtividadeDTO->setStrSinAnalise($selTpAnalise);
       }
 
-  }
+
 
   PaginaSEI::getInstance()->prepararOrdenacao($objMdUtlAdmAtividadeDTO, 'Nome', InfraDTO::$TIPO_ORDENACAO_ASC);
   PaginaSEI::getInstance()->prepararPaginacao($objMdUtlAdmAtividadeDTO, 200);
@@ -262,9 +262,8 @@ try {
     }
     $strResultado .= '<th class="infraTh" width="30%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO,'Atividade ','Nome',$arrObjMdUtlAdmAtividadeDTO).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO,'Descrição','Descricao',$arrObjMdUtlAdmAtividadeDTO).'</th>'."\n";
-    if($isSelecionar) {
-        $strResultado .= '<th class="infraTh" width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO) . '</th>' . "\n";
-    }
+    $strResultado .= '<th class="infraTh" width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO) . '</th>' . "\n";
+
     $strResultado .= '<th class="infraTh" width="15%">Ações</th>'."\n";
     $strResultado .= '</tr>'."\n";
     $strCssTr='';
@@ -304,10 +303,10 @@ try {
 
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome()).'</td>';
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrDescricao()).'</td>';
-      if($isSelecionar) {
+
           $vlAnalise     = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
           $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlAnalise).'</td>';
-     }
+
 
       $strResultado .= '<td align="center">';
 
@@ -385,9 +384,16 @@ PaginaSEI::getInstance()->abrirStyle();
         width: 140px;
     }
 
+    <?if($isSelecionar){?>
     #blocoTipoAnalise{
-        margin-left: -72px;
+        margin-left: -71px;
+     }
+     <?php } else { ?>
+    #blocoTipoAnalise{
+      margin-left: -121px;
     }
+
+   <?php } ?>
 
   <?if(0){?></style><?}?>
 <?
@@ -542,9 +548,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                value="<?=$descricao?>" maxlength="100"
                tabindex="502"/>
       </div>
-        <?php if($isSelecionar){
-            $isSelected = $selTpAnalise != '' && $selTpAnalise == 'S' ? 'selected = selected' : '';
-            ?>
         <div style="width: 25%" class="bloco" id="blocoTipoAnalise">
 
             <label id="lblTipoAnalise" name="lblTipoAnalise" for="selTipoAnalise"
@@ -561,8 +564,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
             </select>
 
         </div>
-
-        <?php } ?>
 
     </div>
 

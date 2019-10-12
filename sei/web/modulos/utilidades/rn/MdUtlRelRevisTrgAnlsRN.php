@@ -80,13 +80,19 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
     }
   }
 
-  protected function listarConectado(MdUtlRelRevisTrgAnlsDTO $objMdUtlRelRevisTrgAnlsDTO) {
+  protected function listarConectado($objMdUtlRelRevisTrgAnlsDTO) {
     try {
 
       SessaoSEI::getInstance()->validarPermissao('md_utl_rel_revis_trg_anls_listar');
 
       $objMdUtlRelRevisTrgAnlsBD = new MdUtlRelRevisTrgAnlsBD($this->getObjInfraIBanco());
-      $ret = $objMdUtlRelRevisTrgAnlsBD->listar($objMdUtlRelRevisTrgAnlsDTO);
+
+      if(is_array($objMdUtlRelRevisTrgAnlsDTO)) {
+          $ret = $objMdUtlRelRevisTrgAnlsBD->listar($objMdUtlRelRevisTrgAnlsDTO[0], true);
+          print_r($ret);exit;
+      }else{
+          $ret = $objMdUtlRelRevisTrgAnlsBD->listar($objMdUtlRelRevisTrgAnlsDTO);
+      }
 
       return $ret;
 
@@ -142,9 +148,11 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
   protected function cadastrarRevisaoTriagemAnaliseControlado($objControleDsmpDTO){
 
+      try {
       $objHistoricoRN           = new MdUtlHistControleDsmpRN();
       $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
 
+      $isProcessoConcluido = 0;
       $idProcedimento = $_POST['hdnIdProcedimento'];
       $idFila         = $_POST['hdnIdFilaAtiva'];
       $idTpCtrl       = $_POST['hdnIdTpCtrl'];
@@ -159,6 +167,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
       $this->_salvarObjsRelacionadosRevisao($idRevisao, $isAnalise);
 
+
       switch ($idEncaminhamento){
 
           case MdUtlRevisaoRN::$VOLTAR_PARA_FILA:
@@ -167,6 +176,11 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
               if(!is_null($arrObjsAtuais)) {
                   $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S', 'S'));
+
+                  $arrIdsProcedimentos = array($idProcedimento);
+                  $arrDados = array($arrIdsProcedimentos, $strNovoStatus);
+                  $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+
                   $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
                   $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
@@ -188,6 +202,11 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
               if (!is_null($arrObjsAtuais)) {
                   $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array(), 'N', 'N', 'S'));
+
+                  $arrIdsProcedimentos = array($idProcedimento);
+                  $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$FLUXO_FINALIZADO);
+                  $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+
                   $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
                   $objMdUtlControleDsmpRN->desativarIdsAtivosControleDsmp($arrRetorno);
@@ -196,7 +215,10 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                   $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
                   $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
 
-                  $this->_verificaProcessoAssociaAutomaticamente($objControleDsmpDTO, $isAnalise);
+                  $isAssociado = $this->_verificaProcessoAssociaAutomaticamente($objControleDsmpDTO, $isAnalise);
+                  if(!$isAssociado){
+                      $isProcessoConcluido = 1;
+                  }
               }
 
               break;
@@ -221,9 +243,14 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
               $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
 
-              $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
+              $arrIdsProcedimentos = array($idProcedimento);
+              $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIdsProcedimentos);
 
-              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S','S'));
+              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdsProcedimentos, 'N','S','S'));
+
+              $arrDados = array($arrIdsProcedimentos, $strNovoStatus);
+              $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+
               $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
               $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
@@ -236,19 +263,29 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , 0, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheDistr, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO));
               break;
       }
+      }catch(Exception $e){
+          throw new InfraException('Erro cadastrando Revisão .',$e);
+      }
+
+      return $isProcessoConcluido;
 
   }
 
   private function _verificaProcessoAssociaAutomaticamente($objControleDsmpDTO, $isAnalise){
-       $staEncaminhamento = $isAnalise ? $objControleDsmpDTO->getStrStaEncaminhamentoAnalise() : $objControleDsmpDTO->getStrStaEncaminhamentoTriagem();
-        if(!is_null($staEncaminhamento) && $staEncaminhamento == MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA){
-            $idMdUtlAdmFila = $isAnalise ? $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise() : $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem();
+       $staEncaminhamento = $_POST['selAssociarProcFila'] == 'S';
+
+        if($staEncaminhamento){
+            $idMdUtlAdmFila = $_POST['selFila'];
             if(!is_null($idMdUtlAdmFila)){
-                $nomeFila = $isAnalise ? $objControleDsmpDTO->getStrNomeFilaEncAnalise() : $objControleDsmpDTO->getStrNomeFilaEncTriagem();
+                $nomeFila = $_POST['hdnSelFila'];
                 $objControleDsmpRN = new MdUtlControleDsmpRN();
                 $objControleDsmpRN->associarFilaAnaliseTriagem(array($objControleDsmpDTO->getDblIdProcedimento(), $idMdUtlAdmFila, $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO, $nomeFila));
             }
+
+            return true;
         }
+
+        return false;
   }
 
 }

@@ -110,12 +110,16 @@ switch ($_GET['acao']) {
 
     //region Selecionar
     case 'md_utl_adm_fila_selecionar':
-        $strTitulo       = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Fila', 'Selecionar Fila');
+        $strTitulo       = PaginaSEI::getInstance()->getTituloSelecao('Filas', 'Filas');
         $strUrlPesquisar = SessaoSEI::getInstance()->assinarLink($strUrl . 'selecionar&acao_origem=' . $_GET['acao']);
 
-        if(isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFila') {
+        $isTelaCadastroGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFila' || $_POST['hdnObjLupaFila'] == 'objLupaFila';
+        $isTelaAlterarGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFilaUnica' || $_POST['hdnObjLupaFila'] == 'objLupaFilaUnica';
+        if($isTelaCadastroGrupo ||$isTelaAlterarGrupo ) {
             $displayNone = "";
         }
+
+
         break;
     //endregion
 
@@ -501,6 +505,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         </div>
 
         <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
+        <input type="hidden" id="hdnObjLupaFila" name="hdnObjLupaFila" value="<?php echo array_key_exists('id_object', $_GET) ? $_GET['id_object'] : ''; ?>"/>
 
         <?php
         PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);

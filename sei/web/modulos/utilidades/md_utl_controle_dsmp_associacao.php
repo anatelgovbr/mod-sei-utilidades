@@ -43,15 +43,18 @@ try {
                 $arrDados = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbAssociarFila']);
                 $count = count($arrDados);
 
-
                 if($_POST['hdnValueFila'] == ''){
+
                     $funcFirstElement = function ($value) {
                         reset($value);
                         return current($value);
                     };
-                 
+
+
+                    $arrRetorno = $objMdUtlControleDsmpRN->controlarHistorico($arrDados, 'S', 'N', true, true);
+
                     $arrIdProcedimento = array_map($funcFirstElement, $arrDados);
-                    $arrRetorno = $objMdUtlControleDsmpRN->controlarHistorico($arrDados, 'S', 'N', true);
+
                     $objHistoricoRN->removerFilaControleDsmp(array($arrIdProcedimento, $arrRetorno));
                     $objRegrasGerais = new MdUtlRegrasGeraisRN();
                     $objRegrasGerais->controlarAtribuicaoGrupo($arrIdProcedimento);
@@ -206,7 +209,8 @@ if(0){?><script><?}?>
             var filaAtual        = $(objLinha).find('.tdFilaProcesso').text();
             var nomeCampoUltFila = 'UltimaFila' + idProcedimento;
             var ultimaFila       = $(arrUltimasFilas).find(nomeCampoUltFila).text();
-            var linhaAtual = [idProcedimento,strProcesso,ultimaFila,filaAtual];
+            var status           = $(objLinha).find('.tdIdStatusAtual').text();
+            var linhaAtual       = [idProcedimento,strProcesso,ultimaFila,filaAtual, status];
 
             if(filaAtual == '') {
                 msgNenhumaFila.push(strProcesso);
@@ -221,9 +225,10 @@ if(0){?><script><?}?>
         var idProcedimento   = idProcedimento;
         var strProcesso      = window.opener.document.getElementById('hdnProtocoloFormatado').value;
         var filaAtual        =  window.opener.document.getElementById('hdnNomeFilaAtual').value;;
+        var status           =  window.opener.document.getElementById('hdnIdStatusAtual').value;;
         var nomeCampoUltFila = 'UltimaFila' + idProcedimento;
         var ultimaFila       = $(arrUltimasFilas).find(nomeCampoUltFila).text();
-        var linhaAtual = [idProcedimento,strProcesso,ultimaFila,filaAtual];
+        var linhaAtual = [idProcedimento,strProcesso,ultimaFila,filaAtual, status];
 
         if(filaAtual == '') {
             msgNenhumaFila.push(strProcesso);
@@ -279,6 +284,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                 <th class="infraTh" width="23%">Processo</th>
                 <th class="infraTh" width="20%">Última Fila Registrada</th>
                 <th class="infraTh" width="20%">Fila Atual</th>
+                <th class="infraTh" style="display: none">Status</th>
               </tr>
         </table>
         <?

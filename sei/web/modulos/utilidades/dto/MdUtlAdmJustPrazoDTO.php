@@ -24,7 +24,13 @@ class MdUtlAdmJustPrazoDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'Nome', 'nome');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'Descricao', 'descricao');
-
+    
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinDilacao', 'sin_dilacao');
+    
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinInterrupcao', 'sin_interrupcao');
+    
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinSuspensao', 'sin_suspensao');
+    
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
     $this->configurarPK('IdMdUtlAdmJustPrazo',InfraDTO::$TIPO_PK_NATIVA);

@@ -237,18 +237,48 @@ class MdUtlAdmFilaPrmGrUsuRN extends InfraRN {
           $objMdUtlAdmFilaPrmGrUsuDTO = new MdUtlAdmFilaPrmGrUsuDTO();
           $objMdUtlAdmFilaPrmGrUsuDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
           $objMdUtlAdmFilaPrmGrUsuDTO->setNumIdMdUtlAdmFila($idFila);
-          $objMdUtlAdmFilaPrmGrUsuDTO->retNumPercentualRevisao();
+          $objMdUtlAdmFilaPrmGrUsuDTO->retNumTipoRevisao();
           $objMdUtlAdmFilaPrmGrUsuDTO->setNumMaxRegistrosRetorno(1);
 
           $objMdUtlAdmFilaPrmGrUsuDTO = $this->consultar($objMdUtlAdmFilaPrmGrUsuDTO);
 
-          if(!is_null($objMdUtlAdmFilaPrmGrUsuDTO)){
-              $percentualRevisao = $objMdUtlAdmFilaPrmGrUsuDTO->getNumPercentualRevisao();
-              $percentualRevisao = is_null($percentualRevisao) ? 0 : $percentualRevisao;
-              return $percentualRevisao;
+
+        if(!is_null($objMdUtlAdmFilaPrmGrUsuDTO)){
+            $tipoRevisao = $objMdUtlAdmFilaPrmGrUsuDTO->getNumTipoRevisao();
+            $tipoRevisao = is_null($tipoRevisao) ? 0 : $tipoRevisao;
+              return $tipoRevisao;
           }
       }
-      return null;
-    }
 
+      return null;
+  }
+
+  protected function alterarDadosTipoRevisaoControlado(){
+
+    $objMdUtlAdmFilaPrmGrUsuDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+    $objMdUtlAdmFilaPrmGrUsuDTO->retTodos();
+    $objMdUtlAdmFilaPrmGrUsuDTO = $this->listar($objMdUtlAdmFilaPrmGrUsuDTO);
+
+
+    foreach ($objMdUtlAdmFilaPrmGrUsuDTO as $objDTO){
+        $tipoRevisao = null;
+
+        if ($objDTO->getNumTipoRevisao() > 0 && $objDTO->getNumTipoRevisao() < 100) {
+            $tipoRevisao = MdUtlAdmFilaRN::$POR_ATIVIDADE;
+        }
+
+        if ($objDTO->getNumTipoRevisao() == 100) {
+            $tipoRevisao = MdUtlAdmFilaRN::$TOTAL;
+        }
+
+        if ($objDTO->getNumTipoRevisao() == 0) {
+            $tipoRevisao = MdUtlAdmFilaRN::$SEM_REVISAO;
+        }
+
+        $objDTO->setNumTipoRevisao($tipoRevisao);
+     
+        $this->alterar($objDTO);
+       
+      }
+  }
 }

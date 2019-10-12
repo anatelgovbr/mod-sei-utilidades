@@ -50,7 +50,7 @@ class MdUtlAdmFilaINT extends InfraINT {
             $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
             $objMdUtlAdmFilaDTO->retTodos();
             $objMdUtlAdmFilaDTO->setNumMaxRegistrosRetorno(50);
-
+            $objMdUtlAdmFilaDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
             if (!InfraString::isBolVazia($strPalavrasPesquisa)){
 
                 $strPalavrasPesquisa = InfraString::prepararIndexacao($strPalavrasPesquisa);
@@ -131,6 +131,24 @@ class MdUtlAdmFilaINT extends InfraINT {
         return $select;
     }
 
+    public static function montarSelectTipoRevisao($valorSelecionado = ''){
 
+        $select = '<option value=""></option>';
+
+        $arrResposta = array( MdUtlAdmFilaRN::$TOTAL => MdUtlAdmFilaRN::$STR_TOTAL,
+            MdUtlAdmFilaRN::$POR_ATIVIDADE => MdUtlAdmFilaRN::$STR_POR_ATIVIDADE,MdUtlAdmFilaRN::$SEM_REVISAO => MdUtlAdmFilaRN::$STR_SEM_REVISAO);
+        foreach ($arrResposta as $key=>$resposta){
+
+            $add= '';
+
+            if($valorSelecionado == $key){
+                $add= 'selected = selected';
+            }
+
+            $select.='<option '.$add.' value="'.$key.'">'.$resposta.'</option>';
+        }
+
+        return $select;
+    }
 
 }

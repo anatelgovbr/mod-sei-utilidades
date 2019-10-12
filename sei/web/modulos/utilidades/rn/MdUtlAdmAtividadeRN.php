@@ -355,6 +355,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
       $mdUtlAdmAtividadeDTO->setStrNome($_POST['txtAtividade']);
       $mdUtlAdmAtividadeDTO->setStrDescricao($_POST['txaDescricao']);
       $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
+      $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('N');
 
       if($_POST['rdnTpAtivdade']=='S'){
 
@@ -367,6 +368,10 @@ class MdUtlAdmAtividadeRN extends InfraRN {
 
       }else{
           $mdUtlAdmAtividadeDTO->setNumUndEsforcoRev($_POST['txtRevUnidEsf']);
+
+          if(isset($_POST['chkAtvRevAmost'])) {
+              $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('S');
+          }
       }
 
       $mdUtlAdmAtividadeDTO->setNumPrzRevisaoAtv($_POST['txtRevAtividade']);
@@ -426,6 +431,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
           $mdUtlAdmAtividadeDTO->setStrDescricao($_POST['txaDescricao']);
           $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
 
+
           //Remove todos os vinculos anteriores caso haja uma troca no tipo de analises
           if ($rdnTpAtividade != $_POST['rdnTpAtivdade']) {
               $this->excluirTodosRelacionamento(array($_POST['rdnTpAtivdade'], $idAtividade));
@@ -438,10 +444,18 @@ class MdUtlAdmAtividadeRN extends InfraRN {
 
               if (isset($_POST['chkAtvRevAmost'])) {
                   $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('S');
+              }else{
+                  $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('N');
               }
 
           } else {
               $mdUtlAdmAtividadeDTO->setNumUndEsforcoRev($_POST['txtRevUnidEsf']);
+
+              if (isset($_POST['chkAtvRevAmost'])) {
+                  $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('S');
+              }else{
+                  $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('N');
+              }
           }
 
           $mdUtlAdmAtividadeDTO->setNumPrzRevisaoAtv($_POST['txtRevAtividade']);
@@ -468,6 +482,24 @@ class MdUtlAdmAtividadeRN extends InfraRN {
         $isTriagemAtiva =$objRelTriagemRN->contar($objRelTriagemDTO) > 0 ? 1 : 0;
 
         return $isTriagemAtiva;
+    }
+
+
+    protected function preencherCorretamenteHabilitarRevisaoControlado(){
+        $objMdUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
+        $objMdUtlAtividadeDTO->setStrSinAtvRevAmostragem(null);
+        $objMdUtlAtividadeDTO->retTodos();
+        $objMdUtlAtividadeDTO->setBolExclusaoLogica(false);
+        $count  = $this->contar($objMdUtlAtividadeDTO);
+
+        if($count > 0) {
+            $arrObjs = $this->listar($objMdUtlAtividadeDTO);
+
+            foreach ($arrObjs as $objDTO) {
+                $objDTO->setStrSinAtvRevAmostragem('N');
+                $this->alterar($objDTO);
+            }
+        }
     }
     
 

@@ -42,4 +42,44 @@ class MdUtlRevisaoINT extends InfraINT {
       return $option;
   }
 
+    public static function montarSelectSinRetorno($valorSelecionado = ''){
+
+        $select = '<option value=""></option>';
+
+        $arrAssociar = array( MdUtlRevisaoRN::$ASSOCIAR_SIM => 'Sim',
+                                MdUtlRevisaoRN::$ASSOCIAR_NAO =>'Não');
+        foreach ($arrAssociar as $key=>$associar){
+
+            $add= '';
+
+            if($valorSelecionado == $key){
+                $add= 'selected = selected';
+            }
+
+            $select.='<option '.$add.' value="'.$key.'">'.$associar.'</option>';
+        }
+
+        return $select;
+    }
+
+    public static function setObjUtilizadoAnaliseRevisao(&$arrObjRelAnaliseProdutoDTOAntigos, $arrMdRelIgualDTO){
+      $idRelAnaliseProdutoDTO = $arrMdRelIgualDTO[0]->getNumIdMdUtlRelAnaliseProduto();
+        for ($i = 0; $i < count($arrObjRelAnaliseProdutoDTOAntigos); $i++) {
+                if($arrObjRelAnaliseProdutoDTOAntigos[$i]->getNumIdMdUtlRelAnaliseProduto() == $idRelAnaliseProdutoDTO) {
+                    unset($arrObjRelAnaliseProdutoDTOAntigos[$i]);
+                    $arrObjRelAnaliseProdutoDTOAntigos = array_values($arrObjRelAnaliseProdutoDTOAntigos);
+                }
+        }
+    }
+
+    public static function setObjUtilizadoTriagemRevisao(&$arrObjRelAtividadesDTOAntigos, $arrDadosAntigaRevisaoDTO){
+      $idRelTriagemAtividadeDTO = $arrDadosAntigaRevisaoDTO[0]->getNumIdMdUtlRelTriagemAtv();
+        for ($i = 0; $i < count($arrObjRelAtividadesDTOAntigos); $i++) {
+                if($arrObjRelAtividadesDTOAntigos[$i]->getNumIdMdUtlRelTriagemAtv() == $idRelTriagemAtividadeDTO) {
+                    unset($arrObjRelAtividadesDTOAntigos[$i]);
+                    $arrObjRelAtividadesDTOAntigos = array_values($arrObjRelAtividadesDTOAntigos);
+                }
+        }
+    }
+
 }

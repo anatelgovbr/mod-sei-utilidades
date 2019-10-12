@@ -11,14 +11,31 @@ session_start();
 SessaoSEI::getInstance()->validarLink();
 PaginaSEI::getInstance()->setTipoPagina(InfraPagina::$TIPO_PAGINA_SIMPLES);
 
+$isProcessoConcluido = array_key_exists('is_processo_concluido', $_GET) ? $_GET['is_processo_concluido'] : 0;
+$isProcessoAutorizadoConcluir = array_key_exists('hdnIsConcluirProcesso', $_POST) ? $_POST['hdnIsConcluirProcesso'] : 0;
+
 $strParametros = '';
 if(isset($_GET['arvore'])){
     PaginaSEI::getInstance()->setBolArvore($_GET['arvore']);
     $strParametros .= '&arvore='.$_GET['arvore'];
 }
 
+
 $idProcedimento  = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 $idProcedimento = trim($idProcedimento);
+$urlInicial = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento);
+
+if ($isProcessoAutorizadoConcluir == 1) {
+    $_POST['hdnIsConcluirProcesso'] = 0;
+    $isProcessoAutorizadoConcluir = 0;
+
+    $objEntradaConcluirProcessoAPI = new EntradaConcluirProcessoAPI();
+    $objEntradaConcluirProcessoAPI->setIdProcedimento($idProcedimento);
+
+    $objSEIRN = new SeiRN();
+    $objSEIRN->concluirProcesso($objEntradaConcluirProcessoAPI);
+
+}
 
 if (!is_null($idProcedimento) && $idProcedimento != ''){
     $strParametros .= '&id_procedimento='.$idProcedimento;
@@ -73,7 +90,6 @@ if($isPermiteAcoes){
 }
 
 $arrSituacao = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
-$arrStatus   = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmp();
 
 //Status
 $objControleDsmpDTO    = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
@@ -85,7 +101,8 @@ $strSiglaUsuarioAtual = '';
 $strDetalheAtual      = '';
 $strStatusAtual       = 0;
 $strTipoAcaoAtual     = '';
-$idControleDsmp        = 0;
+$idControleDsmp       = 0;
+
 
 if(!is_null($objControleDsmpDTO)){
     $idStatus         = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
@@ -99,11 +116,11 @@ if(!is_null($objControleDsmpDTO)){
     $idControleDsmp    = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
 }
 
-$nomeStatus       = $arrStatus[$idStatus];
+$nomeStatus       = $arrSituacao[$idStatus];
 
-$isPossuiAnalise  = $objMdUtlControleDsmpRN->verificaTriagemPossuiAnalise($objControleDsmpDTO);
+$isPossuiAnalise       = $objMdUtlControleDsmpRN->verificaTriagemPossuiAnalise($objControleDsmpDTO);
 $strNumeroProcedimento = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado();
-
+$msg107                = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_107, array($strNumeroProcedimento,  SessaoSEI::getInstance()->getStrSiglaUnidadeAtual()));
 
 //Controle de Urls
 $idUsuarioDistrb  = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getNumIdUsuarioDistribuicao() : null;
@@ -117,6 +134,7 @@ $strLinkIniciarAnalise = $arrCtrlUrls['ANALISE'];
 $strLinkIniciarRevisao = $arrCtrlUrls['REVISAO'];
 $strLinkIniciarDistrb  = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_distrib_usuario_cadastrar&acao_retorno=md_utl_processo_listar&acao_origem=md_utl_controle_dsmp_listar&id_procedimento=' . $idProcedimento.'&id_controle_dsmp='.$idControleDsmp.'&status='.$strStatusAtual.'&id_fila='.$idFila);
 $strUrlFechar          = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_retorno=procedimento_controlar&acao_origem=md_utl_controle_dsmp_listar&id_procedimento=' . $idProcedimento);
+$strLinkConcluirProcesso =  $isProcessoConcluido == 1  ? SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_concluir_processo'.$isProcessoConcluido) : '';
 
 //Controle de Visualização
 $idTipoProcedimento = $objProcedimentoDTO->getNumIdTipoProcedimento();
@@ -308,9 +326,20 @@ if(0) {
 function inicializar() {
 
     var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
+    var isProcessoConcl  = '<?php echo $isProcessoConcluido ?>';
+    var msgConclusao = '<?php echo $msg107 ?>';
 
     if (idParam == 0) {
         alert('O Tipo de Controle desta Unidade não está Parametrizado!');
+    }
+
+   if(isProcessoConcl == 1){
+       if(confirm(msgConclusao)) {
+           document.getElementById('hdnIsConcluirProcesso').value = 1;
+           document.getElementById("frmUtlProcessoLista").submit();
+       }else{
+          window.location.href = '<?=$urlInicial?>';
+       }
     }
 
     if ('<?= $_GET['acao'] ?>' == 'md_utl_processo_listar') {
@@ -462,7 +491,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                                 </label>
                             </td>
                             <td class="tdEscopo">
-                                <label id="lblDetalheText"><?= $arrStatus[$strStatusAtual] ?></label>
+                                <label id="lblDetalheText"><?= $arrSituacao[$strStatusAtual] ?></label>
                             </td>
                         </tr>
 
@@ -487,6 +516,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" id="hdnProtocoloFormatado" name="hdnProtocoloFormatado" value="<?php echo !is_null($objProcedimentoDTO) ? $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado() : '' ?>"/>
         <input type="hidden" id="hdnNomeFilaAtual" name="hdnNomeFilaAtual" value="<?php echo !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrNomeFila() : '' ?>"/>
         <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?php echo $idProcedimento?>"/>
+        <input type="hidden" id="hdnIdStatusAtual" name="hdnIdStatusAtual" value="<?php echo !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrStaAtendimentoDsmp() : 0 ?>"/>
+        <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
+
+
     </form>
 
 <?php

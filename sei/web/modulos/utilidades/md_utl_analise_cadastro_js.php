@@ -179,7 +179,21 @@
 
 
     function fechar() {
-        window.history.back();
+        
+        if("<?= $isRetriagem ?>" == 1){
+           location.href = "<?=$strDetalhamento?>";
+        }else{
+            window.history.back();
+        }
+
+    }
+    
+    function Retriagem() {
+        location.href = "<?= $strUrlRetriagem ?>";
+    }
+
+    function RetriagemAnlCorrecao() {
+        location.href = "<?= $strUrlRtgAnlCorrecao ?>";
     }
 
     function abrirModalRevisao() {

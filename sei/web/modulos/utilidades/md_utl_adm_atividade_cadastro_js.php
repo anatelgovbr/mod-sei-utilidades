@@ -61,6 +61,7 @@ function iniciarRadioECheckbox(){
     }
     if(radio =='N'){
         semAnalise.classList.toggle('blocoExibir');
+        divAtvRevAmost.classList.toggle('blocoExibir');
         infraGetElementById('divRevATividade').style.display= 'inherit';
 
     }
@@ -179,6 +180,7 @@ function tipoAtividade(obj){
             if (semAnalise.className.split(" ").length == 1) {
                 //Adiciona Campo de SEM ANALISE
                 semAnalise.classList.toggle('blocoExibir');
+                divAtvRevAmost.classList.toggle("blocoExibir");
 
             }
 
@@ -197,6 +199,7 @@ function tipoAtividade(obj){
 
             //Adiciona Campo de SEM ANALISE
             semAnalise.classList.toggle('blocoExibir');
+            divAtvRevAmost.classList.toggle("blocoExibir");
 
             document.getElementById('hdnTbProdutoEsperado').removeAttribute('utlCampoObrigatorio');
         }
@@ -456,7 +459,8 @@ function validarFieldsetListaProduto() {
 
     // validar radio Tipo
     if(radio == null){
-        alert('Informe o Tipo.');
+        var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo']);
+        alert(msg);
         return false;
     }
 
@@ -465,7 +469,8 @@ function validarFieldsetListaProduto() {
 
         if(selTpProduto == 0){
             infraGetElementById('selTpProduto').focus();
-            alert('Informe o Tipo de Produto.');
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Produto']);
+            alert(msg);
             return false;
         }
     }
@@ -488,14 +493,16 @@ function validarFieldsetListaProduto() {
 
         //validar aplicabilidade do documento Interno ou Externo
         if(radioDoc == null){
-            alert('Informe a aplicabilidade.');
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Aplicabilidade']);
+            alert(msg);
             return false;
         }
 
         if(radioDoc == 'I') {
             if(infraGetElementById('selTpDocumentoInt').value == 0){
                 infraGetElementById('selTpDocumentoInt').focus();
-                alert('Informe o Tipo de Documento SEI .');
+                var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Documento SEI']);
+                alert(msg);
                 return false;
             }
         }
@@ -503,7 +510,8 @@ function validarFieldsetListaProduto() {
         if(radioDoc == 'E'){
             if(infraGetElementById('selTpDocumentoExt').value == 0){
                 infraGetElementById('selTpDocumentoExt').focus();
-                alert('Informe o Tipo de Documento SEI.');
+                var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Documento SEI']);
+                alert(msg);
                 return false;
             }
         }
@@ -513,7 +521,8 @@ function validarFieldsetListaProduto() {
     // validar Valor da revisão do produto em Unidades de Esforço
     if(infraGetElementById('txtRevUnidade').value == ''){
         infraGetElementById('txtRevUnidade').focus();
-        alert('Informe o Valor da revisão do produto em Unidades de Esforço (EU).');
+        var msg = setMensagemPersonalizada(msg11Padrao, ['Valor da revisão do produto em Unidades de Esforço (EU)']);
+        alert(msg);
         return false;
     }
 

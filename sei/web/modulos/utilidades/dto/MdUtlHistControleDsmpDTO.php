@@ -58,6 +58,8 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimaFila', 'sin_ultima_fila');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimoResponsavel', 'sin_ultimo_responsavel');
+      
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAjustePrazo', 'id_md_utl_ajuste_prazo');
     
     $this->configurarPK('IdMdUtlHistControleDsmp',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdProcedimento', 'procedimento p', 'p.id_procedimento');

@@ -46,7 +46,7 @@ margin-left: 7px;
 width: 10%;
 }
 
-#divPercentualRevisao{
+#divTipoRevisao{
 width: 17%;
 margin-top: 7%;
 margin-right: 71.5%;

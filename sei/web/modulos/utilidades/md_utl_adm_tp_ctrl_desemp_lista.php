@@ -253,11 +253,11 @@ if ($numRegistros > 0) {
         //Ação Consulta
         if (!$bolSelecionar) {
 
-                //link para tela de Tipo de Justificativa nos tipos de controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="imagens/sei_valores.gif" title="Tipo de Justificativa" alt="Tipo de Justificativa" class="infraImg" /></a>&nbsp;';
-
                 //link para tela de Tipo de Justificativa prazo nos tipos de controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/motivo_dilatacao2.png" title="Justificativa de Dilação de Prazo" alt="Justificativa de Dilação de Prazo" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/motivo_dilatacao2.png" title="Justificativa de Ajuste de Prazo" alt="Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+
+                //link para tela de Justificativa de Revisão nos tipos de controle
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="imagens/sei_valores.gif" title="Justificativa de Revisão" alt="Justificativa de Revisão" class="infraImg" /></a>&nbsp;';
 
                 //link para tela de Tipo de Revisão nos tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/livro.png" title="Resultado da Revisão" alt="Resultado da Revisão" class="infraImg" /></a>&nbsp;';

@@ -17,7 +17,6 @@ var msg12 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'G
 var msg18 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_18, 'Unidade') ?>';
 
 
-
 function inicializar() {
     if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ctrl_desemp_cadastrar'){
         document.getElementById('txtNome').focus();
@@ -73,6 +72,7 @@ function carregarComponenteGestores(){
 
     objAutoCompletarGestor = new infraAjaxAutoCompletar('hdnIdGestor','txtGestor','<?=$strLinkAjaxGestor?>');
     objAutoCompletarGestor.limparCampo = true;
+    objAutoCompletarGestor.tamanhoMinimo = 3;
 
     objAutoCompletarGestor.prepararExecucao = function(){
         return 'palavras_pesquisa='+document.getElementById('txtGestor').value;
@@ -114,6 +114,7 @@ function carregarComponenteGestores(){
 function carregarComponenteUnidades(){
     objAutoCompletarUnidade = new infraAjaxAutoCompletar('hdnIdUnidade','txtUnidade','<?=$strLinkAjaxUnidade?>');
     objAutoCompletarUnidade.limparCampo = true;
+    objAutoCompletarUnidade.tamanhoMinimo = 3;
 
     objAutoCompletarUnidade.prepararExecucao = function(){
         return 'palavras_pesquisa='+document.getElementById('txtUnidade').value;

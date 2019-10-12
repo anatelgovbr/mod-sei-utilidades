@@ -241,13 +241,14 @@ class MdUtlAdmRelTpCtrlDesempUsuRN extends InfraRN {
     return false;
   }
 
-  protected function usuarioLogadoIsGestorSipSeiConectado(){
-      $isGestorTpCtrl = count($this->usuarioLogadoIsGestorTpControle()) > 0;
-      $objPermissaoRN  = new MdUtlAdmPermissaoRN();
-      $isGestorSip     = $objPermissaoRN->isGestor();
+    protected function usuarioLogadoIsGestorSipSeiConectado(){
+        $idsTipoControleUsuario = $this->usuarioLogadoIsGestorTpControle();
+        $isGestorTpCtrl  = $idsTipoControleUsuario ? count($idsTipoControleUsuario) > 0 : false;
+        $objPermissaoRN  = new MdUtlAdmPermissaoRN();
+        $isGestorSip     = $objPermissaoRN->isGestor();
 
-      return $isGestorSip && $isGestorTpCtrl;
-  }
+        return $isGestorSip && $isGestorTpCtrl;
+    }
 
   protected function getUnidadesTipoControleConectado($idTpControle = false){
 
