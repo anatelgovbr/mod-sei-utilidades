@@ -60,7 +60,7 @@ try {
                     $objRegrasGerais->controlarAtribuicaoGrupo($arrIdProcedimento);
 
                     $_SESSION['ID_PROCEDIMENTO_FILA_ASSOCIAR'] = $arrIdProcedimento;
-                    
+
                 }else{
                     $objRN = new MdUtlControleDsmpRN();
                     $objRN->associarFila();
@@ -128,7 +128,7 @@ if(0){?><script><?}?>
 
     }
 
-  function submeterAssociarFila(){
+    function submeterAssociarFila(){
         if(validarNenhumaFila()) {
             var selectNomeFila = document.getElementById('selFila');
             var nomeFila = selectNomeFila.options[selectNomeFila.selectedIndex].innerText;
@@ -143,8 +143,8 @@ if(0){?><script><?}?>
         if(selFila == ''){
             if(msgNenhumaFila.length > 0){
                 if(msgNenhumaFila.length == 1){
-                        var msg = setMensagemPersonalizada(msgPadrao85, msgNenhumaFila);
-                        alert(msg);
+                    var msg = setMensagemPersonalizada(msgPadrao85, msgNenhumaFila);
+                    alert(msg);
                 }else {
                     var msg = msgPadrao84 + '\n';
                     for (var i = 0; i < msgNenhumaFila.length; i++) {
@@ -256,7 +256,7 @@ if(0){?><script><?}?>
 
     }
 
-<?if(0){?></script><?}
+    <?if(0){?></script><?}
 
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
@@ -279,13 +279,13 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         </div>
         <br><br>
         <table width="80%" class="infraTable" summary="Associar à Fila" id="tbAssociarFila">
-              <tr>
+            <tr>
                 <th class="infraTh" align="center" width="1%" style="display: none" >IdVinculo</th>
                 <th class="infraTh" width="23%">Processo</th>
                 <th class="infraTh" width="20%">Última Fila Registrada</th>
                 <th class="infraTh" width="20%">Fila Atual</th>
                 <th class="infraTh" style="display: none">Status</th>
-              </tr>
+            </tr>
         </table>
         <?
 
@@ -300,7 +300,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <input type="hidden" id="hdnIdProcedimento"     name="hdnIdProcedimento"    value="<?=$idProcedimento?>">
         <input type="hidden" id="hdnSelFila"            name="hdnSelFila" >
         <input type="hidden" id="hdnValueFila"          name="hdnValueFila" >
-        
+
 
 
     </form>

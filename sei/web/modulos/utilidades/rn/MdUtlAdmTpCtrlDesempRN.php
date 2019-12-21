@@ -462,7 +462,10 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     if (!$tpJustificativaValido) {
       return $tpJustificativaValido;
     }
-
+    $tpJustContestacao = $this->_validarTpJustContestacao($idTpCtrl,$acao);
+     if (!$tpJustContestacao) {
+         return $tpJustContestacao;
+     }
 
     return true;
   }
@@ -486,6 +489,24 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     }
 
     return true;
+  }
+
+  private function _validarTpJustContestacao($idTpCtrl, $acao){
+      $mdUtlAdmJustContestDTO = new MdUtlAdmJustContestDTO();
+      $mdUtlAdmJustContestRN  = new MdUtlAdmJustContestRN();
+
+      $mdUtlAdmJustContestDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
+      $mdUtlAdmJustContestDTO->retTodos();
+
+      $count = $mdUtlAdmJustContestRN->contar($mdUtlAdmJustContestDTO);
+
+      if($count > 0){
+          $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_04, array($acao, 'Justificativa de Contestação'));
+          $objInfraException = new InfraException();
+          $objInfraException->lancarValidacao($msg);
+          return false;
+      }
+      return true;
   }
 
   private function _validarJustificativaDilacao($idTpCtrl, $acao)
@@ -636,19 +657,31 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
   protected function excluirTipoControleControlado($arrObjsTpControle)
   {
     try {
+
       $idsTpControle = InfraArray::converterArrInfraDTO($arrObjsTpControle, 'IdMdUtlAdmTpCtrlDesemp');
       $idsParams = $this->_getIdsParamsTpControle($idsTpControle);
+      $isParametrizacaoTpCtrl = false;
 
+      //Parametrizacao Tipo de Controle
       if (is_array($idsParams) && !is_null($idsParams))
       {
-        $this->_excluirUsuariosPrmGr($idsParams);
-        $this->_excluirTpProcPrmGr($idsParams);
-        $this->excluir($arrObjsTpControle);
-        $this->_excluirPrm($idsParams);
-      }else{
-        $this->excluir($arrObjsTpControle);
-
+        $isParametrizacaoTpCtrl = true;
+          $this->_excluirUsuariosPrmGr($idsParams);
+          $this->_excluirTpProcPrmGr($idsParams);
+          $this->_excluirHistoricoUsuarios($idsParams);
       }
+      //Parametrização da Contestação
+       $this->_excluirPrmContestacao($idsTpControle);
+     //Parametrização da Distribuição
+      $this->_excluirPrmDistribuicao($idsTpControle);
+
+      $this->excluir($arrObjsTpControle);
+
+      if($isParametrizacaoTpCtrl){
+          $this->_excluirPrm($idsParams);
+      }
+
+
     } catch (Exception $e) {
       PaginaSEI::getInstance()->processarExcecao($e);
     }
@@ -825,7 +858,66 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
       return $arrRetorno;
   }
 
+  private function _excluirPrmContestacao($idsTpControle){
+      $objMdUtlAdmPrmContestDTO = new MdUtlAdmPrmContestDTO();
+      $objMdUtlAdmPrmContestRN = new MdUtlAdmPrmContestRN();
+
+      $objMdUtlAdmPrmContestDTO->setNumIdMdUtlAdmTpCtrlDesemp($idsTpControle, InfraDTO::$OPER_IN);
+      $objMdUtlAdmPrmContestDTO->retTodos();
+
+      $count = $objMdUtlAdmPrmContestRN->contar($objMdUtlAdmPrmContestDTO);
+
+      if($count > 0){
+          $arrObjExcluir = $objMdUtlAdmPrmContestRN->listar($objMdUtlAdmPrmContestDTO);
+          $objMdUtlAdmPrmContestRN->excluir($arrObjExcluir);
+      }
 
 
+  }
+
+  private function _excluirPrmDistribuicao($idsTpControle){
+      $objMdUtlAdmPrmDsDTO = new MdUtlAdmPrmDsDTO();
+      $objMdUtlAdmPrmDsRN= new MdUtlAdmPrmDsRN();
+
+      $objMdUtlAdmPrmDsDTO->setNumIdMdUtlAdmTpCtrlDesemp($idsTpControle, InfraDTO::$OPER_IN);
+      $objMdUtlAdmPrmDsDTO->retTodos();
+
+      $count = $objMdUtlAdmPrmDsRN->contar($objMdUtlAdmPrmDsDTO);
+
+      if($count > 0){
+          $arrObjPrmDsDTO = $objMdUtlAdmPrmDsRN->listar($objMdUtlAdmPrmDsDTO);
+
+          $idsPrmDs = InfraArray::converterArrInfraDTO($arrObjPrmDsDTO, 'IdMdUtlAdmPrmDs');
+
+          $objMdUtlAdmRelPrmDsAtenDTO = new MdUtlAdmRelPrmDsAtenDTO();
+          $objMdUtlAdmRelPrmDsAtenRN = new MdUtlAdmRelPrmDsAtenRN();
+
+          $objMdUtlAdmRelPrmDsAtenDTO->setNumIdMdUtlAdmParamDs($idsPrmDs,InfraDTO::$OPER_IN);
+          $objMdUtlAdmRelPrmDsAtenDTO->retTodos();
+
+          $count = $objMdUtlAdmRelPrmDsAtenRN->contar($objMdUtlAdmRelPrmDsAtenDTO);
+          if($count > 0){
+              $arrPrmDsAtenDTO = $objMdUtlAdmRelPrmDsAtenRN->listar($objMdUtlAdmRelPrmDsAtenDTO);
+              $objMdUtlAdmRelPrmDsAtenRN->excluir($arrPrmDsAtenDTO);
+          }
+          $objMdUtlAdmPrmDsRN->excluir($arrObjPrmDsDTO);
+      }
+
+  }
+  private function _excluirHistoricoUsuarios($idsParams){
+
+        $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+        $objMdUtlAdmHistPrmGrUsuRN = new MdUtlAdmHistPrmGrUsuRN();
+
+        $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idsParams, InfraDTO::$OPER_IN);
+        $objMdUtlAdmHistPrmGrUsuDTO->retTodos();
+
+        $count = $objMdUtlAdmHistPrmGrUsuRN->contar($objMdUtlAdmHistPrmGrUsuDTO);
+
+        if($count > 0){
+            $arrObjExcluir = $objMdUtlAdmHistPrmGrUsuRN->listar($objMdUtlAdmHistPrmGrUsuDTO);
+            $objMdUtlAdmHistPrmGrUsuRN->excluir($arrObjExcluir);
+        }
+  }
 
 }

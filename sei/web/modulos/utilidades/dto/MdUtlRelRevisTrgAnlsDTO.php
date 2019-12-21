@@ -31,10 +31,14 @@ class MdUtlRelRevisTrgAnlsDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlRevisao', 'id_md_utl_revisao');
 
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeTipoRevisao','tprev.nome','md_utl_adm_tp_revisao tprev');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeJustificativaRevisao','tpjustrev.nome','md_utl_adm_tp_just_revisao tpjustrev');
+
+
     $this->configurarPK('IdMdUtlRelRevisTrgAnls',InfraDTO::$TIPO_PK_NATIVA);
 
-    $this->configurarFK('IdMdUtlAdmTpJustRevisao', 'md_utl_adm_tp_just_revisao', 'id_md_utl_adm_tp_just_revisao', InfraDTO::$TIPO_FK_OPCIONAL);
-    $this->configurarFK('IdMdUtlAdmTpRevisao', 'md_utl_adm_tp_revisao', 'id_md_utl_adm_tp_revisao');
+    $this->configurarFK('IdMdUtlAdmTpJustRevisao', 'md_utl_adm_tp_just_revisao tpjustrev', 'tpjustrev.id_md_utl_adm_tp_just_revisao', InfraDTO::$TIPO_FK_OPCIONAL);
+    $this->configurarFK('IdMdUtlAdmTpRevisao', 'md_utl_adm_tp_revisao tprev', 'tprev.id_md_utl_adm_tp_revisao');
     $this->configurarFK('IdMdUtlRelAnaliseProduto', 'md_utl_rel_analise_produto', 'id_md_utl_rel_analise_produto', InfraDTO::$TIPO_FK_OPCIONAL);
     $this->configurarFK('IdMdUtlRelTriagemAtv', 'md_utl_rel_triagem_atv reltratv', 'reltratv.id_md_utl_rel_triagem_atv', InfraDTO::$TIPO_FK_OPCIONAL);
 

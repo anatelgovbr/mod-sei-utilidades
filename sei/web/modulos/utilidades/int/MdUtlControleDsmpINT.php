@@ -135,16 +135,13 @@ class MdUtlControleDsmpINT extends InfraINT {
 
     public static function retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila){
 
-        $objMdUtlFilaRN      = new MdUtlAdmFilaRN();
-        $objRelTpCtrlUsuRN   = new MdUtlAdmRelTpCtrlDesempUsuRN();
-        $isGestor = $objRelTpCtrlUsuRN->usuarioLogadoIsGestorSipSei();
+        $objRelTpCtrlUsuRN     = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $objMdUtlFilaRN        = new MdUtlAdmFilaRN();
         $isUsuarioPertenceFila = true;
+        $arrVisualizacao       = array();
+        $isGestor = $objRelTpCtrlUsuRN->usuarioLogadoIsGestorSipSei();
+        $isUsuarioPertenceFila = $objMdUtlFilaRN->verificaUsuarioLogadoPertenceFila(array($idFila, $idStatus));
 
-        if(!$isGestor){
-            $isUsuarioPertenceFila = $objMdUtlFilaRN->verificaUsuarioLogadoPertenceFila(array($idFila, $idStatus));
-        }
-
-        $arrVisualizacao = array();
         switch ($idStatus){
             case MdUtlControleDsmpRN::$AGUARDANDO_FILA:
                 $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
@@ -152,6 +149,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = false;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = false;
+                $arrVisualizacao['ATRIBUICAO']   = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM:
@@ -160,6 +158,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                  $arrVisualizacao['ANALISE']      = false;
                  $arrVisualizacao['REVISAO']      = false;
                  $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
+                 $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
                  break;
 
             case MdUtlControleDsmpRN::$EM_TRIAGEM:
@@ -168,6 +167,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = false;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['ATRIBUICAO']   = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE:
@@ -176,6 +176,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = false;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
@@ -184,6 +185,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = true;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['ATRIBUICAO']   = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO:
@@ -192,6 +194,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM:
@@ -201,6 +204,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
                 $arrVisualizacao['REVISAO']      = true;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$EM_REVISAO:
@@ -211,6 +215,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
                 $arrVisualizacao['REVISAO']      = true;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['ATRIBUICAO']   = false;
             break;
 
             default:
@@ -219,6 +224,7 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrVisualizacao['ANALISE']      = false;
                 $arrVisualizacao['REVISAO']      = false;
                 $arrVisualizacao['DISTRIBUICAO'] = false;
+                $arrVisualizacao['ATRIBUICAO']   = false;
                 break;
         }
 
@@ -255,19 +261,23 @@ class MdUtlControleDsmpINT extends InfraINT {
         switch ($idStatus) {
             case MdUtlControleDsmpRN::$EM_TRIAGEM:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_cadastrar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
             case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_cadastrar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_REVISAO:
@@ -275,28 +285,33 @@ class MdUtlControleDsmpINT extends InfraINT {
                 $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
                 $conc = $isPossuiAnalise ? 'md_utl_revisao_analise_cadastrar' : 'md_utl_revisao_triagem_cadastrar';
                 $arrUrls['REVISAO'] = $replaceUrl($conc);
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_alterar');
                 $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_triagem_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_alterar');
                 $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_analise_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
                 $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_analise_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM:
                 $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_triagem_consultar');
+                $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
         }
@@ -429,12 +444,10 @@ class MdUtlControleDsmpINT extends InfraINT {
     {
         $strResultado = '';
 
-
         $arrStatusNaoPermitidos = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
 
         $strUrl =  PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_retornar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_procedimento=' . $strIdProcedimento));
         if (!in_array($strStatus, $arrStatusNaoPermitidos)) {
-
             if ($isDadosParametrizados) {
                 if (is_null($idPrazoExistente)) {
                     if ($isDataPermitida) {
@@ -473,10 +486,29 @@ class MdUtlControleDsmpINT extends InfraINT {
             }
         }
 
-
         return $strResultado;
     }
 
+    public static function getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $objContestRevisao, $numIdTriagem, $isDadosParametrizados, $strSituacao){
+        $idContestRevisaoExistente = $objContestRevisao->getNumIdMdUtlContestRevisao();
+        $strResultado = '';
+        $arrContestacaoPermitidos = array(MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
+
+        if (in_array($strStatus, $arrContestacaoPermitidos)) {
+            if ($isDadosParametrizados) {
+                    if (is_null($idContestRevisaoExistente) || $strSituacao == MdUtlContestacaoRN::$CANCELADA) {
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/cadastrar_contestacao.png" title="Contestar Revisão" alt="Contestar Revisão" class="infraImg" /></a>&nbsp;';
+                    } else {
+                        if ($strSituacao == MdUtlContestacaoRN::$PENDENTE_RESPOSTA) {
+                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/editar_contestacao.png" title="Alterar Contestação de Revisão" alt="Alterar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
+                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/visualizar_contestacao.png" title="Consultar Contestação de Revisão" alt="Consultar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
+                        }
+                    }
+            }
+        }
+
+        return $strResultado;
+    }
 
     public static function montarSelectTipoSolicitacao($idSelecionado = null){
         $select = '<option value=""></option>';
@@ -502,5 +534,17 @@ class MdUtlControleDsmpINT extends InfraINT {
         $dataHoraCompleta = trim($dataHoraCompleta);
 
         return $dataHoraCompleta;
+    }
+
+    public static function setNomeAtividade(&$arrObjs, $arrObjsTriagem){
+        if(count($arrObjs) > 0){
+            foreach($arrObjs as $objDTO){
+                $strNomeAtividade  = array_key_exists($objDTO->getNumIdMdUtlTriagem(), $arrObjsTriagem) ? $arrObjsTriagem[$objDTO->getNumIdMdUtlTriagem()] : '';
+                $strNomeAtividade  = is_array($strNomeAtividade) ? 'Múltiplas' : $strNomeAtividade;
+                $objDTO->setStrNomeAtividadeTriagem($strNomeAtividade);
+            }
+        }
+
+        return $arrObjs;
     }
 }

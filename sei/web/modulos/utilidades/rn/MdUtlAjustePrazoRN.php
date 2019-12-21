@@ -145,6 +145,7 @@ class MdUtlAjustePrazoRN extends InfraRN {
       $objMdUtlAdmJustPrazoBD = new MdUtlAdmJustPrazoBD($this->getObjInfraIBanco());
       $ret = $objMdUtlAdmJustPrazoBD->listar($objMdUtlAjustePrazoDTO);
 
+
       //Auditoria
 
       return $ret;

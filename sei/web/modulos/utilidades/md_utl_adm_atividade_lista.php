@@ -49,11 +49,14 @@ try {
           }
 
           $idRel = $arrObjMdUtlAdmAtividadeDTO[0]->getNumIdMdUtlAdmAtividade();
-          $objRNRel = new MdUtlAdmAtvSerieProdRN();
-          $objRNRel->consultarExcluirVinculos($idRel);
+
           $mdUtlAdmGrpFlProcAtvRN = new MdUtlAdmGrpFlProcAtvRN();
           $mdUtlAdmGrpFlProcAtvRN->consultarExcluirVinculo($idRel);
 
+          $objMdUtlAdmAtividadeRN->verificaAtividadeDistribuicao($idRel);
+
+          $objRNRel = new MdUtlAdmAtvSerieProdRN();
+          $objRNRel->consultarExcluirVinculos($idRel);
 
           $objMdUtlAdmAtividadeRN->excluir($arrObjMdUtlAdmAtividadeDTO);
 
@@ -116,12 +119,22 @@ try {
       break;
 
       case 'md_utl_adm_atividade_selecionar':
+          $vlisPrmDistrib  = array_key_exists('is_prm_distr',$_GET) ? $_GET['is_prm_distr'] : $_POST['hdnIsPrmDistrib'];
+          $isPrmDistrib    = $vlisPrmDistrib == 1;
+
           $nomeTpCtrl     = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
           $strTitulo      = 'Selecionar Atividades - '.$nomeTpCtrl;
           $displayNone    = "";
           $tpProcesso     = array_key_exists('id_tipo_procedimento', $_GET) ? $_GET['id_tipo_procedimento'] : 0;
           $idTipoControle = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : 0;
           $strLinkSelecionar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao_origem'].'&id_object=objLupaAtividade&id_tipo_controle_utl='.$idTipoControle.'&tipo_selecao=2&id_tipo_procedimento='.$tpProcesso);
+
+          $objLupaAtividade         =  array_key_exists('id_object', $_GET) ? $_GET['id_object'] : $_POST['hdnObjLupaAtividade'];
+          $objLupaAtividadeUnica    =  array_key_exists('id_object', $_GET) ? $_GET['id_object'] : $_POST['hdnObjLupaAtividadeUnica'];
+
+          if($objLupaAtividadeUnica != '' || $objLupaAtividade != '') {
+              $displayNone = "";
+          }
           break;
     default:
       throw new InfraException("Ação '".$_GET['acao']."' não reconhecida.");
@@ -268,6 +281,12 @@ try {
     $strResultado .= '</tr>'."\n";
     $strCssTr='';
     for($i = 0;$i < $numRegistros; $i++){
+        $strNomeFila                = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome();
+        $strNomeFilaChecked         = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome();
+        $strDescricaoAtividade      = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrDescricao();
+        if($isPrmDistrib){
+            $strNomeFilaChecked = $strNomeFila.' - '.$strDescricaoAtividade;
+        }
 
       $strCssTr = ($strCssTr=='<tr class="infraTrClara">')?'<tr class="infraTrEscura">':'<tr class="infraTrClara">';
       if($arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAtivo()=='N')
@@ -298,7 +317,7 @@ try {
         {
           $idSelecao = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade();
         }
-        $strResultado .= '<td valign="top" '.$displayNone.'>'.PaginaSEI::getInstance()->getTrCheck($i,$idSelecao,$arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome()).'</td>';
+        $strResultado .= '<td valign="top" '.$displayNone.'>'.PaginaSEI::getInstance()->getTrCheck($i,$idSelecao,$strNomeFilaChecked).'</td>';
      }
 
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome()).'</td>';
@@ -548,6 +567,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                value="<?=$descricao?>" maxlength="100"
                tabindex="502"/>
       </div>
+        <?php   if (!$isPrmDistrib) { ?>
         <div style="width: 25%" class="bloco" id="blocoTipoAnalise">
 
             <label id="lblTipoAnalise" name="lblTipoAnalise" for="selTipoAnalise"
@@ -564,11 +584,16 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
             </select>
 
         </div>
+        <?php  } ?>
 
     </div>
 
     <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
     <input type="hidden" name="hdnIdsGrupoAtividadeTriagem" id="hdnIdsGrupoAtividadeTriagem" value="<?php echo array_key_exists('hdnIdsGrupoAtividadeTriagem', $_POST) ? $_POST['hdnIdsGrupoAtividadeTriagem'] : '' ?>"/>
+
+    <input type="hidden" id="hdnObjLupaAtividade" name="hdnObjLupaAtividade" value="<?php echo $objLupaAtividade; ?>"/>
+    <input type="hidden" id="hdnObjLupaAtividadeUnica" name="hdnObjLupaAtividadeUnica" value="<?php echo $objLupaAtividadeUnica; ?>"/>
+    <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
     <?
     PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
     //PaginaSEI::getInstance()->montarAreaDebug();

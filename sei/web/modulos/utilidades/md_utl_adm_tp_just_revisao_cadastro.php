@@ -167,7 +167,7 @@ if(0){?><script type="text/javascript"><?}?>
 
   function validarCadastro() {
     if (infraTrim(document.getElementById('txtNome').value)=='') {
-      var msg = setMensagemPersonalizada(msgPadraoObrigatoriedade, ['Nome']);
+      var msg = setMensagemPersonalizada(msgPadraoObrigatoriedade, ['Tipo de Justificativa']);
       alert(msg);
       document.getElementById('txtNome').focus();
       return false;

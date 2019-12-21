@@ -22,7 +22,8 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function getVersao()
     {
-        return '1.2.0';
+   
+        return '1.3.0';
     }
 
     public function getInstituicao()
@@ -208,6 +209,7 @@ class UtilidadesIntegracao extends SeiIntegracao
                 return true;
 
             case 'md_utl_processo_listar':
+            case 'md_utl_atribuicao_automatica':
                 require_once dirname(__FILE__).'/md_utl_processo_lista.php';
                 return true;
 
@@ -253,13 +255,47 @@ class UtilidadesIntegracao extends SeiIntegracao
             case 'md_utl_gestao_solicitacoes_listar':
             case 'md_utl_gestao_ajust_prazo_aprovar':
             case 'md_utl_gestao_ajust_prazo_reprovar':
-                require_once dirname(__FILE__) . '/md_utl_gestao_ajust_prazo_lista.php';
+            case 'md_utl_gestao_contestacao_aprovar':
+            case 'md_utl_gestao_contestacao_reprovar':
+                require_once dirname(__FILE__) . '/md_utl_gestao_solicitacoes_lista.php';
                 return true;
 
             case 'md_utl_atividade_triagem_listar':
                 require_once dirname(__FILE__) . '/md_utl_atividade_triagem_lista.php';
                 return true;
 
+            case 'md_utl_adm_just_contest_listar':
+            case 'md_utl_adm_just_contest_desativar':
+            case 'md_utl_adm_just_contest_reativar':
+            case 'md_utl_adm_just_contest_excluir':
+                require_once dirname(__FILE__) . '/md_utl_adm_just_contest_lista.php';
+                return true;
+
+            case 'md_utl_adm_just_contest_cadastrar':
+            case 'md_utl_adm_just_contest_alterar':
+            case 'md_utl_adm_just_contest_consultar':
+                require_once dirname(__FILE__) . '/md_utl_adm_just_contest_cadastro.php';
+                return true;
+
+            case 'md_utl_adm_prm_contest_cadastrar':
+            case 'md_utl_adm_prm_contest_alterar':
+                require_once dirname(__FILE__) . '/md_utl_adm_prm_contest_cadastro.php';
+                return true;
+
+            case 'md_utl_contest_revisao_cadastrar':
+            case 'md_utl_contest_revisao_alterar':
+            case 'md_utl_contest_revisao_consultar':
+                require_once dirname(__FILE__) . '/md_utl_contest_revisao_cadastro.php';
+                return true;
+
+            //EU34423
+            case 'md_utl_adm_prm_ds_cadastrar':
+                require_once dirname(__FILE__) . '/md_utl_adm_prm_ds_cadastro.php';
+                return true;
+
+            case 'md_utl_adm_status_selecionar':
+                require_once dirname(__FILE__) . '/md_utl_adm_status_lista.php';
+                return true;
         }
 
 
@@ -321,12 +357,19 @@ class UtilidadesIntegracao extends SeiIntegracao
                 break;
 
             case 'md_utl_adm_fila_auto_completar':
-                $arrObjs = MdUtlAdmFilaINT::autoCompletarFilas($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl']);
+                $isPrmDistr = array_key_exists('is_prm_distr',$_GET) && $_GET['is_prm_distr'] == 1 ? true : false;
+                $arrObjs = MdUtlAdmFilaINT::autoCompletarFilas($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl'], $isPrmDistr);
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjs, 'IdMdUtlAdmFila', 'Nome');
                 break;
 
             case 'md_utl_adm_atividade_auto_completar':
-                $xml = MdUtlAdmAtividadeINT::autoCompletarAtividade($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl']);
+                $isPrmDistr = array_key_exists('is_prm_distr',$_GET) && $_GET['is_prm_distr'] == 1 ? true : false;
+                $xml = MdUtlAdmAtividadeINT::autoCompletarAtividade($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl'], $isPrmDistr);
+                break;
+
+            case 'md_utl_adm_status_auto_completar':
+                $isPrmDistr = array_key_exists('is_prm_distr',$_GET) && $_GET['is_prm_distr'] == 1 ? true : false;
+                $xml = MdUtlAdmPrmDsINT::autoCompletarStatus($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl'], $isPrmDistr);
                 break;
 
             case 'md_utl_adm_atividade_filtro_auto_completar':
@@ -414,7 +457,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     public function montarBotaoProcesso(ProcedimentoAPI $objProcedimentoAPI)
     {
         $isAcesso  = SessaoSEI::getInstance()->verificarPermissao('md_utl_controle_dsmp_listar');
-        $arrBotoes = array();
+      $arrBotoes = array();
 
         if($isAcesso) {
             $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
@@ -514,7 +557,6 @@ class UtilidadesIntegracao extends SeiIntegracao
         }
     }
 
-
     public function excluirTipoDocumento($arrObjTpDocumento)
     {
         $mdPetRegrasGeraisRN = new MdUtlRegrasGeraisRN();
@@ -527,7 +569,6 @@ class UtilidadesIntegracao extends SeiIntegracao
         }
     }
 
-
     public function desativarTipoDocumento($arrObjTpDocumento)
     {
         $mdPetRegrasGeraisRN = new MdUtlRegrasGeraisRN();
@@ -539,7 +580,6 @@ class UtilidadesIntegracao extends SeiIntegracao
             return $arrObjTpDocumento;
         }
     }
-
 
     public function excluirTipoProcesso($arrObjTipoProcedimentoDTO)
     {
@@ -566,7 +606,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     }
 
     /**
-     * Valida se o Processo onde está realizando a anexação de processo possui Vínculo com Intimação
+     * Valida se o Processo onde est? realizando a anexa??o de processo possui V?nculo com Intima??o
      */
     public function sobrestarProcesso(ProcedimentoAPI $objProcedimentoAPI, $objProcedimentoAPIVinculado)
     {   
@@ -591,6 +631,8 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function concluirProcesso($arrObjProcedimentoAPI)
     {
+        $objInfraException  = new InfraException();
+        //$objInfraException->lancarValidacao('teste');
 
         $objControleDsmpRN = new MdUtlControleDsmpRN();
 
@@ -729,6 +771,90 @@ class UtilidadesIntegracao extends SeiIntegracao
             $objInfraException = new InfraException();
             $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_60);
             return $objInfraException->lancarValidacao($msg);
+        }
+
+    }
+
+    public function montarIconeProcesso(ProcedimentoAPI $objProcedimentoAPI)
+    {
+        $isAcesso  = SessaoSEI::getInstance()->verificarPermissao('md_utl_controle_dsmp_listar');
+
+        if($isAcesso) {
+            $dblIdProcedimento = $objProcedimentoAPI->getIdProcedimento();
+            $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+            $objTpCtrlUtlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+            $objTpControleDTO = $objTpCtrlUtlUndRN->getObjTipoControleUnidadeLogada();
+            if (!is_null($objTpControleDTO)) {
+                $nomeTpCtrl = 'Controle de Desempenho - ' . $objTpControleDTO->getStrNomeTipoControle() . ': ' . SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+
+                $arrRetorno = $objRegrasGeraisRN->retornaDadosIconesProcesso($dblIdProcedimento, $nomeTpCtrl);
+
+                if (count($arrRetorno) > 0) {
+                    $tipo = 'UTILIDADES';
+                    $id = 'UTL_' . $dblIdProcedimento;
+                    $title = $arrRetorno['TOOLTIP'];;
+                    $icone = $arrRetorno['IMG'];
+
+                    $objArvoreAcaoItemAPI = new ArvoreAcaoItemAPI();
+                    $objArvoreAcaoItemAPI->setTipo($tipo);
+                    $objArvoreAcaoItemAPI->setId($id);
+                    $objArvoreAcaoItemAPI->setIdPai($dblIdProcedimento);
+                    $objArvoreAcaoItemAPI->setTitle($title);
+                    $objArvoreAcaoItemAPI->setIcone($icone);
+                    $objArvoreAcaoItemAPI->setTarget(null);
+                    $objArvoreAcaoItemAPI->setHref('javascript:;');
+                    $objArvoreAcaoItemAPI->setSinHabilitado('S');
+                    $arrObjArvoreAcaoItemAPI[] = $objArvoreAcaoItemAPI;
+
+                    return $arrObjArvoreAcaoItemAPI;
+                }
+            }
+        }
+    }
+
+    public function montarIconeControleProcessos($arrObjProcedimentoDTO)
+    {
+        $isAcesso  = SessaoSEI::getInstance()->verificarPermissao('md_utl_controle_dsmp_listar');
+        if($isAcesso) {
+            $arrParam = array();
+            $arrsIds = array();
+
+            if ($arrObjProcedimentoDTO != null && count($arrObjProcedimentoDTO) > 0) {
+
+                foreach ($arrObjProcedimentoDTO as $objProcedimentoAPI) {
+                    $dblIdProcedimento = $objProcedimentoAPI->getIdProcedimento();
+                    $arrsIds[] = $dblIdProcedimento;
+                }
+
+                $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+                $arrParam = $objRegrasGeraisRN->retornaDadosIconesProcesso($arrsIds);
+
+            }
+
+            return $arrParam;
+        }
+    }
+
+    public function montarIconeAcompanhamentoEspecial($arrObjProcedimentoDTO)
+    {
+
+        $isAcesso  = SessaoSEI::getInstance()->verificarPermissao('md_utl_controle_dsmp_listar');
+        if($isAcesso) {
+            $arrsIds = array();
+
+            if ($arrObjProcedimentoDTO != null && count($arrObjProcedimentoDTO) > 0) {
+
+                foreach ($arrObjProcedimentoDTO as $objProcedimentoAPI) {
+                    $dblIdProcedimento = $objProcedimentoAPI->getIdProcedimento();
+                    $arrsIds[] = $dblIdProcedimento;
+                }
+
+                $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+                $arrParam = $objRegrasGeraisRN->retornaDadosIconesProcesso($arrsIds);
+
+            }
+
+            return $arrParam;
         }
 
     }

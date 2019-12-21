@@ -148,8 +148,8 @@ class MdUtlAnaliseRN extends InfraRN {
 
           array_walk( $dados, $formatarDetalhe);
 
-          $objAnalise = $this->_salvaObjAnalise($dados, $isTpProcParametrizado);
-          $tipoRevisao     = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
+          $objAnalise    = $this->_salvaObjAnalise($dados, $isTpProcParametrizado);
+          $tipoRevisao   = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
           $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
           if (!is_null($arrObjsAtuais)) {
@@ -162,8 +162,11 @@ class MdUtlAnaliseRN extends InfraRN {
                   case MdUtlAdmFilaRN::$TOTAL:
 
                       $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO);
-                      $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+                      if($isAlterar) {
+                          $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                      }
 
+                      $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
                       $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
                       $this->_continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno);
@@ -175,6 +178,9 @@ class MdUtlAnaliseRN extends InfraRN {
                       $nextStatus = $isHabilitar ? MdUtlControleDsmpRN::$AGUARDANDO_REVISAO : MdUtlControleDsmpRN::$FLUXO_FINALIZADO;
                       $arrDados = array($arrIdsProcedimentos, $nextStatus);
                       $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+                      if($isAlterar) {
+                          $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                      }
 
                       $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
@@ -195,6 +201,10 @@ class MdUtlAnaliseRN extends InfraRN {
                   case MdUtlAdmFilaRN::$SEM_REVISAO:
                       $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$FLUXO_FINALIZADO);
                       $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+
+                      if ($isAlterar) {
+                           $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                       }
 
                       $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 

@@ -24,4 +24,23 @@ class MdUtlHistControleDsmpINT extends InfraINT {
         return $dataCompleta.' '.$hora.':'.$minuto;
     }
 
+    public static function getusuarioRevisor($dblIdProcedimento){
+
+        $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($dblIdProcedimento);
+        $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+        $objMdUtlHistControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+        $objMdUtlHistControleDsmpDTO->retStrSiglaUsuarioDist();
+        $objMdUtlHistControleDsmpDTO->retStrNomeUsuarioDist();
+
+        $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
+        $usuDistRevisor = $objMdUtlHistControleDsmpRN->listar($objMdUtlHistControleDsmpDTO);
+
+        foreach ($usuDistRevisor as $obj){
+            $objUsuRevisor = $obj;
+        }
+
+       return $objUsuRevisor;
+    }
+
 }

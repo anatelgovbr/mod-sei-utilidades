@@ -16,7 +16,6 @@ if (isset($_SESSION['IDS_PROCEDIMENTOS_DISTRIBUICAO'])) {
     unset($_SESSION['IDS_PROCEDIMENTOS_DISTRIBUICAO']);
 }
 
-
 PaginaSEI::getInstance()->salvarCamposPost(array('txtProcessoUtlDist','txtDocumento', 'selFilaUtlDist', 'selTipoProcessoUtlDist','selResponsavelUtlDist', 'selStatusUtlDist', 'selAtividadeUtlDist'));
 
 $txtProcessoCampo     = array_key_exists('txtProcessoUtlDist', $_POST) ? $_POST['txtProcessoUtlDist'] : PaginaSEI::getInstance()->recuperarCampo('txtProcessoUtlDist');
@@ -163,6 +162,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO->retNumIdMdUtlTriagem();
 
         if ($selAtividadeCampo != '') {
+            $objDTO->setStrValorAtividadeSelectUtl($selAtividadeCampo);
             $idsTriagem = $objMdUtlControleDsmpRN->pesquisarAtividade($objDTO);
 
             if (count($idsTriagem) > 0) {
@@ -210,6 +210,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         PaginaSEI::getInstance()->prepararPaginacao($objDTO, 200);
 
         $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
+        MdUtlControleDsmpINT::setNomeAtividade($arrObjs, $arrayObjs);
         $numRegistros = count($arrObjs);
 
         PaginaSEI::getInstance()->processarPaginacao($objDTO);
@@ -228,7 +229,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             $strResultado .= '<tr>';
             $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh utlSelecionarTodos" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
             $strResultado .= '<th class="infraTh" width="18%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="19%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="19%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'NomeAtividadeTriagem', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
 

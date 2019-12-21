@@ -42,7 +42,6 @@ class MdUtlAdmTpCtrlDesempDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
-
     $this->configurarPK('IdMdUtlAdmTpCtrlDesemp',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr mupr', 'mupr.id_md_utl_adm_prm_gr', $this->getParametroFk(), $this->getParametroFiltroFk());

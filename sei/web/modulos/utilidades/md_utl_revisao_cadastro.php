@@ -23,7 +23,12 @@ try {
 
     // Vars
     $idProcedimento  = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
+    $idContest       = array_key_exists('id_contest', $_GET) ? $_GET['id_contest'] : $_POST['hdnIdMdUtlContestRevisao'];
 
+    if(is_null($idContest)){
+        $idContest = 0;
+    }
+        
     $strTitulo       = 'Análise ';
 
 //Tipo de Controle e Procedimento
@@ -39,6 +44,8 @@ try {
     $objMdUtlRevDTO              = new MdUtlRevisaoDTO();
     $objMdUtlRevRN               = new MdUtlRevisaoRN();
     $objMdUtlFilaRN              = new MdUtlAdmFilaRN();
+    $idContatoAtual              = null;
+    $strNumeroProcesso           = null;
 
     $idTipoControle            = $objRelTpCtrlUndRN->getTipoControleUnidadeLogada();
     $isAnalise                 = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_analise_consultar';
@@ -46,8 +53,11 @@ try {
     $isEdicao                  = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_triagem_cadastrar';
     $idFilaAtiva               = $_GET['id_fila'];
     $selectFila                = '';
-
+    
+    
     $objControleDsmpDTO        = $objMdUtlControleDsmpRN->getObjControleDsmpAtivoRevisao(array($idProcedimento, $isAnalise));
+    $idContatoAtual            = $objControleDsmpDTO->getNumIdContato();
+    $strNumeroProcesso         = $objControleDsmpDTO->getStrProtocoloProcedimentoFormatado();
 
     $idRevisao                 = $objControleDsmpDTO->getNumIdMdUtlRevisao();
     $idMdUtlAnalise            = $objControleDsmpDTO->getNumIdMdUtlAnalise();
@@ -80,16 +90,18 @@ try {
     $selFila         = MdUtlAdmFilaINT::montarSelectFilas($selFila, $arrObjsFilaDTO, null, true);
     $optionAssociar  = MdUtlRevisaoINT::montarSelectSinRetorno();
 
-    if($idMdUtlAnalise != '' || !is_null($idMdUtlAnalise)){
-        $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise() != null ? 'S' : 'N';
-        $idAssocFila  = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise();
-        $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
-        $selFila      = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
-    } else {
-        $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem() != null ? 'S' : 'N';
-        $idAssocFila  = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem();
-        $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
-        $selFila      = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
+    if($idContest == 0) {
+        if ($idMdUtlAnalise != '' || !is_null($idMdUtlAnalise)) {
+            $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise() != null ? 'S' : 'N';
+            $idAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise();
+            $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
+            $selFila = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
+        } else {
+            $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem() != null ? 'S' : 'N';
+            $idAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncTriagem();
+            $optionAssociar = MdUtlRevisaoINT::montarSelectSinRetorno($selAssocFila);
+            $selFila = MdUtlAdmFilaINT::montarSelectFilas($idAssocFila, $arrObjsFilaDTO, null, true);
+        }
     }
 
     $arrComandos    = array();
@@ -105,14 +117,22 @@ try {
 
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
 
-            if(isset($_POST) && count($_POST) >0){
 
-                $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
-                $isProcessoConcluido = $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
-                if($isPgPadrao == 0) {
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
+            if(isset($_POST) && count($_POST) > 0){
+                $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
+
+                if($idContest == 0) {
+                    $isProcessoConcluido = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
+                    if ($isPgPadrao == 0) {
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                    } else {
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                    }
                 }else{
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
+                    $arrDados = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnaliseContest(array($idProcedimento, $idContatoAtual, $strNumeroProcesso));
+                    $isProcessoConcluido = $arrDados[0];
+                    $isContatoVazio      = $arrDados[1];
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_gestao_solicitacoes_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido.'&is_contato_vazio='.$isContatoVazio));
                 }
                 die;
             }
@@ -125,14 +145,20 @@ try {
 
             require_once 'md_utl_revisao_triagem_cadastro_acoes.php';
             if(isset($_POST) && count($_POST) >0){
-
-                $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
-                $isProcessoConcluido    = $MdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
-
-                if($isPgPadrao == 0) {
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
-                }else{
-                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido='.$isProcessoConcluido));
+                $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
+                if ($idContest == 0)
+                {
+                    $isProcessoConcluido = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
+                    if ($isPgPadrao == 0) {
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                    } else {
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                    }
+                } else {
+                    $arrDados = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnaliseContest(array($idProcedimento, $idContatoAtual, $strNumeroProcesso));
+                    $isProcessoConcluido = $arrDados[0];
+                    $isContatoVazio      = $arrDados[1];
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_gestao_solicitacoes_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido.'&is_contato_vazio='.$isContatoVazio));
                 }
                 die;
             }
@@ -217,6 +243,10 @@ if(0){?><style><?}?>
         width: 200px;
     }
 
+    #selEncaminhamentoContest{
+        width: 200px;
+    }
+
     #txaInformacaoComplementarAnlTri{
         background-color: #dfdfdfdf;
     }
@@ -257,9 +287,13 @@ if(0){?><script type="text/javascript"><?}?>
 
     function salvar(){
 
-        var selectEncaminhamento = document.querySelector('#selEncaminhamento');
-        var option = selectEncaminhamento.children[selectEncaminhamento.selectedIndex];
-        var encaminhamentoDetalhe = option.textContent;
+        var isContestacao = '<?=$idContest ?>';
+
+        if(isContestacao == 0) {
+            var selectEncaminhamento = document.querySelector('#selEncaminhamento');
+            var option = selectEncaminhamento.children[selectEncaminhamento.selectedIndex];
+            var encaminhamentoDetalhe = option.textContent;
+        }
 
         var selectAssociarFila = document.querySelector('#selAssociarProcFila');
         var optionAssociarFila = selectAssociarFila.children[selectAssociarFila.selectedIndex];
@@ -277,14 +311,18 @@ if(0){?><script type="text/javascript"><?}?>
             valido = validarObservacao();
         }
 
-        var encaminhamento = infraGetElementById('selEncaminhamento').value;
+
+        var idEncaminhamento = isContestacao == 0 ? 'selEncaminhamento' : 'selEncaminhamentoContest';
+        var encaminhamento = infraGetElementById(idEncaminhamento).value;
         var associarFilaSelect = infraGetElementById('selAssociarProcFila').value;
         var selectFila = infraGetElementById('selFila').value;
 
-        if(valido){
-            if(encaminhamento == '') {
+
+        if(valido) {
+            if (encaminhamento == '') {
                 valido = false;
-                var msg = setMensagemPersonalizada(msg11Padrao, ['Encaminhamento da Revisão']);
+                var valor = isContestacao == 0 ? 'Encaminhamento da Revisão' : 'Encaminhamento da Contestação';
+                var msg = setMensagemPersonalizada(msg11Padrao, [valor]);
                 alert(msg);
             }
         }
@@ -316,7 +354,10 @@ if(0){?><script type="text/javascript"><?}?>
             }
 
             bloquearBotaoSalvar();
-            document.getElementById('hdnEncaminhamento').value = encaminhamentoDetalhe;
+            if(isContestacao == 0) {
+                document.getElementById('hdnEncaminhamento').value = encaminhamentoDetalhe;
+            }
+
             document.getElementById('hdnAssociarFila').value = associarFila;
             document.getElementById('hdnFila').value = fila;
             infraGetElementById('frmRevisaoCadastro').submit();
@@ -391,18 +432,19 @@ if(0){?><script type="text/javascript"><?}?>
     }
 
     function encaminhamento(val){
-        $selectFila = document.getElementById('selFila').value;
-        $valAssocFila = '<?=$selAssocFila?>';
+        var idDivPrincipal ='divPrincipalEncaminhamento';
+        var selectFila = document.getElementById('selFila').value;
+        var valAssocFila = '<?=$selAssocFila?>';
        
         if(val === 'X'){
             document.getElementById('selAssociarProcFila').innerHTML = '<?=$optionAssociar?>';
-            validarFila($valAssocFila);
-            document.getElementById('divPrincipalEncaminhamento').style.display = 'inline-block' ;
-            if($selectFila){
+            validarFila(valAssocFila);
+            document.getElementById(idDivPrincipal).style.display = 'inline-block' ;
+            if(selectFila){
             document.getElementById('divFila').style.display = 'inline-block' ;
             }
         }else{
-            document.getElementById('divPrincipalEncaminhamento').style.display='none';
+            document.getElementById(idDivPrincipal).style.display='none';
             document.getElementById('divFila').style.display='none';
             document.getElementById('selAssociarProcFila').value = '';
             document.getElementById('selFila').value = '';
@@ -439,18 +481,43 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
             <textarea style="width: 79%" id="txaInformacaoComplementar" <?=$disabled?> name="txaInformacaoComplementar" rows="3" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?php echo $strInformCompRevisao ?></textarea>
         </div>
 
-        <div style="margin-top: 1.8%">
-            <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
-                   tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                Encaminhamento da Revisão:
-            </label>
-            <?php
-            $option = MdUtlRevisaoINT::montarSelectEncaminhamentoRevisao($strEncaminhamento);
+        <?
+
+        $isConsultaContestacao = !is_null($objMdUtlRevisaoDTO) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) && $isConsultar;
+        if($idContest == 1 || $isConsultaContestacao){
+            $disabledContestacao = '';
+            if($isConsultar) {
+                $disabledContestacao = !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) ? 'disabled=disabled' : '';
+            }
             ?>
-            <select class="infraSelect" name="selEncaminhamento"  id="selEncaminhamento" <?=$disabled?> onchange="encaminhamento(this.value)">
-                <?=$option?>
-            </select>
-        </div>
+            <div style="margin-top: 2%">
+                <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
+                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    Encaminhamento da Contestação:
+                </label>
+                <?php
+                $option = MdUtlRevisaoINT::montarSelectEncaminhamentoContestacao($strEncaminhamento, $idContest);
+                ?>
+                <select <?php echo $disabledContestacao; ?> class="infraSelect" name="selEncaminhamentoContest"  id="selEncaminhamentoContest" onchange="encaminhamento(this.value)">
+                    <?=$option?>
+                </select>
+            </div>
+
+        <? } else {
+            ?>
+            <div style="margin-top: 1.8%">
+                <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
+                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    Encaminhamento da Revisão:
+                </label>
+                <?php
+                $option = MdUtlRevisaoINT::montarSelectEncaminhamento($strEncaminhamento);
+                ?>
+                <select class="infraSelect" name="selEncaminhamento"  id="selEncaminhamento" <?=$disabled?> onchange="encaminhamento(this.value)">
+                    <?=$option?>
+                </select>
+            </div>
+        <?}?>
 
         <div id="divPrincipalEncaminhamento" style="display: none;">
             <div id="divEncaminhamentoAnl">
@@ -486,6 +553,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
         <input type="hidden" id="hdnFila" name="hdnFila" value="">
         <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
         <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
+        <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value="<?php echo $idContest ?>"/>
 
         <?php
 

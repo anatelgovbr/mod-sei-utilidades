@@ -20,6 +20,9 @@ class MdUtlRevisaoRN extends InfraRN {
     public static $VOLTAR_PARA_RESPONSAVEL = 'R';
     public static $STR_VOLTAR_PARA_RESPONSAVEL = 'Voltar para o Responsável';
 
+    public static $MANTER_O_RESPONSAVEL = 'M';
+    public static $STR_MANTER_O_RESPONSAVEL = 'Manter com o Responsável';
+
     //Associar processo em fila após a Revisão
     public static $ASSOCIAR_SIM = 'S';
     public static $ASSOCIAR_NAO = 'N';
@@ -139,7 +142,7 @@ class MdUtlRevisaoRN extends InfraRN {
     }
   }
   
-  protected function salvarObjRevisaoConectado(){
+  protected function salvarObjRevisaoConectado($isContestacao = false){
       $objRevisaoDTO    = new MdUtlRevisaoDTO();
       $idEncaminhamento = $_POST['selEncaminhamento'];
       $isAnalise        = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar'? true : false;
@@ -153,7 +156,13 @@ class MdUtlRevisaoRN extends InfraRN {
       $sinAtivo = $idEncaminhamento  && $idEncaminhamento == MdUtlRevisaoRN::$VOLTAR_PARA_FILA ? 'S' : 'N';
       $objRevisaoDTO->setStrInformacoesComplementares($_POST['txaInformacaoComplementar']);
       $objRevisaoDTO->setStrSinAtivo($sinAtivo);
-      $objRevisaoDTO->setStrStaEncaminhamentoRevisao($_POST['selEncaminhamento']);
+
+      if($isContestacao){
+          $objRevisaoDTO->setStrStaEncaminhamentoContestacao($_POST['selEncaminhamentoContest']);
+      }else {
+          $objRevisaoDTO->setStrStaEncaminhamentoRevisao($_POST['selEncaminhamento']);
+      }
+
       $objRevisaoDTO->setDthAtual(InfraData::getStrDataHoraAtual());
       $objRevisaoDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
       $objRevisaoDTO->setStrSinAssociarFila($_POST['selAssociarProcFila']);

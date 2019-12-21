@@ -9,7 +9,7 @@ class MdUtlGestaoAjustPrazoINT extends InfraINT {
         $arrRetorno[MdUtlControleDsmpRN::$EM_ANALISE] =  MdUtlControleDsmpRN::$STR_EM_ANALISE;
         $arrRetorno[MdUtlControleDsmpRN::$EM_REVISAO] = MdUtlControleDsmpRN::$STR_EM_REVISAO;
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
-
+        $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_TRIAGEM;
 
         return $arrRetorno;
     }
@@ -68,13 +68,13 @@ class MdUtlGestaoAjustPrazoINT extends InfraINT {
         return $retorno;
     }
 
-    public static function formatarData($dataHoraCompleta){
+    public static function formatarData($dataHoraCompleta, $separacaoData = '-'){
         if(!is_null($dataHoraCompleta)) {
             $arrDataHoraCompleta = explode(' ', $dataHoraCompleta);
             $dataCompleta = $arrDataHoraCompleta[0];
-            $arrDataFormatada = explode('-', $dataCompleta);
+            $arrDataFormatada = explode($separacaoData, $dataCompleta);
 
-            return $arrDataFormatada[2] . '/' . $arrDataFormatada[1] . '/' . $arrDataFormatada[0];
+            return $arrDataFormatada[0] . '/' . $arrDataFormatada[1] . '/' . $arrDataFormatada[2];
         }
     }
 

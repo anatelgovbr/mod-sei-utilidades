@@ -467,6 +467,141 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
         return $isValido;
     }
+
+    public function retornaDadosIconesProcesso($arrIdProcedimento, $nomeTpCtrl = null){
+
+            $objControleDsmpRN = new MdUtlControleDsmpRN();
+            $arrRetorno = array();
+
+            if (is_null($nomeTpCtrl)) {
+                $objTpCtrlUtlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+                $objTpControleDTO = $objTpCtrlUtlUndRN->getObjTipoControleUnidadeLogada();
+                if (!is_null($objTpControleDTO)) {
+                    $nomeTpCtrl = 'Controle de Desempenho - ' . $objTpControleDTO->getStrNomeTipoControle() . ': ' . SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+                }
+            }
+
+            if (!is_null($nomeTpCtrl)) {
+                $arrStatus = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
+
+                if (is_array($arrIdProcedimento)) {
+                    $arrObjControleDsmpDTO = $objControleDsmpRN->getObjsControleDsmpAtivoAjustePrazo($arrIdProcedimento);
+
+                    if (count($arrObjControleDsmpDTO) > 0) {
+                        foreach ($arrObjControleDsmpDTO as $objControleDsmpDTO) {
+                            $arrDados = $this->_verificaStatusPreencheArr($objControleDsmpDTO, $arrStatus);
+
+                            if (count($arrDados) > 0) {
+                                $arr = array();
+                                // $arr['img'] = "<img src='" . $arrDados['IMG'] . "' onmouseout='return infraTooltipOcultar();' onmouseover='return infraTooltipMostrar(' .  $arrDados['TOOLTIP']  . "\"); />";
+                                $img = 'return infraTooltipMostrar(\'' . $arrDados['TOOLTIP'] . '\')';
+                                $arr['img'] = "<img src='" . $arrDados['IMG'] . "'" . PaginaSEI::montarTitleTooltip($arrDados['TOOLTIP'], $nomeTpCtrl) . " />";
+                                $arrRetorno[$objControleDsmpDTO->getDblIdProcedimento()] = $arr;
+                            }
+                        }
+                    }
+
+                } else {
+                    $objControleDsmpDTO = $objControleDsmpRN->getObjsControleDsmpAtivoAjustePrazo($arrIdProcedimento);
+                    if(!is_null($objControleDsmpDTO)) {
+                        $arrRetorno = $this->_verificaStatusPreencheArr($objControleDsmpDTO, $arrStatus);
+                        $arrRetorno['TOOLTIP'] = $nomeTpCtrl . '\n ' . $arrRetorno['TOOLTIP'];
+                    }
+                }
+            }
+
+            return $arrRetorno;
+    }
+
+    private function _verificaStatusPreencheArr($objControleDsmpDTO, $arrStatus){
+
+        $strStatus = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrStaAtendimentoDsmp() : null;
+        $strNomeStatus = !is_null($objControleDsmpDTO) ? $arrStatus[$strStatus] : null;
+        $strFila = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrNomeFila() : null;
+        $dthStatus = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getDthAtual() : null;
+        $dthStatus = !is_null($dthStatus) ? explode(" ", $dthStatus) : null;
+        $dthDataPrazo = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getDthPrazoTarefa() : null;
+        $dthDataPrazo = !is_null($dthDataPrazo) ? explode(" ", $dthDataPrazo) : null;
+        $dthSuspensoInterrompido = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getDthPrazoSolicitacaoAjustePrazo() : null;
+        $dthSuspensoInterrompido = !is_null($dthSuspensoInterrompido) ? explode(" ", $dthSuspensoInterrompido) : null;
+
+        $arrRetorno = array();
+
+        $imgAmarela    = 'modulos/utilidades/imagens/icone-controle-utl-amarelo.png';
+        $imgVermelha   = 'modulos/utilidades/imagens/icone-controle-utl-vermelho.png';
+        $imgAzul       = 'modulos/utilidades/imagens/icone-controle-utl-azul.png';
+        $imgRoxo       = 'modulos/utilidades/imagens/icone-controle-utl-roxo.png';
+        $imgVerde      = 'modulos/utilidades/imagens/icone-controle-utl-verde.png';
+
+        switch ($strStatus){
+
+            case MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM :
+                $arrRetorno['IMG'] = $imgAmarela;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
+                break;
+
+            case MdUtlControleDsmpRN::$EM_TRIAGEM :
+                $arrRetorno['IMG'] = $imgAmarela;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Prazo: ' . $dthDataPrazo[0];
+                break;
+
+            case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE :
+                $arrRetorno['IMG'] = $imgAzul;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
+                break;
+
+            case MdUtlControleDsmpRN::$EM_ANALISE:
+                $arrRetorno['IMG'] = $imgAzul;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Prazo: ' . $dthDataPrazo[0];
+                break;
+
+            case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO :
+                $arrRetorno['IMG'] = $imgVerde;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
+                break;
+
+            case MdUtlControleDsmpRN::$EM_REVISAO:
+                $arrRetorno['IMG'] = $imgVerde;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Prazo: ' . $dthDataPrazo[0];
+                break;
+
+            case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM :
+            case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE :
+                $arrRetorno['IMG'] = $imgVermelha;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
+                break;
+
+            case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
+            case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
+                $arrRetorno['IMG'] = $imgVermelha;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Prazo: ' . $dthDataPrazo[0];
+                break;
+
+            case MdUtlControleDsmpRN::$SUSPENSO:
+            case MdUtlControleDsmpRN::$INTERROMPIDO:
+                $arrRetorno['IMG'] = $imgRoxo;
+                $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthSuspensoInterrompido[0];
+                break;
+
+        }
+
+        return $arrRetorno;
+    }
+
+    protected function getIdsUsuariosUnidadeLogadaConectado(){
+        $idsUsuarioUnidade = array();
+        $numIdUnidade = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+        $objUnidadeDTO = new UnidadeDTO();
+        $objUnidadeDTO->setNumIdUnidade($numIdUnidade);
+        $objUsuarioRN = new UsuarioRN();
+        $arrObjUsuarioDTOUnd = $objUsuarioRN->listarPorUnidadeRN0812($objUnidadeDTO);
+
+        if (count($arrObjUsuarioDTOUnd) > 0) {
+            $idsUsuarioUnidade = InfraArray::converterArrInfraDTO($arrObjUsuarioDTOUnd, 'IdUsuario');
+        }
+
+        return $idsUsuarioUnidade;
+    }
 }
 
 ?>

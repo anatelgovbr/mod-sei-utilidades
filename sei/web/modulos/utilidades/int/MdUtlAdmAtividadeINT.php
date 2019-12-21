@@ -129,7 +129,7 @@ class MdUtlAdmAtividadeINT extends InfraINT {
         return $xml;
     }
 
-    public static function autoCompletarAtividade($strPalavrasPesquisa, $idTpCtrl){
+    public static function autoCompletarAtividade($strPalavrasPesquisa, $idTpCtrl, $isPrmDistrib = false){
 
        $mdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
         $mdUtlAdmAtividadeRN = new MdUtlAdmAtividadeRN();
@@ -161,6 +161,14 @@ class MdUtlAdmAtividadeINT extends InfraINT {
         }
 
         $mdUtlAdmAtividade = $mdUtlAdmAtividadeRN->listar($mdUtlAdmAtividadeDTO);
+
+        if($isPrmDistrib){
+            foreach ($mdUtlAdmAtividade as $objDTO){
+                $nomeExibicao = $objDTO->getStrNome().' - '.$objDTO->getStrDescricao();
+                $objDTO->setStrNome($nomeExibicao);
+            }
+        }
+
         $xml = InfraAjax::gerarXMLItensArrInfraDTO($mdUtlAdmAtividade, 'IdMdUtlAdmAtividade', 'Nome');
 
         return $xml;

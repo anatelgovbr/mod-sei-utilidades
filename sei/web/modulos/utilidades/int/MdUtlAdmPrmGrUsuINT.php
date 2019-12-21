@@ -213,24 +213,29 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT {
         $strPapelUsuario = MdUtlAdmFilaINT::getPapeisDeUsuario($idStatus);
     
         if (!is_null($strPapelUsuario)) {
-    
+
             $objMdUtlAdmFilaPrmUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
-            $arrDTO = $objMdUtlAdmFilaPrmUsuRN->getUsuarioPorPapel(array($strPapelUsuario, $idFila));
-            $idsUsuario = InfraArray::converterArrInfraDTO($arrDTO, 'IdUsuario');
-            
-            $objUsuarioDTO = new UsuarioDTO();
-            $objUsuarioDTO->retTodos();
-            $objUsuarioDTO->setNumIdUsuario($idsUsuario, InfraDTO::$OPER_IN);
-            $objUsuarioDTO->setStrPalavrasPesquisa($strPalavrasPesquisa);
+            $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+            $idsUsuarioUnidade = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
 
-            $arrObjUsuarioDTO = $objUsuarioRN->pesquisar($objUsuarioDTO);
-     
+            if (count($idsUsuarioUnidade) > 0) {
+                $arrDTO = $objMdUtlAdmFilaPrmUsuRN->getUsuarioPorPapel(array($strPapelUsuario, $idFila, $idsUsuarioUnidade));
+                $idsUsuario = InfraArray::converterArrInfraDTO($arrDTO, 'IdUsuario');
 
-        foreach ($arrObjUsuarioDTO as $objUsuarioDTO) {
-            $objUsuarioDTO->setStrSigla($objUsuarioDTO->getStrNome() . ' (' . $objUsuarioDTO->getStrSigla() . ')');
+                $objUsuarioDTO = new UsuarioDTO();
+                $objUsuarioDTO->retTodos();
+                $objUsuarioDTO->setNumIdUsuario($idsUsuario, InfraDTO::$OPER_IN);
+                $objUsuarioDTO->setStrPalavrasPesquisa($strPalavrasPesquisa);
+
+                $arrObjUsuarioDTO = $objUsuarioRN->pesquisar($objUsuarioDTO);
+
+
+                foreach ($arrObjUsuarioDTO as $objUsuarioDTO) {
+                    $objUsuarioDTO->setStrSigla($objUsuarioDTO->getStrNome() . ' (' . $objUsuarioDTO->getStrSigla() . ')');
+                }
+                return $arrObjUsuarioDTO;
+            }
         }
-        return $arrObjUsuarioDTO;
-    }
 
         return null;
     }

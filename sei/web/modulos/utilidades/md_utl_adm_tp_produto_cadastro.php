@@ -143,8 +143,11 @@ PaginaSEI::getInstance()->abrirStyle();
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
+require_once ('md_utl_geral_js.php');
 ?>
 <?if(0){?><script type="text/javascript"><?}?>
+
+    var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>'
 
   function inicializar(){
     if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_produto_cadastrar'){
@@ -159,13 +162,15 @@ PaginaSEI::getInstance()->abrirJavaScript();
 
   function validarCadastro() {
     if (infraTrim(document.getElementById('txtNome').value)=='') {
-      alert('Informe o Tipo de Produto.');
+     var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Produto']);
+     alert(msg);
       document.getElementById('txtNome').focus();
       return false;
     }
 
     if (infraTrim(document.getElementById('txaDescricao').value)=='') {
-      alert('Informe a Descrição.');
+        var msg = setMensagemPersonalizada(msg11Padrao, ['Descrição']);
+        alert(msg);
       document.getElementById('txaDescricao').focus();
       return false;
     }

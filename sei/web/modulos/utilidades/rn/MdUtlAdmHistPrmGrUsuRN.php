@@ -130,10 +130,17 @@ class MdUtlAdmHistPrmGrUsuRN extends InfraRN {
             }
         }
 
-
     }
 
-
-
+    protected function excluirControlado($arrObjMdUtlAdmHistPrmGrUsuDTO){
+        try {
+            $objMdUtlAdmPrmContestBD = new MdUtlAdmJustContestBD($this->getObjInfraIBanco());
+            for($i=0;$i<count($arrObjMdUtlAdmHistPrmGrUsuDTO);$i++){
+                $objMdUtlAdmPrmContestBD->excluir($arrObjMdUtlAdmHistPrmGrUsuDTO[$i]);
+            }
+        }catch(Exception $e){
+            throw new InfraException('Erro excluindo Parâmetro de Contestação.',$e);
+        }
+    }
 
 }

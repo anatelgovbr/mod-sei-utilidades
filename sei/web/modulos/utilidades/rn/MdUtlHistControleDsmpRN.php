@@ -194,11 +194,15 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $arrRetorno[$idProc]['ID_TRIAGEM'] = $objHistoricoDTO->getNumIdMdUtlTriagem();
                 $arrRetorno[$idProc]['ID_ANALISE'] = $objHistoricoDTO->getNumIdMdUtlAnalise();
                 $arrRetorno[$idProc]['ID_REVISAO'] = $objHistoricoDTO->getNumIdMdUtlRevisao();
+                $arrRetorno[$idProc]['ID_FILA'] = $objHistoricoDTO->getNumIdMdUtlAdmFila();
                 $arrRetorno[$idProc]['ID_USUARIO_ATRIBUICAO'] = $objHistoricoDTO->getNumIdUsuarioDistribuicao();
                 $arrRetorno[$idProc]['ID_ATENDIMENTO'] = $objHistoricoDTO->getNumIdAtendimento();
                 $arrRetorno[$idProc]['STATUS'] = $objHistoricoDTO->getStrStaAtendimentoDsmp();
                 $arrRetorno[$idProc]['ID_AJUST_PRAZO'] = $objHistoricoDTO->getNumIdMdUtlAjustePrazo();
                 $arrRetorno[$idProc]['DTH_PRAZO_TAREFA'] = $objHistoricoDTO->getDthPrazoTarefa();
+                $arrRetorno[$idProc]['ID_TIPO_CONTROLE'] = $objHistoricoDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+                $arrRetorno[$idProc]['ID_CONTESTACAO'] = $objHistoricoDTO->getNumIdMdUtlContestRevisao();
+
            
                 $this->cadastrar($objHistoricoDTO);
             }
@@ -452,6 +456,12 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $undEsforco    = 0;
                 $dtNova        = date('d/m/Y H:i:s', strtotime('+2 second'));
                 break;
+            case MdUtlControleDsmpRN::$CONCLUIR_CONTESTACAO:
+                $strTipoAcao   = MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO;
+                $idRevisao     = $novoId;
+                $idFila        = $arrRetorno[$idProcedimento]['ID_FILA'];
+                break;
+
         }
 
         $status = trim($status);

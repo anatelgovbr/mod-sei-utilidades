@@ -309,7 +309,8 @@ class MdUtlAdmFilaRN extends InfraRN {
     $objMdUtlFilaDTO->setStrSinDistribuicaoUltUsuario($sinDstUltFila);
     $objMdUtlFilaDTO->setNumPrazoTarefa($_POST['txtPrazoTarefa']);
     $objMdUtlFilaDTO->setStrSinAtivo('S');
-
+    $objMdUtlFilaDTO->setStrRespTacitaDilacao($_POST['selDilacao']);
+    
     return $this->cadastrar($objMdUtlFilaDTO);
   }
 
@@ -456,25 +457,30 @@ class MdUtlAdmFilaRN extends InfraRN {
 
     $isFilaPadrao         = $this->_filaIsFilaPadraoTipoControle($idFila, $idTipoControle, $isExcluir);
 
-    if (!$isFilaPadrao) {
-      $isFilaGrupoAtividade = $this->_filaIsGrupoAtividade($idFila, $isExcluir);
+      if (!$isFilaPadrao) {
+          $isFilaGrupoAtividade = $this->_filaIsGrupoAtividade($idFila, $isExcluir);
 
-      if (!$isFilaGrupoAtividade) {
-        $isFilaCtrlProcessos = $this->_filaIsControleProcesso($idFila, $isExcluir);
+          if (!$isFilaGrupoAtividade) {
+              $isFilaDistribuicao = $this->_filaIsDistribuicao($idFila);
 
-        if (!$isFilaCtrlProcessos) {
-          $isFilaAssociadoAnalise = $this->_filaIsAnalise($idFila);
+              if (!$isFilaDistribuicao) {
+                  $isFilaCtrlProcessos = $this->_filaIsControleProcesso($idFila, $isExcluir);
 
-            if(!$isFilaAssociadoAnalise){
-                $isFilaAssociadoTriagem = $this->_filaIsTriagem($idFila);
+                  if (!$isFilaCtrlProcessos) {
+                      $isFilaAssociadoAnalise = $this->_filaIsAnalise($idFila);
 
-                if(!$isFilaAssociadoTriagem){
-                    return true;
-                }
-            }
-        }
+                      if (!$isFilaAssociadoAnalise) {
+                          $isFilaAssociadoTriagem = $this->_filaIsTriagem($idFila);
 
-      }
+                          if (!$isFilaAssociadoTriagem) {
+                              return true;
+                          }
+                      }
+
+                  }
+              }
+
+          }
     }else{
       return false;
     }
@@ -562,10 +568,15 @@ class MdUtlAdmFilaRN extends InfraRN {
     protected function verificaUsuarioLogadoPertenceFilaConectado($arrParams){
         $idFila   = $arrParams[0];
         $idStatus = $arrParams[1];
-        $idsStatusTriador = array(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM);
-        $idsStatusAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE);
-        $idsStatusRevisao = array(MdUtlControleDsmpRN::$AGUARDANDO_REVISAO);
 
+        $idsStatusTriador = array(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
+        $idsStatusAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
+        $idsStatusRevisao = array(MdUtlControleDsmpRN::$AGUARDANDO_REVISAO, MdUtlControleDsmpRN::$EM_REVISAO);
+        $idsStatusSemBotao =  array(MdUtlControleDsmpRN::$INTERROMPIDO, MdUtlControleDsmpRN::$SUSPENSO);
+
+        if(is_null($idStatus) || in_array($idStatus, $idsStatusSemBotao)){
+            return false;
+        }
         $objMdRelFilaUsuarioRN  = new MdUtlAdmFilaPrmGrUsuRN();
         $objMdRelFilaUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
         $objMdRelFilaUsuarioDTO->setNumIdMdUtlAdmFila($idFila);
@@ -582,10 +593,83 @@ class MdUtlAdmFilaRN extends InfraRN {
         if(in_array($idStatus, $idsStatusRevisao)){
             $objMdRelFilaUsuarioDTO->setStrSinRevisor('S');
         }
-
         return ($objMdRelFilaUsuarioRN->contar($objMdRelFilaUsuarioDTO) > 0);
-
     }
 
-  
+    protected function pesquisarConectado(MdUtlAdmFilaDTO $objMdUtlAdmFilaDTO) {
+        try {
+
+            if ($objMdUtlAdmFilaDTO->isSetStrNome()){
+                if (trim($objMdUtlAdmFilaDTO->getStrNome())!=''){
+                    $strPalavrasPesquisa = InfraString::transformarCaixaAlta($objMdUtlAdmFilaDTO->getStrNome());
+                    $arrPalavrasPesquisa = explode(' ',$strPalavrasPesquisa);
+
+                    for($i=0;$i<count($arrPalavrasPesquisa);$i++){
+                        $arrPalavrasPesquisa[$i] = '%'.$arrPalavrasPesquisa[$i].'%';
+                    }
+
+                  if (count($arrPalavrasPesquisa)==1){
+                        $objMdUtlAdmFilaDTO->setStrNome($arrPalavrasPesquisa[0],InfraDTO::$OPER_LIKE);
+                    }else{
+                        $objMdUtlAdmFilaDTO->unSetStrNome();
+                        $a = array_fill(0,count($arrPalavrasPesquisa),'Nome');
+                        $b = array_fill(0,count($arrPalavrasPesquisa),InfraDTO::$OPER_LIKE);
+                        $d = array_fill(0,count($arrPalavrasPesquisa)-1,InfraDTO::$OPER_LOGICO_AND);
+                        $objMdUtlAdmFilaDTO->adicionarCriterio($a,$b,$arrPalavrasPesquisa,$d);
+                    }
+
+                }
+            }else {
+                $objMdUtlAdmFilaDTO->unSetStrNome();
+            }
+
+            if ($objMdUtlAdmFilaDTO->isSetStrDescricao()){
+                if (trim($objMdUtlAdmFilaDTO->getStrDescricao())!=''){
+                    $strPalavrasPesquisa = InfraString::transformarCaixaAlta($objMdUtlAdmFilaDTO->getStrDescricao());
+                    $arrPalavrasPesquisa = explode(' ',$strPalavrasPesquisa);
+
+                    for($i=0;$i<count($arrPalavrasPesquisa);$i++){
+                        $arrPalavrasPesquisa[$i] = '%'.$arrPalavrasPesquisa[$i].'%';
+                    }
+
+                  if (count($arrPalavrasPesquisa)==1){
+                        $objMdUtlAdmFilaDTO->setStrdescricao($arrPalavrasPesquisa[0],InfraDTO::$OPER_LIKE);
+                    }else{
+                        $objMdUtlAdmFilaDTO->unSetStrDescricao();
+                        $a = array_fill(0,count($arrPalavrasPesquisa),'Descricao');
+                        $b = array_fill(0,count($arrPalavrasPesquisa),InfraDTO::$OPER_LIKE);
+                        $d = array_fill(0,count($arrPalavrasPesquisa)-1,InfraDTO::$OPER_LOGICO_AND);
+                        $objMdUtlAdmFilaDTO->adicionarCriterio($a,$b,$arrPalavrasPesquisa,$d);
+                    }
+
+                }
+            }else {
+                $objMdUtlAdmFilaDTO->unSetStrDescricao();
+            }
+
+
+            return $this->listar($objMdUtlAdmFilaDTO);
+
+        }catch(Exception $e){
+            throw new InfraException('Erro pesquisando Filas.',$e);
+        }
+    }
+    private function _filaIsDistribuicao($idFila){
+        $objMdUtlAdmRelPrmDsFilaDTO = new  MdUtlAdmRelPrmDsFilaDTO();
+        $objMdUtlAdmRelPrmDsFilaRN = new  MdUtlAdmRelPrmDsFilaRN();
+
+        $objMdUtlAdmRelPrmDsFilaDTO->setNumIdMdUtlAdmFila($idFila);
+        $objMdUtlAdmRelPrmDsFilaDTO->retTodos();
+
+       $isDistribuicao = $objMdUtlAdmRelPrmDsFilaRN->contar($objMdUtlAdmRelPrmDsFilaDTO) > 0;
+
+        if($isDistribuicao){
+            $objInfraException= new InfraException();
+            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_109, array('excluir'));
+            $objInfraException->lancarValidacao($msg);
+            return true;
+        }
+
+        return $objMdUtlAdmRelPrmDsFilaRN->contar($objMdUtlAdmRelPrmDsFilaDTO) > 0;
+    }
 }

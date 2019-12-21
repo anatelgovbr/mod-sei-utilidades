@@ -60,7 +60,9 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimoResponsavel', 'sin_ultimo_responsavel');
       
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAjustePrazo', 'id_md_utl_ajuste_prazo');
-    
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlContestRevisao', 'id_md_utl_contest_revisao');
+
     $this->configurarPK('IdMdUtlHistControleDsmp',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdProcedimento', 'procedimento p', 'p.id_procedimento');
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila fila', 'fila.id_md_utl_adm_fila');
@@ -70,6 +72,7 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario');
     $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp', 'id_md_utl_adm_tp_ctrl_desemp');
     $this->configurarFK('IdProcedimento', 'protocolo', 'id_protocolo');
+    $this->configurarFK('IdMdUtlContestRevisao', 'imd_utl_contest_revisao', 'id_md_utl_contest_revisao');
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFila','fila.nome','md_utl_adm_fila fila');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuarioDist','ud.nome','usuario ud');

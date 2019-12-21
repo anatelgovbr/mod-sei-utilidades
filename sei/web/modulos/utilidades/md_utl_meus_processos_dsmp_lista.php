@@ -30,6 +30,7 @@ $selAtividadeCampo    = array_key_exists('selAtividadeUtlMs', $_POST) ? $_POST['
 
 $somaUndEsforco = '';
 $idProcedimentoMeusProcessos = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
+$strSituacao = '';
 
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
@@ -126,12 +127,14 @@ switch ($_GET['acao']) {
         $objMdUtlControleDsmpDTO->retNumDiasUteisExcedentes();
         $objMdUtlControleDsmpDTO = $objMdUtlControleDsmpRN->consultar($objMdUtlControleDsmpDTO);
 
-$idStatus = $objMdUtlControleDsmpDTO->getStrStaAtendimentoDsmp();
+        $idStatus = $objMdUtlControleDsmpDTO->getStrStaAtendimentoDsmp();
 
         if ($idStatus == MdUtlControleDsmpRN::$INTERROMPIDO || $idStatus == MdUtlControleDsmpRN::$SUSPENSO) {
             $objMdUtlControleRN = new MdUtlControleDsmpRN();
             $objMdUtlControleRN->retornaStatusImpedido(array($objMdUtlControleDsmpDTO));
         }
+
+        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&acao_origem=' . $_GET['acao']));
 
         break;
     //endregion
@@ -185,6 +188,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
         $objDTO->retNumIdMdUtlTriagem();
         $objDTO->retStrStaSolicitacaoAjustePrazo();
         $objDTO->retNumIdUsuarioDistribuicao();
+        $objDTO->retNumIdMdUtlContestRevisao();
 
         $objMdUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
         $isDadosParametrizados = $objMdUtlTpCtrlRN->validaNovosDadosParametrizacao($idTipoControle);
@@ -204,8 +208,8 @@ if (!is_null($idTipoControle) && $isParametrizado) {
     //Combo de Atividade
     if(!is_null($objDTOCombo)) {
         $objDTOCombo->retNumIdMdUtlTriagem();
-        $arrObjsCombo = $objMdUtlControleDsmpRN->listarProcessos($objDTOCombo);
 
+        $arrObjsCombo = $objMdUtlControleDsmpRN->listarProcessos($objDTOCombo);
         $idTriagemCombo = InfraArray::converterArrInfraDTO($arrObjsCombo, 'IdMdUtlTriagem');
         $idTriagemCombo = MdUtlControleDsmpINT::removeNullsTriagem($idTriagemCombo);
         $count = count($idTriagemCombo);
@@ -240,7 +244,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
  
         $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
         $numRegistros = count($arrObjs);
-
+        MdUtlControleDsmpINT::setNomeAtividade($arrObjs, $arrayObjs);
         PaginaSEI::getInstance()->processarPaginacao($objDTO);
 
         if ($numRegistros > 0) {
@@ -256,7 +260,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             $strResultado .= '<tr>';
             $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
             $strResultado .= '<th class="infraTh" width="18%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" width="14%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'IdTipoProcedimento', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" width="14%">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'NomeAtividadeTriagem', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
 
@@ -269,13 +273,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
             $strResultado .= '<th class="infraTh" style="display: none">Última Fila</th>';
             $strResultado .= '</tr>';
 
-
-
             //Linhas
-            $strCssTr = '<tr class="infraTrEscura">';
-
+            $strCssTr='';
             for ($i = 0; $i < $numRegistros; $i++) {
-
 
                 $strId              = $arrObjs[$i]->getDblIdProcedimento();
                 $strProcesso        = $arrObjs[$i]->getStrProtocoloProcedimentoFormatado();
@@ -287,7 +287,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $numIdControleDsmp  = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
                 $numUndEsforco      = $arrObjs[$i]->getNumUnidadeEsforco();
                 $numIdTriagem       = $arrObjs[$i]->getNumIdMdUtlTriagem();
-             
+                $numIdAjustePrazo   = $arrObjs[$i]->getNumIdMdUtlAjustePrazo();
+                $numIdContestRevisao= $arrObjs[$i]->getNumIdMdUtlContestRevisao();
+
                 $numUndEsforco      = $arrObjs[$i]->getNumUnidadeEsforco();
                 $numIdTriagem       = $arrObjs[$i]->getNumIdMdUtlTriagem();
                 $strNomeAtividade   = array_key_exists($numIdTriagem, $arrayObjs) ? $arrayObjs[$numIdTriagem] : '';
@@ -299,8 +301,6 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
                 $objStatusAnterior  = $objMdUtlHistControleRN->getStatusAnterior($strId);
                 $statusAnterior = !is_null($objStatusAnterior) ? $objStatusAnterior->getStrStaAtendimentoDsmp() : null;
-
-
 
                 $arrSituacao        = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
                 $linkProcedimento   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $strId . '');
@@ -320,6 +320,18 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 
                 $status          = !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
 
+                $idContestRevisao = $arrObjs[$i]->getNumIdMdUtlContestRevisao();
+                $strSituacao = '';
+                if ($idContestRevisao) {
+                    $objContestRevisaoDTO = new MdUtlContestacaoDTO();
+                    $objContestRevisaoRN = new MdUtlContestacaoRN();
+                    $objContestRevisaoDTO->setNumIdMdUtlContestRevisao($idContestRevisao);
+                    $objContestRevisaoDTO->retTodos();
+                    $arrObjContestRevisao = $objContestRevisaoRN->consultar($objContestRevisaoDTO);
+                    if ($arrObjContestRevisao->getStrStaSolicitacao()) {
+                        $strSituacao = $arrObjContestRevisao->getStrStaSolicitacao() ? $arrObjContestRevisao->getStrStaSolicitacao() : '';
+                    }
+                }
                     
                 if($strStatus == MdUtlControleDsmpRN::$SUSPENSO){
                     $dataPrazoFormatada = 'Prazo Suspenso';
@@ -329,7 +341,10 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
                 $somaUndEsforco   += $numUndEsforco;
 
-                $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha">' : ($strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">');
+                $strIdContestRevisao = $_GET['id_contest_revisao'];
+
+                //Linha Acessada
+                $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha ">' : ($strCssTr == '<tr class="infraTrClara ">' ? '<tr class="infraTrEscura ">' : '<tr class="infraTrClara ">');
                 $strCssTr = in_array($strId, $arrIdProcedimentoDistrib) ? '<tr class="infraTrAcessada">' : $strCssTr;
                 $strResultado .= $strCssTr;
 
@@ -384,7 +399,9 @@ if (!is_null($idTipoControle) && $isParametrizado) {
                 $strResultado .= '</td>';
 
                 $strResultado .= '<td style="text-align: center">';
-                $strResultado .= MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados, $strId, $statusAnterior);
+              
+                $strResultado .= !$numIdContestRevisao ? MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados, $strId, $statusAnterior) : '';
+                $strResultado .= !$numIdAjustePrazo ? MdUtlControleDsmpINT::getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $arrObjs[$i], $numIdTriagem, $isDadosParametrizados, $strSituacao) : '';
                 $strResultado .= '</td>';
 
                 $strResultado .= '</tr>';
@@ -508,7 +525,7 @@ if (0){ ?>
         var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
 
         function inicializar() {
-
+            infraEfeitoTabelas();
             var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
             var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
             var tpCtrl = document.getElementById('hdnIdTipoControleUtl').value;

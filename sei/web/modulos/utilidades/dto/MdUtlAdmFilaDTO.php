@@ -36,6 +36,8 @@ class MdUtlAdmFilaDTO extends InfraDTO {
       $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaDilacao', 'resp_tacita_dilacao');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
+    
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'RespTacitaDilacao', 'resp_tacita_dilacao');
 
     $this->configurarPK('IdMdUtlAdmFila',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila_prm_gr_usu fl', 'fl.id_md_utl_adm_fila');

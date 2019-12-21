@@ -132,8 +132,15 @@ try {
         $strPapelUsuario = MdUtlAdmFilaINT::getPapeisDeUsuario($idStatus);
 
         if (!is_null($strPapelUsuario)) {
-            $objMdUtlAdmFilaPrmUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
-            $arrDTO = $objMdUtlAdmFilaPrmUsuRN->getUsuarioPorPapel(array($strPapelUsuario, $idFila));
+            $arrDTO = null;
+            $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+            $idsUsuarioUnidade = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
+
+            if(count($idsUsuarioUnidade) > 0) {
+                $objMdUtlAdmFilaPrmUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
+                $arrDTO = $objMdUtlAdmFilaPrmUsuRN->getUsuarioPorPapel(array($strPapelUsuario, $idFila, $idsUsuarioUnidade));
+            }
+
             if (is_null($arrDTO)) {
                 $isVazioUsers = true;
             }else{
@@ -144,7 +151,6 @@ try {
                 }
             }
         }
-        //}
     }
 
   $objUsuarioDTO->retNumIdUsuario();

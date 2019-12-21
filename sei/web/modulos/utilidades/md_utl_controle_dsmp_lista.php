@@ -116,7 +116,7 @@ if (!is_null($idTipoControle) && $isParametrizado) {
 
         if ($isAguardandoFila) {
             $arrIdsAtivosDsmp = $objMdUtlControleDsmpRN->getIdsAtivosControleDesempenho($idsProcessoAberto);
-            $idsAgFilaAberto = count($arrIdsAtivosDsmp) > 0 && $isAguardandoFila ? array_diff($idsProcessoAberto, $arrIdsAtivosDsmp) : $idsProcessoAberto;
+            $idsProcessoAberto = count($arrIdsAtivosDsmp) > 0 && $isAguardandoFila ? array_diff($idsProcessoAberto, $arrIdsAtivosDsmp) : $idsProcessoAberto;
 
             if(count($idsProcessoAberto) == 0){
                 $objDTO->setNumIdMdUtlControleDsmp(null);
@@ -135,17 +135,15 @@ if (!is_null($idTipoControle) && $isParametrizado) {
     }
 
     if (count($idsProcessoAberto) > 0) {
-        $idsProcessoAberto = $isAguardandoFila ? array_diff($idsProcessoAberto, $arrIdsAtivosDsmp) : $idsProcessoAberto;
 
         if ($isStrDocumento)
         {
             //Realiza o filtro de Documento
-            $idsProcessoDocumento = $objMdUtlControleDsmpRN->getIdsProcessoDocumentosFiltrados(array($objDTO, $idsProcessoAberto));
+            $idsProcessoAberto = $objMdUtlControleDsmpRN->getIdsProcessoDocumentosFiltrados(array($objDTO, $idsProcessoAberto));
             $isFiltroDocumento    = true;
-            $idsProcessoAberto    = count($idsProcessoDocumento) > 0 ? array_diff($idsProcessoAberto, $idsProcessoDocumento) : array();
 
-            if (count($idsProcessoDocumento) > 0) {
-                $objDTO->setDblIdProcedimento($idsProcessoDocumento, InfraDTO::$OPER_IN);
+            if (count($idsProcessoAberto) > 0) {
+                $objDTO->setDblIdProcedimento($idsProcessoAberto, InfraDTO::$OPER_IN);
             } else {
                 //Se não existir dados validos ele faz a pesquisa de forma normal, para retornar a paginação.]
                 $objDTO->setStrProtocoloFormatadoDocumento('%' . trim($_POST['txtDocumento']) . '%', InfraDTO::$OPER_LIKE);

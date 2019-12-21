@@ -37,6 +37,10 @@ if ($isConsultar) {
     $strInformCompRevisao = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
     $strEncaminhamento = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrStaEncaminhamentoRevisao() : '';
 
+    if(is_null($strEncaminhamento) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao())){
+        $strEncaminhamento = $objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao();
+    }
+
     $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
     $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
 

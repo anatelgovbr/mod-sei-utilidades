@@ -12,13 +12,16 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 class MdUtlControleDsmpDTO extends InfraDTO {
 
   private $AjustePrazoFK = null;
+  private $ContestacaoFK = null;
+  private $UsuarioDistribuicaoFK = null;
 
   public function __construct()
   {
     $this->AjustePrazoFK = InfraDTO::$TIPO_FK_OPCIONAL;
+    $this->ContestacaoFK = InfraDTO::$TIPO_FK_OPCIONAL;
+    $this->UsuarioDistribuicaoFK = InfraDTO::$TIPO_FK_OPCIONAL;
     parent::__construct();
   }
-
 
   public function getStrNomeTabela()
   {
@@ -63,12 +66,14 @@ class MdUtlControleDsmpDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAjustePrazo', 'id_md_utl_ajuste_prazo');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlContestRevisao', 'id_md_utl_contest_revisao');
+
     $this->configurarPK('IdMdUtlControleDsmp',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila fila', 'fila.id_md_utl_adm_fila');
     $this->configurarFK('IdUnidade', 'unidade und', 'und.id_unidade');
     $this->configurarFK('IdUsuarioAtual', 'usuario ua', 'ua.id_usuario');
-    $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario', InfraDTO::$TIPO_FK_OPCIONAL);
+    $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario', $this->getUsuarioDistribuicaoFK());
     $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp', 'id_md_utl_adm_tp_ctrl_desemp');
     $this->configurarFK('IdProcedimento', 'procedimento proced', 'proced.id_procedimento');
     $this->configurarFK('IdProcedimento', 'protocolo prot', 'prot.id_protocolo');
@@ -80,11 +85,15 @@ class MdUtlControleDsmpDTO extends InfraDTO {
     $this->configurarFK('IdMdUtlAdmFilaEncTriagem', 'md_utl_adm_fila filatri', 'filatri.id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);
     $this->configurarFK('IdMdUtlAdmFilaEncAnalise', 'md_utl_adm_fila filaanl', 'filaanl.id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);
 
-    $this->configurarFK('IdMdUtlAjustePrazo', 'md_utl_ajuste_prazo mdap', 'mdap.id_md_utl_ajuste_prazo', $this->AjustePrazoFK);
+    $this->configurarFK('IdMdUtlAjustePrazo', 'md_utl_ajuste_prazo mdap', 'mdap.id_md_utl_ajuste_prazo', $this->getAjustePrazoFK());
     $this->configurarFK('IdMdUtlAdmJustPrazo', 'md_utl_adm_just_prazo majp', 'majp.id_md_utl_adm_just_prazo');
     $this->configurarFK('IdContato', 'contato ct', 'ct.id_contato');
-    
-    //Fila
+
+    $this->configurarFK('IdMdUtlContestRevisao', 'md_utl_contest_revisao mcr', 'mcr.id_md_utl_contest_revisao',  $this->getContestacaoFK());
+    $this->configurarFK('IdMdUtlAdmJustContest', 'md_utl_adm_just_contest majc', 'majc.id_md_utl_adm_just_contest');
+
+
+      //Fila
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFila','fila.nome','md_utl_adm_fila fila');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFilaEncTriagem','filatri.nome','md_utl_adm_fila filatri');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFilaEncAnalise','filaanl.nome','md_utl_adm_fila filaanl');
@@ -98,6 +107,7 @@ class MdUtlControleDsmpDTO extends InfraDTO {
     //Usuário Distribuição
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuarioDistribuicao','ud.nome','usuario ud');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SiglaUsuarioDistribuicao','ud.sigla','usuario ud');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdContatoDistribuicao','ud.id_contato','usuario ud');
 
     //Usuário Atual
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuarioAtual','ua.nome','usuario ua');
@@ -124,20 +134,30 @@ class MdUtlControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SinAtivoAjustePrazo', 'mdap.sin_ativo', 'md_utl_ajuste_prazo mdap');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaSolicitacaoAjustePrazo', 'mdap.sta_solicitacao', 'md_utl_ajuste_prazo mdap');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaTipoSolicitacaoAjustePrazo', 'mdap.sta_tipo_solicitacao', 'md_utl_ajuste_prazo mdap');
-    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'DthPrazoInicialAjustePrazo', 'mdap.dth_prazo_inicial', 'md_utl_ajuste_prazo mdap');
-    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'DthPrazoSolicitacaoAjustePrazo', 'mdap.dth_prazo_solicitacao', 'md_utl_ajuste_prazo mdap');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTH, 'PrazoInicialAjustePrazo', 'mdap.dth_prazo_inicial', 'md_utl_ajuste_prazo mdap');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTH, 'PrazoSolicitacaoAjustePrazo', 'mdap.dth_prazo_solicitacao', 'md_utl_ajuste_prazo mdap');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmJustPrazo', 'mdap.id_md_utl_adm_just_prazo', 'md_utl_ajuste_prazo mdap');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'Observacao', 'mdap.observacao', 'md_utl_ajuste_prazo mdap');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'DiasUteisExcedentes', 'mdap.dias_uteis_excedentes', 'md_utl_ajuste_prazo mdap');
 
-    //Justificativa de Prazo - Administração
+      //Justificativa de Prazo - Administração
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeJustificativa', 'majp.nome','md_utl_adm_just_prazo majp');
 
     //Contato
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'Email', 'ct.email','contato ct');
 
+    //Sta Solicitacao Contestação
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaSolicitacaoContestacao', 'mcr.sta_solicitacao', 'md_utl_contest_revisao mcr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaSinAtivoContestacao', 'mcr.sin_ativo', 'md_utl_contest_revisao mcr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmJustContest', 'mcr.id_md_utl_adm_just_contest', 'md_utl_contest_revisao mcr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaSolicitacaoContestacao', 'mcr.sta_solicitacao', 'md_utl_contest_revisao mcr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'InformacoesComplementares', 'mcr.informacoes_complementares', 'md_utl_contest_revisao mcr');
 
-    //Atributos de Apoio
+    //Justificativa de Contestação
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeJustContestacao', 'majc.nome','md_utl_adm_just_contest majc');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'IdJustContestacao', 'majc.id_md_utl_adm_just_contest','md_utl_adm_just_contest majc');
+
+      //Atributos de Apoio
      $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'SinVerificarPermissao');
 
   }
@@ -157,4 +177,38 @@ class MdUtlControleDsmpDTO extends InfraDTO {
   {
     $this->AjustePrazoFK = $AjustePrazoFK;
   }
+
+    /**
+     * @return int|null
+     */
+    public function getContestacaoFK()
+    {
+        return $this->ContestacaoFK;
+    }
+
+    /**
+     * @param int|null $ContestacaoFK
+     */
+    public function setContestacaoFK($ContestacaoFK)
+    {
+        $this->ContestacaoFK = $ContestacaoFK;
+    }
+
+    /**
+     * @return |null
+     */
+    public function getUsuarioDistribuicaoFK()
+    {
+        return $this->UsuarioDistribuicaoFK;
+    }
+
+    /**
+     * @param |null $UsuarioDistribuicaoFK
+     */
+    public function setUsuarioDistribuicaoFK($UsuarioDistribuicaoFK)
+    {
+        $this->UsuarioDistribuicaoFK = $UsuarioDistribuicaoFK;
+    }
+
+
 }

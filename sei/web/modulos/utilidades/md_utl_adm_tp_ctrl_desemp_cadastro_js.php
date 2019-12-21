@@ -11,10 +11,10 @@ var objAutoCompletarGestor = null;
 
 var objLupaTipoProcessos = null;
 var objAutoCompletarTipoProcesso = null;
-var msg10 = '<?= $msg10 ?>';
+var msg10Padrao  = '<?=  MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10); ?>';
 var msg11Padrao  = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11) ?>';
-var msg12 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Gestor') ?>';
-var msg18 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_18, 'Unidade') ?>';
+var msg12        = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_12, 'Gestor') ?>';
+var msg18        = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_18, 'Unidade') ?>';
 
 
 function inicializar() {
@@ -85,7 +85,8 @@ function carregarComponenteGestores(){
 
             for(var i=0;i < options.length;i++){
                 if (options[i].value == id){
-                    alert(msg10);
+                    var msg = setMensagemPersonalizada(msg10Padrao, ['Gestor']);
+                    alert(msg);
                     break;
                 }
             }
@@ -127,7 +128,8 @@ function carregarComponenteUnidades(){
 
             for(var i=0;i < options.length;i++){
                 if (options[i].value == id){
-                    alert('Unidade já consta na lista.');
+                    var msg = setMensagemPersonalizada(msg10Padrao, ['Unidade']);
+                    alert(msg);
                     break;
                 }
             }

@@ -62,6 +62,7 @@ try {
         $objMdUtlAdmTpAusenciaDTO->setNumIdMdUtlAdmTpAusencia($_GET['id_md_utl_adm_tp_ausencia']);
         $objMdUtlAdmTpAusenciaDTO->retTodos();
         $objMdUtlAdmTpAusenciaRN = new MdUtlAdmTpAusenciaRN();
+        $objMdUtlAdmTpAusenciaDTO->setBolExclusaoLogica(false);
         $objMdUtlAdmTpAusenciaDTO = $objMdUtlAdmTpAusenciaRN->consultar($objMdUtlAdmTpAusenciaDTO);
         if ($objMdUtlAdmTpAusenciaDTO==null){
           throw new InfraException("Registro não encontrado.");
@@ -70,7 +71,6 @@ try {
         $objMdUtlAdmTpAusenciaDTO->setNumIdMdUtlAdmTpAusencia($_POST['hdnIdMdUtlAdmTpAusencia']);
         $objMdUtlAdmTpAusenciaDTO->setStrNome($_POST['txtNome']);
         $objMdUtlAdmTpAusenciaDTO->setStrDescricao($_POST['txaDescricao']);
-        $objMdUtlAdmTpAusenciaDTO->setStrSinAtivo('S');
       }
 
       $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].PaginaSEI::getInstance()->montarAncora($objMdUtlAdmTpAusenciaDTO->getNumIdMdUtlAdmTpAusencia())).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
@@ -142,6 +142,9 @@ PaginaSEI::getInstance()->abrirJavaScript();
 ?>
 <?if(0){?><script type="text/javascript"><?}?>
 
+
+  var msg11Padrao = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11) ?>';
+  
 function inicializar(){
   if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_cadastrar'){
     document.getElementById('txtNome').focus();
@@ -155,13 +158,15 @@ function inicializar(){
 
 function validarCadastro() {
   if (infraTrim(document.getElementById('txtNome').value)=='') {
-    alert('Informe o Tipo de Ausência.');
+    var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Ausência']);
+    alert(msg);
     document.getElementById('txtNome').focus();
     return false;
   }
 
   if (infraTrim(document.getElementById('txaDescricao').value)=='') {
-    alert('Informe a Descrição.');
+    var msg = setMensagemPersonalizada(msg11Padrao, ['Descrição']);
+    alert(msg);
     document.getElementById('txaDescricao').focus();
     return false;
   }

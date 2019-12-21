@@ -321,7 +321,7 @@ PaginaSEI::getInstance()->abrirJavaScript();
 ?>
 <?if(0){?><script type="text/javascript"><?}?>
 
-  var msg100Padrao = <?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_100)?>;
+  var msg100Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_100)?>';
 
   function inicializar(){
   if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_selecionar'){
@@ -333,7 +333,6 @@ PaginaSEI::getInstance()->abrirJavaScript();
   infraEfeitoTabelas(true);
 }
 
-<? if ($bolAcaoDesativar){ ?>
 function acaoDesativar(id,desc){
   if (confirm("Confirma desativação do Tipo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
@@ -342,21 +341,8 @@ function acaoDesativar(id,desc){
   }
 }
 
-  function acaoDesativacaoMultipla(){
-    if (document.getElementById('hdnInfraItensSelecionados').value==''){
-      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
-      alert(msg);
-      return;
-    }
-    if (confirm("Confirma desativação dos Tipos de Ausência selecionados?")){
-      document.getElementById('hdnInfraItemId').value='';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkDesativar?>';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-    }
-  }
-<? } ?>
 
-<? if ($bolAcaoReativar){ ?>
+
 function acaoReativar(id,desc){
   if (confirm("Confirma reativação do Tipo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
@@ -365,21 +351,6 @@ function acaoReativar(id,desc){
   }
 }
 
-  function acaoReativacaoMultipla(){
-    if (document.getElementById('hdnInfraItensSelecionados').value==''){
-      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
-      alert(msg);
-      return;
-    }
-    if (confirm("Confirma reativação dos Tipos de Ausência selecionados?")){
-      document.getElementById('hdnInfraItemId').value='';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkReativar?>';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-    }
-  }
-<? } ?>
-
-<? if ($bolAcaoExcluir){ ?>
 function acaoExcluir(id,desc){
   if (confirm("Confirma exclusão do Tipo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
@@ -388,19 +359,6 @@ function acaoExcluir(id,desc){
   }
 }
 
-  function acaoExclusaoMultipla(){
-    if (document.getElementById('hdnInfraItensSelecionados').value==''){
-      var msg = setMensagemPersonalizada(msg100Padrao, ['Tipo de Ausência']);
-      alert(msg);
-      return;
-    }
-    if (confirm("Confirma exclusão dos Tipos de Ausência selecionados?")){
-      document.getElementById('hdnInfraItemId').value='';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkExcluir?>';
-      document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
-    }
-  }
-<? } ?>
 
 function fechar(){
   location.href="<?= $strUrlFechar ?>";

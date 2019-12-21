@@ -1,6 +1,5 @@
 <?
 /**
-* TRIBUNAL REGIONAL FEDERAL DA 4ª REGIÃO
 *
 * 06/11/2018 - criado por jaqueline.cast
 *
@@ -171,6 +170,8 @@ class MdUtlTriagemRN extends InfraRN {
       $idProcedimento           = $dados['hdnIdProcedimento'];
       $isRetriagem              = $dados['hdnIdRetriagem'];
       $isRtgAnlCorrecao         = $dados['hdnIdRtgAnlCorrecao'];
+      $isAlterar                = $_GET['acao'] == 'md_utl_triagem_alterar';
+      $isHabilitar              = false;
 
       $objControleDsmpDTO       = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
       $isTpProcParametrizado    = $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($objControleDsmpDTO->getNumIdTpProcedimento(), $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp()));
@@ -192,7 +193,6 @@ class MdUtlTriagemRN extends InfraRN {
             $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S', 'S'));
 
             if ($isRetriagem == 1 && !$isPossuiAnalise) {
-                //Somente entra neste IF quando o UsuÃ¡rio Troca o valor da Atividade em uma Retriagem (com analise, passa a ser sem analise)
 
                 if($novoStatus == MdUtlControleDsmpRN::$AGUARDANDO_REVISAO) {
                     if ($isRtgAnlCorrecao == 1) {
@@ -207,7 +207,19 @@ class MdUtlTriagemRN extends InfraRN {
                 $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
             }
 
+
+            $isStatusAlteracao = !$isRetriagem && $isAlterar;
+            $isStatusRegMudanca = $isRetriagem == 1 && !$isPossuiAnalise;
+
+
+            if ($isStatusAlteracao || $isStatusRegMudanca) {
+                $arrDados = array($arrIdsProcedimentos, $novoStatus);
+                $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                $arrRetorno[$idProcedimento]['ID_CONTESTACAO'] = null;
+            }
+
             $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+
             $strDetalhe = $this->_retornaDetalheTriagem();
 
 
@@ -220,8 +232,6 @@ class MdUtlTriagemRN extends InfraRN {
             $objRNGerais = new MdUtlRegrasGeraisRN();
             $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
             $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
-
-
         }
 
     }catch(Exception $e){
@@ -310,11 +320,11 @@ class MdUtlTriagemRN extends InfraRN {
 
           $idAnalise      = $strNovoStatus == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE ?  $arrRetorno[$idProcedimento]['ID_ANALISE'] : null;
 
-          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], $idUsuarioDistrib, $objTriagem->getNumIdMdUtlTriagem(),  $idAnalise, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, null, $idAjusTarefa, $dthPrazoTarefa);
+          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], $idUsuarioDistrib, $objTriagem->getNumIdMdUtlTriagem(),  $idAnalise, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, null, $idAjusTarefa, $dthPrazoTarefa, null, $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
 
       }else{
 
-          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], null, $objTriagem->getNumIdMdUtlTriagem(), null, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM);
+          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], null, $objTriagem->getNumIdMdUtlTriagem(), null, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, null, null, null, null, $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
       }
 
       $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
@@ -520,7 +530,7 @@ class MdUtlTriagemRN extends InfraRN {
 
 
     protected function checarDadosTriagemControlado($idUsuario){
-        /*Busca id do usuário de utilidades para agendamento automático do sistema*/
+     
         $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
         $objMdUtlTriagemDTO->adicionarCriterio(array('Atual','IdUsuario'),array(InfraDTO::$OPER_IGUAL,InfraDTO::$OPER_IGUAL),array(null, null),InfraDTO::$OPER_LOGICO_OR);
         $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();

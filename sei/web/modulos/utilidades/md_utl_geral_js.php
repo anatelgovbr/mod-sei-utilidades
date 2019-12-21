@@ -214,6 +214,7 @@
         for (var i = 0; i < labels.length; i++) {
             var forLabel = labels[i].htmlFor;
             if (forLabel != '' && forLabel == forLabelSelecao) {
+                var nomelabel = $.trim(labels[i]);
                 return labels[i];
             }
         }
@@ -225,7 +226,7 @@
         for(var i = 0; i < arrParams.length; i++){
             var numero = i + 1;
             var campoNome = padraoSetMsg.replace('$NUMERO$', numero);
-            var campoSubst = arrParams[i];
+            var campoSubst = $.trim(arrParams[i]);
             msg = msg.replace(campoNome, campoSubst);
         }
 

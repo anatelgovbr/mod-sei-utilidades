@@ -176,7 +176,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
             <div class="bloco blocoExibir" id="divTpProduto">
                 <br>
                 <label id="lblTpProduto" for="selTpProduto" accesskey="" class="infraLabelObrigatorio">Tipo de Produto:</label>
-                <a style="" id="btnAjudaTpProduto" <?=PaginaSEI::montarTitleTooltip('Selecionar o documento na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')?>
+                <a style="" id="btnAjudaTpProduto" <?=PaginaSEI::montarTitleTooltip('Selecionar o produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')?>
                    tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
                     <img id="imgAjudaTpProduto" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
                 </a>
@@ -185,8 +185,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                 </select>
 
             </div>
-
-
             <div class="bloco blocoExibir" id="divTpDocumento">
                 <br>
                 <label id="selTpDocumento" for="selTpDocumento" accesskey="" class="infraLabelObrigatorio">Tipo de Documento SEI:</label>
@@ -237,7 +235,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                 <div id="divBtnAdicionar">
                 <button type="button" class="infraButton" id="adicionar" accesskey="a" onclick="adicionarRegistroTabelaProduto()"><span class="infraTeclaAtalho">A</span>dicionar</button>
                 </div>
-
             </div>
             <br>
 
@@ -255,17 +252,20 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                     <th style="display: none">id_vinculo</th><!--0-->
                     <th style="display: none">id_doc</th>
                     <th style="display: none">vinculo_analise</th>
+                    <th style="display: none">is</th>
                     <th class="infraTh"  align="center" width="15%" >Ações</th> <!--5-->
                 </tr>
             </table>
         </fieldset>
     </div>
     <input <?php echo $strItensTabela != '' ? 'utlCampoObrigatorio="o"' : ''; ?> type="hidden" id="hdnTbProdutoEsperado" name="hdnTbProdutoEsperado" value="<?=$strItensTabela?>" />
+    <pre>
+    </pre>
     <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?=$idTipoControle?>" />
     <input type="hidden" id="hdnIdAtividade"       name="hdnIdAtividade"       value="<?=$idAtividade?>" />
     <input type="hidden" id="hdnIdsRemovido"       name="hdnIdsRemovido"       value="" />
     <input type="hidden" id="hdnIsAlterar"       name="hdnIsAlterar"       value="<?php echo $isAlterar ?>" />
-
+    <input type="hidden" id="hdnIdAlteracao"       name="hdnIdAlteracao"       value="" />
     <?
     PaginaSEI::getInstance()->fecharAreaDados();
     PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);

@@ -25,6 +25,8 @@ $idProcedimento  = array_key_exists('id_procedimento', $_GET) ? $_GET['id_proced
 $idProcedimento = trim($idProcedimento);
 $urlInicial = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento);
 
+
+
 if ($isProcessoAutorizadoConcluir == 1) {
     $_POST['hdnIsConcluirProcesso'] = 0;
     $isProcessoAutorizadoConcluir = 0;
@@ -53,6 +55,7 @@ $isParametrizado = null;
 $nomeStatus      = '';
 $strTitulo       = 'Detalhamento do Processo ';
 $arrCtrlVisualizacao = array();
+$isUsuarioDuplicado = false;
 //Rns
 $objRegrasGerais           = new MdUtlRegrasGeraisRN();
 $objMdUtlAdmUtlTpCtrlRN    = new MdUtlAdmTpCtrlDesempRN();
@@ -114,6 +117,8 @@ if(!is_null($objControleDsmpDTO)){
     $strStatusAtual   = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
     $strTipoAcaoAtual = $objControleDsmpDTO->getStrTipoAcao();
     $idControleDsmp    = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
+
+    $isUsuarioDuplicado = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUsuario();
 }
 
 $nomeStatus       = $arrSituacao[$idStatus];
@@ -121,18 +126,23 @@ $nomeStatus       = $arrSituacao[$idStatus];
 $isPossuiAnalise       = $objMdUtlControleDsmpRN->verificaTriagemPossuiAnalise($objControleDsmpDTO);
 $strNumeroProcedimento = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado();
 $msg107                = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_107, array($strNumeroProcedimento,  SessaoSEI::getInstance()->getStrSiglaUnidadeAtual()));
+$msg92                 = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_92, array($strNumeroProcedimento));
 
 //Controle de Urls
-$idUsuarioDistrb  = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getNumIdUsuarioDistribuicao() : null;
-$arrCtrlUrls      = MdUtlControleDsmpINT::retornaUrlsAcessoDsmp($idStatus, $isPossuiAnalise, $idProcedimento, $idFila, $idUsuarioDistrb);
+$idUsuarioDistrb     = !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getNumIdUsuarioDistribuicao() : null;
+$isStatusAjustePrazo = !is_null($objControleDsmpDTO) && ($idStatus == MdUtlControleDsmpRN::$SUSPENSO || $idStatus == MdUtlControleDsmpRN::$INTERROMPIDO);
+$idRevisaoAjustePrz  = $isStatusAjustePrazo &&  !is_null($objControleDsmpDTO) ?  $objControleDsmpDTO->getNumIdMdUtlRevisao() : null;
 
+$arrCtrlUrls      = MdUtlControleDsmpINT::retornaUrlsAcessoDsmp($idStatus, $isPossuiAnalise, $idProcedimento, $idFila, $idUsuarioDistrb);
 
 //Urls
 $strLinkAssociarFila   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_controle_dsmp_associar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&id_tp_controle_desmp=' . $idTipoControle.'&is_detalhamento=1');
 $strLinkIniciarTriagem = $arrCtrlUrls['TRIAGEM'];
 $strLinkIniciarAnalise = $arrCtrlUrls['ANALISE'];
 $strLinkIniciarRevisao = $arrCtrlUrls['REVISAO'];
+
 $strLinkIniciarDistrb  = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_distrib_usuario_cadastrar&acao_retorno=md_utl_processo_listar&acao_origem=md_utl_controle_dsmp_listar&id_procedimento=' . $idProcedimento.'&id_controle_dsmp='.$idControleDsmp.'&status='.$strStatusAtual.'&id_fila='.$idFila);
+$strLinkAtribuir  = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_atribuicao_automatica&acao_retorno=md_utl_processo_listar&acao_origem=md_utl_controle_dsmp_listar&id_procedimento=' . $idProcedimento.'&id_controle_dsmp='.$idControleDsmp.'&status='.$strStatusAtual.'&id_fila='.$idFila.'&id_tp_ctrl='.$idTipoControle);
 $strUrlFechar          = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_retorno=procedimento_controlar&acao_origem=md_utl_controle_dsmp_listar&id_procedimento=' . $idProcedimento);
 $strLinkConcluirProcesso =  $isProcessoConcluido == 1  ? SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_concluir_processo'.$isProcessoConcluido) : '';
 
@@ -140,12 +150,22 @@ $strLinkConcluirProcesso =  $isProcessoConcluido == 1  ? SessaoSEI::getInstance(
 $idTipoProcedimento = $objProcedimentoDTO->getNumIdTipoProcedimento();
 
 $isTipoProcessoParametrizado = $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($idTipoProcedimento, $idTipoControle));
-$arrCtrlVisualizacao = MdUtlControleDsmpINT::retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila);
+$arrCtrlVisualizacao = MdUtlControleDsmpINT::retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila, $idRevisaoAjustePrz);
 
 if (count($arrCtrlVisualizacao) > 0 && $isPermiteAcoes) {
     if($arrCtrlVisualizacao['ASSOCIACAO']) {
         $arrComandos[] = '<button type="button" accesskey="A" id="btnAssoFila" onclick="associarFila()" class="infraButton">
                                     <span class="infraTeclaAtalho">A</span>ssociar à Fila</button>';
+    }
+
+    if($arrCtrlVisualizacao['ATRIBUICAO']) {
+        if($isUsuarioDuplicado) {
+            $arrComandos[] = '<button type="button" accesskey="B" id="btnAtribuicao" onclick="exibirExcessaoDuplicidade()" class="infraButton">
+                                    Atri<span class="infraTeclaAtalho">b</span>uir a mim</button>';
+        }else {
+            $arrComandos[] = '<button type="button" accesskey="B" id="btnAtribuicao" onclick="atribuicaoAutomatica()" class="infraButton">
+                                    Atri<span class="infraTeclaAtalho">b</span>uir a mim</button>';
+        }
     }
 
     if($arrCtrlVisualizacao['DISTRIBUICAO']) {
@@ -177,6 +197,13 @@ switch ($_GET['acao']) {
     case $acaoPrincipal:
         break;
     //endregion
+
+    case 'md_utl_atribuicao_automatica':
+        $objMdUtlControleDsmpRN->atribuirDistribuicaoUsuarioLogado();
+
+            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimento));
+        die;
+    break;
 
     //region Erro
     default:
@@ -323,6 +350,8 @@ if(0) {
     <script type="javascript">
 <?php } ?>
 
+var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
+
 function inicializar() {
 
     var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
@@ -330,7 +359,7 @@ function inicializar() {
     var msgConclusao = '<?php echo $msg107 ?>';
 
     if (idParam == 0) {
-        alert('O Tipo de Controle desta Unidade não está Parametrizado!');
+        alert(msg25);
     }
 
    if(isProcessoConcl == 1){
@@ -375,6 +404,18 @@ function iniciarDistribuicao(){
     }else{
         window.location.href = '<?= $strLinkIniciarDistrb ?>';
     }
+}
+
+function atribuicaoAutomatica() {
+    if(confirm("Confirma a Distribuição do Processo em sua carga?")){
+        window.location.href = '<?= $strLinkAtribuir ?>';
+    }
+
+}
+
+function exibirExcessaoDuplicidade(){
+    var msg92 = '<?php echo $msg92 ?>'
+    alert(msg92);
 }
 
 function fechar() {

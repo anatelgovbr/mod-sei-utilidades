@@ -11,10 +11,13 @@ require_once dirname(__FILE__) . '/../../../SEI.php';
 class MdUtlAtualizadorSeiRN extends InfraRN
 {
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.2.0';
+
+
+    private $versaoAtualDesteModulo = '1.3.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0');
+
+    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0','1.3.0');
 
     public function __construct(){
         parent::__construct();
@@ -109,18 +112,25 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                 $this->instalarv100();
                 $this->instalarv110();
                 $this->instalarv120();
+                $this->instalarv130();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
             } elseif ($strVersaoModuloUtilidades == '1.0.0') {
                 $this->instalarv110();
                 $this->instalarv120();
+                $this->instalarv130();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
             } elseif ($strVersaoModuloUtilidades == '1.1.0') {
                 $this->instalarv120();
+                $this->instalarv130();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
                 $this->finalizar('FIM', false);
-            } else {
+            } elseif ($strVersaoModuloUtilidades == '1.2.0') {
+                $this->instalarv130();
+                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+                $this->finalizar('FIM', false);
+            }else{
                 $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v ' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
                 $this->finalizar('FIM', false);
             }
@@ -1007,6 +1017,139 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
     }
 
+    protected function instalarv130(){
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+        SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
+
+        //Justificativa de Contestação
+        $this->logar('CRIANDO A TABELA md_utl_adm_just_contest');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_just_contest (
+                id_md_utl_adm_just_contest ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_tp_ctrl_desemp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				nome ' . $objInfraMetaBD->tipoTextoVariavel(100) . ' NOT NULL,
+				descricao ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NOT NULL,
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+        );
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_just_contest', 'pk_md_utl_adm_just_contest', array('id_md_utl_adm_just_contest'));
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_just_contest', 'md_utl_adm_just_contest',
+            array('id_md_utl_adm_tp_ctrl_desemp'), 'md_utl_adm_tp_ctrl_desemp', array('id_md_utl_adm_tp_ctrl_desemp'));
+
+        $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_just_contest');
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_just_contest', 1);
+
+        //Solicitar Contestação
+        $this->logar('CRIANDO A TABELA md_utl_adm_prm_contest');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_prm_contest (
+                id_md_utl_adm_prm_contest ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_tp_ctrl_desemp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sin_reprovacao_automatica ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				qtd_dias_uteis_reprovacao ' . $objInfraMetaBD->tipoNumero() . ' NULL
+				) '
+        );
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_prm_contest', 'md_utl_adm_prm_contest',
+            array('id_md_utl_adm_tp_ctrl_desemp'), 'md_utl_adm_tp_ctrl_desemp', array('id_md_utl_adm_tp_ctrl_desemp'));
+
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_prm_contest', 1);
+
+        //Parametrização da Contestação
+        $this->logar('CRIANDO A TABELA md_utl_contest_revisao');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_contest_revisao (
+                id_md_utl_contest_revisao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_just_contest ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sta_solicitacao ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				informacoes_complementares ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NULL,
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL
+				) '
+        );
+
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_contest_revisao', 1);
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_contest_revisao', 'pk_md_utl_contest_revisao', array('id_md_utl_contest_revisao'));
+
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_contest_revisao', 'md_utl_contest_revisao',
+            array('id_md_utl_adm_just_contest'), 'md_utl_adm_just_contest', array('id_md_utl_adm_just_contest'));
+
+        $this->logar('ALTERANDO A TABELA md_utl_hist_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'id_md_utl_contest_revisao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk10_md_utl_hist_controle_dsmp', 'md_utl_hist_controle_dsmp', array('id_md_utl_contest_revisao'), 'md_utl_contest_revisao', array('id_md_utl_contest_revisao'));
+
+        $this->logar('ALTERANDO A TABELA md_utl_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'id_md_utl_contest_revisao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk10_md_utl_controle_dsmp', 'md_utl_controle_dsmp', array('id_md_utl_contest_revisao'), 'md_utl_contest_revisao', array('id_md_utl_contest_revisao'));
+
+        //Parametrização da Distribuição
+        $this->logar('CRIANDO A TABELA md_utl_adm_prm_ds');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_prm_ds (
+                id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_tp_ctrl_desemp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sin_priorizar_distribuicao ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				sin_fila ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				sin_status_atendimento_dsmp ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				sin_atividade ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+        );
+
+
+        $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_prm_ds');
+        BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_prm_ds', 1);
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_prm_ds', 'pk_md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_prm_ds','md_utl_adm_prm_ds',array('id_md_utl_adm_tp_ctrl_desemp'),'md_utl_adm_tp_ctrl_desemp',array('id_md_utl_adm_tp_ctrl_desemp'));
+
+        $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_fila');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_fila (
+                id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_fila ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+        );
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_fila', 'pk_md_utl_adm_rel_prm_ds_fila', array('id_md_utl_adm_prm_ds','id_md_utl_adm_fila'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_fila','md_utl_adm_rel_prm_ds_fila',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_fila','md_utl_adm_rel_prm_ds_fila',array('id_md_utl_adm_fila'),'md_utl_adm_fila',array('id_md_utl_adm_fila'));
+
+        $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_ativ');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_ativ (
+                id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_atividade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+        );
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_ativ', 'pk_md_utl_adm_rel_prm_ds_ativ', array('id_md_utl_adm_prm_ds','id_md_utl_adm_atividade'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_ativ','md_utl_adm_rel_prm_ds_ativ',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_ativ','md_utl_adm_rel_prm_ds_ativ',array('id_md_utl_adm_atividade'),'md_utl_adm_atividade',array('id_md_utl_adm_atividade'));
+
+        $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_aten');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_aten (
+                id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				sta_atendimento_dsmp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+        );
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_aten', 'pk_md_utl_adm_rel_prm_ds_aten', array('id_md_utl_adm_prm_ds','sta_atendimento_dsmp'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_aten','md_utl_adm_rel_prm_ds_aten',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
+
+        //Revisão
+        $this->logar('CRIANDO colunas na tabela md_utl_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'sta_encaminhamento_contestacao', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->alterarColuna('md_utl_revisao', 'sta_encaminhamento_revisao', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        //Contestacao
+        $this->logar('CRIANDO colunas na tabela md_utl_contest_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_contest_revisao', 'id_md_utl_revisao', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_contest_revisao','md_utl_contest_revisao',array('id_md_utl_revisao'),'md_utl_revisao',array('id_md_utl_revisao'));
+
+        $strDescricao = 'Script Responsável por Reprovar as Contestações de Revisão após o Vencimento do Prazo.';
+        $strComando   = 'MdUtlAgendamentoAutomaticoRN::reprovarContestacao';
+        $strPeriodicidadeComplemento = '1';
+        $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
+
+        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+    }
+
     private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = 'neijobson@anatel.gov.br', $strPeriodicidade = null){
 
         $msgLogar = 'Inserção de Novo Agendamento: '.$strDescricao;
@@ -1038,6 +1181,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
         }
     }
+
+
+
 }
 
 ?>
