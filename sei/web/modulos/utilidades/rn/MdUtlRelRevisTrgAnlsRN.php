@@ -215,7 +215,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                   $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
                   $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
 
-                  $isAssociado = $this->_verificaProcessoAssociaAutomaticamente($objControleDsmpDTO, $isAnalise);
+                  $isAssociado = $this->_verificaProcessoAssociaAutomaticamente($objControleDsmpDTO->getDblIdProcedimento(), $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), $isAnalise);
                   if(!$isAssociado){
                       $isProcessoConcluido = 1;
                   }
@@ -271,7 +271,96 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
   }
 
-  private function _verificaProcessoAssociaAutomaticamente($objControleDsmpDTO, $isAnalise){
+    protected function cadastrarRevisaoTriagemAnaliseContestControlado($arrParams){
+
+        try {
+            $idProcedimento         = $arrParams[0];
+            $idContato              = $arrParams[1];
+            $strNumeroProcesso      = $arrParams[2];
+            $objMdUtlContestacaoRN  = new MdUtlContestacaoRN();
+            $objHistoricoRN         = new MdUtlHistControleDsmpRN();
+            $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+            $objMdUtlRevisaoRN      = new MdUtlRevisaoRN();
+            $objRNGerais            = new MdUtlRegrasGeraisRN();
+            $arrIdsProcedimentos    = array($idProcedimento);
+            $arrObjsAtuais          = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIdsProcedimentos);
+            $idNovaRevisao          = $objMdUtlRevisaoRN->salvarObjRevisao(true);
+            $isAnalise              = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar';
+            $this->_salvarObjsRelacionadosRevisao($idNovaRevisao, $isAnalise);
+            $strStatus              = null;
+
+            $strEncaminhamentoConts = $_POST['selEncaminhamentoContest'];
+
+            switch($strEncaminhamentoConts){
+                case MdUtlRevisaoRN::$MANTER_O_RESPONSAVEL:
+
+                    $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdsProcedimentos, 'N','N','N'));
+                    $idContestacao = $arrRetorno[$idProcedimento]['ID_CONTESTACAO'];
+                    $objMdUtlContestacaoRN->aprovarContestacao(array($idContestacao, $idNovaRevisao));
+                    $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+
+                    $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
+                    $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
+                    $strStatus = $arrRetorno[$idProcedimento]['STATUS'];
+                    $idFila    = $arrRetorno[$idProcedimento]['ID_FILA'];
+                    $idTpCtrl  = $arrRetorno[$idProcedimento]['ID_TIPO_CONTROLE'];
+                    $idUsuarioDistr = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
+
+                    //Cadastrando para essa fila, e esse procedimento e unidade o novo status
+                   $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strStatus, null, 0,$idUsuarioDistr, $idTriagem, $idAnalise, $idNovaRevisao,MdUtlContestacaoRN::$STR_APROVADA,  MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO));
+                break;
+                case MdUtlRevisaoRN::$FLUXO_FINALIZADO:
+                    $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
+
+                    if (!is_null($arrObjsAtuais)) {
+                        $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array(), 'N', 'N', 'N'));
+                        $idTpCtrl  = $arrRetorno[$idProcedimento]['ID_TIPO_CONTROLE'];
+                        $strStatus = $arrRetorno[$idProcedimento]['STATUS'];
+
+                        $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+                        $objMdUtlControleDsmpRN->desativarIdsAtivosControleDsmp($arrRetorno);
+                        $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_CONTESTACAO, $idNovaRevisao));
+
+                        $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
+                        $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
+
+                        $isAssociado = $this->_verificaProcessoAssociaAutomaticamente($idProcedimento, $idTpCtrl, $isAnalise);
+                        if(!$isAssociado){
+                            $isProcessoConcluido = 1;
+                        }
+                    }
+                    break;
+
+            }
+
+            $objContatoRN  = new ContatoRN();
+            $objContatoDTO = new ContatoDTO();
+            $objContatoDTO->setNumIdContato($idContato);
+            $objContatoDTO->retTodos();
+            $objContatoDTO = $objContatoRN->listarRN0325($objContatoDTO);
+            $strNome = $objContatoDTO[0]->getStrNome();
+            $strEmailSolicitante = $objContatoDTO[0]->getStrEmail();
+            $isContatoVazio = 1;
+
+            $objMdUtlGestaoAjusteRN = new MdUtlGestaoAjustPrazoRN();
+            if ($strEmailSolicitante != '') {
+                $strAssunto = 'Resultado da Solicitação de Contestação de Revisão';
+                $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de Contestação de Revisão referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
+
+                $arrDados = array($strNome, $strEmailSolicitante, $strNumeroProcesso, $strStatus, true, $strAssunto, $strConteudo);
+                $isContatoVazio = 0;
+                $objMdUtlGestaoAjusteRN->emailRespostaSolicitacao($arrDados);
+            }
+
+            return array($isProcessoConcluido, $isContatoVazio);
+
+        } catch(Exception $e){
+            throw new InfraException('Erro cadastrando Revisão .',$e);
+        }
+
+    }
+
+  private function _verificaProcessoAssociaAutomaticamente($idProcedimento, $idTipoControle, $isAnalise){
        $staEncaminhamento = $_POST['selAssociarProcFila'] == 'S';
 
         if($staEncaminhamento){
@@ -279,7 +368,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             if(!is_null($idMdUtlAdmFila)){
                 $nomeFila = $_POST['hdnSelFila'];
                 $objControleDsmpRN = new MdUtlControleDsmpRN();
-                $objControleDsmpRN->associarFilaAnaliseTriagem(array($objControleDsmpDTO->getDblIdProcedimento(), $idMdUtlAdmFila, $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO, $nomeFila));
+                $objControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idMdUtlAdmFila, $idTipoControle, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO, $nomeFila));
             }
 
             return true;

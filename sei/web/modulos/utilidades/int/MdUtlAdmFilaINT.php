@@ -51,29 +51,43 @@ class MdUtlAdmFilaINT extends InfraINT {
             $objMdUtlAdmFilaDTO->retTodos();
             $objMdUtlAdmFilaDTO->setNumMaxRegistrosRetorno(50);
             $objMdUtlAdmFilaDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+
             if (!InfraString::isBolVazia($strPalavrasPesquisa)){
 
-                $strPalavrasPesquisa = InfraString::prepararIndexacao($strPalavrasPesquisa);
+//                $strPalavrasPesquisa = InfraString::prepararIndexacao($strPalavrasPesquisa);
+//
+//                $arrPalavrasPesquisa = explode(' ',$strPalavrasPesquisa);
+//                $numPalavras = count($arrPalavrasPesquisa);
+//                for($i=0;$i<$numPalavras;$i++){
+//                    $arrPalavrasPesquisa[$i] = '%'.$arrPalavrasPesquisa[$i].'%';
+//                }
+//
+//                if ($numPalavras==1){
+//                    $objMdUtlAdmFilaDTO->setStrNome($arrPalavrasPesquisa[0],InfraDTO::$OPER_LIKE);
+//                }else{
+//                    $a = array_fill(0,count($arrPalavrasPesquisa),'Nome');
+//                    $c = array_fill(0,count($arrPalavrasPesquisa),InfraDTO::$OPER_LIKE);
+//                    $d = array_fill(0,count($arrPalavrasPesquisa)-1,InfraDTO::$OPER_LOGICO_AND);
+//                    $objMdUtlAdmFilaDTO->adicionarCriterio($a,$c,$arrPalavrasPesquisa,$d);
+//                }
+                $arrObjMdUtlAdmFilaDTO = $objMdUtlAdmFilaRN->listar($objMdUtlAdmFilaDTO);
 
-                $arrPalavrasPesquisa = explode(' ',$strPalavrasPesquisa);
-                $numPalavras = count($arrPalavrasPesquisa);
-                for($i=0;$i<$numPalavras;$i++){
-                    $arrPalavrasPesquisa[$i] = '%'.$arrPalavrasPesquisa[$i].'%';
-                }
+                $results = array_filter($arrObjMdUtlAdmFilaDTO, function ($item) use ($strPalavrasPesquisa) {
+                    if (stripos($item, $strPalavrasPesquisa) !== false) {
+                        return true;
+                    }
+                    return false;
+                });
 
-                if ($numPalavras==1){
-                    $objMdUtlAdmFilaDTO->setStrNome($arrPalavrasPesquisa[0],InfraDTO::$OPER_LIKE);
-                }else{
-                    $a = array_fill(0,count($arrPalavrasPesquisa),'Nome');
-                    $c = array_fill(0,count($arrPalavrasPesquisa),InfraDTO::$OPER_LIKE);
-                    $d = array_fill(0,count($arrPalavrasPesquisa)-1,InfraDTO::$OPER_LOGICO_AND);
-                    $objMdUtlAdmFilaDTO->adicionarCriterio($a,$c,$arrPalavrasPesquisa,$d);
+
+                foreach ($results as $objFilaDTO) {
+                    $objFilaDTO->setStrNome($objFilaDTO->getStrNome() . ' - ' . $objFilaDTO->getStrDescricao());
                 }
             }
 
-            $arrObjs = $objMdUtlAdmFilaRN->listar($objMdUtlAdmFilaDTO);
+//            $arrObjs = $objMdUtlAdmFilaRN->listar($objMdUtlAdmFilaDTO);
 
-             return $arrObjs;
+             return $results;
         }
 
         return null;

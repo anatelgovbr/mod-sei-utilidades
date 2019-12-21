@@ -21,30 +21,30 @@ class MdUtlAdmTpJustRevisaoRN extends InfraRN {
 
   private function validarNumIdMdUtlAdmTpCtrlDesemp(MdUtlAdmTpJustRevisaoDTO $objMdUtlAdmTpJustRevisaoDTO, InfraException $objInfraException){
     if (InfraString::isBolVazia($objMdUtlAdmTpJustRevisaoDTO->getNumIdMdUtlAdmTpCtrlDesemp())){
-      $objInfraException->adicionarValidacao('IdMdUtlAdmTpCtrlDesemp não informad.');
+      $objInfraException->adicionarValidacao('Id de Controle de Desempenho.');
     }
   }
 
   private function validarStrNome(MdUtlAdmTpJustRevisaoDTO $objMdUtlAdmTpJustRevisaoDTO, InfraException $objInfraException){
     if (InfraString::isBolVazia($objMdUtlAdmTpJustRevisaoDTO->getStrNome())){
-      $objInfraException->adicionarValidacao('Nome: não informado');
+      $objInfraException->adicionarValidacao('Nom não informado');
     }else{
       $objMdUtlAdmTpJustRevisaoDTO->setStrNome(trim($objMdUtlAdmTpJustRevisaoDTO->getStrNome()));
 
       if (strlen($objMdUtlAdmTpJustRevisaoDTO->getStrNome())>50){
-        $objInfraException->adicionarValidacao('Nome: possui tamanho superior a 50 caracteres.');
+        $objInfraException->adicionarValidacao('Nome possui tamanho superior a 50 caracteres.');
       }
     }
   }
 
   private function validarStrDescricao(MdUtlAdmTpJustRevisaoDTO $objMdUtlAdmTpJustRevisaoDTO, InfraException $objInfraException){
     if (InfraString::isBolVazia($objMdUtlAdmTpJustRevisaoDTO->getStrDescricao())){
-      $objInfraException->adicionarValidacao('Descrição:  não informad.');
+      $objInfraException->adicionarValidacao('Descrição não informada.');
     }else{
       $objMdUtlAdmTpJustRevisaoDTO->setStrDescricao(trim($objMdUtlAdmTpJustRevisaoDTO->getStrDescricao()));
 
       if (strlen($objMdUtlAdmTpJustRevisaoDTO->getStrDescricao())>250){
-        $objInfraException->adicionarValidacao('Descrição:  possui tamanho superior a 250 caracteres.');
+        $objInfraException->adicionarValidacao('Descrição possui tamanho superior a 250 caracteres.');
       }
     }
   }
@@ -175,11 +175,6 @@ class MdUtlAdmTpJustRevisaoRN extends InfraRN {
 
       //Valida Permissao
       SessaoSEI::getInstance()->validarPermissao('md_utl_adm_tp_just_revisao_consultar');
-
-      //Regras de Negocio
-      //$objInfraException = new InfraException();
-
-      //$objInfraException->lancarValidacoes();
 
       $objMdUtlAdmTpJustRevisaoBD = new MdUtlAdmTpJustRevisaoBD($this->getObjInfraIBanco());
       $ret = $objMdUtlAdmTpJustRevisaoBD->consultar($objMdUtlAdmTpJustRevisaoDTO);

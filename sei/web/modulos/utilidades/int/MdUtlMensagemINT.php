@@ -105,7 +105,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_92 = 'O processo @VALOR1@ já está distribuido para este usuário.';
     public static $MSG_UTL_93 = 'Os Processos listados abaixo já estão distribuidos para este usuário.\n\n Segue lista:';
     public static $MSG_UTL_94 = 'O Prazo Solicitado deve ser maior que o Prazo Atual!';
-    public static $MSG_UTL_95 = 'Não foi encontrada justificativa ativa para o Tipo de Solicitação selecionado. Converse com o Gestor do Tipo de Controle da sua área.';
+    public static $MSG_UTL_95 = 'Não foi encontrada Justificativa Ativa para o Tipo de Solicitação selecionado. Converse com o Gestor do Tipo de Controle da sua área.';
     public static $MSG_UTL_96 = 'Os processos listados abaixo estão com o Status diferente do permitido para Distribuição, remova-os da seleção:';
     public static $MSG_UTL_97 = 'Não é possível remover este usuário, pois o mesmo possui vinculo com uma ou mais Distribuições.';
     public static $MSG_UTL_98 = 'O Percentual @VALOR1@ deve ser entre 0 e 100.';
@@ -116,8 +116,16 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_103 = 'Confirma a @VALOR1@ do Ajuste de Prazo no Processo @VALOR2@?';
     public static $MSG_UTL_104 = 'O Usuário logado não está parametrizado no Tipo de Controle desta Unidade.';
     public static $MSG_UTL_105 = 'Confirma o retorno do processo no Status atual @VALOR1@ para o Status anterior?';
-
+    public static $MSG_UTL_106 = 'Não é possível excluir esta Justificativa pois a mesma está vinculada a uma Contestação.';
     public static $MSG_UTL_107 = 'Confirma a Conclusão do Processo "@VALOR1@" na Unidade "@VALOR2@"?';
+    public static $MSG_UTL_108 = 'Confirma a @VALOR1@ da Contestação de Revisão no Processo @VALOR2@?';
+    public static $MSG_UTL_109 = 'Selecione ao menos @VALOR1@ para adicionar na Parametrização da Distribuição.';
+    public static $MSG_UTL_110 = 'As @VALOR1@ listadas abaixo já estão cadastradas como @VALOR2@ para esta parametrização:';
+    public static $MSG_UTL_111 = 'Os @VALOR1@ listados abaixo já estão cadastrados como @VALOR2@ para esta parametrização:';
+    public static $MSG_UTL_112 = 'Preencha a prioridade do fieldset "@VALOR1@" seguindo uma ordem numérica lógica.';
+    public static $MSG_UTL_113 = 'Existe uma prioridade duplicada na tabela @VALOR1@';
+    public static $MSG_UTL_114 = 'Não é possível @VALOR1@ esta Fila pois a mesma está cadastrada em uma lista de Filas priorizadas no Parâmetro de Distribuição do Tipo de Controle.';
+    public static $MSG_UTL_115 = 'Não é possível @VALOR1@ esta Atividade pois a mesma está cadastrada em uma lista de Atividades priorizadas no Parâmetro de Distribuição do Tipo de Controle.';
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;

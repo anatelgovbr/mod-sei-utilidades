@@ -33,6 +33,7 @@ try {
   switch($_GET['acao']){
     case 'md_utl_adm_tp_produto_excluir':
       try{
+
         $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
         $arrObjMdUtlAdmTpProdutoDTO = array();
         for ($i=0;$i<count($arrStrIds);$i++){

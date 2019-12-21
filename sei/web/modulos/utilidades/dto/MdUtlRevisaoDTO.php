@@ -35,6 +35,8 @@ class MdUtlRevisaoDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFila', 'id_md_utl_adm_fila');
 
+      $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaEncaminhamentoContestacao', 'sta_encaminhamento_contestacao');
+
     $this->configurarPK('IdMdUtlRevisao',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila', 'id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);

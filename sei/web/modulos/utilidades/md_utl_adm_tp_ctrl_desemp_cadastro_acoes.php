@@ -6,7 +6,6 @@ $strDesabilitar = '';
 
 $arrComandos = array();
 $objTipoControleUtilidadesRN = new MdUtlAdmTpCtrlDesempRN();
-$msg10 = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10, 'Gestor');
 
 switch($_GET['acao']){
 

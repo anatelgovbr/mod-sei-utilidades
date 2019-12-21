@@ -253,6 +253,12 @@ if ($numRegistros > 0) {
         //Ação Consulta
         if (!$bolSelecionar) {
 
+                //link para tela de Parametrização de Distribuição nos tipos de controle
+//                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_prm_ds_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/distribuir1.png" title="Distribuição" alt="Distribuição" class="infraImg" /></a>&nbsp;';
+
+            //link para a tela de justificativa de contestacão
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_contest_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/justificativa.png" title="Justificativa de Contestação" alt="Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+
                 //link para tela de Tipo de Justificativa prazo nos tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/motivo_dilatacao2.png" title="Justificativa de Ajuste de Prazo" alt="Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
 
@@ -276,7 +282,8 @@ if ($numRegistros > 0) {
                     $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/fila.png" title="Filas" alt="Filas" class="infraImg" /></a>&nbsp;';
                 }
 
-                //link para a tela de parametrizar tipos de controle
+
+            //link para a tela de parametrizar tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_prm_gr_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensLocal() . '/sei_servicos.gif" title="Parametrizar Tipo de Controle" alt="Parametrizar Tipo de Controle" class="infraImg" /></a>&nbsp;';
 
                 //Consultar Tipo de Controle

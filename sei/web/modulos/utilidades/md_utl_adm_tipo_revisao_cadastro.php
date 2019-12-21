@@ -139,6 +139,8 @@ PaginaSEI::getInstance()->abrirJavaScript();
 ?>
 <?if(0){?><script type="text/javascript"><?}?>
 
+    var msg11Padrao = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11) ?>';
+    
     function inicializar(){
         if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_cadastrar'){
             document.getElementById('txtNome').focus();
@@ -152,13 +154,15 @@ PaginaSEI::getInstance()->abrirJavaScript();
 
     function validarCadastro() {
         if (infraTrim(document.getElementById('txtNome').value)=='') {
-            alert('Informe o Nome.');
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Nome']);
+            alert(msg);
             document.getElementById('txtNome').focus();
             return false;
         }
 
         if (infraTrim(document.getElementById('txaDescricao').value)=='') {
-            alert('Informe a Descrição.');
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Descrição']);
+            alert(msg);
             document.getElementById('txaDescricao').focus();
             return false;
         }

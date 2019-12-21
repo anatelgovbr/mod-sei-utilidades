@@ -155,10 +155,45 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
             $numSeg = InfraUtil::verificarTempoProcessamento();
             InfraDebug::getInstance()->gravar('ATUALIZANDO STATUS DO OBJETO DE UTILIDADES');
 
-            $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
-            $objHistoricoRN         = new MdUtlHistControleDsmpRN();
-
             $this->_getAguardandoFila();
+
+            $numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
+            InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
+            InfraDebug::getInstance()->gravar('FIM');
+
+            LogSEI::getInstance()->gravar(InfraDebug::getInstance()->getStrDebug(), InfraLog::$INFORMACAO);
+
+            InfraDebug::getInstance()->setBolLigado(false);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+            InfraDebug::getInstance()->setBolEcho(false);
+
+        } catch (Exception $e) {
+
+            InfraDebug::getInstance()->setBolLigado(false);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+            InfraDebug::getInstance()->setBolEcho(false);
+            throw new InfraException('Erro atualizando os objetos em andamento de utilidades.', $e);
+        }
+
+    }
+
+    protected function reprovarContestacaoControlado()
+    {
+
+        try {
+            ini_set('max_execution_time', '0');
+            ini_set('memory_limit', '1024M');
+
+            InfraDebug::getInstance()->setBolLigado(true);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+            InfraDebug::getInstance()->setBolEcho(false);
+            InfraDebug::getInstance()->limpar();
+
+            $numSeg = InfraUtil::verificarTempoProcessamento();
+            InfraDebug::getInstance()->gravar('REPROVANDO CONTESTAÇÕES PENDENTES POR PRAZO TÁCITO');
+
+            $objContestacaoRN = new MdUtlContestacaoRN();
+            $objContestacaoRN->getContestacaoPendente(true);
 
             $numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
             InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
@@ -438,6 +473,5 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
         return $arrRetorno;
     }
-
 
 }

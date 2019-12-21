@@ -501,6 +501,22 @@ class MdUtlAdmAtividadeRN extends InfraRN {
             }
         }
     }
+
+    protected function verificaAtividadeDistribuicaoConectado($idAtividade){
+        $objMdUtlAdmRelPrmDsAtivDTO = new  MdUtlAdmRelPrmDsAtivDTO();
+        $objMdUtlAdmRelPrmDsAtivRN = new  MdUtlAdmRelPrmDsAtivRN();
+
+        $objMdUtlAdmRelPrmDsAtivDTO->setNumIdMdUtlAdmAtividade($idAtividade);
+        $objMdUtlAdmRelPrmDsAtivDTO->retTodos();
+
+        $isAtividade = $objMdUtlAdmRelPrmDsAtivRN->contar($objMdUtlAdmRelPrmDsAtivDTO) > 0;
+
+        if($isAtividade){
+            $objInfraException= new InfraException();
+            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_110, array('excluir'));
+            $objInfraException->lancarValidacao($msg);
+        }
+    }
     
 
 }

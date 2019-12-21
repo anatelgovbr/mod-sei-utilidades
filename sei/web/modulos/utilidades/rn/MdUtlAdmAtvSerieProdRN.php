@@ -216,10 +216,29 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
 
       $idAtividade             = $params[0];
       $itemTbProdutosEsperados = PaginaSEI::getInstance()->getArrItensTabelaDinamica($params[1]);
-
       $this->_verificaRemoveRelacionamentosAtv($itemTbProdutosEsperados, $idAtividade);
       $this->_cadastrarNovosProdutosRelacionados($itemTbProdutosEsperados, $idAtividade);
+      $this->_alterarProdutosRelacionados($itemTbProdutosEsperados);
       return true;
+  }
+
+  private function _alterarProdutosRelacionados($itemTbProdutosEsperados){
+      foreach ($itemTbProdutosEsperados as $produtoAlterado ){
+            if($produtoAlterado[11] == 'S'){
+                $mdUtlAdmAtvSerieProdDTO = new MdUtlAdmAtvSerieProdDTO();
+                $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmAtvSerieProd(intval($produtoAlterado[0]));
+                $mdUtlAdmAtvSerieProdDTO->retTodos();
+
+                $objAlterarDTO = $this->consultar($mdUtlAdmAtvSerieProdDTO);
+                $sinObrigatorio = $produtoAlterado[6] == 'Sim' ? 'S' : 'N';
+
+                $objAlterarDTO->setStrSinObrigatorio($sinObrigatorio);
+                $objAlterarDTO->setNumUnidadeEsforcoProduto(intval($produtoAlterado[5]));
+
+                $this->alterar($objAlterarDTO);
+            }
+      }
+
   }
 
     private function _verificaRemoveRelacionamentosAtv($itemTbProdutosEsperados, $idAtividade){
@@ -238,18 +257,15 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
 
     private function _cadastrarNovosProdutosRelacionados($itemTbProdutosEsperados, $idAtividade){
 
-
         foreach ($itemTbProdutosEsperados as $registro) {
             $idPk      = null;
             $isInclusao = strpos($registro[0], 'NOVO_REGISTRO') !== false;
-
 
             if ($isInclusao) {
 
                 $mdUtlAdmAtvSerieProdDTO = new MdUtlAdmAtvSerieProdDTO();
                 
                 $mdUtlAdmAtvSerieProdDTO->setStrStaTipo($registro[2]);
-
 
                 if ($registro[2] == self::$TIPO_PRODUTO) {
                     $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmTpProduto($registro[9]);
@@ -261,9 +277,7 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
                     } else {
                         $mdUtlAdmAtvSerieProdDTO->setStrStaAplicabilidadeSerie(self::$APLICABILIDADESERIE_EXTERNO);
                     }
-
                 }
-
                 $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmAtividade($idAtividade);
                 $mdUtlAdmAtvSerieProdDTO->setNumUnidadeEsforcoProduto($registro[5]);
 
@@ -273,8 +287,6 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
                 $this->cadastrar($mdUtlAdmAtvSerieProdDTO);
             }
         }
-
-
     }
 
   protected function retornarItensTabelasDinamicaControlado($idAtividade){
@@ -314,24 +326,19 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
               $linha[] = 'true';
 
           }else{
-
               $linha[] = self::$N_OBRIGATORIO[1];
               $linha[] = 'false';
-
           }
 
           $linha[]   = $item->getNumIdMdUtlAdmAtvSerieProd();
           $linha[]   = $item->getStrStaTipo() == self::$TIPO_PRODUTO ? $item->getNumIdMdUtlAdmTpProduto() : $item->getNumIdSerie() ;
           $linha[]   = 'N';
-          
+          $linha[]   = 'N';
 
           $arrIten[] = $linha;
       }
-
       return $arrIten;
   }
-
-
 
   protected function consultarExcluirVinculosControlado($idAtividade){
 
@@ -346,8 +353,5 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
           $mdUtlAdmAtvSerieProd =$this->listar($mdUtlAdmAtvSerieProdDTO);
           $this->excluir($mdUtlAdmAtvSerieProd);
       }
-
   }
-
-
 }

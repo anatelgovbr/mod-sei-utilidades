@@ -180,46 +180,55 @@ class MdUtlAdmFilaPrmGrUsuRN extends InfraRN {
 
     return $arrObjFilaDTO;
   }
-  
-  protected function getUsuarioPorPapelConectado($valores){
 
-    $papelUsu = $valores[0];
-    $arrFila   = $valores[1];
-    
-      $objUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
-      $objUsuarioDTO->retTodos();
-      $objUsuarioDTO->setNumIdMdUtlAdmFila($arrFila);
-      $objUsuarioDTO->retNumIdUsuario();
-      
-      if($papelUsu == MdUtlAdmFilaRN::$TRIADOR){
-        $objUsuarioDTO->setStrSinTriador('S');
-      }
+    protected function getUsuarioPorPapelConectado($valores)
+    {
+        $papelUsu = $valores[0];
+        $arrFila = $valores[1];
+        $idsUsuarios = array_key_exists(2, $valores) ? $valores[2] : null;
 
-      if($papelUsu == MdUtlAdmFilaRN::$ANALISTA){
-        $objUsuarioDTO->setStrSinAnalista('S');
-      }
+        $objUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+        $objUsuarioDTO->retTodos();
+        $objUsuarioDTO->setNumIdMdUtlAdmFila($arrFila);
+        $objUsuarioDTO->retNumIdUsuario();
 
-      if($papelUsu == MdUtlAdmFilaRN::$REVISOR){
-        $objUsuarioDTO->setStrSinRevisor('S');
-      }
-      
-      $count = $this->contar($objUsuarioDTO);
+        if (!is_null($idsUsuarios) && is_array($idsUsuarios)) {
+            $objUsuarioDTO->setNumIdUsuario($idsUsuarios, InfraDTO::$OPER_IN);
+        }
 
-      if ($count > 0) {
-        $arrObjFilaDTO = $this->listar($objUsuarioDTO);
-      }
+        if ($papelUsu == MdUtlAdmFilaRN::$TRIADOR) {
+            $objUsuarioDTO->setStrSinTriador('S');
+        }
 
-    return $arrObjFilaDTO;
-  }
+        if ($papelUsu == MdUtlAdmFilaRN::$ANALISTA) {
+            $objUsuarioDTO->setStrSinAnalista('S');
+        }
+
+        if ($papelUsu == MdUtlAdmFilaRN::$REVISOR) {
+            $objUsuarioDTO->setStrSinRevisor('S');
+        }
+
+        $count = $this->contar($objUsuarioDTO);
+
+        if ($count > 0) {
+            $arrObjFilaDTO = $this->listar($objUsuarioDTO);
+        }
+
+        return $arrObjFilaDTO;
+    }
 
   protected function getResponsavelPorFilaConectado($idsFilasPermitidas){
 
-      if(count($idsFilasPermitidas) > 0) {
+      $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+      $idsUsuarioUnidade = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
+
+      if(count($idsFilasPermitidas) > 0 && count($idsUsuarioUnidade) > 0) {
           $idsResponsaveis = '';
 
           $objFilaPrmUsuDTO = new MdUtlAdmFilaPrmGrUsuDTO();
           $objFilaPrmUsuDTO->setNumIdMdUtlAdmFila($idsFilasPermitidas, InfraDTO::$OPER_IN);
           $objFilaPrmUsuDTO->retNumIdUsuario();
+          $objFilaPrmUsuDTO->setNumIdUsuario($idsUsuarioUnidade, InfraDTO::$OPER_IN);
           $objFilaPrmUsuDTO->retStrNomeUsuario();
           $objFilaPrmUsuDTO->setOrdStrNomeUsuario(InfraDTO::$TIPO_ORDENACAO_ASC);
 

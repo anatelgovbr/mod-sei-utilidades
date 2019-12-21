@@ -70,7 +70,15 @@ $strLinkAjaxAtividade      = SessaoSEI::getInstance()->assinarLink('controlador_
 $strLinkGrupoAtividadeSelecao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_selecionar&tipo_selecao=2&id_object=objLupaGrupoAtividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strLinkAjaxGrupoAtividade    = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_grp_fila_auto_completar&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strUrlAjaxValidarGrupoAtvAtividade = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_grupo_atividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
-$strDetalhamento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1');
+
+$urlRetorno = 'controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1';
+
+if($isPgPadrao == 1){
+    $urlRetorno = str_replace('md_utl_processo_listar','md_utl_meus_processos_listar',$urlRetorno);
+    $urlRetorno .= '&pg_padrao=1';
+}
+
+$strDetalhamento = SessaoSEI::getInstance()->assinarLink($urlRetorno);
 
 $isConsultar                  = false;
 $strGridTriagem               = '';
@@ -267,24 +275,25 @@ switch ($_GET['acao']) {
                     $dados['isCorrecaoTriagem'] = true;
                     $isProcessoConcluido = $objTriagemRN->cadastrarDadosTriagem($dados);
 
+                    $paginaRetorno = $isPgPadrao == 0 ? 'md_utl_processo_listar' : 'md_utl_meus_processos_dsmp_listar';
 
-                    if($isPgPadrao == 0) {
-                        if($idRetriagem == 1){
-                            if($isPossuiAnalise == 'N'){
-                                header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
-                            }
-                            else if($isRtgAnlCorrecao == 1){
-                                    header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_analise_alterar&id_procedimento=' . $idProcedimento.'&id_fila='.$isFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1'));
-                            }else {
-                                header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_analise_cadastrar&acao_origem=md_utl_analise_cadastrar&id_procedimento=' . $idProcedimento . '&id_fila=' . $isFilaAtiva . '&id_retriagem=1'));
-                            }
-                        }else{
-                            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
+                    if ($idRetriagem == 1) {
+                        if ($isPossuiAnalise == 'N') {
+                            $url = 'controlador.php?acao='.$paginaRetorno.'&id_procedimento=' . $idProcedimento . '&is_processo_concluido' . $isProcessoConcluido;
+                        } else if ($isRtgAnlCorrecao == 1) {
+                            $url = 'controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_analise_alterar&id_procedimento=' . $idProcedimento . '&id_fila=' . $isFilaAtiva . '&id_retriagem=1&isRtgAnlCorrecao=1';
+                        } else {
+                            $url = 'controlador.php?acao=md_utl_analise_cadastrar&acao_origem=md_utl_analise_cadastrar&id_procedimento=' . $idProcedimento . '&id_fila=' . $isFilaAtiva . '&id_retriagem=1';
                         }
-                    }else{
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento.'&is_processo_concluido'.$isProcessoConcluido));
+                    } else {
+                        $url = 'controlador.php?acao='.$paginaRetorno.'&id_procedimento=' . $idProcedimento . '&is_processo_concluido' . $isProcessoConcluido;
                     }
-                    
+
+                    if($isPgPadrao == 1){
+                        $url = $url . '&pg_padrao=1';
+                    }
+
+                    header('Location: ' . SessaoSEI::getInstance()->assinarLink($url));
 
                     die;
 

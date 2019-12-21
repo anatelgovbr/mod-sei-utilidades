@@ -69,9 +69,12 @@ $idTriagem                = $objControleDsmpDTO->getNumIdMdUtlTriagem();
 
 
 //Urls
+$acaoOrigem = $isMeusProcessos ? 'md_utl_meus_processos_listar' : 'md_utl_processo_listar';
 $strUrlValidarDocumentoSEI = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_documento_sei');
-$strUrlRetriagem           = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem=md_utl_processo_listar&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1');
-$strUrlRtgAnlCorrecao      = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem=md_utl_processo_listar&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1');
+
+$isPgPadraoRetriagem = !is_null($isPgPadrao) && $isPgPadrao != 0 ? '&pg_padrao=1' : '';
+$strUrlRetriagem           = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem='.$acaoOrigem.'&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1'.$isPgPadraoRetriagem);
+$strUrlRtgAnlCorrecao      = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_triagem_alterar&acao_origem='.$acaoOrigem.'&id_procedimento='.$idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1'.$isPgPadraoRetriagem);
 $strDetalhamento           = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento);
 $idsAtividades = $objTriagemRN->getIdsAtividadesTriagem($idTriagem);
 

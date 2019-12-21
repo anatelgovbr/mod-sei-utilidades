@@ -99,6 +99,7 @@ class MdUtlAdmJustPrazoRN extends InfraRN {
         $this->validarStrSinAtivo($objMdUtlAdmJustPrazoDTO, $objInfraException);
       }
 
+     
       $objInfraException->lancarValidacoes();
 
       $objMdUtlAdmJustPrazoBD = new MdUtlAdmJustPrazoBD($this->getObjInfraIBanco());
@@ -147,7 +148,7 @@ class MdUtlAdmJustPrazoRN extends InfraRN {
 
       $objMdUtlAdmJustPrazoBD = new MdUtlAdmJustPrazoBD($this->getObjInfraIBanco());
       $ret = $objMdUtlAdmJustPrazoBD->consultar($objMdUtlAdmJustPrazoDTO);
-
+      
       //Auditoria
 
       return $ret;

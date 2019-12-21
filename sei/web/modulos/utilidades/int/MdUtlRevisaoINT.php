@@ -23,9 +23,27 @@ class MdUtlRevisaoINT extends InfraINT {
     return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlRevisaoDTO, '', 'idMdUtlRevisao');
   }
 
-  public static function montarSelectEncaminhamentoRevisao($strEncaminhamento){
+  public static function montarSelectEncaminhamento($strEncaminhamento){
       $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_RESPONSAVEL] = MdUtlRevisaoRN::$STR_VOLTAR_PARA_RESPONSAVEL;
+      $arrOption[MdUtlRevisaoRN::$FLUXO_FINALIZADO]        = MdUtlRevisaoRN::$STR_FLUXO_FINALIZADO;
       $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_FILA]        = MdUtlRevisaoRN::$STR_VOLTAR_PARA_FILA;
+
+      $option = '<option value=""></option>';
+      foreach ($arrOption as $key => $op){
+
+          $selected = "";
+          if($strEncaminhamento == $key){
+              $selected = 'selected';
+          }
+          $option .= '<option value="'.$key.'" '.$selected.'>'.$op.'</option>';
+
+      }
+
+      return $option;
+  }
+
+  public static function montarSelectEncaminhamentoContestacao($strEncaminhamento){
+      $arrOption[MdUtlRevisaoRN::$MANTER_O_RESPONSAVEL]        = MdUtlRevisaoRN::$STR_MANTER_O_RESPONSAVEL;
       $arrOption[MdUtlRevisaoRN::$FLUXO_FINALIZADO]        = MdUtlRevisaoRN::$STR_FLUXO_FINALIZADO;
 
       $option = '<option value=""></option>';
@@ -42,7 +60,7 @@ class MdUtlRevisaoINT extends InfraINT {
       return $option;
   }
 
-    public static function montarSelectSinRetorno($valorSelecionado = ''){
+  public static function montarSelectSinRetorno($valorSelecionado = ''){
 
         $select = '<option value=""></option>';
 

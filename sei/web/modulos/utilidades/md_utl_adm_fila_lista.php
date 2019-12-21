@@ -24,6 +24,9 @@ $strUrlNovo      = SessaoSEI::getInstance()->assinarLink($strUrl . 'cadastrar&ac
 $strUrlFechar    = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_ctrl_desemp_listar&acao_origem=' . $_GET['acao']. PaginaSEI::getInstance()->montarAncora($idTipoControle));
 $displayNone ="style='display: none'";
 $strTitulo      = 'Filas';
+$isPrmDistrib = false;
+$objLupaFila = '';
+$objLupaFilaUnica = '';
 
 switch ($_GET['acao']) {
 
@@ -34,6 +37,10 @@ switch ($_GET['acao']) {
             $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
             $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
             $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
+
+
+
+
             $idExcluir = array_key_exists(0, $arrStrIds) ? $arrStrIds[0] : null;
 
             if (!is_null($idExcluir)) {
@@ -110,12 +117,18 @@ switch ($_GET['acao']) {
 
     //region Selecionar
     case 'md_utl_adm_fila_selecionar':
+        $vlisPrmDistrib  = array_key_exists('is_prm_distr',$_GET) ? $_GET['is_prm_distr'] : $_POST['hdnIsPrmDistrib'];
+        $isPrmDistrib    = $vlisPrmDistrib == 1;
         $strTitulo       = PaginaSEI::getInstance()->getTituloSelecao('Filas', 'Filas');
         $strUrlPesquisar = SessaoSEI::getInstance()->assinarLink($strUrl . 'selecionar&acao_origem=' . $_GET['acao']);
 
-        $isTelaCadastroGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFila' || $_POST['hdnObjLupaFila'] == 'objLupaFila';
-        $isTelaAlterarGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFilaUnica' || $_POST['hdnObjLupaFila'] == 'objLupaFilaUnica';
-        if($isTelaCadastroGrupo ||$isTelaAlterarGrupo ) {
+        //$isTelaCadastroGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFila' || $_POST['hdnObjLupaFila'] == 'objLupaFila';
+        // $isTelaAlterarGrupo =  isset($_GET['id_object'])&&$_GET['id_object']=='objLupaFilaUnica' || $_POST['hdnObjLupaFila'] == 'objLupaFilaUnica';
+
+        $objLupaFila         =  array_key_exists('id_object', $_GET) ? $_GET['id_object'] : $_POST['hdnObjLupaFila'];
+        $objLupaFilaUnica    =  array_key_exists('id_object', $_GET) ? $_GET['id_object'] : $_POST['hdnObjLupaFilaUnica'];
+
+        if($objLupaFilaUnica != '' || $objLupaFila != '') {
             $displayNone = "";
         }
 
@@ -217,7 +230,9 @@ if ($numRegistros > 0) {
     $strResultado .= '<th class="infraTh" align="center" width="1%" '.$displayNone.' >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
     $strResultado .= '<th class="infraTh" width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila', 'Nome', $arrObjMdUtlAdmFila) . '</th>';
     $strResultado .= '<th class="infraTh" width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Descrição', 'Descricao', $arrObjMdUtlAdmFila) . '</th>';
-    $strResultado .= '<th class="infraTh" width="25%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila Padrão', 'FilaPadrao', $arrObjMdUtlAdmFila) . '</th>';
+    if(!$isPrmDistrib) {
+        $strResultado .= '<th class="infraTh" width="25%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila Padrão', 'FilaPadrao', $arrObjMdUtlAdmFila) . '</th>';
+    }
     $strResultado .= '<th class="infraTh" width="15%">Ações</th>';
     $strResultado .= '</tr>';
 
@@ -229,33 +244,40 @@ if ($numRegistros > 0) {
 
         //vars
         $strId                      = $arrObjMdUtlAdmFila[$i]->getNumIdMdUtlAdmFila();
-        $strNomeTpControle          = $arrObjMdUtlAdmFila[$i]->getStrNome();
-        $strDescricaoTpControle     = $arrObjMdUtlAdmFila[$i]->getStrDescricao();
+        $strNomeFila                = $arrObjMdUtlAdmFila[$i]->getStrNome();
+        $strNomeFilaChecked         = $arrObjMdUtlAdmFila[$i]->getStrNome();
+        $strDescricaoFila           = $arrObjMdUtlAdmFila[$i]->getStrDescricao();
         $strNomeTpControleParametro = PaginaSEI::getInstance()->formatarParametrosJavaScript($arrObjMdUtlAdmFila[$i]->getStrNome());
         $bolRegistroAtivo           = $arrObjMdUtlAdmFila[$i]->getStrSinAtivo() == 'S';
+
+        if($isPrmDistrib){
+            $strNomeFilaChecked = $strNomeFila.' - '.$strDescricaoFila;
+        }
 
         $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha">' : ($strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">');
         $strResultado .= $strCssTr;
 
         //Linha Checkbox
         $strResultado .= '<td align="center" valign="top" '.$displayNone.' >';
-        $strResultado .= PaginaSEI::getInstance()->getTrCheck($i, $strId, $strNomeTpControle);
+        $strResultado .= PaginaSEI::getInstance()->getTrCheck($i, $strId, $strNomeFilaChecked);
         $strResultado .= '</td>';
 
         //Linha Nome
         $strResultado .= '<td>';
-        $strResultado .= PaginaSEI::tratarHTML($strNomeTpControle);
+        $strResultado .= PaginaSEI::tratarHTML($strNomeFila);
         $strResultado .= '</td>';
 
         //Linha Descrição
         $strResultado .= '<td>';
-        $strResultado .= PaginaSEI::tratarHTML($strDescricaoTpControle);
+        $strResultado .= PaginaSEI::tratarHTML($strDescricaoFila);
         $strResultado .= '</td>';
 
         //Linha Fila Padrão
-        $strResultado .= '<td>';
-        $strResultado .= PaginaSEI::tratarHTML($arrObjMdUtlAdmFila[$i]->getStrFilaPadrao());
-        $strResultado .= '</td>';
+        if(!$isPrmDistrib) {
+            $strResultado .= '<td>';
+            $strResultado .= PaginaSEI::tratarHTML($arrObjMdUtlAdmFila[$i]->getStrFilaPadrao());
+            $strResultado .= '</td>';
+        }
 
         $strResultado .= '<td align="center">';
 
@@ -270,19 +292,19 @@ if ($numRegistros > 0) {
 
             //Ação Desativar
             if ($bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Fila" alt="Desativar Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Fila" alt="Desativar Fila" class="infraImg" /></a>&nbsp;';
             }
 
             //Ação Reativar
             if (!$bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Fila" alt="Reativar Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Fila" alt="Reativar Fila" class="infraImg" /></a>&nbsp;';
             }
 
 /*            //Ação Excluir
             if($arrObjMdUtlAdmFila[$i]->getStrFilaPadrao() == 'Sim') {
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="alert(\''.MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_23, 'excluir').'\')" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
             }else {*/
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
          //   }
         } else {
             $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i, $strId);
@@ -494,6 +516,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                            size="30"  maxlength="100" tabindex="502"/>
             </div>
 
+            <?php     if(!$isPrmDistrib) { ?>
             <div id="divMembro">
                 <label id="lblMembro" for="selMembro" accesskey="" class="infraLabelOpcional">Membro:</label>
                 <select style="width:200px" id="selMembro"  name="selMembro" class="infraSelect" onchange="pesquisar();"
@@ -501,11 +524,14 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                     <?=$selMembros ?>
                 </select>
             </div>
+            <?php } ?>
 
         </div>
 
         <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
-        <input type="hidden" id="hdnObjLupaFila" name="hdnObjLupaFila" value="<?php echo array_key_exists('id_object', $_GET) ? $_GET['id_object'] : ''; ?>"/>
+        <input type="hidden" id="hdnObjLupaFila" name="hdnObjLupaFila" value="<?php echo $objLupaFila; ?>"/>
+        <input type="hidden" id="hdnObjLupaFilaUnica" name="hdnObjLupaFilaUnica" value="<?php echo $objLupaFilaUnica; ?>"/>
+        <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
 
         <?php
         PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);

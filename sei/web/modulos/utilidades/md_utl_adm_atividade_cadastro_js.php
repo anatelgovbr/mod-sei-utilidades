@@ -13,9 +13,15 @@ if(0){ ?>
 var objTabelaDinamicaListaProduto= null;
 var contadorTabelaDinamica       = 0;
 var msg009 = '<?php echo MdUtlMensagemINT::$MSG_UTL_09 ?>';
+var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11)?>';
 var msg15Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_15)?>';
 var msg16Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_16)?>';
-
+var isAlterarGrid = false;
+var tpRadioApl= '';
+var tpRadioTip= '';
+var indexTp = '';
+var valTp   = '';
+var txtTp   = '';
 
 function inicializar() {
     iniciarTabelaDinamicaListaProduto();
@@ -32,8 +38,7 @@ function isNumber(n) {
 }
 
 function iniciarRadioECheckbox(){
-
-
+    
     var divTpAtividade = infraGetElementById('divAnalise');
     var inputs = divTpAtividade.getElementsByTagName('input');
     var radio  = null;
@@ -44,7 +49,6 @@ function iniciarRadioECheckbox(){
             if(r.checked){
                 radio = r.value;
             }
-
         }
     }
 
@@ -63,14 +67,13 @@ function iniciarRadioECheckbox(){
         semAnalise.classList.toggle('blocoExibir');
         divAtvRevAmost.classList.toggle('blocoExibir');
         infraGetElementById('divRevATividade').style.display= 'inherit';
-
     }
-
 }
 
 function realizarValidacaoVinculoAnalise(item) {
        removerItemCadastrado(item);
        verificaTabela(2);
+       limparCamposListaProdutos();
        return true;
 }
 
@@ -78,12 +81,31 @@ function iniciarTabelaDinamicaListaProduto(){
 
     var bolConsultar = "<?php echo $bolConsultar?>";
     var acaoRemover  = bolConsultar  ? false : true;
+    var acaoAlterar  = bolConsultar  ? false : true;
 
-    objTabelaDinamicaListaProduto = new infraTabelaDinamica('tbProdutoEsperado','hdnTbProdutoEsperado',false,acaoRemover);
+    objTabelaDinamicaListaProduto = new infraTabelaDinamica('tbProdutoEsperado','hdnTbProdutoEsperado',acaoAlterar,acaoRemover);
     objTabelaDinamicaListaProduto.gerarEfeitoTabela = true;
 
     objTabelaDinamicaListaProduto.remover = function(item){
         return realizarValidacaoVinculoAnalise(item);
+    };
+
+    objTabelaDinamicaListaProduto.alterar = function(item){
+
+        isAlterarGrid = true;
+
+        if(item[2] == 'P'){
+            desabilitarCamposProdutoAlteracao(item);
+        }else{
+           desabilitarCamposDocumentoAlteracao(item);
+        }
+
+        infraGetElementById('rdnProduto').disabled = 'disabled';
+        infraGetElementById('rdnDocumento').disabled = 'disabled';
+        infraGetElementById('hdnIdAlteracao').value = item[0];
+        infraGetElementById('chkObrigatorio').checked = (item[7] === 'true');
+        infraGetElementById('txtRevUnidade').value = item[5];
+
     };
 
     objTabelaDinamicaListaProduto.procuraLinha = function (id,vlTipo) {
@@ -98,13 +120,39 @@ function iniciarTabelaDinamicaListaProduto(){
             var valor       = id+vlTipo;
 
             if (valorLinha == valor ) {
+
                 return i;
             }
-
         }
         return 0;
     };
+}
+ function desabilitarCamposProdutoAlteracao(item) {
+    var obj = infraGetElementById('rdnProduto');
+    infraGetElementById('rdnProduto').checked = 'checked';
 
+    if(infraGetElementById('divTpProduto').className != 'bloco'){
+        exibirTipo(obj);
+    }
+    infraGetElementById('selTpProduto').value = item[9];
+    infraGetElementById('selTpProduto').disabled = 'disabled';
+}
+
+ function desabilitarCamposDocumentoAlteracao(item) {
+     var obj = infraGetElementById('rdnDocumento');
+     infraGetElementById('rdnDocumento').checked = 'checked';
+
+     if(infraGetElementById('divTpDocumento').className != 'bloco'){
+         exibirTipo(obj);
+     }
+     item[3] == 'I' ?  infraGetElementById('rdnAplicSerieInterno').checked = 'checked' : infraGetElementById('rdnAplicSerieExterno').checked = 'checked';
+     infraGetElementById('rdnAplicSerieInterno').disabled = 'disabled';
+     infraGetElementById('rdnAplicSerieExterno').disabled = 'disabled';
+
+     exibirTipoDocumento(item[3]);
+
+     item[3] == 'I' ? infraGetElementById('selTpDocumentoInt').value = item[9] : infraGetElementById('selTpDocumentoExt').value = item[9];
+     item[3] == 'I' ? infraGetElementById('selTpDocumentoInt').disabled = 'disabled' : infraGetElementById('selTpDocumentoExt').disabled = 'disabled';
 }
 
 function removerItemCadastrado(item){
@@ -118,9 +166,7 @@ function removerItemCadastrado(item){
         }else {
             infraGetElementById('hdnIdsRemovido').value = hdnIdsRemovido +'-'+ idVinculo;
         }
-
     }
-
 }
 
 function manterTipoAtividade(obj){
@@ -170,7 +216,6 @@ function tipoAtividade(obj){
     var divRevATividade     = infraGetElementById('divRevATividade');
     var semAnalise          = infraGetElementById('divSemAnalise');
 
-
         if (obj.value == 'S') {
 
             comAnalise.classList.toggle("blocoExibir");
@@ -181,12 +226,8 @@ function tipoAtividade(obj){
                 //Adiciona Campo de SEM ANALISE
                 semAnalise.classList.toggle('blocoExibir');
                 divAtvRevAmost.classList.toggle("blocoExibir");
-
             }
-
             document.getElementById('hdnTbProdutoEsperado').setAttribute('utlCampoObrigatorio', 'a');
-
-
         } else {
 
             if (comAnalise.className.split(" ").length == 1) {
@@ -196,7 +237,6 @@ function tipoAtividade(obj){
                 divRevATividade.classList.toggle('blocoExibir');
                 divAtvRevAmost.classList.toggle("blocoExibir");
             }
-
             //Adiciona Campo de SEM ANALISE
             semAnalise.classList.toggle('blocoExibir');
             divAtvRevAmost.classList.toggle("blocoExibir");
@@ -221,7 +261,6 @@ function exibirTipo(obj){
         divTpProduto.classList.toggle('blocoExibir');
 
         utlTrocarTooltip(toltipTipo, 'Selecionar o Produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.');
-
     }else{
 
         if(divTpProduto.className.split(" ").length == 1) {
@@ -230,9 +269,7 @@ function exibirTipo(obj){
         divTpDocumento.classList.toggle('blocoExibir');
         utlTrocarTooltip(toltipTipo, 'Selecionar o Documento na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')
     }
-
     divFinal.style.display='inherit';
-
 }
 
 function exibirTipoDocumento(val){
@@ -245,116 +282,122 @@ function exibirTipoDocumento(val){
         selTpDocumentoInt.style.display = 'inherit';
 
     }else{
-
         selTpDocumentoExt.style.display = 'inherit';
         selTpDocumentoInt.style.display = 'none';
     }
-
 }
 
+function retornaRadiosTelaPreenchidos(){
+    var blocoLista = infraGetElementById('blocoListaProduto');
+    var inputs = blocoLista.getElementsByTagName('input');
+    var radio = [];
+
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].type === 'radio') {
+            var r = inputs[i];
+            if (r.checked) {
+                radio.push(r.value);
+            }
+        }
+    }
+
+    return radio;
+}
+function definirTiposProdutosSelecionados(radio){
+    if (radio[0] == 'P') {
+
+        tpRadioTip = radio[0];
+        indexTp = document.getElementById('selTpProduto').selectedIndex;
+        valTp = document.getElementById('selTpProduto').value;
+        txtTp = document.getElementById('selTpProduto').options[indexTp].text;
+
+    } else {
+        tpRadioTip = radio[0];
+
+        if (radio[1] == 'I') {
+
+            tpRadioApl = radio[1];
+            indexTp = document.getElementById('selTpDocumentoInt').selectedIndex;
+            valTp = document.getElementById('selTpDocumentoInt').value;
+            txtTp = document.getElementById('selTpDocumentoInt').options[indexTp].text;
+
+        } else {
+            tpRadioApl = radio[1];
+            indexTp = document.getElementById('selTpDocumentoExt').selectedIndex;
+            valTp = document.getElementById('selTpDocumentoExt').value;
+            txtTp = document.getElementById('selTpDocumentoExt').options[indexTp].text;
+        }
+    }
+}
+
+function validarDuplicidade(){
+    var isPosicaoLinha = objTabelaDinamicaListaProduto.procuraLinha(valTp, tpRadioTip);
+    var msg = '';
+    var tipo ='';
+    var valido = isPosicaoLinha == 0;
+
+    if(!valido) {
+        if (tpRadioTip === 'P') {
+            tipo = 'Produto "' + txtTp + '"';
+            msg = setMensagemPersonalizada(msg16Padrao, [tipo]);
+        } else {
+            tipo = 'Documento "' + txtTp + '"';
+            msg = setMensagemPersonalizada(msg16Padrao, [tipo]);
+        }
+
+        alert(msg);
+    }
+
+    return valido;
+}
 
 function adicionarRegistroTabelaProduto() {
 
-    if(validarFieldsetListaProduto()) {
+    if (validarFieldsetListaProduto()) {
+        var radio = retornaRadiosTelaPreenchidos();
+        definirTiposProdutosSelecionados(radio);
 
-        var tpRadioTip = null;
-        var tpRadioApl = null;
-        var indexTp    = null;
-        var valTp      = null;
-        var txtTp      = null;
-        var idVinculo  = null;
-        var valido     = null;
-        var blocoLista = infraGetElementById('blocoListaProduto');
-        var inputs     = blocoLista.getElementsByTagName('input');
-        var radio      = [];
-
-        for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].type == 'radio') {
-                var r = inputs[i];
-                if (r.checked) {
-                    radio.push(r.value);
-                }
-            }
-        }
-
-        if (radio[0] == 'P') {
-
-            tpRadioTip = radio[0];
-            indexTp = document.getElementById('selTpProduto').selectedIndex;
-            valTp = document.getElementById('selTpProduto').value;
-            txtTp = document.getElementById('selTpProduto').options[indexTp].text;
-
-        } else {
-            tpRadioTip = radio[0];
-
-            if (radio[1] == 'I') {
-
-                tpRadioApl = radio[1];
-                indexTp = document.getElementById('selTpDocumentoInt').selectedIndex;
-                valTp = document.getElementById('selTpDocumentoInt').value;
-                txtTp = document.getElementById('selTpDocumentoInt').options[indexTp].text;
-
-            } else {
-
-                tpRadioApl = radio[1];
-                indexTp = document.getElementById('selTpDocumentoExt').selectedIndex;
-                valTp = document.getElementById('selTpDocumentoExt').value;
-                txtTp = document.getElementById('selTpDocumentoExt').options[indexTp].text;
-
-            }
-        }
-
-
-        var valorRevisao = document.getElementById('txtRevUnidade').value;
-        var obrigatorio = null;
-        var chkobrigatorio = infraGetElementById('chkObrigatorio').checked;
-
-        if (chkobrigatorio) {
-            obrigatorio = 'Sim';
-        } else {
-            obrigatorio = 'Não';
-        }
-
-        valido = objTabelaDinamicaListaProduto.procuraLinha(valTp,tpRadioTip);
-        var pkTabela = 'NOVO_REGISTRO_' +contadorTabelaDinamica;
-        if(valido == 0) {
-            var arrLinha = [
-                pkTabela,
-                valTp+tpRadioTip,
-                tpRadioTip,
-                tpRadioApl,
-                txtTp,
-                valorRevisao,
-                obrigatorio,
-                chkobrigatorio,
-                idVinculo,
-                valTp,
-                'N'
-            ];
-            contadorTabelaDinamica++;
-            objTabelaDinamicaListaProduto.adicionar(arrLinha);
-            infraGetElementById('tbProdutoEsperado').style.display = 'inherit';
-
-            limparCamposListaProdutos();
-
-            var toltipTipo      = infraGetElementById('btAjudaTipo');
-            utlTrocarTooltip(toltipTipo, 'Selecionar o Tipo de Produto, posteriormente escolher o documento/produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')
-
-        }else{
-            var msg = '';
-
-            if(tpRadioTip == 'P') {
-                var tipo = 'Produto "' + txtTp + '"';
-                msg = setMensagemPersonalizada(msg16Padrao, [tipo]);
-            }else{
-                var tipo = 'Documento "' + txtTp + '"';
-                msg = setMensagemPersonalizada(msg16Padrao, [tipo]);
-            }
-
-            alert(msg);
+        if (!isAlterarGrid && !validarDuplicidade()) {
             return false;
         }
+
+        var idVinculo = null;
+        var valorRevisao = document.getElementById('txtRevUnidade').value;
+        var chkobrigatorio = infraGetElementById('chkObrigatorio').checked;
+        var valorPkAlteracao = infraGetElementById('hdnIdAlteracao').value;
+        var obrigatorio = chkobrigatorio ? 'Sim' : 'Não';
+        var pkTabela = isAlterarGrid ? valorPkAlteracao : 'NOVO_REGISTRO_' + contadorTabelaDinamica;
+        var isRegistroNovo =(pkTabela.indexOf('NOVO_REGISTRO_') -1);
+        var isAlteracao = isAlterarGrid && !isRegistroNovo ? 'S' : 'N';
+
+        var arrLinha = [
+            pkTabela,
+            valTp + tpRadioTip,
+            tpRadioTip,
+            tpRadioApl,
+            txtTp,
+            valorRevisao,
+            obrigatorio,
+            chkobrigatorio,
+            idVinculo,
+            valTp,
+            'N',
+            isAlteracao
+        ];
+
+        contadorTabelaDinamica++;
+        objTabelaDinamicaListaProduto.adicionar(arrLinha);
+        infraGetElementById('tbProdutoEsperado').style.display = 'inherit';
+
+        limparCamposListaProdutos();
+
+        var toltipTipo = infraGetElementById('btAjudaTipo');
+        utlTrocarTooltip(toltipTipo, 'Selecionar o Tipo de Produto, posteriormente escolher o documento/produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')
+        isAlterarGrid = false;
+
     }
+
+    return false;
 
 }
 
@@ -397,8 +440,16 @@ function limparCamposListaProdutos(){
 
      selTpDocumentoExt.style.display = 'none';
      selTpDocumentoInt.style.display = 'none';
+    infraGetElementById('rdnProduto').disabled = false;
+    infraGetElementById('rdnDocumento').disabled = false;
+    infraGetElementById('rdnAplicSerieInterno').disabled = false;
+    infraGetElementById('rdnAplicSerieExterno').disabled = false;
+    infraGetElementById('selTpDocumentoExt').disabled = false;
+    infraGetElementById('selTpDocumentoInt').disabled = false;
+    infraGetElementById('selTpProduto').disabled = false;
 
 }
+
 
 function verificaTabela(qtdLinha) {
 
