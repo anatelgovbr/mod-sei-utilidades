@@ -43,6 +43,11 @@ class MdUtlAtividadePrincipalDTO extends AtividadeDTO
             'sta_nivel_acesso_local',
             'protocolo');
 
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,
+            'StaEstadoProtocolo',
+            'sta_estado',
+            'protocolo');
+
 
        $this->configurarFK('IdProtocolo', 'procedimento procutl', 'procutl.id_procedimento',  InfraDTO::$TIPO_FK_OBRIGATORIA, InfraDTO::$FILTRO_FK_WHERE);
 

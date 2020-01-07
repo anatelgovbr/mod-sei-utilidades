@@ -258,6 +258,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objMdUtlAtvPrincipalDTO->setDthConclusao(null);
                 $objMdUtlAtvPrincipalDTO->setNumIdMdUtlControleDsmp(null);
                 $objMdUtlAtvPrincipalDTO->setStrStaUtlNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
+                $objMdUtlAtvPrincipalDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
 
   /*              $objMdUtlAtvPrincipalDTO->adicionarCriterio(array('Conclusao', 'IdMdUtlControleDsmp'),
                     array(InfraDTO::$OPER_IGUAL, InfraDTO::$OPER_IGUAL),
@@ -296,7 +297,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objControleDsmpRN = new MdUtlControleDsmpRN();
                 $objHistoricoRN = new MdUtlHistControleDsmpRN();
 
-                $arrObjs = $objAtividadeRN->listarRN0036($objMdUtlAtvPrincipalDTO);
+                $arrObjs = $objAtividadeRN->listarRN0036(($objMdUtlAtvPrincipalDTO));
 
                 /*Busca id do usuário de utilidades para agendamento automático do sistema*/
                 $objUsuarioRN = new MdUtlUsuarioRN();
