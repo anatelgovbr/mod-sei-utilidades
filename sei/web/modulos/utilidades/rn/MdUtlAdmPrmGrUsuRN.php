@@ -284,7 +284,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
           //$UsuarioParticipante[]= $dadosUsuParticipante->getNumIdMdUtlAdmPrmGrUsu();
           $UsuarioParticipante[]= $dadosUsuParticipante->getNumIdUsuario();
-          $UsuarioParticipante[]= htmlentities($htmlDadosUsuario);
+          $UsuarioParticipante[]= $htmlDadosUsuario;
 
           //Tipo presenca
           $UsuarioParticipante[]= $arrPresenca[$dadosUsuParticipante->getStrStaTipoPresenca()];

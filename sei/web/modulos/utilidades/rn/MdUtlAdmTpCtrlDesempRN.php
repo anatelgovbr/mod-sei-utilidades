@@ -482,7 +482,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $count = $objMdUtlAdmJustRevisaoRN->contar($objMdUtlAdmJustRevisaoDTO);
 
     if ($count > 0) {
-      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_05, array($acao, 'Tipo de Justificativa'));
+      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_04, array($acao, 'Justificativa de Revisão'));
       $objInfraException = new InfraException();
       $objInfraException->lancarValidacao($msg);
       return false;
@@ -541,7 +541,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $count = $objMdUtlRevisaoRN->contar($objMdUtlRevisaoDTO);
 
     if ($count > 0) {
-      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_05, array($acao, 'Tipo de Revisão'));
+      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_05, array($acao, 'Resultado de Revisão'));
       $objInfraException = new InfraException();
       $objInfraException->lancarValidacao($msg);
       return false;

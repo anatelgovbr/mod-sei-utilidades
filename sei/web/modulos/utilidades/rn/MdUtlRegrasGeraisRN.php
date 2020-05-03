@@ -533,6 +533,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $imgRoxo       = 'modulos/utilidades/imagens/icone-controle-utl-roxo.png';
         $imgVerde      = 'modulos/utilidades/imagens/icone-controle-utl-verde.png';
 
+        $strStatus = trim($strStatus);
         switch ($strStatus){
 
             case MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM :
@@ -601,6 +602,54 @@ class MdUtlRegrasGeraisRN extends InfraRN
         }
 
         return $idsUsuarioUnidade;
+    }
+
+    protected function retornaArrAtendimentoMapeadoConectado($arrObjs){
+        $idsProcesso = InfraArray::converterArrInfraDTO($arrObjs, 'IdProtocolo');
+        $idsUnidade  = InfraArray::converterArrInfraDTO($arrObjs, 'IdUnidade');
+        $arrMapeado  = array();
+        $contadorIds = 0;
+
+        if(count($idsUnidade) && count($idsProcesso) > 0) {
+            foreach ($arrObjs as $objDTO) {
+                $idProtocolo = $objDTO->getDblIdProtocolo();
+                $idUnidade = $objDTO->getNumIdUnidade();
+                $contadorIds++;
+                $arrMapeado[$idProtocolo][$idUnidade] = null;
+            }
+
+            $objMdUtlHistoricoRN = new MdUtlHistControleDsmpRN();
+            $objMdUtlHistoricoDTO = new MdUtlHistControleDsmpDTO();
+            $objMdUtlHistoricoDTO->setDblIdProcedimento($idsProcesso, InfraDTO::$OPER_IN);
+            $objMdUtlHistoricoDTO->setNumIdUnidade($idsUnidade, InfraDTO::$OPER_IN);
+            $objMdUtlHistoricoDTO->retNumIdAtendimento();
+            $objMdUtlHistoricoDTO->retNumIdUnidade();
+            $objMdUtlHistoricoDTO->retDblIdProcedimento();
+            $objMdUtlHistoricoDTO->setOrdNumIdAtendimento(InfraDTO::$TIPO_ORDENACAO_DESC);
+
+            $arrRetornoDTO = $objMdUtlHistoricoRN->listar($objMdUtlHistoricoDTO);
+
+
+            foreach ($arrRetornoDTO as $objDTO) {
+                $idUnidade = $objDTO->getNumIdUnidade();
+                $idProcesso =$objDTO->getDblIdProcedimento();
+
+                if(array_key_exists($idProcesso, $arrMapeado)){
+                    $arrProcesso = $arrMapeado[$idProcesso];
+
+                    if(array_key_exists($idUnidade, $arrProcesso)){
+                        $idAtendimento = $arrMapeado[$idProcesso][$idUnidade];
+
+                        if(is_null($idAtendimento)){
+                            $arrMapeado[$idProcesso][$idUnidade] = $objDTO->getNumIdAtendimento();
+                        }
+                    }
+                }
+        }
+
+        }
+
+        return $arrMapeado;
     }
 }
 

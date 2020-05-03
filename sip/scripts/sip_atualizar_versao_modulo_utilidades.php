@@ -1,41 +1,36 @@
 <?
-/**
- * ANATEL
- *
- * 05/07/2018 - criado por jaqueline.mendes - CAST
- *
- */
+try {
 
 require_once dirname(__FILE__).'/../web/Sip.php';
 
 class MdUtlAtualizadorSipRN extends InfraRN {
 
     private $numSeg = 0;
-
-    private $versaoAtualDesteModulo = '1.3.0';
+    private $versaoAtualDesteModulo = '1.4.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0','1.3.0');
+    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0','1.3.0','1.4.0');
 
     private $nomeGestorControleDesempenho = 'Gestor de Controle de Desempenho';
     private $descricaoGestorControleDesempenho = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
 
-    public function __construct(){
+    public function __construct() {
         parent::__construct();
     }
 
-    protected function inicializarObjInfraIBanco(){
+    protected function inicializarObjInfraIBanco() {
         return BancoSip::getInstance();
     }
 
-    private function inicializar($strTitulo){
-        ini_set('max_execution_time','0');
-        ini_set('memory_limit','-1');
+    private function inicializar($strTitulo) {
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '-1');
 
         try {
-            @ini_set('zlib.output_compression','0');
+            @ini_set('zlib.output_compression', '0');
             @ini_set('implicit_flush', '1');
-        }catch(Exception $e){}
+        } catch (Exception $e) {
+		}
 
         ob_implicit_flush();
 
@@ -74,18 +69,18 @@ class MdUtlAtualizadorSipRN extends InfraRN {
         die;
     }
 
-    protected function atualizarVersaoConectado(){
+    protected function atualizarVersaoConectado() {
 
         try {
-            $this->inicializar('INICIANDO A INSTALAÇÃO/ATUALIZAÇÃO DO '.$this->nomeDesteModulo.' NO SIP VERSÃO '.SIP_VERSAO);
+            $this->inicializar('INICIANDO A INSTALAÇÃO/ATUALIZAÇÃO DO ' . $this->nomeDesteModulo . ' NO SIP VERSÃO ' . SIP_VERSAO);
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.502';
-            $versaoInfraFormatada = (int) str_replace('.','', VERSAO_INFRA);
-            $versaoInfraReqFormatada = (int) str_replace('.','', $numVersaoInfraRequerida);
+            $numVersaoInfraRequerida = '1.532';
+            $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
+            $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
-            if ($versaoInfraFormatada < $versaoInfraReqFormatada){
-                $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL '.VERSAO_INFRA.', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A '.$numVersaoInfraRequerida.')',true);
+            if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
+                $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
 
             //checando BDs suportados
@@ -109,30 +104,37 @@ class MdUtlAtualizadorSipRN extends InfraRN {
             $strVersaoModuloUtl = $objInfraParametro->getValor($this->nomeParametroModulo, false);
 
             //VERIFICANDO QUAL VERSAO DEVE SER INSTALADA NESTA EXECUCAO
-             if (InfraString::isBolVazia($strVersaoModuloUtl)){
+            if (InfraString::isBolVazia($strVersaoModuloUtl)){
                 $this->instalarv100();
                 $this->instalarv110();
                 $this->instalarv120();
                 $this->instalarv130();
+                $this->instalarv140();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
             } else if ( $strVersaoModuloUtl == '1.0.0' ) {
                 $this->instalarv110();
                 $this->instalarv120();
-                 $this->instalarv130();
+                $this->instalarv130();
+                $this->instalarv140();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
             } else if ( $strVersaoModuloUtl == '1.1.0' ) {
                 $this->instalarv120();
-                 $this->instalarv130();
+                $this->instalarv130();
+                $this->instalarv140();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
             } else if ( $strVersaoModuloUtl == '1.2.0' ) {
-                 $this->instalarv130();
+                $this->instalarv130();
+                $this->instalarv140();
                 $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
                 $this->finalizar('FIM', false);
-             }else{
-                //se a versão instalada já é a atual, então não instala nada e avisa
+            } else if ( $strVersaoModuloUtl == '1.3.0' ) {
+                $this->instalarv140();
+                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '.$this->versaoAtualDesteModulo.' DO '.$this->nomeDesteModulo.' REALIZADA COM SUCESSO NA BASE DO SIP');
+                $this->finalizar('FIM', false);
+            }else{
                 $this->logar('A VERSÃO MAIS ATUAL DO '.$this->nomeDesteModulo.' (v'.$this->versaoAtualDesteModulo.') JÁ ESTÁ INSTALADA.');
                 $this->finalizar('FIM', false);
             }
@@ -969,6 +971,11 @@ class MdUtlAtualizadorSipRN extends InfraRN {
         BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
     }
 
+    protected function instalarv140(){
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO '.$this->nomeDesteModulo.' NA BASE DO SIP');
+        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.4.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+    }
+
     private function adicionarRecursoPerfil($numIdSistema, $numIdPerfil, $strNome, $strCaminho = null){
 
         $objRecursoDTO = new RecursoDTO();
@@ -1444,20 +1451,43 @@ class MdUtlAtualizadorSipRN extends InfraRN {
     }
 }
 
+}catch(Exception $e){
+    echo(InfraException::inspecionar($e));
+    try{LogSip::getInstance()->gravar(InfraException::inspecionar($e));	}catch (Exception $e){}
+    exit(1);
+}
+
 //========================= INICIO SCRIPT EXECUÇAO =============
 
 try {
 
-    session_start();
-
+	session_start();
     SessaoSip::getInstance(false);
+    BancoSip::getInstance()->setBolScript(true);
+
+    if (!ConfiguracaoSip::getInstance()->isSetValor('BancoSip','UsuarioScript')){
+        throw new InfraException('Chave BancoSip/UsuarioScript não encontrada.');
+    }
+
+    if (InfraString::isBolVazia(ConfiguracaoSip::getInstance()->getValor('BancoSip','UsuarioScript'))){
+        throw new InfraException('Chave BancoSip/UsuarioScript não possui valor.');
+    }
+
+    if (!ConfiguracaoSip::getInstance()->isSetValor('BancoSip','SenhaScript')){
+        throw new InfraException('Chave BancoSip/SenhaScript não encontrada.');
+    }
+
+    if (InfraString::isBolVazia(ConfiguracaoSip::getInstance()->getValor('BancoSip','SenhaScript'))){
+        throw new InfraException('Chave BancoSip/SenhaScript não possui valor.');
+    }
 
     $objVersaoRN = new MdUtlAtualizadorSipRN();
     $objVersaoRN->atualizarVersao();
 
 }catch(Exception $e){
-    echo(nl2br(InfraException::inspecionar($e)));
-    try{LogSip::getInstance()->gravar(InfraException::inspecionar($e));}catch(Exception $e){}
+    echo(InfraException::inspecionar($e));
+    try{LogSip::getInstance()->gravar(InfraException::inspecionar($e));	}catch (Exception $e){}
+    exit(1);
 }
 
 //========================== FIM SCRIPT EXECUÇÂO ====================

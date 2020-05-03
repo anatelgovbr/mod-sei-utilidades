@@ -329,7 +329,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $strPara = $strEmailSolicitante;
 
         if(is_null($strAssunto)) {
-            $strAssunto = 'Resultado da solicitação do Ajuste de Prazo';
+            $strAssunto = 'Resultado da Solicitação do Ajuste de Prazo';
             $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de ajuste de prazo referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
         }
 

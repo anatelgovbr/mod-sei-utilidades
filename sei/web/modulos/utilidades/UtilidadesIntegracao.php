@@ -22,8 +22,8 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function getVersao()
     {
-   
-        return '1.3.0';
+
+        return '1.4.0';
     }
 
     public function getInstituicao()
@@ -203,7 +203,7 @@ class UtilidadesIntegracao extends SeiIntegracao
                 require_once dirname(__FILE__) . '/md_utl_controle_dsmp_lista.php';
                 return true;
 
-               
+
             case 'md_utl_controle_dsmp_associar':
                 require_once dirname(__FILE__) . '/md_utl_controle_dsmp_associacao.php';
                 return true;
@@ -316,7 +316,7 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $nameParam = $isBolIdUsuario ? 'IdUsuario' : 'IdMdUtlAdmPrmGrUsu';
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjUsuarioDTO, $nameParam, 'Sigla');
                 break;
-           
+
             case 'md_utl_adm_usuario_participante_auto_completar':
                 $arrObjUsuarioDTO = MdUtlAdmPrmGrUsuINT::autoCompletarUsuarioParticipante($_POST['palavras_pesquisa'], $_GET['id_fila'], $_GET['id_status']);
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObjUsuarioDTO, 'IdUsuario', 'Sigla');
@@ -343,7 +343,7 @@ class UtilidadesIntegracao extends SeiIntegracao
             case 'md_utl_adm_prm_vinculo_usuario_fila':
                 $xml = MdUtlAdmPrmGrUsuINT::consultarVinculoFilaUsuario($_POST['idVinculo']);
                 break;
-                
+
             case 'md_utl_adm_prm_vinculo_usuario_parametrizado_fila':
                 $xml = MdUtlAdmPrmGrUsuINT::consultarVinculoParametrizacaoUsuario($_POST['idVinculo'], $_POST['idFila']);
                 break;
@@ -376,7 +376,7 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $grupoAtv = array_key_exists('ids_grupo_atv', $_POST) ? $_POST['ids_grupo_atv'] : null;
                 $xml = MdUtlAdmAtividadeINT::autoCompletarAtividadeFiltroGrupo($_POST['palavras_pesquisa'], $_GET['id_tipo_controle_utl'], $grupoAtv, $_GET['id_tipo_procedimento']);
                 break;
-            
+
             case 'md_utl_adm_grp_fila_auto_completar':
                 $arrObj = MdUtlAdmGrpFilaINT::autoCompletarGrupoFilaAtividade($_POST, $_GET);
                 $xml = InfraAjax::gerarXMLItensArrInfraDTO($arrObj, 'IdMdUtlAdmGrpFila', 'NomeGrupoAtividade');
@@ -457,7 +457,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     public function montarBotaoProcesso(ProcedimentoAPI $objProcedimentoAPI)
     {
         $isAcesso  = SessaoSEI::getInstance()->verificarPermissao('md_utl_controle_dsmp_listar');
-      $arrBotoes = array();
+        $arrBotoes = array();
 
         if($isAcesso) {
             $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
@@ -545,7 +545,7 @@ class UtilidadesIntegracao extends SeiIntegracao
 
         $msg = '';
         $msg = $mdPetRegrasGeraisRN->verificarExistenciaUnidade(array($arrObjUnidadeAPI, 'desativar'));
-           
+
         if ($msg != '') {
 
             $objInfraException = new InfraException();
@@ -609,7 +609,7 @@ class UtilidadesIntegracao extends SeiIntegracao
      * Valida se o Processo onde est? realizando a anexa??o de processo possui V?nculo com Intima??o
      */
     public function sobrestarProcesso(ProcedimentoAPI $objProcedimentoAPI, $objProcedimentoAPIVinculado)
-    {   
+    {
         $objControleDsmpRN = new MdUtlControleDsmpRN();
         $dados = $objControleDsmpRN->verificaProcessoAtivoDsmp(array($objProcedimentoAPI->getIdProcedimento()));
         $msg = $dados['MSG'];

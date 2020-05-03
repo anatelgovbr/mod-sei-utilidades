@@ -155,7 +155,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
             $numSeg = InfraUtil::verificarTempoProcessamento();
             InfraDebug::getInstance()->gravar('ATUALIZANDO STATUS DO OBJETO DE UTILIDADES');
 
-            $this->_getAguardandoFila();
+            $this->_associarFilaAutomaticamente();
 
             $numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
             InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
@@ -215,7 +215,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
     }
 
-    private function _getAguardandoFila()
+    private function _associarFilaAutomaticamente()
     {
         $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
         $objMdUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
@@ -251,6 +251,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objMdUtlAtvPrincipalDTO->retNumIdUnidade();
                 $objMdUtlAtvPrincipalDTO->retDblIdProtocolo();
                 $objMdUtlAtvPrincipalDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                $objMdUtlAtvPrincipalDTO->retDthAbertura();
                 $objMdUtlAtvPrincipalDTO->retNumIdUtlTipoProcedimentoProcedimento();
                 $objMdUtlAtvPrincipalDTO->setOrd('Abertura', InfraDTO::$TIPO_ORDENACAO_ASC);
                 $objMdUtlAtvPrincipalDTO->setNumMaxRegistrosRetorno(10000);
@@ -260,13 +261,6 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objMdUtlAtvPrincipalDTO->setStrStaUtlNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
                 $objMdUtlAtvPrincipalDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
 
-  /*              $objMdUtlAtvPrincipalDTO->adicionarCriterio(array('Conclusao', 'IdMdUtlControleDsmp'),
-                    array(InfraDTO::$OPER_IGUAL, InfraDTO::$OPER_IGUAL),
-                    array(null, null),
-                    array(InfraDTO::$OPER_LOGICO_AND),
-                    'CriterioPrincipal');
-
-                $arrGrupos[] = 'CriterioPrincipal';*/
 
                 if (count($arrTiposControleCondicional) > 0) {
                     $objMdUtlAtvPrincipalDTO->adicionarCriterio(array('IdMdUtlAdmTpCtrlDesemp', 'IdMdUtlHistControleDsmp'),
@@ -305,13 +299,15 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objUsuarioDTO = $objUsuarioRN->getObjUsuarioUtilidades();
 
                 if (count($arrObjs) > 0) {
+                    $objRnGerais = new MdUtlRegrasGeraisRN();
+                    $arrAtendimentosMapeado = $objRnGerais->retornaArrAtendimentoMapeado($arrObjs);
                     $arrTipoProcedimentoCompleto = $objMdUtlTpCtrlRN->getObjTipoControlePorPrm();
 
                     foreach ($arrObjs as $obj) {
                         $idFilaHistorico = '';
                         $idFilaPadrao = '';
 
-                        $idAtendimentoAntigo = 1;
+                        $idAtendimentoAntigo = null;
                         $idProcedimento = $obj->getDblIdProtocolo();
                         $idTipoControle = $obj->getNumIdMdUtlAdmTpCtrlDesemp();
                         $idUnidade = $obj->getNumIdUnidade();
@@ -319,101 +315,88 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
                         $arrTiposProcedimento = array_key_exists($idTipoControle, $arrTipoProcedimentoCompleto) ? $arrTipoProcedimentoCompleto[$idTipoControle] : null;
 
-                        if (is_null($arrTiposProcedimento)) {
-                            break;
-                        }
+                        if (!is_null($arrTiposProcedimento)) {
 
-                        if (array_key_exists($idTipoProcedimento, $arrTiposProcedimento)) {
+                            if (array_key_exists($idTipoProcedimento, $arrTiposProcedimento)) {
 
 
-                            SessaoSEI::getInstance()->simularLogin(null, null, $objUsuarioDTO->getNumIdUsuario(), $idUnidade);
+                                SessaoSEI::getInstance()->simularLogin(null, null, $objUsuarioDTO->getNumIdUsuario(), $idUnidade);
 
-                            $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
-                            $objMdUtlTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
-                            $objMdUtlTpCtrlDTO->retStrSinUltimaFila();
-                            $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmFila();
-                            $objMdUtlTpCtrlDTO->setNumMaxRegistrosRetorno(1);
+                                $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+                                $objMdUtlTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+                                $objMdUtlTpCtrlDTO->retStrSinUltimaFila();
+                                $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmFila();
+                                $objMdUtlTpCtrlDTO->setNumMaxRegistrosRetorno(1);
 
-                            $numRegistrosTpCtrl = $objMdUtlTpCtrlRN->contar($objMdUtlTpCtrlDTO);
-                            $objMdUtlTpCtrlDTO = $objMdUtlTpCtrlRN->consultar($objMdUtlTpCtrlDTO);
+                                $numRegistrosTpCtrl = $objMdUtlTpCtrlRN->contar($objMdUtlTpCtrlDTO);
+                                $objMdUtlTpCtrlDTO = $objMdUtlTpCtrlRN->consultar($objMdUtlTpCtrlDTO);
 
-                            if ($numRegistrosTpCtrl > 0) {
-                                $nomeFila = '';
-                                $sinUltimaFila = $objMdUtlTpCtrlDTO->getStrSinUltimaFila();
-                                $idFilaPadrao = $objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila();
-                                $undEsforco = 0;
+                                if ($numRegistrosTpCtrl > 0) {
+                                    $nomeFila = '';
+                                    $sinUltimaFila = $objMdUtlTpCtrlDTO->getStrSinUltimaFila();
+                                    $idFilaPadrao = $objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila();
+                                    $undEsforco = 0;
 
-                                //Busca os dados da Fila Padrão
-                                if (!is_null($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila())) {
-                                    $objFilaRN = new MdUtlAdmFilaRN();
-                                    $objFilaDTO = new MdUtlAdmFilaDTO();
-                                    $objFilaDTO->setNumIdMdUtlAdmFila($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila());
-                                    $objFilaDTO->retTodos();
-                                    $numRegistrosFila = $objFilaRN->contar($objFilaDTO);
-                                    $objFilaDTO = $objFilaRN->consultar($objFilaDTO);
+                                    //Busca os dados da Fila Padrão
+                                    if (!is_null($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila())) {
+                                        $objFilaRN = new MdUtlAdmFilaRN();
+                                        $objFilaDTO = new MdUtlAdmFilaDTO();
+                                        $objFilaDTO->setNumIdMdUtlAdmFila($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila());
+                                        $objFilaDTO->retTodos();
+                                        $numRegistrosFila = $objFilaRN->contar($objFilaDTO);
+                                        $objFilaDTO = $objFilaRN->consultar($objFilaDTO);
 
-                                    if ($numRegistrosFila > 0) {
-                                        $nomeFila = $objFilaDTO->getStrNome();
-                                        $undEsforco = $objFilaDTO->getStrUndEsforcoTriagem();
+                                        if ($numRegistrosFila > 0) {
+                                            $nomeFila = $objFilaDTO->getStrNome();
+                                            $undEsforco = $objFilaDTO->getStrUndEsforcoTriagem();
+                                        }
                                     }
-                                }
 
-                                /*Se possuir ultima fila - buscar em historico e atribuir*/
-                                if ($sinUltimaFila == 'S') {
-                                    $objHistoricoDTO = new MdUtlHistControleDsmpDTO();
-                                    $objHistoricoDTO->setDblIdProcedimento($idProcedimento);
-                                    $objHistoricoDTO->setNumIdUnidade($idUnidade);
-                                    $objHistoricoDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
-                                    $objHistoricoDTO->setNumMaxRegistrosRetorno(1);
-                                    $objHistoricoDTO->retNumIdMdUtlAdmFila();
-                                    $objHistoricoDTO->retNumIdAtendimento();
-                                    $objHistoricoDTO->retStrNomeFila();
+                                    /*Se possuir ultima fila - buscar em historico e atribuir*/
+                                    if ($sinUltimaFila == 'S') {
+                                        $objHistoricoDTO = new MdUtlHistControleDsmpDTO();
+                                        $objHistoricoDTO->setDblIdProcedimento($idProcedimento);
+                                        $objHistoricoDTO->setNumIdUnidade($idUnidade);
+                                        $objHistoricoDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
+                                        $objHistoricoDTO->setNumMaxRegistrosRetorno(1);
+                                        $objHistoricoDTO->retNumIdMdUtlAdmFila();
+                                        $objHistoricoDTO->retNumIdAtendimento();
+                                        $objHistoricoDTO->retStrNomeFila();
 
-                                    $numRegistrosHist = $objHistoricoRN->contar($objHistoricoDTO);
-                                    $objHistoricoDTO = $objHistoricoRN->consultar($objHistoricoDTO);
+                                        $numRegistrosHist = $objHistoricoRN->contar($objHistoricoDTO);
+                                        $objHistoricoDTO = $objHistoricoRN->consultar($objHistoricoDTO);
 
-                                    if ($numRegistrosHist > 0) {
-                                        $idFilaHistorico = $objHistoricoDTO->getNumIdMdUtlAdmFila();
-                                        $nomeUltimaFila = $objHistoricoDTO->getStrNomeFila();
-                                        $idAtendimentoAntigo = $objHistoricoDTO->getNumIdAtendimento() != '' ? $objHistoricoDTO->getNumIdAtendimento() : $idAtendimentoAntigo;
+                                        if ($numRegistrosHist > 0) {
+                                            $idFilaHistorico = $objHistoricoDTO->getNumIdMdUtlAdmFila();
+                                            $nomeUltimaFila = $objHistoricoDTO->getStrNomeFila();
+                                            $idAtendimentoAntigo = $objHistoricoDTO->getNumIdAtendimento() != '' ? $objHistoricoDTO->getNumIdAtendimento() : $idAtendimentoAntigo;
+                                        }
                                     }
-                                }
 
-                                /* Se a última fila estiver como SIM e existir ultima fila */
-                                if ($sinUltimaFila == 'S' && $idFilaHistorico != '') {
-                                    $idFilaCompleto = $idFilaHistorico;
-                                    $nomeFilaCompleto = $nomeUltimaFila;
-                                }
+                                    $arrDadosFilaAssociar = MdUtlControleDsmpINT::verificaFilaAssociacaoAutomatica($sinUltimaFila, $idFilaHistorico, $nomeUltimaFila, $idFilaPadrao, $nomeFila);
+                                    $idFilaCompleto   = $arrDadosFilaAssociar['idFilaCompleto'];
+                                    $nomeFilaCompleto = $arrDadosFilaAssociar['nomeFilaCompleto'];
+                                    $isPreenchido     = $arrDadosFilaAssociar['isPreenchido'];
 
-                                /* Se a última fila estiver como SIM e NÃO existir ultima fila, porém existir  fila Padrão */
-                                if ($sinUltimaFila == 'S' && $idFilaHistorico == '' && $idFilaPadrao != '') {
-                                    $idFilaCompleto = $idFilaPadrao;
-                                    $nomeFilaCompleto = $nomeFila;
-                                }
+                                    if($isPreenchido) {
+                                        $arrProcessosAtend   = array_key_exists($idProcedimento, $arrAtendimentosMapeado) ? $arrAtendimentosMapeado[$idProcedimento] : null;
 
-                                /* Se a última fila estiver como NÃO e Fila Padrão estiver SIM */
-                                if (($sinUltimaFila == 'N' || is_null($sinUltimaFila)) && $idFilaPadrao != '') {
-                                    $idFilaCompleto = $idFilaPadrao;
-                                    $nomeFilaCompleto = $nomeFila;
-                                }
+                                        $idAtendimentoAntigo = null;
+                                        $idAtendimentoAntigo = !is_null($arrProcessosAtend) && array_key_exists($idUnidade, $arrProcessosAtend) ? $arrProcessosAtend[$idUnidade] : null;
 
-                                if ($sinUltimaFila == 'S' && $idFilaHistorico == '' && $idFilaPadrao == '') {
-                                    break;
-                                }
 
-                                if (($sinUltimaFila == 'N' || is_null($sinUltimaFila)) && $idFilaHistorico == '' && $idFilaPadrao == '') {
-                                    break;
-                                }
+                                        $idAtendimentoNovo   =  (is_null($idAtendimentoAntigo)) ? 1 : $idAtendimentoAntigo + 1;
 
-                                $idAtendimento = $idAtendimentoAntigo + 1;
+                                        if ($idProcedimento != '' && $idUnidade != '') {
+                                            $isExiste = $objControleDsmpRN->validaExistenciaProcessoAtivo(array($idProcedimento, $idUnidade));
 
-                                if ($idProcedimento != '' && $idUnidade != '') {
-                                    $isExiste = $objControleDsmpRN->validaExistenciaProcessoAtivo(array($idProcedimento, $idUnidade));
-                                    $isFilasPreenchidas = $idFilaHistorico != '' || $idFilaPadrao != '';
+                                            $isFilasPreenchidas = !is_null($idFilaCompleto);
 
-                                    if (!$isExiste && $isFilasPreenchidas) {
-                                        $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $undEsforco, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimento, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
-                                        $objControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
+                                            if (!$isExiste && $isFilasPreenchidas) {
+                                                $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $undEsforco, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimentoNovo, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
+                                                $objControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
+                                            }
+                                        }
                                     }
                                 }
                             }

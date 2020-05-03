@@ -9,12 +9,14 @@
 
 require_once dirname(__FILE__).'/../../../SEI.php';
 
-class MdUtlControleDsmpINT extends InfraINT {
+class MdUtlControleDsmpINT extends InfraINT
+{
 
 
-    public static function retornaArrSituacoesControleDsmp(){
+    public static function retornaArrSituacoesControleDsmp()
+    {
         $arrRetorno = array();
-        $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_FILA] =  MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA;
+        $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_FILA] = MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM] = MdUtlControleDsmpRN::$STR_AGUARDANDO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$EM_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_ANALISE] = MdUtlControleDsmpRN::$STR_AGUARDANDO_ANALISE;
@@ -24,16 +26,17 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_ANALISE;
-        $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE]  = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
-        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO]  = MdUtlControleDsmpRN::$STR_SUSPENSO;
-        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO]  = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
+        $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
+        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO] = MdUtlControleDsmpRN::$STR_SUSPENSO;
+        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO] = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
 
         return $arrRetorno;
     }
 
-    public static function retornaArrSituacoesControleDsmpCompleto(){
+    public static function retornaArrSituacoesControleDsmpCompleto()
+    {
         $arrRetorno = array();
-        $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_FILA] =  MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA;
+        $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_FILA] = MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM] = MdUtlControleDsmpRN::$STR_AGUARDANDO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$EM_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_ANALISE] = MdUtlControleDsmpRN::$STR_AGUARDANDO_ANALISE;
@@ -43,23 +46,24 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_TRIAGEM;
         $arrRetorno[MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_ANALISE;
-        $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE]  = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
-        $arrRetorno[MdUtlControleDsmpRN::$FLUXO_FINALIZADO]  = MdUtlControleDsmpRN::$STR_FLUXO_FINALIZADO;
-        $arrRetorno[MdUtlControleDsmpRN::$REMOCAO_FILA]  = MdUtlControleDsmpRN::$STR_REMOCAO_FILA;
-        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO]  = MdUtlControleDsmpRN::$STR_SUSPENSO;
-        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO]  = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
+        $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
+        $arrRetorno[MdUtlControleDsmpRN::$FLUXO_FINALIZADO] = MdUtlControleDsmpRN::$STR_FLUXO_FINALIZADO;
+        $arrRetorno[MdUtlControleDsmpRN::$REMOCAO_FILA] = MdUtlControleDsmpRN::$STR_REMOCAO_FILA;
+        $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO] = MdUtlControleDsmpRN::$STR_SUSPENSO;
+        $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO] = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
 
         return $arrRetorno;
     }
 
-    public static function montarSelectStatus($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false){
+    public static function montarSelectStatus($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false)
+    {
         $arrDados = self::retornaArrSituacoesControleDsmp();
 
         $html = '<option value=""></option>';
 
         foreach ($arrDados as $key => $status) {
-            $isAguardandoFilaValido =($key != MdUtlControleDsmpRN::$AGUARDANDO_FILA || $key == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isAguardandoFila);
-            $isStatusValido         = $idsStatusPermitido && in_array($key, $idsStatusPermitido) || !$idsStatusPermitido;
+            $isAguardandoFilaValido = ($key != MdUtlControleDsmpRN::$AGUARDANDO_FILA || $key == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isAguardandoFila);
+            $isStatusValido = $idsStatusPermitido && in_array($key, $idsStatusPermitido) || !$idsStatusPermitido;
             if ($isAguardandoFilaValido && $isStatusValido) {
                 $selected = '';
 
@@ -75,14 +79,15 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $html;
     }
 
-    public static function montarSelectStatusMeusProcessos($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false){
+    public static function montarSelectStatusMeusProcessos($valorSelecionado = null, $isAguardandoFila = true, $idsStatusPermitido = false)
+    {
         $arrDados = self::retornaArrSituacoesControleDsmpCompleto();
 
         $html = '<option value=""></option>';
 
         foreach ($arrDados as $key => $status) {
-            $isAguardandoFilaValido =($key != MdUtlControleDsmpRN::$AGUARDANDO_FILA || $key == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isAguardandoFila);
-            $isStatusValido         = $idsStatusPermitido && in_array($key, $idsStatusPermitido) || !$idsStatusPermitido;
+            $isAguardandoFilaValido = ($key != MdUtlControleDsmpRN::$AGUARDANDO_FILA || $key == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isAguardandoFila);
+            $isStatusValido = $idsStatusPermitido && in_array($key, $idsStatusPermitido) || !$idsStatusPermitido;
             if ($isAguardandoFilaValido && $isStatusValido) {
                 $selected = '';
 
@@ -98,15 +103,17 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $html;
     }
 
-    public static function montarSelectTipoProcesso($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado){
+    public static function montarSelectTipoProcesso($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado)
+    {
         $objRN = new MdUtlControleDsmpRN();
         $arrObjsDTO = $objRN->getTiposProcessoTipoControle();
 
         return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjsDTO, 'IdTipoProcedimento', 'NomeProcedimento');
     }
 
-    public static function retornaXmlUltimasFilas($jsonIdsProcedimento, $idProcedimento, $isTelaDetalhe){
-        $isTelaDetalhe   = $isTelaDetalhe == '1' ? true : false;
+    public static function retornaXmlUltimasFilas($jsonIdsProcedimento, $idProcedimento, $isTelaDetalhe)
+    {
+        $isTelaDetalhe = $isTelaDetalhe == '1' ? true : false;
         $idsProcedimento = $isTelaDetalhe ? array($idProcedimento) : json_decode($jsonIdsProcedimento);
 
         $objHsRN = new MdUtlHistControleDsmpRN();
@@ -114,8 +121,8 @@ class MdUtlControleDsmpINT extends InfraINT {
         $arrObjsUltimasFilas = $objHsRN->getUltimasFilasPorProcedimento($idsProcedimento);
 
         $xml = '<Dados>';
-        if(!is_null($arrObjsUltimasFilas)){
-            foreach($arrObjsUltimasFilas as $objUltimaFila) {
+        if (!is_null($arrObjsUltimasFilas)) {
+            foreach ($arrObjsUltimasFilas as $objUltimaFila) {
                 $xml .= '<UltimaFila' . $objUltimaFila->getDblIdProcedimento() . '>';
                 $xml .= htmlspecialchars($objUltimaFila->getStrNomeFila());
                 $xml .= '</UltimaFila' . $objUltimaFila->getDblIdProcedimento() . '>';
@@ -127,104 +134,104 @@ class MdUtlControleDsmpINT extends InfraINT {
         }
 
 
-
         $xml .= '</Dados>';
 
         return $xml;
     }
 
-    public static function retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila){
+    public static function retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila)
+    {
 
-        $objRelTpCtrlUsuRN     = new MdUtlAdmRelTpCtrlDesempUsuRN();
-        $objMdUtlFilaRN        = new MdUtlAdmFilaRN();
+        $objRelTpCtrlUsuRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $objMdUtlFilaRN = new MdUtlAdmFilaRN();
         $isUsuarioPertenceFila = true;
-        $arrVisualizacao       = array();
+        $arrVisualizacao = array();
         $isGestor = $objRelTpCtrlUsuRN->usuarioLogadoIsGestorSipSei();
         $isUsuarioPertenceFila = $objMdUtlFilaRN->verificaUsuarioLogadoPertenceFila(array($idFila, $idStatus));
 
-        switch ($idStatus){
+        switch ($idStatus) {
             case MdUtlControleDsmpRN::$AGUARDANDO_FILA:
-                $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
-                $arrVisualizacao['TRIAGEM']      = false;
-                $arrVisualizacao['ANALISE']      = false;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
+                $arrVisualizacao['TRIAGEM'] = false;
+                $arrVisualizacao['ANALISE'] = false;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = false;
-                $arrVisualizacao['ATRIBUICAO']   = false;
+                $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM:
-                 $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
-                 $arrVisualizacao['TRIAGEM']      = false;
-                 $arrVisualizacao['ANALISE']      = false;
-                 $arrVisualizacao['REVISAO']      = false;
-                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
-                 $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
-                 break;
+                $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
+                $arrVisualizacao['TRIAGEM'] = false;
+                $arrVisualizacao['ANALISE'] = false;
+                $arrVisualizacao['REVISAO'] = false;
+                $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO'] = $isUsuarioPertenceFila;
+                break;
 
             case MdUtlControleDsmpRN::$EM_TRIAGEM:
-                $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = false;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = false;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
-                $arrVisualizacao['ATRIBUICAO']   = false;
+                $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE:
-                $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = false;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = false;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
-                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO'] = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
-                $arrVisualizacao['ASSOCIACAO']   = $isTipoProcessoParametrizado;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = true;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = true;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
-                $arrVisualizacao['ATRIBUICAO']   = false;
+                $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO:
-                $arrVisualizacao['ASSOCIACAO']   = false;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = false;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = $isPossuiAnalise;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
-                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO'] = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM:
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE:
-                $arrVisualizacao['ASSOCIACAO']   = false;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
-                $arrVisualizacao['REVISAO']      = true;
+                $arrVisualizacao['ASSOCIACAO'] = false;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = $isPossuiAnalise;
+                $arrVisualizacao['REVISAO'] = true;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
-                $arrVisualizacao['ATRIBUICAO']   = $isUsuarioPertenceFila;
+                $arrVisualizacao['ATRIBUICAO'] = $isUsuarioPertenceFila;
                 break;
 
             case MdUtlControleDsmpRN::$EM_REVISAO:
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
-                $arrVisualizacao['ASSOCIACAO']   = false;
-                $arrVisualizacao['TRIAGEM']      = true;
-                $arrVisualizacao['ANALISE']      = $isPossuiAnalise;
-                $arrVisualizacao['REVISAO']      = true;
+                $arrVisualizacao['ASSOCIACAO'] = false;
+                $arrVisualizacao['TRIAGEM'] = true;
+                $arrVisualizacao['ANALISE'] = $isPossuiAnalise;
+                $arrVisualizacao['REVISAO'] = true;
                 $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
-                $arrVisualizacao['ATRIBUICAO']   = false;
-            break;
+                $arrVisualizacao['ATRIBUICAO'] = false;
+                break;
 
             default:
-                $arrVisualizacao['ASSOCIACAO']   = false;
-                $arrVisualizacao['TRIAGEM']      = false;
-                $arrVisualizacao['ANALISE']      = false;
-                $arrVisualizacao['REVISAO']      = false;
+                $arrVisualizacao['ASSOCIACAO'] = false;
+                $arrVisualizacao['TRIAGEM'] = false;
+                $arrVisualizacao['ANALISE'] = false;
+                $arrVisualizacao['REVISAO'] = false;
                 $arrVisualizacao['DISTRIBUICAO'] = false;
-                $arrVisualizacao['ATRIBUICAO']   = false;
+                $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
         }
 
@@ -234,83 +241,83 @@ class MdUtlControleDsmpINT extends InfraINT {
 
     public static function retornaUrlsAcessoDsmp($idStatus, $isPossuiAnalise, $idProcedimento, $idFila, $idUsuarioDsBd, $isMeusProcessos = false)
     {
-        $arrUrls           = array();
+        $arrUrls = array();
         $isPermiteCadastro = ($idUsuarioDsBd == SessaoSEI::getInstance()->getNumIdUsuario());
 
-        $strPadraoUrl = 'controlador.php?acao=$URL_COMPLETA$&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento.'&id_fila='.$idFila;
-        $replaceUrl   = function($busca) use ($strPadraoUrl, $isPermiteCadastro, $isMeusProcessos) {
+        $strPadraoUrl = 'controlador.php?acao=$URL_COMPLETA$&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&id_fila=' . $idFila;
+        $replaceUrl = function ($busca) use ($strPadraoUrl, $isPermiteCadastro, $isMeusProcessos) {
             $buscaArr = explode('_', $busca);
             $vlUnset = $buscaArr[2] == 'revisao' ? 4 : 3;
             unset($buscaArr[$vlUnset]);
-            $busca = $isPermiteCadastro ? $busca : (implode("_", $buscaArr) .'_consultar');
+            $busca = $isPermiteCadastro ? $busca : (implode("_", $buscaArr) . '_consultar');
 
 
-            $novaUrl  = str_replace('$URL_COMPLETA$', $busca, $strPadraoUrl);
+            $novaUrl = str_replace('$URL_COMPLETA$', $busca, $strPadraoUrl);
 
-            if($isMeusProcessos){
-                   $novaUrl .='&pg_padrao=1';
+            if ($isMeusProcessos) {
+                $novaUrl .= '&pg_padrao=1';
             }
 
             return SessaoSEI::getInstance()->assinarLink($novaUrl);
         };
 
-        $arrUrls['TRIAGEM']      = '';
-        $arrUrls['ANALISE']      =  '';
-        $arrUrls['REVISAO']      =  '';
+        $arrUrls['TRIAGEM'] = '';
+        $arrUrls['ANALISE'] = '';
+        $arrUrls['REVISAO'] = '';
 
         switch ($idStatus) {
             case MdUtlControleDsmpRN::$EM_TRIAGEM:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_cadastrar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_cadastrar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
             case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_cadastrar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_cadastrar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_REVISAO:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_consultar');
                 $conc = $isPossuiAnalise ? 'md_utl_revisao_analise_cadastrar' : 'md_utl_revisao_triagem_cadastrar';
                 $arrUrls['REVISAO'] = $replaceUrl($conc);
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_alterar');
-                $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_triagem_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_alterar');
+                $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_triagem_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_alterar');
-                $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_analise_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_alterar');
+                $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_analise_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['ANALISE'] =  $replaceUrl('md_utl_analise_consultar');
-                $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_analise_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_consultar');
+                $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_analise_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM:
-                $arrUrls['TRIAGEM'] =  $replaceUrl('md_utl_triagem_consultar');
-                $arrUrls['REVISAO'] =  $replaceUrl('md_utl_revisao_triagem_consultar');
+                $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
+                $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_triagem_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
 
@@ -319,9 +326,10 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $arrUrls;
     }
 
-    public static function getProximoStatusDistribuicao($idStatus){
+    public static function getProximoStatusDistribuicao($idStatus)
+    {
 
-        switch ($idStatus){
+        switch ($idStatus) {
             case MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM:
             case MdUtlControleDsmpRN::$EM_TRIAGEM:
                 $idRetorno = MdUtlControleDsmpRN::$EM_TRIAGEM;
@@ -329,22 +337,22 @@ class MdUtlControleDsmpINT extends InfraINT {
 
             case MdUtlControleDsmpRN::$AGUARDANDO_ANALISE:
             case MdUtlControleDsmpRN::$EM_ANALISE:
-            $idRetorno =  MdUtlControleDsmpRN::$EM_ANALISE;
+                $idRetorno = MdUtlControleDsmpRN::$EM_ANALISE;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_REVISAO:
             case MdUtlControleDsmpRN::$EM_REVISAO:
-                $idRetorno =  MdUtlControleDsmpRN::$EM_REVISAO;
+                $idRetorno = MdUtlControleDsmpRN::$EM_REVISAO;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM:
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
-                $idRetorno =  MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM;
+                $idRetorno = MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM;
                 break;
 
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE:
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
-                $idRetorno =  MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE;
+                $idRetorno = MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE;
                 break;
 
             default:
@@ -355,20 +363,22 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $idRetorno;
     }
 
-    public static function montarSelectEncaminhamentoAnaliseTriagem($vlSelecionado = null){
+    public static function montarSelectEncaminhamentoAnaliseTriagem($vlSelecionado = null)
+    {
         $arrParametros = self::retornaSelectEncaminhamentoAnaliseTriagem();
         $select = '<option value=""></option>';
 
-        foreach($arrParametros as $key => $parametros){
+        foreach ($arrParametros as $key => $parametros) {
             $strSelected = $vlSelecionado != null && $key == $vlSelecionado ? 'selected=selected' : '';
-            $select .= '<option '.$strSelected.' value="'.$key.'">'.$parametros.'</option>';
+            $select .= '<option ' . $strSelected . ' value="' . $key . '">' . $parametros . '</option>';
         }
 
 
         return $select;
     }
 
-    public static function retornaSelectEncaminhamentoAnaliseTriagem(){
+    public static function retornaSelectEncaminhamentoAnaliseTriagem()
+    {
         $arrParametros = array();
         $arrParametros[MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA] = MdUtlControleDsmpRN::$STR_ENC_ASSOCIAR_EM_FILA;
         $arrParametros[MdUtlControleDsmpRN::$ENC_FINALIZAR_TAREFA] = MdUtlControleDsmpRN::$STR_ENC_FINALIZAR_TAREFA;
@@ -377,40 +387,42 @@ class MdUtlControleDsmpINT extends InfraINT {
 
     }
 
-    public static function  retornaLinkStatus($arrCtrlUrls, $idStatus){
+    public static function retornaLinkStatus($arrCtrlUrls, $idStatus)
+    {
 
         $arrStatusTriagem = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
         $arrStatusAnalise = array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
         $arrStatusRevisao = array(MdUtlControleDsmpRN::$EM_REVISAO);
         $arrStatusEspera = array(MdUtlControleDsmpRN::$SUSPENSO, MdUtlControleDsmpRN::$INTERROMPIDO);
 
-        if(in_array($idStatus, $arrStatusTriagem)){
+        if (in_array($idStatus, $arrStatusTriagem)) {
             return $arrCtrlUrls['TRIAGEM'];
         }
 
-        if(in_array($idStatus, $arrStatusAnalise)){
+        if (in_array($idStatus, $arrStatusAnalise)) {
             return $arrCtrlUrls['ANALISE'];
         }
 
-        if(in_array($idStatus, $arrStatusRevisao)){
+        if (in_array($idStatus, $arrStatusRevisao)) {
             return $arrCtrlUrls['REVISAO'];
         }
 
-        if(in_array($idStatus, $arrStatusEspera)){
-                return '#';
+        if (in_array($idStatus, $arrStatusEspera)) {
+            return '#';
         }
 
         return '';
     }
 
-    public static function validarTrocaTipoAtividade($idAtividade){
+    public static function validarTrocaTipoAtividade($idAtividade)
+    {
 
         $xml = '<Dados>';
         $objControleDsmpRN = new MdUtlControleDsmpRN();
 
         $isRelacionamentosAtivos = true;
 
-        if($idAtividade) {
+        if ($idAtividade) {
             $isRelacionamentosAtivos = $objControleDsmpRN->verificaExisteRelacionamentoAtivoAtividade($idAtividade);
         }
 
@@ -422,19 +434,21 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $xml;
     }
 
-    public  static function removeNullsTriagem($idsTriagem){
-       foreach($idsTriagem as $key => $idTriagem){
-           if(is_null($idTriagem)){
-               unset($idsTriagem[$key]);
-           }
-       }
+    public static function removeNullsTriagem($idsTriagem)
+    {
+        foreach ($idsTriagem as $key => $idTriagem) {
+            if (is_null($idTriagem)) {
+                unset($idsTriagem[$key]);
+            }
+        }
         return $idsTriagem;
     }
 
-    public static function retornaSelectTipoSolicitacao(){
+    public static function retornaSelectTipoSolicitacao()
+    {
         $arr = array();
-        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO]     = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_DILACAO;
-        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO]   = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_SUSPENSAO;
+        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO] = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_DILACAO;
+        $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_SUSPENSAO] = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_SUSPENSAO;
         $arr[MdUtlControleDsmpRN::$TP_SOLICITACAO_INTERRUPCAO] = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_INTERRUPCAO;
         return $arr;
     }
@@ -446,7 +460,7 @@ class MdUtlControleDsmpINT extends InfraINT {
 
         $arrStatusNaoPermitidos = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
 
-        $strUrl =  PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_retornar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_procedimento=' . $strIdProcedimento));
+        $strUrl = PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_retornar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_procedimento=' . $strIdProcedimento));
         if (!in_array($strStatus, $arrStatusNaoPermitidos)) {
             if ($isDadosParametrizados) {
                 if (is_null($idPrazoExistente)) {
@@ -489,62 +503,110 @@ class MdUtlControleDsmpINT extends InfraINT {
         return $strResultado;
     }
 
-    public static function getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $objContestRevisao, $numIdTriagem, $isDadosParametrizados, $strSituacao){
+    public static function getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $objContestRevisao, $numIdTriagem, $isDadosParametrizados, $strSituacao)
+    {
         $idContestRevisaoExistente = $objContestRevisao->getNumIdMdUtlContestRevisao();
         $strResultado = '';
         $arrContestacaoPermitidos = array(MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
 
         if (in_array($strStatus, $arrContestacaoPermitidos)) {
             if ($isDadosParametrizados) {
-                    if (is_null($idContestRevisaoExistente) || $strSituacao == MdUtlContestacaoRN::$CANCELADA) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/cadastrar_contestacao.png" title="Contestar Revisão" alt="Contestar Revisão" class="infraImg" /></a>&nbsp;';
-                    } else {
-                        if ($strSituacao == MdUtlContestacaoRN::$PENDENTE_RESPOSTA) {
-                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/editar_contestacao.png" title="Alterar Contestação de Revisão" alt="Alterar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
-                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/visualizar_contestacao.png" title="Consultar Contestação de Revisão" alt="Consultar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
-                        }
+                if (is_null($idContestRevisaoExistente) || $strSituacao == MdUtlContestacaoRN::$CANCELADA) {
+                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/cadastrar_contestacao.png" title="Contestar Revisão" alt="Contestar Revisão" class="infraImg" /></a>&nbsp;';
+                } else {
+                    if ($strSituacao == MdUtlContestacaoRN::$PENDENTE_RESPOSTA) {
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/editar_contestacao.png" title="Alterar Contestação de Revisão" alt="Alterar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/visualizar_contestacao.png" title="Consultar Contestação de Revisão" alt="Consultar Contestação de Revisão" class="infraImg" /></a>&nbsp;';
                     }
+                }
             }
         }
 
         return $strResultado;
     }
 
-    public static function montarSelectTipoSolicitacao($idSelecionado = null){
+    public static function montarSelectTipoSolicitacao($idSelecionado = null)
+    {
         $select = '<option value=""></option>';
         $arr = self::retornaSelectTipoSolicitacao();
         $idSelecionado = trim($idSelecionado);
 
-        foreach ($arr as $key => $value){
+        foreach ($arr as $key => $value) {
 
-            $selected =  !is_null($idSelecionado) && $key == $idSelecionado ? 'selected="selected"' : '';
-            $select .= '<option '.$selected.' value="'.$key.'"> '.$value.' </option>';
+            $selected = !is_null($idSelecionado) && $key == $idSelecionado ? 'selected="selected"' : '';
+            $select .= '<option ' . $selected . ' value="' . $key . '"> ' . $value . ' </option>';
         }
 
         return $select;
     }
 
- public static function formatarDatasComDoisDigitos($dataFormato){
-        $arrData = explode('/',$dataFormato);
+    public static function formatarDatasComDoisDigitos($dataFormato)
+    {
+        $arrData = explode('/', $dataFormato);
         $dia = str_pad($arrData[0], 2, '0', STR_PAD_LEFT);
         $mes = str_pad($arrData[1], 2, '0', STR_PAD_LEFT);
         $ano = str_pad($arrData[2], 2, '0', STR_PAD_LEFT);
 
-        $dataHoraCompleta = $dia.'/'.$mes.'/'.$ano.' '.$arrData[3];
+        $dataHoraCompleta = $dia . '/' . $mes . '/' . $ano . ' ' . $arrData[3];
         $dataHoraCompleta = trim($dataHoraCompleta);
 
         return $dataHoraCompleta;
     }
 
-    public static function setNomeAtividade(&$arrObjs, $arrObjsTriagem){
-        if(count($arrObjs) > 0){
-            foreach($arrObjs as $objDTO){
-                $strNomeAtividade  = array_key_exists($objDTO->getNumIdMdUtlTriagem(), $arrObjsTriagem) ? $arrObjsTriagem[$objDTO->getNumIdMdUtlTriagem()] : '';
-                $strNomeAtividade  = is_array($strNomeAtividade) ? 'Múltiplas' : $strNomeAtividade;
+    public static function setNomeAtividade(&$arrObjs, $arrObjsTriagem)
+    {
+        if (count($arrObjs) > 0) {
+            foreach ($arrObjs as $objDTO) {
+                $strNomeAtividade = array_key_exists($objDTO->getNumIdMdUtlTriagem(), $arrObjsTriagem) ? $arrObjsTriagem[$objDTO->getNumIdMdUtlTriagem()] : '';
+                $strNomeAtividade = is_array($strNomeAtividade) ? 'Múltiplas' : $strNomeAtividade;
                 $objDTO->setStrNomeAtividadeTriagem($strNomeAtividade);
             }
         }
 
         return $arrObjs;
+    }
+
+    public static function verificaFilaAssociacaoAutomatica($sinUltimaFila, $idFilaHistorico, $nomeUltimaFila, $idFilaPadrao, $nomeFila)
+    {
+        $arrRetorno = array();
+        $arrRetorno['idFilaCompleto'] = null;
+        $arrRetorno['nomeFilaCompleto'] = null;
+        $isPreenchido = false;
+
+        /* Se a última fila estiver como SIM e existir ultima fila */
+        if ($sinUltimaFila == 'S' && $idFilaHistorico != '') {
+            $arrRetorno['idFilaCompleto'] = $idFilaHistorico;
+            $arrRetorno['nomeFilaCompleto'] = $nomeUltimaFila;
+            $isPreenchido = true;
+        }
+
+        /* Se a última fila estiver como SIM e NÃO existir ultima fila, porém existir  fila Padrão */
+        if(!$isPreenchido) {
+            if (($sinUltimaFila == 'S' && $idFilaHistorico == '' && $idFilaPadrao != '')) {
+                $arrRetorno['idFilaCompleto'] = $idFilaPadrao;
+                $arrRetorno['nomeFilaCompleto'] = $nomeFila;
+                $isPreenchido = true;
+            }
+        }
+
+        /* Se a última fila estiver como NÃO e Fila Padrão estiver SIM */
+        if(!$isPreenchido) {
+            if (($sinUltimaFila == 'N' || is_null($sinUltimaFila)) && $idFilaPadrao != '') {
+                $arrRetorno['idFilaCompleto'] = $idFilaPadrao;
+                $arrRetorno['nomeFilaCompleto'] = $nomeFila;
+                $isPreenchido = true;
+            }
+        }
+
+        /*if ($sinUltimaFila == 'S' && $idFilaHistorico == '' && $idFilaPadrao == '') {
+            $isPreenchido = false;
+        }
+
+        if (($sinUltimaFila == 'N' || is_null($sinUltimaFila)) && $idFilaHistorico == '' && $idFilaPadrao == '') {
+            $isPreenchido = false;
+        }*/
+        $arrRetorno['isPreenchido'] = $isPreenchido;
+
+        return $arrRetorno;
     }
 }

@@ -122,7 +122,7 @@ switch($_GET['acao']){
                 $isPossuiVinculo   = in_array($objVincUsuario->getNumIdUsuario(), $arrUsuariosVinculados) ? 1 : 0;
 
                 $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(),
-                    htmlentities($htmlDadosUsuario),
+                    $htmlDadosUsuario,
                     $strTriador,  $objVincUsuario->getStrSinTriador(),
                     $strAnalista, $objVincUsuario->getStrSinAnalista(),
                     $vlTipoRevisao,
@@ -233,7 +233,7 @@ switch($_GET['acao']){
                 }
                 $htmlDadosUsuario  = '<a alt="'.$objVincUsuario->getStrNomeUsuario().'" title="'.$objVincUsuario->getStrNomeUsuario().'" class="ancoraSigla"> '.$objVincUsuario->getStrSigla().' </a>';
 
-                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(), htmlentities($htmlDadosUsuario), $strTriador,  $objVincUsuario->getStrSinTriador(), $strAnalista, $objVincUsuario->getStrSinAnalista(), $vlTipoRevisao, $strRevisor, $objVincUsuario->getStrSinRevisor());
+                $arrGrid[] = array($objVincUsuario->getNumIdMdUtlAdmPrmGrUsu(), $htmlDadosUsuario, $strTriador,  $objVincUsuario->getStrSinTriador(), $strAnalista, $objVincUsuario->getStrSinAnalista(), $vlTipoRevisao, $strRevisor, $objVincUsuario->getStrSinRevisor());
 
             }
 

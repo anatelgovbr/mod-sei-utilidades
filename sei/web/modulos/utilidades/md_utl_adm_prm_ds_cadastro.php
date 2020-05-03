@@ -363,7 +363,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
     <input type="hidden" id="hdnFilaLupa" name="hdnFilaLupa" value="<?=$_POST['hdnFilaLupa']?>" />
     <input type="hidden" id="hdnIdFila" name="hdnIdFila" value="<?php echo $idFila;?>"/>
-    <input type="hidden" id="hdnFila" name="hdnFila" value='<?php echo htmlentities($strGridFila)?>' />
+    <input type="hidden" id="hdnFila" name="hdnFila" value='<?php echo $strGridFila?>' />
     <input type="hidden" id="hdnIdFilaLupa" name="hdnIdFilaLupa" value=""/>
 
     <input type="hidden" id="hdnStatusLupa" name="hdnStatusLupa" value="<?=$_POST['hdnStatusLupa']?>" />

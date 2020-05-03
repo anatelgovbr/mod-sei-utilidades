@@ -107,13 +107,13 @@ try {
                     $protocoloFormatado = $obj->getStrProtocoloProcedimentoFormatado();
                     $nomeProcesso = $obj->getStrNomeTipoProcesso();
                     $urlProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_distrib_usuario_cadastrar&id_procedimento=' . $idProcedimento . '');
-                    $hrefLinkProcesso = htmlentities('<a onclick="window.open(\'' . $urlProcedimento . '\')" alt="' . $nomeProcesso . '" title="' . $nomeProcesso . '" class="ancoraPadraoAzul">' . $protocoloFormatado . '</a>');
+                    $hrefLinkProcesso = '<a onclick="window.open(\'' . $urlProcedimento . '\')" alt="' . $nomeProcesso . '" title="' . $nomeProcesso . '" class="ancoraPadraoAzul">' . $protocoloFormatado . '</a>';
 
                     //Formatando Usuário
                     $arrDadosUsuario = array_key_exists($idProcedimento, $arrUltimosResponsaveis) ? $arrUltimosResponsaveis[$idProcedimento] : array();
                     $nomeUsuario     = array_key_exists('NOME', $arrDadosUsuario) ? $arrDadosUsuario['NOME'] : '';
                     $siglaUsuario    = array_key_exists('SIGLA', $arrDadosUsuario) ? $arrDadosUsuario['SIGLA'] : '';
-                    $linkUsuario     = $nomeUsuario != ''  && $siglaUsuario != '' ? htmlentities('<a class="ancoraSigla" alt="' . $nomeUsuario . '" title="' . $nomeUsuario . '">' . $siglaUsuario . '</a>') : '';
+                    $linkUsuario     = $nomeUsuario != ''  && $siglaUsuario != '' ? '<a class="ancoraSigla" alt="' . $nomeUsuario . '" title="' . $nomeUsuario . '">' . $siglaUsuario . '</a>' : '';
 
                     $arrStrGridProcesso[] = array($idProcedimento, $idControleDsmp, $hrefLinkProcesso, $numUndEsforco, $linkUsuario);
 
