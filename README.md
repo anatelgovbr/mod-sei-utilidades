@@ -4,7 +4,7 @@
 - SEI 3.1.3 instalado/atualizado.
    - Verificar valor da constante de versão no arquivo /sei/web/SEI.php ou, após logado no sistema, parando o mouse sobre a logo do SEI no canto superior esquerdo.
 - Antes de executar os scripts de instalação/atualização, o usuário de acesso aos bancos de dados do SEI e do SIP, constante nos arquivos ConfiguracaoSEI.php e ConfiguracaoSip.php, deverá ter permissão de acesso total ao banco de dados, permitindo, por exemplo, criação e exclusão de tabelas.
-- Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://softwarepublico.gov.br/gitlab/anatel/mod-sei-utilidades/tags](https://softwarepublico.gov.br/gitlab/anatel/mod-sei-utilidades/tags "Clique e acesse")
+- Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://github.com/anatelgovbr/mod-sei-utilidades/releases](https://github.com/anatelgovbr/mod-sei-utilidades/releases "Clique e acesse")
 - Solicitamos que os Órgãos que tenham instalado o Módulo preencham a pesquisa a seguir, para termos um feedback sobre sua utilização: [http://bit.ly/Form_SEI_Mod_Utilidades](http://bit.ly/Form_SEI_Mod_Utilidades "Clique e acesse")
 
 ## Procedimentos para Instalação
