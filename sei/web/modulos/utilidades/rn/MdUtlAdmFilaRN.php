@@ -20,7 +20,7 @@ class MdUtlAdmFilaRN extends InfraRN {
       public static $POR_ATIVIDADE = '2';
       public static $STR_POR_ATIVIDADE = 'Por Atividade';
       public static $SEM_REVISAO = '3';
-      public static $STR_SEM_REVISAO = 'Sem Revisão';
+      public static $STR_SEM_REVISAO = 'Sem Avaliação';
     
 
   public function __construct(){
@@ -304,7 +304,7 @@ class MdUtlAdmFilaRN extends InfraRN {
     $objMdUtlFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($_POST['hdnIdTipoControleUtl']);
     $objMdUtlFilaDTO->setStrNome($_POST['txtNome']);
     $objMdUtlFilaDTO->setStrDescricao($_POST['txaDescricao']);
-    $objMdUtlFilaDTO->setStrUndEsforcoTriagem($_POST['txtUndEsforcoTriagem']);
+    $objMdUtlFilaDTO->setNumTmpExecucaoTriagem($_POST['txtTmpExecucaoTriagem']);
     $objMdUtlFilaDTO->setStrSinDistribuicaoAutomatica($sinDstAutomatica);
     $objMdUtlFilaDTO->setStrSinDistribuicaoUltUsuario($sinDstUltFila);
     $objMdUtlFilaDTO->setNumPrazoTarefa($_POST['txtPrazoTarefa']);
@@ -527,8 +527,11 @@ class MdUtlAdmFilaRN extends InfraRN {
 
       $mdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
       $mdUtlAdmFilaRN = new MdUtlAdmFilaRN();
-
-      $mdUtlAdmFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleUtl);
+      if(is_array($idTipoControleUtl)){
+        $mdUtlAdmFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleUtl,InfraDTO::$OPER_IN);
+      }else{
+        $mdUtlAdmFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleUtl);
+      }      
       $mdUtlAdmFilaDTO->setStrSinAtivo('S');
       $mdUtlAdmFilaDTO->retStrNome();
       $mdUtlAdmFilaDTO->retNumIdMdUtlAdmFila();
@@ -538,7 +541,56 @@ class MdUtlAdmFilaRN extends InfraRN {
       return $mdUtlAdmFila;
   }
 
-    protected function getUnidadeEsforcoFilaConectado($idFila){
+  protected function getFilasVinculadosUsuarioConectado($idTipoControle){
+
+    //Filas do Tipo de Controle
+    $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
+    $arrObjsFilaDTO = InfraArray::converterArrInfraDTO( $this->getFilasTipoControle($idTipoControle) , 'IdMdUtlAdmFila' );
+
+    // Filas que o usuario eh membro - 1 regra do retorno das filas
+    $arrObjsFilas = $objMdUtlAdmFilaPrmGrUsuRN->getPapeisDeUsuario($arrObjsFilaDTO);
+
+    $arrObjsFilaUsuDTO = array();
+
+    if( !is_null( $arrObjsFilas ) ){
+      $arrObjsFilaUsuDTO = InfraArray::converterArrInfraDTO( $arrObjsFilas , 'IdMdUtlAdmFila');
+    }
+
+    // Busca usuarios da mesma unidade do usuario logado
+    $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+    $idsUsuarioUnid = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
+
+    // Retorna as filas que os usuarios da mesma unidade do usuario logado estao vinculados
+    $objDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+    $objDTO->setNumIdUsuario($idsUsuarioUnid , InfraDTO::$OPER_IN);
+    $objDTO->setNumIdMdUtlAdmFila($arrObjsFilaDTO, InfraDTO::$OPER_IN);
+    $objDTO->retTodos();
+
+    $arrObjsFilaUsuUnidDTO = array();
+
+    $count = $objMdUtlAdmFilaPrmGrUsuRN->contar($objDTO);
+
+    if ($count > 0) {
+      // 2 regra do retorno das filas
+      $arrObjsFilaUsuUnidDTO = array_unique( InfraArray::converterArrInfraDTO( $objMdUtlAdmFilaPrmGrUsuRN->listar($objDTO) , 'IdMdUtlAdmFila') );
+    }
+
+    $arrIdsFila = array_unique(array_merge($arrObjsFilaUsuDTO,$arrObjsFilaUsuUnidDTO));
+
+    if( count($arrIdsFila) > 0 ){
+      $objFilaDTO = new MdUtlAdmFilaDTO();
+      $objFilaDTO->setNumIdMdUtlAdmFila( $arrIdsFila , InfraDTO::$OPER_IN );
+      $objFilaDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+      $objFilaDTO->retNumIdMdUtlAdmFila();
+      $objFilaDTO->retStrNome();
+
+      return $this->listar($objFilaDTO);
+    }else{
+      return $arrIdsFila; // retorna array vazio
+    }
+  }
+
+    protected function getTempoExecucaoFilaConectado($idFila){
         $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
         $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($idFila);
         $objMdUtlAdmFilaDTO->retTodos();
@@ -547,10 +599,10 @@ class MdUtlAdmFilaRN extends InfraRN {
         $numRegistros = count($objFilaDTO);
         if($numRegistros > 0){
             for($i = 0; $i < $numRegistros; $i++){
-                $undEsforco = $objFilaDTO[$i]->getStrUndEsforcoTriagem();
+                $TmpExecucao = $objFilaDTO[$i]->getNumTmpExecucaoTriagem();
             }
         }
-        return $undEsforco;
+        return $TmpExecucao;
     }
 
     protected function getNumPrazoTarefaPorIdFilaConectado($idFila)
@@ -568,6 +620,7 @@ class MdUtlAdmFilaRN extends InfraRN {
     protected function verificaUsuarioLogadoPertenceFilaConectado($arrParams){
         $idFila   = $arrParams[0];
         $idStatus = $arrParams[1];
+        $bolFiltraPorPapel = array_key_exists(2,$arrParams) ? true : false;
 
         $idsStatusTriador = array(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
         $idsStatusAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
@@ -582,17 +635,20 @@ class MdUtlAdmFilaRN extends InfraRN {
         $objMdRelFilaUsuarioDTO->setNumIdMdUtlAdmFila($idFila);
         $objMdRelFilaUsuarioDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
 
-        if(in_array($idStatus, $idsStatusTriador)){
-            $objMdRelFilaUsuarioDTO->setStrSinTriador('S');
+        if( $bolFiltraPorPapel ) {
+            if (in_array($idStatus, $idsStatusTriador)) {
+                $objMdRelFilaUsuarioDTO->setStrSinTriador('S');
+            }
+
+            if (in_array($idStatus, $idsStatusAnalise)) {
+                $objMdRelFilaUsuarioDTO->setStrSinAnalista('S');
+            }
+
+            if (in_array($idStatus, $idsStatusRevisao)) {
+                $objMdRelFilaUsuarioDTO->setStrSinRevisor('S');
+            }
         }
 
-        if(in_array($idStatus, $idsStatusAnalise)){
-            $objMdRelFilaUsuarioDTO->setStrSinAnalista('S');
-        }
-
-        if(in_array($idStatus, $idsStatusRevisao)){
-            $objMdRelFilaUsuarioDTO->setStrSinRevisor('S');
-        }
         return ($objMdRelFilaUsuarioRN->contar($objMdRelFilaUsuarioDTO) > 0);
     }
 

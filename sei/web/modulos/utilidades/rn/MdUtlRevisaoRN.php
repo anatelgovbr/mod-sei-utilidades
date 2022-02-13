@@ -12,18 +12,25 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 class MdUtlRevisaoRN extends InfraRN {
 
     public static $FLUXO_FINALIZADO = 'X';
-    public static $STR_FLUXO_FINALIZADO = 'Fluxo Finalizado';
+    public static $STR_FLUXO_FINALIZADO = 'Finalizar Fluxo';
 
     public static $VOLTAR_PARA_FILA = 'F';
-    public static $STR_VOLTAR_PARA_FILA = 'Voltar para a Fila';
+    public static $STR_VOLTAR_PARA_FILA = 'Voltar para a Fila';    
+    public static $STR_VOLTAR_OUTRO_PARTICIPANTE = 'Retornar para Correção por outro Participante na mesma Fila';
+    /* Deixar este valor abaixo por enquanto, para fim de testes no calculo */
+    public static $STR_VOLTAR_OUTRO_PARTICIPANTE_OLD = 'Retornar para Correção por outro Participante';
 
     public static $VOLTAR_PARA_RESPONSAVEL = 'R';
     public static $STR_VOLTAR_PARA_RESPONSAVEL = 'Voltar para o Responsável';
+    public static $STR_VOLTAR_PARA_O_MESMO_PARTICIPANTE = 'Retornar para Correção pelo mesmo Participante';
 
     public static $MANTER_O_RESPONSAVEL = 'M';
     public static $STR_MANTER_O_RESPONSAVEL = 'Manter com o Responsável';
 
-    //Associar processo em fila após a Revisão
+    public static $NOVA_FILA = 'N';
+    public static $STR_NOVA_FILA = 'Associar em Fila após Finalizar Fluxo';
+
+    //Associar processo em fila após a Avaliação
     public static $ASSOCIAR_SIM = 'S';
     public static $ASSOCIAR_NAO = 'N';
 
@@ -168,11 +175,19 @@ class MdUtlRevisaoRN extends InfraRN {
       $objRevisaoDTO->setStrSinAssociarFila($_POST['selAssociarProcFila']);
       $objRevisaoDTO->setNumIdMdUtlAdmFila($_POST['selFila']);
 
+      /* Novos campos */
+      if(!isset($_POST['cbkRealizarAvalProdAProd'])){
+        $objRevisaoDTO->setStrSinRealizarAvalProdProd('N');
+      }else{
+        $objRevisaoDTO->setStrSinRealizarAvalProdProd('S');
+      }
+
+      $objRevisaoDTO->setNumAvaliacaoQualitativa($_POST['selAvalQualitativa']);      
+      /* Novos campos Fim */
+
       $objRevisaoDTO->retTodos();
 
-      $objRevisaoDTO = $this->cadastrar($objRevisaoDTO);
-
-      return $objRevisaoDTO->getNumIdMdUtlRevisao();
+      return $this->cadastrar($objRevisaoDTO);
   }
 
   protected function buscarObjRevisaoPorIdConectado($idRevisao){

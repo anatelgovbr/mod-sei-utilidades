@@ -12,6 +12,7 @@ $objMdUtlRevisaoRN  = new MdUtlRevisaoRN();
 
 $arrObjRelAnaliseProdutoDTOAntigos = array();
 $displayJustificativa = 'style="display: none"';
+$exibirCol            = " display:none; ";
 $strResultado         ="";
 $idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
 
@@ -19,6 +20,9 @@ $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
 $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($idMdUtlAnalise);
 $objMdUtlAnaliseDTO->retTodos();
 $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
+
+$idUsuarioAnalise = $objMdUtlAnalise->getNumIdUsuario();
+
 $strInformComp = $objMdUtlAnalise->getStrInformacoesComplementares();
 
 $objMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
@@ -37,14 +41,18 @@ if ($isConsultar) {
     $strInformCompRevisao = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
     $strEncaminhamento = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrStaEncaminhamentoRevisao() : '';
 
+    $vlrAvaliacaoQualitativa = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getNumAvaliacaoQualitativa() : '';
+
     if(is_null($strEncaminhamento) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao())){
         $strEncaminhamento = $objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao();
     }
 
     $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
     $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
-
-    if (!is_null($objMdUtlRevisaoDTO)) {
+    $ckbRealizarAvalProdProd = '';
+    if (!is_null($objMdUtlRevisaoDTO) && $objMdUtlRevisaoDTO->getStrSinRealizarAvalProdProd() == 'S' ) {
+        $exibirCol = "";
+        $ckbRealizarAvalProdProd = 'checked';
         $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($idRevisao);
         $objMdUtlRelRevisTrgAnlsDTO->retTodos();
         $arrMdUtlRelRevisTrgAnls = $objMdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
@@ -88,21 +96,22 @@ $numRegistro = count($arrMdUtlRelAnaliseProduto);
 
 if($numRegistro > 0) {
 
-    if(count($arrMdUtlRelRevisTrgAnls) > 0 && $isConsultar || !$isConsultar) {
-        $strResultado .= '<table width="99%" class="infraTable" summary="Revisao">';
+    #if(count($arrMdUtlRelRevisTrgAnls) > 0 && $isConsultar || !$isConsultar) {
+    if( true ){
+        $strResultado .= '<table width="99%" class="infraTable" summary="Revisao" id="tb_avaliacao">';
         $strResultado .= '<caption class="infraCaption">';
-        $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Revisão', $numRegistro);
+        $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Atividades e Produtos Entregues', $numRegistro);
         $strResultado .= '</caption>';
         //Cabeçalho da Tabela
         $strResultado .= '<tr>';
         $strResultado .= '<th class="infraTh" style="display: none" width="10%">Id_Analise</th>';
         $strResultado .= '<th class="infraTh" width="13%">Atividade</th>';
-        $strResultado .= '<th class="infraTh" width="12%">Produto</th>';
-        $strResultado .= '<th class="infraTh" width="17%">Documento</th>';
-        $strResultado .= '<th class="infraTh" width="13%" style="text-align: left;">Observação sobre a Análise</th>';
-        $strResultado .= '<th class="infraTh" width="13%">Resultado</th>';
-        $strResultado .= '<th class="infraTh" width="13%">Justificativa</th>';
-        $strResultado .= '<th class="infraTh" width="20%" style="text-align: left;">Observação sobre a Revisão</th>';
+        $strResultado .= '<th class="infraTh" width="8%">Produto</th>';
+        $strResultado .= '<th class="infraTh" width="8%">Documento</th>';
+        $strResultado .= '<th class="infraTh" width="18%" style="text-align: left;">Observação sobre a Análise</th>';
+        $strResultado .= '<th class="infraTh" width="13%" style="'.$exibirCol.'">Resultado</th>';
+        $strResultado .= '<th class="infraTh" width="13%" style="'.$exibirCol.'">Justificativa</th>';
+        $strResultado .= '<th class="infraTh" width="20%" style="text-align: left; '.$exibirCol.'">Observação sobre a Avaliação</th>';
         $strResultado .= '</tr>';
 
         $hdnTbRevisaoAnalise = "";
@@ -118,7 +127,7 @@ if($numRegistro > 0) {
             $bolDocSei = $arrMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() != "" ? true : false;
 
             if ($isConsultar) {
-                $arrMdUtlRelRevisTrgAnlsCompleto = InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelAnaliseProduto', $idMdUtlRelAnaliseProduto);
+                $arrMdUtlRelRevisTrgAnlsCompleto = !empty($arrMdUtlRelRevisTrgAnls) ? InfraArray::filtrarArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelAnaliseProduto', $idMdUtlRelAnaliseProduto) : array();
 
                 if(count($arrMdUtlRelRevisTrgAnlsCompleto) > 0) {
                     $strObservacao = $arrMdUtlRelRevisTrgAnlsCompleto[0]->getStrObservacao();
@@ -131,7 +140,7 @@ if($numRegistro > 0) {
                 }
             }
 
-
+            /*
             if ($isEdicao) {
                 $arrMdRelAtividadeIgualDTO = InfraArray::filtrarArrInfraDTO($arrObjRelAnaliseProdutoDTOAntigos, 'IdMdUtlAdmAtividade', $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlAdmAtividade());
                 $strAtributoSearch = $bolDocSei ? 'IdDocumento' : 'IdMdUtlAdmTpProduto';
@@ -156,10 +165,18 @@ if($numRegistro > 0) {
                     MdUtlRevisaoINT::setObjUtilizadoAnaliseRevisao($arrObjRelAnaliseProdutoDTOAntigos, $arrMdRelIgualDTO);
                 }
             }
+            */
 
             $strResultado .= '<tr class="infraTrClara">';
             $strResultado .= '<td style="display: none" >' . $idMdUtlRelAnaliseProduto . '</td>';
-            $strResultado .= '<td>' . $arrMdUtlRelAnaliseProduto[$i]->getStrNomeAtividade() . '</td>';
+
+            $vlrUnidEsf = !is_null($arrMdUtlRelAnaliseProduto[$i]->getNumTempoExecucao()) ? $arrMdUtlRelAnaliseProduto[$i]->getNumTempoExecucao() : 0;
+            if( !empty( $idUsuarioAnalise )){
+                $vlrUnidEsf =MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho( $vlrUnidEsf , $idTipoControle , $idUsuarioAnalise);
+            }
+            $vlrUnidEsf =  MdUtlAdmPrmGrINT::convertToHoursMins( $vlrUnidEsf );
+            
+            $strResultado .= '<td>' . $arrMdUtlRelAnaliseProduto[$i]->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrMdUtlRelAnaliseProduto[$i]->getNumComplexidadeAtividade()] . ') - ' . $vlrUnidEsf .'</td>';
 
             $strProduto = $bolDocSei ? $arrMdUtlRelAnaliseProduto[$i]->getStrNomeSerie() : $arrMdUtlRelAnaliseProduto[$i]->getStrNomeProduto();
             $strResultado .= '<td>' . $strProduto . '</td>';
@@ -172,14 +189,14 @@ if($numRegistro > 0) {
             $strAcoesDocumento = '<a href="#" onclick="infraAbrirJanela(\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=documento_visualizar&acao_origem=arvore_visualizar&acao_retorno=arvore_visualizar&id_procedimento=' . $idProcedimento . '&id_documento=' . $dblIdDocumento . '&arvore=1') . '\',\'janelaCancelarAssinaturaExterna\',850,600,\'location=0,status=1,resizable=1,scrollbars=1\')" tabindex="' . $numTabBotao . '" class="botaoSEI">' . $strDocumento . '</a>';
 
             $strResultado .= '<td>' . $strAcoesDocumento . '</td>';
-            $strResultado .= '<td align="center"><img src="modulos/utilidades/imagens/obsAnalise.png" title="' . $arrMdUtlRelAnaliseProduto[$i]->getStrObservacaoAnalise() . '" alt="teste" class="infraImg" style="width: 16px;height: 16px"/></td>';
-            $strResultado .= '<td>';
+            $strResultado .= '<td>'. $arrMdUtlRelAnaliseProduto[$i]->getStrObservacaoAnalise() .'</td>';
+            $strResultado .= '<td style="'.$exibirCol.'">';
             $strResultado .= '<select campo="R" style="width:95%" class="infraSelect" ' . $disabled . ' id="selRev_' . $idMdUtlRelAnaliseProduto . '" name="selRev_' . $idMdUtlRelAnaliseProduto . '" onchange="verificarJustificativa(this);" >' . $selRevisao . '</select>';
             $strResultado .= '</td>';
-            $strResultado .= '<td>';
+            $strResultado .= '<td style="'.$exibirCol.'">';
             $strResultado .= '<select campo="J"  class="infraSelect" ' . $disabled . ' id="selJust_' . $idMdUtlRelAnaliseProduto . '" name="selJust_' . $idMdUtlRelAnaliseProduto . '" ' . $displayJustificativa . '>' . $selJustRevisao . '</select>';
             $strResultado .= '</td>';
-            $strResultado .= '<td><input onpaste="return infraLimitarTexto(this,event,250);" onkeypress="return infraLimitarTexto(this,event,250);" class="inputObservacao" id="obs_' . $idMdUtlRelAnaliseProduto . '" ' . $disabled . ' name="obs_' . $idMdUtlRelAnaliseProduto . '" type="text" value="' . $strObservacao . '"/></td>';
+            $strResultado .= '<td style="padding: 4px 10px 2px 3px; '.$exibirCol.'"><textarea onpaste="return infraLimitarTexto(this,event,250);" onkeypress="return infraLimitarTexto(this,event,250);" class="infraTextArea inputObservacao" id="obs_' . $idMdUtlRelAnaliseProduto . '" ' . $disabled . ' name="obs_' . $idMdUtlRelAnaliseProduto . '" style="width: 100%; '.$exibirCol.'">' . $strObservacao . '</textarea></td>';
             $strResultado .= '</tr>';
 
             if ($hdnTbRevisaoAnalise != "") {
@@ -197,7 +214,7 @@ if($numRegistro > 0) {
 }
 
 $divInfComplementar = '<div id="divInformacaoComplementarAnalise" style="margin-top: 1.8%">
-             <label id="lblInformacaoComplementar" style="display: block"  for="txaInformacaoComplementar" class="infraLabelOpcional"
+             <label id="lblInformacaoComplementar" style="display: block"  for="txaInformacaoComplementarAnlTri" class="infraLabelOpcional"
                     tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                  Informações Complementares da Análise:
              </label>

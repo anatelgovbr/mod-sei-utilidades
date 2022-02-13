@@ -20,7 +20,7 @@ try {
     if ($numRegistro > 0) {
         $arrayObjs = [];
         foreach ($arrObjsTriagemAtividade as $obj) {
-            $strNomeAtividade = $obj->getStrNomeAtividade();
+            $strNomeAtividade = $obj->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$obj->getNumComplexidadeAtividade()] . ') - '. MdUtlAdmPrmGrINT::convertToHoursMins($obj->getNumTempoExecucao());
             array_push($arrayObjs, $strNomeAtividade);
 
         }

@@ -25,7 +25,7 @@ class MdUtlAdmFilaDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'Descricao', 'descricao');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'UndEsforcoTriagem', 'und_esforco_triagem');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TmpExecucaoTriagem', 'tmp_execucao_triagem');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinDistribuicaoAutomatica', 'sin_distribuicao_automatica');
 

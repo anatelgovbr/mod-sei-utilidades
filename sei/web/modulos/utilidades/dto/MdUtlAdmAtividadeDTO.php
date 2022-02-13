@@ -27,15 +27,17 @@ class MdUtlAdmAtividadeDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAnalise', 'sin_analise');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'UndEsforcoAtv', 'und_esforco_atv');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TmpExecucaoAtv', 'tmp_execucao_atv');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrzExecucaoAtv', 'prz_execucao_atv');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'UndEsforcoRev', 'und_esforco_rev');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TmpExecucaoRev', 'tmp_execucao_rev');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrzRevisaoAtv', 'prz_revisao_atv');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtvRevAmostragem', 'sin_atv_rev_amostragem');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'Complexidade', 'complexidade' );
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 

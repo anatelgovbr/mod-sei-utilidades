@@ -60,7 +60,7 @@ margin: -0.5% 92% 0.5%;
 width: 45%!important;
 }
 
-#txtUndEsforcoTriagem {
+#txtTmpExecucaoTriagem {
 width: 45%!important;
 }
 

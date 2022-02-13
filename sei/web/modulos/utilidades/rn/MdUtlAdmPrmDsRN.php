@@ -42,6 +42,16 @@ class MdUtlAdmPrmDsRN extends InfraRN
             $objInfraException->adicionarValidacao('Informe o campo Priorizar por Atividade.');
         }
     }
+    private function validarSinTipoProcesso(MdUtlAdmPrmDsDTO $objMdUtlAdmPrmDsDTO, InfraException $objInfraException) {
+        if (InfraString::isBolVazia($objMdUtlAdmPrmDsDTO->getStrSinTipoProcesso())){
+            $objInfraException->adicionarValidacao('Informe o campo Priorizar por Tipo de Processo.');
+        }
+    }
+    private function validarSinDiasUteis(MdUtlAdmPrmDsDTO $objMdUtlAdmPrmDsDTO, InfraException $objInfraException) {
+        if (InfraString::isBolVazia($objMdUtlAdmPrmDsDTO->getStrSinDiasUteis())){
+            $objInfraException->adicionarValidacao('Informe o campo Priorizar por Dias Úteis.');
+        }
+    }
 
     public function cadastrarParemetrizacao(MdUtlAdmPrmDsDTO $objMdUtlAdmPrmDsDTO, $idMdUtlAdmPrmDsDTO) {
 
@@ -51,11 +61,13 @@ class MdUtlAdmPrmDsRN extends InfraRN
             $this->cadastrarPriorizacaoFilaControlado($objMdUtlAdmPrmDsDTO);
             $this->cadastrarPriorizacaoStatusControlado($objMdUtlAdmPrmDsDTO);
             $this->cadastrarPriorizacaoAtividadeControlado($objMdUtlAdmPrmDsDTO);
+            $this->cadastrarPriorizacaoTipoProcessoControlado($objMdUtlAdmPrmDsDTO);
         } else {
             $ret = $this->cadastrar($objMdUtlAdmPrmDsDTO);
             $this->cadastrarPriorizacaoFilaControlado($ret);
             $this->cadastrarPriorizacaoStatusControlado($ret);
             $this->cadastrarPriorizacaoAtividadeControlado($ret);
+            $this->cadastrarPriorizacaoTipoProcessoControlado($ret);
         }
     }
 
@@ -182,6 +194,10 @@ class MdUtlAdmPrmDsRN extends InfraRN
             $objInfraException->lancarValidacoes();
             $this->validarSinStatusAtendimentoDsmp($objMdUtlAdmPrmDsDTO,$objInfraException);
             $objInfraException->lancarValidacoes();
+            $this->validarSinTipoProcesso($objMdUtlAdmPrmDsDTO, $objInfraException);
+            $objInfraException->lancarValidacoes();
+            $this->validarSinDiasUteis($objMdUtlAdmPrmDsDTO, $objInfraException);
+            $objInfraException->lancarValidacoes();
 
             $objMdUtlAdmPrmDsBD = new MdUtlAdmPrmDsBD($this->getObjInfraIBanco());
             $ret = $objMdUtlAdmPrmDsBD->cadastrar($objMdUtlAdmPrmDsDTO);
@@ -209,6 +225,10 @@ class MdUtlAdmPrmDsRN extends InfraRN
             $objInfraException->lancarValidacoes();
             $this->validarSinStatusAtendimentoDsmp($objMdUtlAdmPrmDsDTO,$objInfraException);
             $objInfraException->lancarValidacoes();
+            $this->validarSinTipoProcesso($objMdUtlAdmPrmDsDTO, $objInfraException);
+            $objInfraException->lancarValidacoes();
+            $this->validarSinDiasUteis($objMdUtlAdmPrmDsDTO, $objInfraException);
+            $objInfraException->lancarValidacoes();
 
             $objMdUtlAdmPrmDsBD = new MdUtlAdmPrmDsBD($this->getObjInfraIBanco());
             $ret = $objMdUtlAdmPrmDsBD->alterar($objMdUtlAdmPrmDsDTO);
@@ -223,7 +243,7 @@ class MdUtlAdmPrmDsRN extends InfraRN
     protected function consultarConectado(MdUtlAdmPrmDsDTO $objMdUtlAdmPrmDsDTO) {
         try {
             //Valida Permissão
-            SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_prm_ds_cadastrar', __METHOD__, $objMdUtlAdmPrmDsDTO);
+            SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_prm_ds_consultar', __METHOD__, $objMdUtlAdmPrmDsDTO);
 
             $objMdUtlAdmPrmDsBD = new MdUtlAdmPrmDsBD($this->getObjInfraIBanco());
             $ret = $objMdUtlAdmPrmDsBD->consultar($objMdUtlAdmPrmDsDTO);
@@ -302,4 +322,51 @@ class MdUtlAdmPrmDsRN extends InfraRN
         }
     }
 
+    protected function cadastrarPriorizacaoTipoProcessoControlado(MdUtlAdmPrmDsDTO $objMdUtlAdmPrmDsDTO) {
+        $objMdUtlAdmRelPrmDsProcDTO = new MdUtlAdmRelPrmDsProcDTO();
+        $objMdUtlAdmRelPrmDsProcRN = new MdUtlAdmRelPrmDsProcRN();
+
+        $arrTipoProcesso = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTipoProcesso']);
+
+        if(count($arrTipoProcesso) > 0) {
+            if ($_POST['selTipoProcesso'] == MdUtlAdmPrmDsRN::$SIM) {
+                $this->excluirPriorizacaoTipoProcessoControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
+            }
+            foreach($arrTipoProcesso as $linha){
+                $objMdUtlAdmRelPrmDsProcDTO->setNumIdMdUtlAdmParamDs($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
+                $objMdUtlAdmRelPrmDsProcDTO->setNumIdMdUtlAdmTipoProcesso($linha[0]);
+//                alterar aqui o priorização
+                $objMdUtlAdmRelPrmDsProcDTO->setNumPrioridade($linha[2]);
+
+                if($_POST['selTipoProcesso'] == MdUtlAdmPrmDsRN::$SIM) {
+                    $objMdUtlAdmRelPrmDsProcRN->cadastrar($objMdUtlAdmRelPrmDsProcDTO);
+                } else {
+                    $this->excluirPriorizacaoTipoProcessoControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
+                }
+            }
+        }
+    }
+
+    protected function excluirPriorizacaoTipoProcessoControlado($idParametrizacaoDs)
+    {
+        $objMdUtlAdmRelPrmDsProcDTO = new MdUtlAdmRelPrmDsProcDTO();
+        $objMdUtlAdmRelPrmDsProcDTO->retTodos();
+        $objMdUtlAdmRelPrmDsProcDTO->setNumIdMdUtlAdmParamDs($idParametrizacaoDs);
+
+        $objMdUtlAdmRelPrmDsProcRN = new MdUtlAdmRelPrmDsProcRN();
+        $arrobjMdUtlAdmRelPrmDsAtivDTO = $objMdUtlAdmRelPrmDsProcRN->listar($objMdUtlAdmRelPrmDsProcDTO);
+        $objMdUtlAdmRelPrmDsProcRN->excluir($arrobjMdUtlAdmRelPrmDsAtivDTO);
+    }
+
+    public function getPrioridades($idTipoControle) {
+        try {
+            $objMdUtlAdmPrmDsDTO = new MdUtlAdmPrmDsDTO();
+            $objMdUtlAdmPrmDsDTO->retTodos();
+            $objMdUtlAdmPrmDsDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
+            return $this->consultar($objMdUtlAdmPrmDsDTO);
+        } catch (Exception $e) {
+            throw new InfraException('Erro Prioridade geral na Parametrização de Distribuição', $e);
+        }
+    }
 }

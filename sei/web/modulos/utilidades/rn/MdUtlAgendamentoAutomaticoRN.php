@@ -335,7 +335,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                                     $nomeFila = '';
                                     $sinUltimaFila = $objMdUtlTpCtrlDTO->getStrSinUltimaFila();
                                     $idFilaPadrao = $objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila();
-                                    $undEsforco = 0;
+                                    $TmpExecucao = 0;
 
                                     //Busca os dados da Fila Padrão
                                     if (!is_null($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila())) {
@@ -348,7 +348,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
                                         if ($numRegistrosFila > 0) {
                                             $nomeFila = $objFilaDTO->getStrNome();
-                                            $undEsforco = $objFilaDTO->getStrUndEsforcoTriagem();
+                                            $TmpExecucao = $objFilaDTO->getNumTmpExecucaoTriagem();
                                         }
                                     }
 
@@ -393,7 +393,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                                             $isFilasPreenchidas = !is_null($idFilaCompleto);
 
                                             if (!$isExiste && $isFilasPreenchidas) {
-                                                $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $undEsforco, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimentoNovo, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
+                                                $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $TmpExecucao, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimentoNovo, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
                                                 $objControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
                                             }
                                         }

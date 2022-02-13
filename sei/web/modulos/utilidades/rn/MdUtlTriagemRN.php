@@ -140,7 +140,7 @@ class MdUtlTriagemRN extends InfraRN {
       throw new InfraException('Erro reativando .',$e);
     }
   }
-    
+
   private function _retornaDetalheTriagem(){
         $arrAtividades = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbAtividade']);
         $strDetalheAtividade = '';
@@ -157,9 +157,8 @@ class MdUtlTriagemRN extends InfraRN {
     }
 
   protected function cadastrarDadosTriagemControlado($dados){
-
     try {
- 
+
       $objMdUtlControleDsmpRN   = new MdUtlControleDsmpRN();
       $objMdUtlControleDsmpDTO  = new MdUtlControleDsmpDTO();
       $objRelAtvTriagemRN       = new MdUtlRelTriagemAtvRN();
@@ -175,12 +174,16 @@ class MdUtlTriagemRN extends InfraRN {
 
       $objControleDsmpDTO       = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
       $isTpProcParametrizado    = $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($objControleDsmpDTO->getNumIdTpProcedimento(), $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp()));
-
-      $objTriagem               = $this->_salvaObjTriagem($dados, $dados['hdnIsPossuiAnalise'], $isTpProcParametrizado);
+      $idFila                   = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
+      $vlrUndEsf                = null;
+      if(!$isRetriagem){
+          $vlrUndEsf = empty($objControleDsmpDTO->getNumTempoExecucao()) ? null : $objControleDsmpDTO->getNumTempoExecucao();
+      }
+      $objTriagem               = $this->_salvaObjTriagem($dados, $dados['hdnIsPossuiAnalise'], $isTpProcParametrizado, $vlrUndEsf);
       $idTriagem                = $objTriagem->getNumIdMdUtlTriagem();
       $arrObjs                  = $objRelAtvTriagemRN->cadastrarObjsTriagem(array($dados, $objTriagem));
 
-      $idFila                   = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
+
       $arrObjsAtuais            = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
       $tipoRevisao              = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
       $vlEncaminhamento         = $dados['selEncaminhamentoTriagem'];
@@ -190,7 +193,8 @@ class MdUtlTriagemRN extends InfraRN {
       $isProcessoConcluido      = 0;
 
         if (!is_null($arrObjsAtuais)) {
-            $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S', 'S'));
+            $isAcaoConcluida = $isRetriagem == 1 ? 'N' : 'S';
+            $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N', 'S', $isAcaoConcluida));
 
             if ($isRetriagem == 1 && !$isPossuiAnalise) {
 
@@ -222,16 +226,19 @@ class MdUtlTriagemRN extends InfraRN {
 
             $strDetalhe = $this->_retornaDetalheTriagem();
 
-
             if($novoStatus == MdUtlControleDsmpRN::$AGUARDANDO_REVISAO) {
                 $this->_continuarFluxoAtendimento($objTriagem, $dados, $isPossuiAnalise, $idFila, $idProcedimento, $arrRetorno, $strDetalhe);
             }else {
                 $isProcessoConcluido = $this->_concluirFluxoTriagem($idProcedimento, $arrRetorno, $objTriagem, $strDetalhe, $vlEncaminhamento, $objControleDsmpDTO, $dados);
             }
 
-            $objRNGerais = new MdUtlRegrasGeraisRN();
-            $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
-            $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
+            if(!$isRetriagem){
+                $objRNGerais = new MdUtlRegrasGeraisRN();
+                $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
+                $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
+            }
+
+            $this->_atualizaObjTriagem($idProcedimento, $objTriagem,$dados['hdnIdTpCtrl']);
         }
 
     }catch(Exception $e){
@@ -273,7 +280,12 @@ class MdUtlTriagemRN extends InfraRN {
         $objHistoricoRN = new MdUtlHistControleDsmpRN();
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
 
-        $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_TRIAGEM, $objTriagem->getNumIdMdUtlTriagem(), $strDetalhe));
+        $tipoConclusao = MdUtlControleDsmpRN::$CONCLUIR_TRIAGEM;
+        if ($objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE) {
+            $tipoConclusao = MdUtlControleDsmpRN::$CONCLUIR_RETRIAGEM;
+        }
+
+        $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, $tipoConclusao, $objTriagem->getNumIdMdUtlTriagem(), $strDetalhe));
 
         if ($vlEncaminhamento == MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA) {
             $idTipoControle = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
@@ -312,19 +324,16 @@ class MdUtlTriagemRN extends InfraRN {
               $dthPrazoTarefa = $arrRetorno[$idProcedimento]['DTH_PRAZO_TAREFA'];
           }
 
-
           if($isRtgAnlCorrecao) {
               $strNovoStatus = $isPossuiAnalise ? MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE : MdUtlControleDsmpRN::$AGUARDANDO_REVISAO;
           }
 
+          $idAnalise = $strNovoStatus == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE ?  $arrRetorno[$idProcedimento]['ID_ANALISE'] : null;
 
-          $idAnalise      = $strNovoStatus == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE ?  $arrRetorno[$idProcedimento]['ID_ANALISE'] : null;
-
-          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], $idUsuarioDistrib, $objTriagem->getNumIdMdUtlTriagem(),  $idAnalise, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, null, $idAjusTarefa, $dthPrazoTarefa, null, $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
+          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnTmpExecucao'], $idUsuarioDistrib, $objTriagem->getNumIdMdUtlTriagem(),  $idAnalise, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, null, $idAjusTarefa, $dthPrazoTarefa, InfraData::getStrDataHoraAtual(), $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
 
       }else{
-
-          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnUndEsforco'], null, $objTriagem->getNumIdMdUtlTriagem(), null, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, null, null, null, null, $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
+          $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $dados['hdnTmpExecucao'], null, $objTriagem->getNumIdMdUtlTriagem(), null, $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, null, null, null, null, $arrRetorno[$idProcedimento]['ID_CONTESTACAO']);
       }
 
       $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
@@ -332,9 +341,9 @@ class MdUtlTriagemRN extends InfraRN {
       return true;
   }
 
-  private function _salvaObjTriagem($dados, $strSinAnalise, $isTpProcParametrizado){
+  private function _salvaObjTriagem($dados, $strSinAnalise, $isTpProcParametrizado, $vlrUndEsforco){
       $isSemAnalise = $strSinAnalise == 'N';
-      
+
       $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
       $objMdUtlTriagemDTO->setNumIdMdUtlTriagem(null);
       $objMdUtlTriagemDTO->setDthPrazoResposta($dados['txtPrazoResposta']);
@@ -343,6 +352,7 @@ class MdUtlTriagemRN extends InfraRN {
       $objMdUtlTriagemDTO->setStrSinPossuiAnalise($strSinAnalise);
       $objMdUtlTriagemDTO->setDthAtual(InfraData::getStrDataHoraAtual());
       $objMdUtlTriagemDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+      $objMdUtlTriagemDTO->setNumTempoExecucao($vlrUndEsforco);
 
       if($isSemAnalise && $isTpProcParametrizado){
           $objMdUtlTriagemDTO->setStrStaEncaminhamentoTriagem($dados['selEncaminhamentoTriagem']);
@@ -353,6 +363,23 @@ class MdUtlTriagemRN extends InfraRN {
       }
 
       return $this->cadastrar($objMdUtlTriagemDTO);
+  }
+
+  private function _atualizaObjTriagem($idProcedimento, $objMdUtlTriagemDTO, $idTpCtrl) {
+
+      $regrasGerais = new MdUtlRegrasGeraisRN();
+      $objTodosHistDesmp = $regrasGerais->recuperarObjHistorico($idProcedimento);
+      $arrParams = $regrasGerais->regraAcaoTriagem($objTodosHistDesmp, $idProcedimento);
+      $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho($arrParams['tempoExecucao'] ? $arrParams['tempoExecucao'] : 0, $idTpCtrl, $objMdUtlTriagemDTO->getNumIdUsuario());
+
+      $objMdUtlTriagemDTO->setDthInicio($arrParams['dataInicio'] ? $arrParams['dataInicio'] : '');
+      $objMdUtlTriagemDTO->setDthPrazo($arrParams['dataPrazo'] ? $arrParams['dataPrazo'] : '');
+      $objMdUtlTriagemDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
+      $objMdUtlTriagemDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
+      $objMdUtlTriagemDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+      $objMdUtlTriagemDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+
+      return $this->alterar($objMdUtlTriagemDTO);
   }
 
   protected function getIdsAtividadesTriagemConectado($idTriagem){
@@ -377,7 +404,8 @@ class MdUtlTriagemRN extends InfraRN {
     $objRelTriagemAtvRN  = new MdUtlRelTriagemAtvRN();
     $objRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
     $objRelTriagemAtvDTO->setNumIdMdUtlAdmAtividade($idsAtividade, InfraDTO::$OPER_IN);
-    $objRelTriagemAtvDTO->retTodos();
+    $objRelTriagemAtvDTO->setDistinct(true);
+    $objRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
 
     $count = $objRelTriagemAtvRN->contar($objRelTriagemAtvDTO);
     $idsAtividadeVinculado = array();
@@ -421,7 +449,7 @@ class MdUtlTriagemRN extends InfraRN {
       return false;
   }
 
-  protected function buscarObjTriagemPorIdConectado($idTriagem)
+  public function buscarObjTriagemPorIdConectado($idTriagem)
   {
        $objTriagemDTO = new MdUtlTriagemDTO();
        $objTriagemDTO->setNumIdMdUtlTriagem($idTriagem);
@@ -449,10 +477,11 @@ class MdUtlTriagemRN extends InfraRN {
         $objRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
         $objRelTriagemAtvDTO->retTodos();
         $objRelTriagemAtvDTO->retNumIdMdUtlAdmAtvSerieProd();
-        $objRelTriagemAtvDTO->retNumUnidadeEsforcoProduto();
+        $objRelTriagemAtvDTO->retNumTempoExecucaoProduto();
         $objRelTriagemAtvDTO->retStrSinObrigatorio();
+        $objRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
         $objRelTriagemAtvDTO->retStrNomeSerie();
-        $objRelTriagemAtvDTO->retStrNomeAtividade();
+        $objRelTriagemAtvDTO->retStrNomeAtividade() ;
         $objRelTriagemAtvDTO->retStrStaAplicabilidadeSerie();
         $objRelTriagemAtvDTO->retStrNomeProduto();
         $objRelTriagemAtvDTO->retNumIdMdUtlAdmTpProduto();
@@ -530,7 +559,7 @@ class MdUtlTriagemRN extends InfraRN {
 
 
     protected function checarDadosTriagemControlado($idUsuario){
-     
+
         $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
         $objMdUtlTriagemDTO->adicionarCriterio(array('Atual','IdUsuario'),array(InfraDTO::$OPER_IGUAL,InfraDTO::$OPER_IGUAL),array(null, null),InfraDTO::$OPER_LOGICO_OR);
         $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
@@ -549,6 +578,21 @@ class MdUtlTriagemRN extends InfraRN {
         }
     }
 
+    public function cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO){
+      //Desativar Relacionamentos
+      $this->desativar(array($objTriagemDTO));
+                    
+      $objRevisaoRN = new MdUtlRevisaoRN();
+      $idRevisao     = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+      $objRevisaoDTO = $objRevisaoRN->buscarObjRevisaoPorId($idRevisao);
 
+      if(!is_null($objRevisaoDTO)) {
+        $objRevisaoRN->desativar(array($objRevisaoDTO));
+      }
+      
+      $dados = $_POST;
+      $dados['isCorrecaoTriagem'] = true;
+      return $this->cadastrarDadosTriagem($dados);
+    }
 
 }

@@ -17,6 +17,11 @@ $strUrl = 'controlador.php?acao=md_utl_adm_tp_ctrl_desemp_';
 
 
 //URL das Actions
+$isAdmUsuarioAlterar   = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_alterar');
+$isAdmUsuarioExcluir   = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_excluir');
+$isAdmUsuarioDesativar = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_desativar');
+$isAdmUsuarioReativar  = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_reativar');
+
 $isAdmUsuario       = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_cadastrar');
 $isGestorSipGeral   = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ctrl_desemp_listar');
 $isGestorUnidadeAt  = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_atividade_cadastrar');
@@ -43,6 +48,30 @@ switch ($_GET['acao']) {
                 $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
                 $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($arrStrIds[$i]);
                 $arrObjMdUtlAdmTpCtrlDesemp[] = $objMdUtlAdmTpCtrlDesempDTO;
+            }
+
+            /* Valida se pode desativar
+                Regra: Nao pode haver controle de desempenho com situacao em andamento, independente da unidade
+            */
+            $objMdUtlControleRN  = new MdUtlControleDsmpRN();
+            $objMdUtlControleDTO = new MdUtlControleDsmpDTO();
+            
+            $objMdUtlControleDTO->setNumIdMdUtlAdmTpCtrlDesemp( $arrObjMdUtlAdmTpCtrlDesemp[0]->getNumIdMdUtlAdmTpCtrlDesemp() );
+            $objMdUtlControleDTO->setStrStaAtendimentoDsmp(range(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM,MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE) , InfraDTO::$OPER_IN);
+            $qtd = $objMdUtlControleRN->contar($objMdUtlControleDTO);
+            
+            if( $qtd > 0 ){
+                $objMdUtlControleDTO->retStrProtocoloProcedimentoFormatado();
+                $objMdUtlControleDTO->retStrSiglaUnidade();
+                $objMdUtlControleDTO->setNumMaxRegistrosRetorno(10);
+                $ret = $objMdUtlControleRN->listar($objMdUtlControleDTO);
+                $msg = "Não é possível desativar o Tipo de Controle de Desempenho, pois existem processos em fluxo de atendimento em andamento: \n";
+                foreach ($ret as $k => $v) {
+                    $msg .= $v->getStrProtocoloProcedimentoFormatado() . ": ". $v->getStrSiglaUnidade() . "\n";
+                }
+                $msg .= "...";
+                $objInfra = new InfraException();
+                $objInfra->lancarValidacao( $msg );
             }
 
             $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
@@ -228,6 +257,7 @@ if ($numRegistros > 0) {
         $strNomeTpControleParametro = PaginaSEI::getInstance()->formatarParametrosJavaScript($arrObjMdUtlAdmTpCtrlDesemp[$i]->getStrNome());
         $bolRegistroAtivo           = $arrObjMdUtlAdmTpCtrlDesemp[$i]->getStrSinAtivo() == 'S';
         $exibirIconeAtividade       = array_key_exists($strId, $arrObjsTpProduto) ? $arrObjsTpProduto[$strId] : false;
+        $numIdPrmGr                 = empty($arrObjMdUtlAdmTpCtrlDesemp[$i]->getNumIdMdUtlAdmPrmGr()) ? "0" : $arrObjMdUtlAdmTpCtrlDesemp[$i]->getNumIdMdUtlAdmPrmGr();
         $exibirIconesGestor         = $isGestorSipUsuario && $tpsCtrlUsuario && count($tpsCtrlUsuario) > 0 && in_array($strId, $tpsCtrlUsuario);
         $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha">' : ($strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">');
         $strResultado .= $strCssTr;
@@ -262,11 +292,11 @@ if ($numRegistros > 0) {
                 //link para tela de Tipo de Justificativa prazo nos tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_prazo_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/motivo_dilatacao2.png" title="Justificativa de Ajuste de Prazo" alt="Justificativa de Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
 
-                //link para tela de Justificativa de Revisão nos tipos de controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="imagens/sei_valores.gif" title="Justificativa de Revisão" alt="Justificativa de Revisão" class="infraImg" /></a>&nbsp;';
+                //link para tela de Justificativa de Avaliação nos tipos de controle
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="imagens/sei_valores.gif" title="Justificativa de Avaliação" alt="Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
 
-                //link para tela de Tipo de Revisão nos tipos de controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/livro.png" title="Resultado da Revisão" alt="Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+                //link para tela de Tipo de Avaliação nos tipos de controle
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/livro.png" title="Resultado da Avaliação" alt="Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
 
                 //link para a tela de Tipo de Produto nos tipos de controle
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_produto_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/tipoprodutoatividade.png" title="Tipo de Produto" alt="Tipo de Produto" class="infraImg" /></a>&nbsp;';
@@ -275,39 +305,35 @@ if ($numRegistros > 0) {
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/grupoatividades.png" title="Grupo de Atividades" alt="Grupo de Atividades" class="infraImg" /></a>&nbsp;';
 
                 //link para a tela de atividades tipos de controle
-                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/atividade.png" title="Atividades" alt="Atividades" class="infraImg" /></a>&nbsp;';
+                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '" class="verificaParam" data-info="'.$numIdPrmGr.'" data-tipo="a"><img src="modulos/utilidades/imagens/atividade.png" title="Atividades" alt="Atividades" class="infraImg" /></a>&nbsp;';
 
                 //link para tela de filas
-                if(!is_null($arrObjMdUtlAdmTpCtrlDesemp[$i]->getNumIdMdUtlAdmPrmGr())){
-                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/fila.png" title="Filas" alt="Filas" class="infraImg" /></a>&nbsp;';
-                }
+                //if(!is_null($arrObjMdUtlAdmTpCtrlDesemp[$i]->getNumIdMdUtlAdmPrmGr())){
+                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_fila_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '" class="verificaParam" data-info="'.$numIdPrmGr.'" data-tipo="f"><img src="modulos/utilidades/imagens/fila.png" title="Filas" alt="Filas" class="infraImg" /></a>&nbsp;';
+                //}
 
 
             //link para a tela de parametrizar tipos de controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_prm_gr_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensLocal() . '/sei_servicos.gif" title="Parametrizar Tipo de Controle" alt="Parametrizar Tipo de Controle" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_prm_gr_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensLocal() . '/sei_servicos.gif" title="Parametrizar Tipo de Controle" alt="Parametrizar Tipo de Controle" class="infraImg" /></a>&nbsp;';
 
-                //Consultar Tipo de Controle
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utilidades=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Tipo de Controle de Desempenho" alt="Consultar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
+            //Consultar Tipo de Controle
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utilidades=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Tipo de Controle de Desempenho" alt="Consultar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
 
-                //Ação Alterar
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utilidades=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/alterar.gif" title="Alterar Tipo de Controle de Desempenho" alt="Alterar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
+            //Ação Alterar
+            if( $isAdmUsuarioAlterar )
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utilidades=' . $strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/alterar.gif" title="Alterar Tipo de Controle de Desempenho" alt="Alterar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';            
 
-                //Ícones são exibidos somente para o Administrador.
-                if ($isAdmUsuario) {
+            //Ação Desativar
+            if ($isAdmUsuarioDesativar && $bolRegistroAtivo)
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Tipo de Controle de Desempenho" alt="Desativar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
 
-                    //Ação Desativar
-                    if ($bolRegistroAtivo) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Tipo de Controle de Desempenho" alt="Desativar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
-                    }
+            //Ação Reativar
+            if ($isAdmUsuarioReativar && !$bolRegistroAtivo)
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Tipo de Controle de Desempenho" alt="Reativar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
 
-                    //Ação Reativar
-                    if (!$bolRegistroAtivo) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Tipo de Controle de Desempenho" alt="Reativar Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
-                    }
-
-                    //Ação Excluir
-                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Tipo de Controle de Desempenho" alt="Excluir Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
-            }
+            //Ação Excluir
+            if( $isAdmUsuarioExcluir )
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Tipo de Controle de Desempenho" alt="Excluir Tipo de Controle de Desempenho" class="infraImg" /></a>&nbsp;';
 
         } else {
             $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i, $strId);
@@ -421,6 +447,26 @@ require_once 'md_utl_geral_js.php';
     }
 <?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
 
+<?php PaginaSEI::getInstance()->abrirJavaScript(); ?>
+    $(function(){
+        $('.verificaParam').click(function(){
+            var vlr = $(this).data('info');
+            var tp  = $(this).data('tipo');
+            var msg = '';
+
+            if( tp == 'a' && vlr == 0 ){
+                msg = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_118); ?>';
+            }else if( tp == 'f' && vlr == 0 ){
+                msg = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_119); ?>';
+            }
+            
+            if( vlr == 0 ) {
+                alert( msg );
+                return false;
+            }            
+        });
+    });
+<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
 
 <?php
 PaginaSEI::getInstance()->fecharHead();

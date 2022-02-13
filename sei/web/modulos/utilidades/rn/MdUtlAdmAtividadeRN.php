@@ -11,6 +11,15 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 
 class MdUtlAdmAtividadeRN extends InfraRN {
 
+  public static $ARR_COMPLEXIDADE = array (
+      '0'=>'Baixa',
+      '1'=>'Média',
+      '2'=>'Alta',
+      '3'=>'Muito Baixa', 
+      '4'=>'Muito Alta', 
+      '5'=>'Especial'
+  ) ;
+
   public function __construct(){
     parent::__construct();
   }
@@ -28,8 +37,8 @@ class MdUtlAdmAtividadeRN extends InfraRN {
   private function validarStrNome(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
       $objMdUtlAdmAtividadeDTO->setStrNome(trim($objMdUtlAdmAtividadeDTO->getStrNome()));
 
-      if (strlen($objMdUtlAdmAtividadeDTO->getStrNome())>50){
-        $msg =  MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Nome', '50'));
+      if (strlen($objMdUtlAdmAtividadeDTO->getStrNome())>100){
+        $msg =  MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Nome', '100'));
         $objInfraException->adicionarValidacao($msg);
     }
   }
@@ -56,8 +65,8 @@ class MdUtlAdmAtividadeRN extends InfraRN {
     }
   }
 
-  private function validarNumUndEsforcoAtv(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
-    if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumUndEsforcoAtv())){
+  private function validarNumTmpExecucaoAtv(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
+    if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumTmpExecucaoAtv())){
       $objInfraException->adicionarValidacao(' não informad.');
     }
   }
@@ -68,14 +77,20 @@ class MdUtlAdmAtividadeRN extends InfraRN {
     }
   }
 
-  private function validarNumUndEsforcoRev(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
-    if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumUndEsforcoRev())){
+  private function validarNumTmpExecucaoRev(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
+    if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumTmpExecucaoRev())){
       $objInfraException->adicionarValidacao(' não informad.');
     }
   }
 
   private function validarNumPrzRevisaoAtv(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
     if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumPrzRevisaoAtv())){
+      $objInfraException->adicionarValidacao(' não informad.');
+    }
+  }
+
+  private function validarNumComplexidade(MdUtlAdmAtividadeDTO $objMdUtlAdmAtividadeDTO, InfraException $objInfraException){
+    if (InfraString::isBolVazia($objMdUtlAdmAtividadeDTO->getNumComplexidade())){
       $objInfraException->adicionarValidacao(' não informad.');
     }
   }
@@ -112,8 +127,9 @@ class MdUtlAdmAtividadeRN extends InfraRN {
       $this->validarNumIdMdUtlAdmTpCtrlDesemp($objMdUtlAdmAtividadeDTO, $objInfraException);
       $this->validarStrNome($objMdUtlAdmAtividadeDTO, $objInfraException);
       $this->validarStrDescricao($objMdUtlAdmAtividadeDTO, $objInfraException);
+      $this->validarNumComplexidade($objMdUtlAdmAtividadeDTO, $objInfraException);
       $this->validarStrSinAnalise($objMdUtlAdmAtividadeDTO, $objInfraException);
-      $this->validarNumPrzRevisaoAtv($objMdUtlAdmAtividadeDTO, $objInfraException);
+      //$this->validarNumPrzRevisaoAtv($objMdUtlAdmAtividadeDTO, $objInfraException); #retirado a obrigatoriedade deste campo
 
       $objInfraException->lancarValidacoes();
 
@@ -299,16 +315,16 @@ class MdUtlAdmAtividadeRN extends InfraRN {
 
       if($tpAtividade == 'S'){
 
-          $objMdUtlAdmAtividadeDTO->setNumUndEsforcoRev(null);
+          $objMdUtlAdmAtividadeDTO->setNumTmpExecucaoRev(null);
 
           $this->alterar($objMdUtlAdmAtividadeDTO);
 
       }else{
 
-          $objMdUtlAdmAtividadeDTO->setNumUndEsforcoAtv(null);
+          $objMdUtlAdmAtividadeDTO->setNumTmpExecucaoAtv(null);
           $objMdUtlAdmAtividadeDTO->setNumPrzExecucaoAtv(null);
 
-          $objMdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem(null);
+          #$objMdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem(null);
 
           $this->alterar($objMdUtlAdmAtividadeDTO);
 
@@ -327,12 +343,14 @@ class MdUtlAdmAtividadeRN extends InfraRN {
       $nomeAtividade = $params[0];
       $idTpCtrl      = $params[1];
       $idAtividade   = array_key_exists(2,$params)? $params[2] :0;
+      $complexidade     = $params[2];
 
       $mdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
       $mdUtlAdmAtividadeDTO->retTodos();
       $mdUtlAdmAtividadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
       $mdUtlAdmAtividadeDTO->setStrNome(trim($nomeAtividade),InfraDTO::$OPER_IGUAL);
       $mdUtlAdmAtividadeDTO->setNumIdMdUtlAdmAtividade($idAtividade,InfraDTO::$OPER_DIFERENTE);
+      $mdUtlAdmAtividadeDTO->setNumComplexidade($complexidade,InfraDTO::$OPER_IGUAL);
       $mdUtlAdmAtividadeDTO->setBolExclusaoLogica(false);
 
       if($this->contar($mdUtlAdmAtividadeDTO) > 0) {
@@ -354,12 +372,13 @@ class MdUtlAdmAtividadeRN extends InfraRN {
       $mdUtlAdmAtividadeDTO->setNumIdMdUtlAdmAtividade(null);
       $mdUtlAdmAtividadeDTO->setStrNome($_POST['txtAtividade']);
       $mdUtlAdmAtividadeDTO->setStrDescricao($_POST['txaDescricao']);
+      $mdUtlAdmAtividadeDTO->setNumComplexidade($_POST['selComplexidade']);
       $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
       $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('N');
 
       if($_POST['rdnTpAtivdade']=='S'){
 
-          $mdUtlAdmAtividadeDTO->setNumUndEsforcoAtv($_POST['txtUndEsforco']);
+          $mdUtlAdmAtividadeDTO->setNumTmpExecucaoAtv($_POST['txtTmpExecucao']);
           $mdUtlAdmAtividadeDTO->setNumPrzExecucaoAtv($_POST['txtExecucaoAtividade']);
 
           if(isset($_POST['chkAtvRevAmost'])) {
@@ -367,7 +386,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
           }
 
       }else{
-          $mdUtlAdmAtividadeDTO->setNumUndEsforcoRev($_POST['txtRevUnidEsf']);
+          $mdUtlAdmAtividadeDTO->setNumTmpExecucaoRev($_POST['txtRevUnidEsf']);
 
           if(isset($_POST['chkAtvRevAmost'])) {
               $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('S');
@@ -429,6 +448,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
           $mdUtlAdmAtividadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
           $mdUtlAdmAtividadeDTO->setStrNome($_POST['txtAtividade']);
           $mdUtlAdmAtividadeDTO->setStrDescricao($_POST['txaDescricao']);
+          $mdUtlAdmAtividadeDTO->setNumComplexidade($_POST['selComplexidade']);
           $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
 
 
@@ -439,7 +459,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
 
           if ($_POST['rdnTpAtivdade'] == 'S') {
 
-              $mdUtlAdmAtividadeDTO->setNumUndEsforcoAtv($_POST['txtUndEsforco']);
+              $mdUtlAdmAtividadeDTO->setNumTmpExecucaoAtv($_POST['txtTmpExecucao']);
               $mdUtlAdmAtividadeDTO->setNumPrzExecucaoAtv($_POST['txtExecucaoAtividade']);
 
               if (isset($_POST['chkAtvRevAmost'])) {
@@ -449,7 +469,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
               }
 
           } else {
-              $mdUtlAdmAtividadeDTO->setNumUndEsforcoRev($_POST['txtRevUnidEsf']);
+              $mdUtlAdmAtividadeDTO->setNumTmpExecucaoRev($_POST['txtRevUnidEsf']);
 
               if (isset($_POST['chkAtvRevAmost'])) {
                   $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('S');
@@ -518,5 +538,36 @@ class MdUtlAdmAtividadeRN extends InfraRN {
         }
     }
     
+    public function getAtividadesParaRetriagem($idsAtividades){
+      $arrIds      = strpos($idsAtividades,',') > 0 ? explode(',',$idsAtividades) : array($idsAtividades);
+      $arrGrid     = array();
+      $contador    = 0;        
+      $tmpExecucao = 0;
+
+      foreach ( $arrIds as $k => $v ) {
+        $objMdUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
+
+        $objMdUtlAtividadeDTO->setNumIdMdUtlAdmAtividade( $v );
+
+        $objMdUtlAtividadeDTO->retNumIdMdUtlAdmAtividade();
+        $objMdUtlAtividadeDTO->retStrNome();
+        $objMdUtlAtividadeDTO->retStrSinAnalise();
+        $objMdUtlAtividadeDTO->retNumTmpExecucaoAtv();
+        $objMdUtlAtividadeDTO->retNumComplexidade();
+        
+        $arrMdUtlAtividadeDTO = $this->listar( $objMdUtlAtividadeDTO );        
+
+        foreach ( $arrMdUtlAtividadeDTO as $objDTO ) {
+          $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
+          $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
+          $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv()) : '0min';
+          $strVlAnalise = $objDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
+          $tmpExecucao += $objDTO->getNumTmpExecucaoAtv();
+          $contador++;
+          $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNome() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $objDTO->getNumTmpExecucaoAtv());
+        }
+      }
+      return array( 'itensTable' => PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrGrid) , 'tmpExecucao' => $tmpExecucao );
+    }
 
 }

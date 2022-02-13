@@ -35,7 +35,23 @@ class MdUtlRevisaoDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFila', 'id_md_utl_adm_fila');
 
-      $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaEncaminhamentoContestacao', 'sta_encaminhamento_contestacao');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaEncaminhamentoContestacao', 'sta_encaminhamento_contestacao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Inicio', 'dth_inicio');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Prazo', 'dth_prazo');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucao', 'tempo_execucao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaTipoPresenca', 'sta_tipo_presenca');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoAtribuido', 'tempo_de_execucao_atribuido');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PercentualDesempenho', 'percentual_desempenho');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'AvaliacaoQualitativa', 'avaliacao_qualitativa');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRealizarAvalProdProd', 'sin_realizar_aval_prod_prod');
 
     $this->configurarPK('IdMdUtlRevisao',InfraDTO::$TIPO_PK_NATIVA);
 

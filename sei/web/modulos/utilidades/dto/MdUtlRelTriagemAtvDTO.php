@@ -23,7 +23,7 @@ class MdUtlRelTriagemAtvDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmAtividade', 'id_md_utl_adm_atividade');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'UnidadeEsforco', 'unidade_esforco');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucao', 'tempo_execucao');
 
     $this->configurarPK('IdMdUtlRelTriagemAtv', InfraDTO::$TIPO_PK_NATIVA);
 
@@ -38,14 +38,14 @@ class MdUtlRelTriagemAtvDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PrazoRevisaoAtividade', 'atv.prz_revisao_atv', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinAtvRevAmostragem','atv.sin_atv_rev_amostragem','md_utl_adm_atividade atv');
 
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'ComplexidadeAtividade', 'atv.complexidade', 'md_utl_adm_atividade atv');    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'VlTmpExecucaoAtv', 'atv.tmp_execucao_atv', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'NomeAtividade', 'atv.nome', 'md_utl_adm_atividade atv');
-    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'VlUndEsforcoAtv', 'atv.und_esforco_atv', 'md_utl_adm_atividade atv');
-    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'VlUndEsforcoRev', 'atv.und_esforco_rev', 'md_utl_adm_atividade atv');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'VlTmpExecucaoRev', 'atv.tmp_execucao_rev', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinAnalise', 'atv.sin_analise', 'md_utl_adm_atividade atv');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinObrigatorio', 'mp.sin_obrigatorio', 'md_utl_adm_atv_serie_prod mp');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'StaAplicabilidadeSerie', 'mp.sta_aplicabilidade_serie', 'md_utl_adm_atv_serie_prod mp');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmAtvSerieProd', 'mp.id_md_utl_adm_atv_serie_prod', 'md_utl_adm_atv_serie_prod mp');
-    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'UnidadeEsforcoProduto', 'mp.und_esforco_rev_produto', 'md_utl_adm_atv_serie_prod mp');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'TempoExecucaoProduto', 'mp.tmp_execucao_rev_produto', 'md_utl_adm_atv_serie_prod mp');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdSerieRel', 'mp.id_serie', 'md_utl_adm_atv_serie_prod mp');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmTpProduto', 'mp.id_md_utl_adm_tp_produto', 'md_utl_adm_atv_serie_prod mp');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeSerie','s.nome','serie s');

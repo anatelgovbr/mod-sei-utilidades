@@ -50,7 +50,7 @@ class MdUtlControleDsmpDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlRevisao', 'id_md_utl_revisao');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'UnidadeEsforco', 'unidade_esforco');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucao', 'tempo_execucao');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Atual', 'dth_atual');
 
@@ -68,13 +68,22 @@ class MdUtlControleDsmpDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlContestRevisao', 'id_md_utl_contest_revisao');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaAtribuido', 'sta_atribuido');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaTipoPresenca', 'sta_tipo_presenca');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoAtribuido', 'tempo_de_execucao_atribuido');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PercentualDesempenho', 'percentual_desempenho');
+
+
     $this->configurarPK('IdMdUtlControleDsmp',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila fila', 'fila.id_md_utl_adm_fila');
     $this->configurarFK('IdUnidade', 'unidade und', 'und.id_unidade');
     $this->configurarFK('IdUsuarioAtual', 'usuario ua', 'ua.id_usuario');
     $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario', $this->getUsuarioDistribuicaoFK());
-    $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp', 'id_md_utl_adm_tp_ctrl_desemp');
+    $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp dsmp', 'dsmp.id_md_utl_adm_tp_ctrl_desemp');
     $this->configurarFK('IdProcedimento', 'procedimento proced', 'proced.id_procedimento');
     $this->configurarFK('IdProcedimento', 'protocolo prot', 'prot.id_protocolo');
     $this->configurarFK('IdTpProcedimento', 'tipo_procedimento tp', 'tp.id_tipo_procedimento');
@@ -157,7 +166,10 @@ class MdUtlControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeJustContestacao', 'majc.nome','md_utl_adm_just_contest majc');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'IdJustContestacao', 'majc.id_md_utl_adm_just_contest','md_utl_adm_just_contest majc');
 
-      //Atributos de Apoio
+    // Tipo Controle Desempenho
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeTpControle', 'dsmp.nome','md_utl_adm_tp_ctrl_desemp dsmp');
+
+    //Atributos de Apoio
      $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'SinVerificarPermissao');
 
   }

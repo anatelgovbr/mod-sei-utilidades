@@ -55,15 +55,23 @@ $objFilaRN                  = new MdUtlAdmFilaRN();
 $objMdUtlAdmAtvSerieProdDTO = new MdUtlAdmAtvSerieProdDTO();
 $objMdUtlAnaliseDTO         = new MdUtlAnaliseDTO();
 
-$idTipoControle           = $objMdRelTpCtrlUndRN->getTipoControleUnidadeLogada();
+$objProcedimentoDTO        = $objRegrasGerais->getObjProcedimentoPorId($idProcedimento);
+$numProcessoFormatado      = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado(); 
+$objProcedimentoDTO = null;
+// retorna objeto controle desempenho
+$objControleDsmpDTO        = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
+
+$idUsuarioDistribuicao    = $objControleDsmpDTO->getNumIdUsuarioDistribuicao();
+$idTipoControle           = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+$situacaoAtual            = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
+
 $idFilaAtiva              = $_GET['id_fila'];
 $selEncaminhamentoAnalise ='';
-$arrObjFilaDTO            = $objFilaRN->getFilasTipoControle($idTipoControle);
+$arrObjFilaDTO            = $objFilaRN->getFilasVinculadosUsuario( $idTipoControle ); #$objFilaRN->getFilasTipoControle($idTipoControle);
 $selFila                  = MdUtlAdmFilaINT::montarSelectFilas('', $arrObjFilaDTO);
 $selEncaminhamentoAnalise = MdUtlControleDsmpINT::montarSelectEncaminhamentoAnaliseTriagem();
 
 // Processo para recuperar ids do rel_triagem_atv
-$objControleDsmpDTO        = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
 $idMdUtlAnalise           = $objControleDsmpDTO->getNumIdMdUtlAnalise();
 $idTriagem                = $objControleDsmpDTO->getNumIdMdUtlTriagem();
 
@@ -90,7 +98,6 @@ if(!is_null($idMdUtlAnalise)){
     $vlEncaminhamento         = !is_null($objMdUtlAnaliseDTO) ? $objMdUtlAnaliseDTO->getStrStaEncaminhamentoAnalise() : '';
     $selEncaminhamentoAnalise = MdUtlControleDsmpINT::montarSelectEncaminhamentoAnaliseTriagem($vlEncaminhamento);
     $selFila                  = MdUtlAdmFilaINT::montarSelectFilas($vlFila, $arrObjFilaDTO);
-
 }
 
 if(!is_null($idProcedimento) && !$acaoPrincipal != $_GET['acao']){
@@ -131,6 +138,16 @@ switch ($_GET['acao']) {
         if(!empty($_POST)){
           
             try {
+                if( $_POST['hdnIdRetriagem'] == 1 ){
+                  $objMdUtlAdmAtividadeRN = new MdUtlAdmAtividadeRN();
+                  $dados = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem( $_POST['idsAtividades'] );
+                  $_POST['hdnTbAtividade'] = $dados['itensTable'];
+                  $_POST['hdnTmpExecucao'] = $dados['tmpExecucao'];
+                  $_POST['hdnIsPossuiAnalise'] = 'S';
+                  $objTriagemDTO = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
+                  $isRetriagemConcluida = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
+                }
+
                 $objRn = new MdUtlAnaliseRN();
                 $isProcessoConcluido = $objRn->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado, false));
 
@@ -225,15 +242,15 @@ switch ($_GET['acao']) {
 
 
 
-        $arrComandos[] = '<button type="submit" accesskey="s" id="btnSalvar" value="salvar" class="infraButton botaoSalvar">
+        $arrComandos[] = '<button type="submit" accesskey="s" id="btnSalvar" value="Salvar" class="infraButton botaoSalvar">
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
         $arrComandos[] = '<button type="button" accesskey="t" id="btnRetriagem" value="Retriagem" onclick="RetriagemAnlCorrecao();" class="infraButton">
                                      Re<span class="infraTeclaAtalho">t</span>riagem
                             </button>';
 
-        $arrComandos[] = '<button type="button" accesskey="r" id="btnFecharSelecao" value="Cancelar" onclick="abrirModalRevisao();" class="infraButton">
-                                    <span class="infraTeclaAtalho">R</span>evisão
+        $arrComandos[] = '<button type="button" accesskey="v" id="btnFecharSelecao" value="Revisao" onclick="abrirModalRevisao();" class="infraButton">
+                                    A<span class="infraTeclaAtalho">v</span>aliação
                             </button>';
 
         $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
@@ -257,6 +274,16 @@ switch ($_GET['acao']) {
                 $objRevisaoRN->desativar(array($objRevisaoDTO));
                 $objMdUtlAnaliseRN->desativar(array($objMdUtlAnaliseDTO));
 
+                if( $_POST['hdnIdRetriagem'] == 1 ){
+                  $objMdUtlAdmAtividadeRN      = new MdUtlAdmAtividadeRN();
+                  $dados = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem( $_POST['idsAtividades'] );
+                  $_POST['hdnTbAtividade'] = $dados['itensTable'];
+                  $_POST['hdnTmpExecucao'] = $dados['tmpExecucao'];
+                  $_POST['hdnIsPossuiAnalise'] = 'S';
+                  $objTriagemDTO = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
+                  $isRetriagemConcluida = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
+                }
+
                 $isProcessoConcluido = $objMdUtlAnaliseRN->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado, true));
 
                 if($isPgPadrao == 0) {
@@ -278,8 +305,6 @@ switch ($_GET['acao']) {
         throw new InfraException("Ação '" . $_GET['acao'] . "' não reconhecida.");
     //endregion
 }
-
-
 
 $numRegistros = count($idsAtividades) > 0 ? count($arrObjs) : 0;
 
@@ -308,18 +333,25 @@ if ($numRegistros > 0) {
     $strCssTr = '<tr class="infraTrEscura">';
     $linhaClara = true;
     $cont = 0;
+    $bloco = 1;
+    $idRelTriagem2 = $arrObjs[0]->getNumIdMdUtlRelTriagemAtv();
     for ($i = 0; $i < $numRegistros; $i++) {
 
         //vars
         $observacao     = "";
         $numSei         = "";
-        $idRelTriagem   = "";
+        $idRelTriagem   = "";         
         $strValor       = 'N';
 
+        if( $idRelTriagem2 != $arrObjs[$i]->getNumIdMdUtlRelTriagemAtv() ){
+            $bloco++;
+        }
+
+        $idRelTriagem2  = $arrObjs[$i]->getNumIdMdUtlRelTriagemAtv();
         $idRelTriagem   = $arrObjs[$i]->getNumIdMdUtlRelTriagemAtv();
         $strId          = $i;
         $strIdSerieProd = $isCadastrar ? $arrObjs[$i]->getNumIdMdUtlAdmAtvSerieProd() : null;
-        $undEsforco     = $isCadastrar || $isAlterar ? $arrObjs[$i]->getNumUnidadeEsforcoProduto() : 0;
+        $TmpExecucao     = $isCadastrar || $isAlterar ? $arrObjs[$i]->getNumTempoExecucaoProduto() : 0;
         $idSerieAtual   = $isCadastrar || $isAlterar ? $arrObjs[$i]->getNumIdSerieRel() : $arrObjs[$i]->getNumIdSerie();
         $isDocumentoSEI = !is_null($idSerieAtual);
         $vlProduto      = $isDocumentoSEI ? $arrObjs[$i]->getStrNomeSerie() : $arrObjs[$i]->getStrNomeProduto();
@@ -339,27 +371,38 @@ if ($numRegistros > 0) {
             if ($isAnalise) {
                 $cont+=1;
                 $observacao    = $arrObjs[$i]->getStrObservacaoAnalise();
+                $nomeAtividade = $arrObjs[$i]->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $arrObjs[$i]->getNumComplexidadeAtividade() ] . ')';
                 $numSei        = $arrObjs[$i]->getStrDocumentoFormatado();
-                $nomeAtividade = $arrObjs[$i]->getStrNomeAtividade();
                 $strValor = 'S';
             }
         }
-
 
         $strResultado .= $strCssTr;
 
         //Linha Checkbox
         $classObrigatorio = $isObrigatorio ? 'class="classTdObrigatorio"' : '';
-        $strResultado .= '<td align="center" valign="top" ' . $classObrigatorio.' >';
+        $strResultado .= '<td align="center" valign="middle" ' . $classObrigatorio.' >';
         $attrAdapt = $strValor == 'S' ? ' checkado = "S"' : '';
         $attrs = $disabled . $attrAdapt;
 
-        $strResultado .= PaginaSEI::getInstance()->getTrCheck($i, $strId,  $arrObjs[$i]->getStrNomeAtividade(),null,null,$attrs);
+        $strResultado .= PaginaSEI::getInstance()->getTrCheck($i, $strId,  $arrObjs[$i]->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjs[$i]->getNumComplexidadeAtividade()] . ')',null,null, $attrs)  ;
         $strResultado .= '</td>';
 
         //Linha Nome Atividade
-        $strResultado .= '<td>';
-        $strResultado .= PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeAtividade());
+        $strResultado .= '<td style="width: 20%;">';
+        $vlrUnidEsf = !is_null($arrObjs[$i]->getNumTempoExecucao()) ? $arrObjs[$i]->getNumTempoExecucao() : 0;
+
+        if(empty($idMdUtlAnalise)){            
+            $vlrUnidEsf = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho( $vlrUnidEsf , $idTipoControle , $idUsuarioDistribuicao );
+        }else{
+            if( $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE ){
+                $vlrUnidEsf = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho( $vlrUnidEsf , $idTipoControle , $idUsuarioDistribuicao );
+            }else{
+                $vlrUnidEsf = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho( $vlrUnidEsf , $idTipoControle , $objMdUtlAnaliseDTO->getNumIdUsuario());
+            }                        
+        }
+        $vlrUnidEsf =  MdUtlAdmPrmGrINT::convertToHoursMins( $vlrUnidEsf );
+        $strResultado .= PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjs[$i]->getNumComplexidadeAtividade()]) . ') - ' . $vlrUnidEsf;
         $strResultado .= '</td>';
 
         //Linha Produtos Esperados
@@ -378,8 +421,9 @@ if ($numRegistros > 0) {
         $strResultado .= '</td>';
 
         //Linha Observação
-        $strResultado .= '<td style="">';
-        $strResultado .= '<input disabled="disabled" '.$disabled.' style="width: 98%;" id="observacao_'.$i.'" name="observacao_'.$strId.'" type="text" value="'.$observacao.'"/>';
+        $strResultado .= '<td style="padding: 2px 10px 2px 5px;">';
+        //$strResultado .= '<input disabled="disabled" '.$disabled.' style="width: 98%;" id="observacao_'.$i.'" name="observacao_'.$strId.'" type="text" value="'.$observacao.'" onkeypress="return infraMascaraTexto(this,event,250);"/>';
+        $strResultado .= '<textarea disabled="disabled" '.$disabled.' id="observacao_'.$i.'" name="observacao_'.$strId.'" style="resize: none; width: 100%;" rows="2" cols="40" class="infraTextArea" maxlength="500" onkeypress="return infraMascaraTexto(this,event, 500);">'.$observacao.'</textarea>';
         $strResultado .= '</td>';
 
         //Linha idSerieProd
@@ -391,9 +435,9 @@ if ($numRegistros > 0) {
         $strResultado .= '<input style="width: 97%;" name="idSerieProd_'.$strId.'" type="text" value="'.$strIdSerieProd.'"/>';
         $strResultado .= '</td>';
 
-        //Linha undEsforco
+        //Linha TmpExecucao
         $strResultado .= '<td style="display: none">';
-        $strResultado .= '<input style="width: 97%;" id="undEsforco" name="undEsforco_'.$strId.'" type="text" value="'.$undEsforco.'"/>';
+        $strResultado .= '<input style="width: 97%;" id="TmpExecucao" name="TmpExecucao_'.$strId.'" type="text" value="'.$TmpExecucao.'"/>';
         $strResultado .= '</td>';
 
         //Linha Produto
@@ -402,8 +446,9 @@ if ($numRegistros > 0) {
         $strResultado .= '</td>';
 
         //Linha Atividade
-        $strResultado .= '<td style="display: none">';
-        $strResultado .= '<input style="width: 97%;" id="idAtividade" name="idAtividade_'.$strId.'" type="text" value="'.$arrObjs[$i]->getNumIdMdUtlAdmAtividade().'"/>';
+        $strResultado .= '<td style="display: none"><span>'.$bloco.'</span>';
+        $strResultado .= '<input style="width: 97%;" id="idAtividade" name="idAtividade_'.$strId.'" type="text" value="'.$arrObjs[$i]->getNumIdMdUtlAdmAtividade().'" />';
+
         $strResultado .= '</td>';
 
         //Linha Produto Nome
@@ -501,7 +546,7 @@ textarea{
 }
 
 #tdNumSei{
-    width: 15%;
+    width: 9%;
 }
 
 #tdObs{
@@ -513,10 +558,15 @@ textarea{
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
 require_once ('md_utl_geral_js.php');
+require_once ('md_utl_funcoes_js.php');
 require_once ('md_utl_analise_cadastro_js.php');
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
+
+//texto tooltip
+$txtTooltipEncaminhamentoAnalise = 'A depender das parametrizações em seu perfil ou sobre as Atividades entregues, o que for selecionado neste campo será meramente sugestivo ou será executado imediatamente.\n \n Selecione a opção "Associar em Fila após Finalizar Fluxo" caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual.\n \n Ou selecione a opção "Finalizar Fluxo" para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual.';
+
 ?>
     <form onsubmit="return onSubmitForm();" id="frmUtlAnaliseCadastro" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -531,7 +581,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" name="hdnIdFilaAtiva" id="hdnIdFilaAtiva" value="<?php echo $idFilaAtiva ?>"/>
         <input type="hidden" name="hdnIdTpCtrl" id="hdnIdTpCtrl" value="<?php echo $idTipoControle ?>"/>
         <input type="hidden" name="hdnIdCtrlProcFilaCorrecao" id="hdnIdCtrlProcFilaCorrecao" value="<?php echo $idCtrlProcFilaCorrecao ?>"/>
-        <input type="hidden" name="hdnUndEsforco" id="hdnUndEsforco" />
+        <input type="hidden" name="hdnTmpExecucao" id="hdnTmpExecucao" />
         <input type="hidden" name="hdnFila" id="hdnFila" value="<?=$vlFila?>"/>
         <input type="hidden" name="hdnEncaminhamentoAnl" id="hdnEncaminhamentoAnl" value="<?=$vlEncaminhamento?>"/>
         <input type="hidden" name="hdnStaPermiteAssociarAnalise" id="hdnStaPermiteAssociarAnalise" value="<?php echo MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA ?>"/>
@@ -539,6 +589,24 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
         <input type="hidden" name="hdnIdRetriagem" id="hdnIdRetriagem"/>
         <input type="hidden" name="hdnIdRtgAnlCorrecao" id="hdnIdRtgAnlCorrecao"/>
+        <input type="hidden" name="idsAtividades" id="idsAtividades">
+        
+        <?php if( $isPgPadrao != 0 ) { ?>
+            <label style='margin-bottom: .2em; font-weight: bold; line-height: 1.5em; color: black;'>
+                Número do Processo:
+            </label>
+            <label><?= $numProcessoFormatado ?> </label>
+            <div class="clear"></div>
+            <br><br>
+        <?php } ?>
+
+        <label id="lblTipoControle" for="selTipoControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label><br/>
+        <div class="clear"></div>
+        <input type="text" style="width:300px" id="txtTipoControle" name="txtTipoControle" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeTpControle() ?>" disabled/><br/><br/>
+
+        <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label><br/>
+        <div class="clear"></div>
+        <input type="text" style="width:300px" id="txtNomeFila" name="txtNomeFila" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeFila() ?>" disabled/><br/><br/>
 
 <?php
 
@@ -548,7 +616,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <div id="divInformacaoComplementar" style="margin-top: 1.8%">
             <label id="lblInformacaoComplementar" style="display: block" for="txaInformacaoComplementar" class="infraLabelOpcional"
                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                Informação Complementar:
+                Informações Complementares da Análise:
             </label>
 
             <textarea <?=$disabledConsultar?> id="txaInformacaoComplementar" name="txaInformacaoComplementar" style="resize: none;" rows="4" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?php echo $strInformComp ?></textarea>
@@ -557,9 +625,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <div id="divPrincipalEncaminhamento">
           <div id="divEncaminhamentoAnl">
                 <label id="lblEncaminhamentoAnl" for="selEncaminhamentoAnl"  class="infraLabelObrigatorio">Encaminhamento da Análise:</label>
-                <a style="" id="btAjudaEncAnalise" <?=PaginaSEI::montarTitleTooltip('Informe o Tipo de Encaminhamento da Análise.')?>
+                <a style="" id="btAjudaEncAnalise" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoAnalise)?>
                  tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                  <img class="tamanhoBtnAjuda" id="imgAjudaEncAnalise" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
+                  <img class="tamanhoBtnAjuda" id="imgAjudaEncAnalise" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" style="width: 16px; height: 16px; margin-bottom: -3px; margin-left: 4px" class="infraImg"/>
                 </a>
                 <select id="selEncaminhamentoAnl" name="selEncaminhamentoAnl" class="infraSelect padraoSelect"
                         onchange="controlarExibicaoAnalise(this);"

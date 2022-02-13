@@ -24,6 +24,8 @@ if(isset($_GET['arvore'])){
 $idProcedimento  = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 $idProcedimento = trim($idProcedimento);
 $urlInicial = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento);
+$strLinkAjaxListarHistoricoTipoControle = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_hist_controle_dsmp_tp_controle&acao_origem=' . $_GET['acao']);
+$strLinkAjaxVerificarSePodeDistribuirParaMim = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_verificar_pode_distrib_para_mim&id_procedimento=' . $idProcedimento);
 
 
 
@@ -51,7 +53,7 @@ $acaoPrincipal = 'md_utl_processo_listar';
 $strUrlPadrao = 'controlador.php?acao=' . $acaoPrincipal;
 
 // Vars
-$isParametrizado = null;
+$isParametrizado = true;
 $nomeStatus      = '';
 $strTitulo       = 'Detalhamento do Processo ';
 $arrCtrlVisualizacao = array();
@@ -64,13 +66,31 @@ $objTriagemRN              = new MdUtlTriagemRN();
 $objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objAnaliseRN              = new MdUtlAnaliseRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
+$objMdUtlAdmTpCtrlUsuRN    = new MdUtlAdmRelTpCtrlDesempUsuRN();
 $objMdUtlAdmPrmGrRN        = new MdUtlAdmPrmGrRN();
 $objProcedimentoDTO        = $objRegrasGerais->getObjProcedimentoPorId($idProcedimento);
 
+$objDTO            = new MdUtlProcedimentoDTO();
+$objProcedimentoRN = new ProcedimentoRN(); 
+
+$idTipoControle = null;
+
+$objDTO->setDblIdProcedimento( $idProcedimento );
+$objDTO->setNumIdUnidade( SessaoSEI::getInstance()->getNumIdUnidadeAtual() );
+$objDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+
+$res = $objProcedimentoRN->contarRN0279($objDTO);
+
+if ( !is_null($res) ) {
+    $res = $objProcedimentoRN->listarRN0278($objDTO);    
+    if( !is_null($res[0]->getNumIdMdUtlAdmTpCtrlDesemp() ) ){
+        $idTipoControle = $res[0]->getNumIdMdUtlAdmTpCtrlDesemp();
+    }
+}
+
+#if( is_null( $idTipoControle) ) $idTipoControle = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 
 //Preenche Vars Principais
-//Tipo de Controle
-$idTipoControle = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
 if(!is_null($idTipoControle)) {
     $isParametrizado = $objMdUtlAdmUtlTpCtrlRN->verificaTipoControlePossuiParametrizacao($idTipoControle);
 }
@@ -80,9 +100,10 @@ $objMdUtlAdmTpCtrlDTO->retStrStaFrequencia();
 $objMdUtlAdmTpCtrlDTO->setNumMaxRegistrosRetorno(1);
 $objDTOTipoControle = $objMdUtlAdmUtlTpCtrlRN->consultar($objMdUtlAdmTpCtrlDTO);
 
-$staFrequencia = $objDTOTipoControle->getStrStaFrequencia();
+$staFrequencia = is_null($objDTOTipoControle) ? '0' : $objDTOTipoControle->getStrStaFrequencia();
 
-$isPermiteAcoes = $objMdUtlControleDsmpRN->validaVisualizacaoUsuarioLogado($idTipoControle);
+$options = array( 'tp_procedimento' => true , 'idTpProced' => $objProcedimentoDTO->getNumIdTipoProcedimento() );
+$isPermiteAcoes = is_null($idTipoControle) ? true : $objMdUtlControleDsmpRN->validaVisualizacaoUsuarioLogado($idTipoControle , null , $options );
 
 if($isPermiteAcoes){
     $isPermiteAcoes = $objRegrasGerais->validarSituacaoProcesso($idProcedimento);
@@ -108,15 +129,17 @@ $idControleDsmp       = 0;
 
 
 if(!is_null($objControleDsmpDTO)){
-    $idStatus         = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
-    $idFila           = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
-    $dthDataHoraAtual = $objControleDsmpDTO->getDthAtual();
-    $strNomeUsuarioAtual  = $objControleDsmpDTO->getStrNomeUsuarioAtual();
-    $strSiglaUsuarioAtual = $objControleDsmpDTO->getStrSiglaUsuarioAtual();
-    $strDetalheAtual  = $objControleDsmpDTO->getStrDetalhe();
-    $strStatusAtual   = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
-    $strTipoAcaoAtual = $objControleDsmpDTO->getStrTipoAcao();
-    $idControleDsmp    = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
+    $idStatus                 = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
+    $idFila                   = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
+    $dthDataHoraAtual         = $objControleDsmpDTO->getDthAtual();
+    $strNomeUsuarioAtual      = $objControleDsmpDTO->getStrNomeUsuarioAtual();
+    $strSiglaUsuarioAtual     = $objControleDsmpDTO->getStrSiglaUsuarioAtual();
+    $strDetalheAtual          = $objControleDsmpDTO->getStrDetalhe();
+    $strNomeTipoControleAtual = $objControleDsmpDTO->getStrNomeTpControle();
+    $strNomeFila              = $objControleDsmpDTO->getStrNomeFila();
+    $strStatusAtual           = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
+    $strTipoAcaoAtual         = $objControleDsmpDTO->getStrTipoAcao();
+    $idControleDsmp           = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
 
     $isUsuarioDuplicado = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUsuario();
 }
@@ -136,7 +159,7 @@ $idRevisaoAjustePrz  = $isStatusAjustePrazo &&  !is_null($objControleDsmpDTO) ? 
 $arrCtrlUrls      = MdUtlControleDsmpINT::retornaUrlsAcessoDsmp($idStatus, $isPossuiAnalise, $idProcedimento, $idFila, $idUsuarioDistrb);
 
 //Urls
-$strLinkAssociarFila   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_controle_dsmp_associar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&id_tp_controle_desmp=' . $idTipoControle.'&is_detalhamento=1');
+$strLinkAssociarFila   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_controle_dsmp_associar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&is_detalhamento=1');
 $strLinkIniciarTriagem = $arrCtrlUrls['TRIAGEM'];
 $strLinkIniciarAnalise = $arrCtrlUrls['ANALISE'];
 $strLinkIniciarRevisao = $arrCtrlUrls['REVISAO'];
@@ -149,44 +172,58 @@ $strLinkConcluirProcesso =  $isProcessoConcluido == 1  ? SessaoSEI::getInstance(
 //Controle de Visualização
 $idTipoProcedimento = $objProcedimentoDTO->getNumIdTipoProcedimento();
 
-$isTipoProcessoParametrizado = $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($idTipoProcedimento, $idTipoControle));
+$isTipoProcessoParametrizado = is_null($idTipoControle) ? true : $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($idTipoProcedimento, $idTipoControle));
 $arrCtrlVisualizacao = MdUtlControleDsmpINT::retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila, $idRevisaoAjustePrz);
 
+$idsTpCtrlUsuarioGestor = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
+
+$isGestorTpControle = true;
+if(!is_null($idTipoControle)){
+    if ($idsTpCtrlUsuarioGestor) {
+        $isGestorTpControle = in_array($idTipoControle, $idsTpCtrlUsuarioGestor);
+    } else {
+        $isGestorTpControle = false;
+    }
+}
+
 if (count($arrCtrlVisualizacao) > 0 && $isPermiteAcoes) {
-    if($arrCtrlVisualizacao['ASSOCIACAO']) {
-        $arrComandos[] = '<button type="button" accesskey="A" id="btnAssoFila" onclick="associarFila()" class="infraButton">
+    if($arrCtrlVisualizacao['ASSOCIACAO'] || $isGestorTpControle) {
+        $arrComandos[] = '<button type="button" accesskey="a" id="btnAssoFila" onclick="associarFila()" class="infraButton">
                                     <span class="infraTeclaAtalho">A</span>ssociar à Fila</button>';
     }
 
     if($arrCtrlVisualizacao['ATRIBUICAO']) {
         if($isUsuarioDuplicado) {
-            $arrComandos[] = '<button type="button" accesskey="B" id="btnAtribuicao" onclick="exibirExcessaoDuplicidade()" class="infraButton">
-                                    Atri<span class="infraTeclaAtalho">b</span>uir a mim</button>';
+            $arrComandos[] = '<button type="button" accesskey="m" id="btnAtribuicao" onclick="exibirExcessaoDuplicidade()" class="infraButton">'
+                                . MdUtlControleDsmpINT::getLabelBtn(2, $idStatus) .
+                            '</button>';
         }else {
-            $arrComandos[] = '<button type="button" accesskey="B" id="btnAtribuicao" onclick="atribuicaoAutomatica()" class="infraButton">
-                                    Atri<span class="infraTeclaAtalho">b</span>uir a mim</button>';
+            $arrComandos[] = '<button type="button" accesskey="m" id="btnAtribuicao" onclick="atribuicaoAutomatica()" class="infraButton">'
+                                . MdUtlControleDsmpINT::getLabelBtn(2, $idStatus) .
+                            '</button>';
         }
     }
 
-    if($arrCtrlVisualizacao['DISTRIBUICAO']) {
-        $arrComandos[] = '<button type="button" accesskey="i" id="btnDistribuicao" onclick="iniciarDistribuicao()" class="infraButton">
-                                    D<span class="infraTeclaAtalho">i</span>stribuir</button>';
+    if($arrCtrlVisualizacao['DISTRIBUICAO']) {        
+        $arrComandos[] = '<button type="button" accesskey="i" id="btnDistribuicao" onclick="iniciarDistribuicao()" class="infraButton">'
+                            . MdUtlControleDsmpINT::getLabelBtn(1, $idStatus) .
+                        '</button>';
     }
 
 
     if($arrCtrlVisualizacao['TRIAGEM']) {
-        $arrComandos[] = '<button type="button" accesskey="T" id="btnIniciarTriagem" onclick="iniciarTriagem()" class="infraButton">
+        $arrComandos[] = '<button type="button" accesskey="t" id="btnIniciarTriagem" onclick="iniciarTriagem()" class="infraButton">
                                     <span class="infraTeclaAtalho">T</span>riagem</button>';
     }
 
     if($arrCtrlVisualizacao['ANALISE']) {
-        $arrComandos[] = '<button type="button" accesskey="N" id="btnAnalise" onclick="iniciarAnalise()" class="infraButton">
+        $arrComandos[] = '<button type="button" accesskey="n" id="btnAnalise" onclick="iniciarAnalise()" class="infraButton">
                                     A<span class="infraTeclaAtalho">n</span>álise</button>';
     }
 
     if($arrCtrlVisualizacao['REVISAO']) {
-        $arrComandos[] = '<button type="button" accesskey="R" id="btnRevisao" onclick="iniciarRevisao()" class="infraButton">
-                                    <span class="infraTeclaAtalho">R</span>evisão</button>';
+        $arrComandos[] = '<button type="button" accesskey="v" id="btnRevisao" onclick="iniciarRevisao()" class="infraButton">
+                                    A<span class="infraTeclaAtalho">v</span>aliação</button>';
     }
 
 }
@@ -195,6 +232,8 @@ switch ($_GET['acao']) {
 
     //region Listar
     case $acaoPrincipal:
+        $arrObjTpControle = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada(array('origem'=>'detalhamento'));         
+        $arrIdsTpCtrlAux  = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',null);        
         break;
     //endregion
 
@@ -211,111 +250,11 @@ switch ($_GET['acao']) {
     //endregion
 }
 
-
-//Tabela histórico
-$objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
-
-$objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
-$objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
-$objMdUtlHistControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
-$objMdUtlHistControleDsmpDTO->retStrNomeUsuario();
-$objMdUtlHistControleDsmpDTO->retStrSiglaUsuario();
-$objMdUtlHistControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
-$objMdUtlHistControleDsmpDTO->retTodos();
-
-PaginaSEI::getInstance()->prepararOrdenacao($objMdUtlHistControleDsmpDTO, 'Atual', InfraDTO::$TIPO_ORDENACAO_DESC);
-PaginaSEI::getInstance()->prepararPaginacao($objMdUtlHistControleDsmpDTO, 200);
-
-$arrObjsMdUtlHistControleDsmpDTO = $objMdUtlHistControleDsmpRN->listar($objMdUtlHistControleDsmpDTO);
-$numRegistros = count($arrObjsMdUtlHistControleDsmpDTO);
-PaginaSEI::getInstance()->processarPaginacao($objMdUtlHistControleDsmpDTO);
-
-
-    if ($numRegistros > 0) {
-
-        $sinPrimeiroStatusHist = $arrObjsMdUtlHistControleDsmpDTO[0]->getStrStaAtendimentoDsmp();
-        $sinPrimeiroStatusHist = trim($sinPrimeiroStatusHist);
-
-        if(($strStatusAtual == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE || $strStatusAtual == MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM) && $sinPrimeiroStatusHist == MdUtlControleDsmpRN::$EM_REVISAO){
-            $strTipoAcaoAtual = 'Revisão';
-        }
-
-
-        $strResultado .= '<table width="99%" class="infraTable" summary="Detalhamento" id="tbHistDetalhe">';
-        $strResultado .= '<caption class="infraCaption">';
-        $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela($strTitulo, $numRegistros);
-        $strResultado .= '</caption>';
-
-
-        $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">    Data/Hora</th>' . "\n";
-        $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">    Usuário Ação </th>' . "\n";
-        $strResultado .= '<th class="infraTh" width="18%" style="text-align: center">    Tipo de Ação </th>' . "\n";
-        $strResultado .= '<th class="infraTh" width="25%" style="text-align: center">    Detalhe</th>' . "\n";
-        $strResultado .= '<th class="infraTh" width="25%" style="text-align: center">    Status </th>' . "\n";
-        $strResultado .= '</tr>' . "\n";
-
-        $strCssTr = '<tr class="infraTrClara">';
-
-
-        for ($i = 0; $i < $numRegistros; $i++) {
-
-
-            $strNomeUsu  = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeUsuario();
-            $strStatus   = trim($arrObjsMdUtlHistControleDsmpDTO[$i]->getStrStaAtendimentoDsmp());
-            $data        = $arrObjsMdUtlHistControleDsmpDTO[$i]->getDthAtual();
-            $strDetalhe  = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrDetalhe();
-            $strSiglaUsu = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrSiglaUsuario();
-            $strTipoAcao = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao();
-            $dataFormatada = MdUtlHistControleDsmpINT::formatarDataHora($data);
-
-            $idAtendimentoAnterior = 0;
-            if($i > 0){
-                $posicaoAnterior = $i - 1;
-                $idAtendimentoAnterior = $arrObjsMdUtlHistControleDsmpDTO[$posicaoAnterior]->getNumIdAtendimento();
-                if($idAtendimentoAnterior != $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdAtendimento()){
-                    $strCssTr = ($strCssTr == '<tr class="infraTrClara">') ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">';
-                }
-
-                //$strCssTr = ($strCssTr == '<tr class="infraTrClara">' && $idAtendimentoAnterior !=  $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdAtendimento()) ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">';
-            }
-
-
-
-            $strResultado .= $strCssTr;
-            //Linha Data/Hora
-            $strResultado .= '<td class="tdDataHora" style="text-align: center">';
-            $strResultado .= PaginaSEI::tratarHTML($dataFormatada);
-            $strResultado .= '</td>';
-
-            //Linha Usuário ação
-            $strResultado .= '<td class="tdNomeUsuario" style="text-align: center">';
-            $strResultado .=             '<a class="ancoraSigla" href="javascript:void(0);" alt="' . PaginaSEI::tratarHTML($strNomeUsu) . '" title="' . PaginaSEI::tratarHTML($strNomeUsu) . '">' . PaginaSEI::tratarHTML($strSiglaUsu) . '</a>';
-            $strResultado .= '</td>';
-
-            //Linha Tipo de ação
-            $strResultado .= '<td class="tdTipoAcao" style="text-align: center">';
-            $strResultado .= PaginaSEI::tratarHTML($strTipoAcao);
-            $strResultado .= '</td>';
-
-            //Linha Detalhe
-            $strResultado .= '<td class="tdDetalhe" style="text-align: center">';
-            $strResultado .= $strDetalhe;
-            $strResultado .= '</td>';
-
-            //Linha Fila Status
-            $strResultado .= '<td class="tdStatusProcesso" style="text-align: center">';
-            $strResultado .= !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
-            $strResultado .= '</td>';
-
-
-            $strResultado .= '</tr>';
-        }
-            $strResultado .= '</table>';
-}
+$strResultado = MdUtlHistControleDsmpINT::retornarHistoricoPorTipoDeControle($idProcedimento, null, $strStatusAtual, $strTitulo);
+$numRegistros = MdUtlHistControleDsmpINT::retornarQuantidadeRegistroHistorico($idProcedimento);
 
 $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" value="Fechar" onclick="window.top.location.href=\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=' . $_GET['acao'] . '&acao_destino=' . $_GET['acao'] . $strParametros . PaginaSEI::montarAncora($arrStrIdProtocolo)) . '\';" 
 class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
-
 
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
@@ -330,7 +269,7 @@ PaginaSEI::getInstance()->abrirStyle();
     }
 
     #tblSituacaoAtual .tdCabecalho{
-        width: 80px;
+        width: 100px;
     }
 
     #tblSituacaoAtual .tdEscopo{
@@ -338,7 +277,7 @@ PaginaSEI::getInstance()->abrirStyle();
     }
 
     #fldSituacaoAtual{
-        width: 65%;
+        width: 500px;
     }
 <?php
 PaginaSEI::getInstance()->fecharStyle();
@@ -351,9 +290,11 @@ if(0) {
 <?php } ?>
 
 var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
+var permiteDistribuirParaMim = false;
 
 function inicializar() {
 
+    this.distribuirParaMimProcesso();
     var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
     var isProcessoConcl  = '<?php echo $isProcessoConcluido ?>';
     var msgConclusao = '<?php echo $msg107 ?>';
@@ -380,7 +321,7 @@ function inicializar() {
 
 
 function associarFila(){
-      infraAbrirJanela('<?=$strLinkAssociarFila?>', 'janelaAssinatura', 700, 450, 'location=0,status=1,resizable=1,scrollbars=1');
+      infraAbrirJanela('<?=$strLinkAssociarFila?>', 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');
 }
 
 function iniciarTriagem(){
@@ -407,10 +348,13 @@ function iniciarDistribuicao(){
 }
 
 function atribuicaoAutomatica() {
-    if(confirm("Confirma a Distribuição do Processo em sua carga?")){
-        window.location.href = '<?= $strLinkAtribuir ?>';
+    if(permiteDistribuirParaMim){
+        if(confirm("Confirma a Distribuição do Processo em sua carga?")){
+            window.location.href = '<?= $strLinkAtribuir ?>';
+        }
+    } else {
+        alert('Não é permitido Distribuir a Avaliação cuja tarefa no fluxo a ser avaliada tenha sido realizada pelo mesmo Membro Participante.')
     }
-
 }
 
 function exibirExcessaoDuplicidade(){
@@ -422,7 +366,50 @@ function fechar() {
     window.location.href = '<?= $strLinkFechar ?>';
 }
 
+function atualizarHistorico(){
 
+    var paramsAjax = {
+        idTipoControleSelecionado : document.getElementById('filtrarTipoControle').value,
+        idProcedimento : '<?= $idProcedimento?>',
+        strStatusAtual : '<?= $strStatusAtual?>',
+        strTitulo : '<?= $strTitulo?>',
+    };
+
+    $.ajax({
+        url: '<?=$strLinkAjaxListarHistoricoTipoControle?>',
+        type: 'POST',
+        dataType: 'XML',
+        data: paramsAjax,
+        success: function (response) {
+            $('#tbHistDetalhe').replaceWith($(response).find("NovaTabela").html());
+        },
+        error: function (e) {
+            console.error('Erro ao processar o XML do SEI: ' + e.responseText);
+        }
+    });
+}
+
+function distribuirParaMimProcesso(){
+
+    var paramsAjax = {
+        idProcedimento : '<?= $idProcedimento?>',
+    };
+
+    $.ajax({
+        url: '<?=$strLinkAjaxVerificarSePodeDistribuirParaMim?>',
+        type: 'POST',
+        dataType: 'XML',
+        data: paramsAjax,
+        success: function (response) {
+            if ($(response).find("PermiteDistribuirParaMim").html() == 1) {
+                permiteDistribuirParaMim = true;
+            }
+        },
+        error: function (e) {
+            console.error('Erro ao processar o XML do SEI: ' + e.responseText);
+        }
+    });
+}
 
 <?php
 if(0) {
@@ -449,18 +436,31 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         ?>
         <div class="bloco" id="divCabecalho">
             <div id="divProcesso" style="font-size: 1.1em;">
-            <label id="lblProcesso" for="txtProcesso" class="infraLabelObrigatorio">
-                Processo:
-            </label>
-            <label><?=$strNumeroProcedimento?></label>
-            </br>
+                <label class="infraLabelObrigatorio">
+                    Tipo de Controle:
+                </label>
+                <br>
+                <select id="filtrarTipoControle" style="width: 184px;" onchange="atualizarHistorico()">
+                    <?php echo $arrIdsTpCtrlAux ?>
+                </select>
             </div>
+            <br>
+            <!--
+            <div id="divProcesso" style="font-size: 1.1em;">                
+                <label id="lblProcesso" for="txtProcesso" class="infraLabelObrigatorio">
+                    Processo:
+                </label>
+                <label><?=$strNumeroProcedimento?></label>
+                
+                </br>
+            </div>
+            -->
             <?php if(is_null($objControleDsmpDTO)) {
                 if($isTipoProcessoParametrizado) {
                     ?>
                     <div style="font-size: 1.1em;">
                         <label id="lblStatus" for="txtStatus" class="infraLabelObrigatorio">
-                            Status Atual:
+                            Situação Atual:
                         </label>
                         <label>
                             <?php echo MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA; ?>
@@ -500,6 +500,30 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                             </td>
                         </tr>
 
+                    <!-- Tipo de Controle -->
+                        <tr>
+                            <td class="tdCabecalho">
+                                <label id="lblTipoControle" for="lblTipoControleText" class="infraLabelObrigatorio">
+                                    Tipo de Controle:
+                                </label></td>
+
+                            <td class="tdEscopo">
+                                <label id="lblTipoAcaoText"><?= $strNomeTipoControleAtual ?></label>
+                            </td>
+                        </tr>
+
+                    <!-- Tipo de Controle -->
+                        <tr>
+                            <td class="tdCabecalho">
+                                <label id="lblFila" for="lblFilaText" class="infraLabelObrigatorio">
+                                    Fila:
+                                </label></td>
+
+                            <td class="tdEscopo">
+                                <label id="lblNomeFilaText"><?= $strNomeFila ?></label>
+                            </td>
+                        </tr>
+
                     <!-- Tipo de Ação -->
                         <tr>
                             <td class="tdCabecalho">
@@ -528,7 +552,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                         <tr>
                             <td class="tdCabecalho">
                                 <label id="lblDetalhe" for="lblDetalheText" class="infraLabelObrigatorio">
-                                    Status Atual:
+                                    Situação Atual:
                                 </label>
                             </td>
                             <td class="tdEscopo">
@@ -556,6 +580,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl" value="<?php echo $isParametrizado ? '1' : '0'; ?>"/>
         <input type="hidden" id="hdnProtocoloFormatado" name="hdnProtocoloFormatado" value="<?php echo !is_null($objProcedimentoDTO) ? $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado() : '' ?>"/>
         <input type="hidden" id="hdnNomeFilaAtual" name="hdnNomeFilaAtual" value="<?php echo !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrNomeFila() : '' ?>"/>
+        <input type="hidden" id="hdnNomeTpCtrlAtual" name="hdnNomeTpCtrlAtual" value="<?php echo !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrNomeTpControle() : '' ?>"/>
         <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?php echo $idProcedimento?>"/>
         <input type="hidden" id="hdnIdStatusAtual" name="hdnIdStatusAtual" value="<?php echo !is_null($objControleDsmpDTO) ? $objControleDsmpDTO->getStrStaAtendimentoDsmp() : 0 ?>"/>
         <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?php echo $isProcessoAutorizadoConcluir ?>"/>

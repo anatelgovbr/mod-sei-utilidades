@@ -43,8 +43,8 @@ switch($_GET['acao']){
                     $arrUnidades = PaginaSEI::getInstance()->getArrValuesSelect($_POST['hdnUnidades']);
 
                     //Validar se já existe uma unidade cadastrada para outro tipo de controle.
-                    $objTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
-                    $objTipoControleUtilidadesUnidadeRN->validarDuplicidadeUnidade(array($arrUnidades));
+//                    $objTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+//                    $objTipoControleUtilidadesUnidadeRN->validarDuplicidadeUnidade(array($arrUnidades));
 
 
                     for ($x = 0; $x < count($arrUnidades); $x++) {

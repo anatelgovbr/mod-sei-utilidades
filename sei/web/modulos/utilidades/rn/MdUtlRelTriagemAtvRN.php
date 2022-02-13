@@ -126,7 +126,7 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
         $objRelTriagemAtivDTO->setNumIdMdUtlRelTriagemAtv(null);
         $objRelTriagemAtivDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
         $objRelTriagemAtivDTO->setNumIdMdUtlAdmAtividade($atividade[1]);
-        $objRelTriagemAtivDTO->setNumUnidadeEsforco($atividade[6]);
+        $objRelTriagemAtivDTO->setNumTempoExecucao($atividade[6]);
         $arrRetorno[] = $this->cadastrar($objRelTriagemAtivDTO);
       }
     }
@@ -166,8 +166,10 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
      $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlAnalise($idAnalise);
      $objMdUtlRelAnaliseProdutoDTO->setStrSinAtivoAnalise('S');
      $objMdUtlRelAnaliseProdutoDTO->retStrNomeProduto();
+     $objMdUtlRelAnaliseProdutoDTO->retNumComplexidadeAtividade()  ;
      $objMdUtlRelAnaliseProdutoDTO->retStrNomeSerie();
      $objMdUtlRelAnaliseProdutoDTO->retStrNomeAtividade();
+     $objMdUtlRelAnaliseProdutoDTO->retNumTempoExecucao();
      $objMdUtlRelAnaliseProdutoDTO->retTodos();
      $objMdUtlRelAnaliseProdutoDTO->retStrDocumentoFormatado();
      $arrObjs = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
@@ -181,8 +183,9 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
       $objRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
       $objRelTriagemAtvDTO->retTodos();
       $objRelTriagemAtvDTO->retStrNomeAtividade();
-      $objRelTriagemAtvDTO->retNumVlUndEsforcoAtv();
-      $objRelTriagemAtvDTO->retNumVlUndEsforcoRev();
+      $objRelTriagemAtvDTO->retNumComplexidadeAtividade();
+      $objRelTriagemAtvDTO->retNumVlTmpExecucaoAtv();
+      $objRelTriagemAtvDTO->retNumVlTmpExecucaoRev();
       $objRelTriagemAtvDTO->retStrSinAnalise();
       return $objRelTriagemAtvRN->listar($objRelTriagemAtvDTO);
   }
@@ -196,6 +199,7 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
             $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
             $objMdUtlRelTriagemAtvDTO->setOrdStrNomeAtividade(InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
+            $objMdUtlRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
             $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
             $objMdUtlRelTriagemAtvDTO->retTodos();
 
@@ -217,6 +221,7 @@ class MdUtlRelTriagemAtvRN extends InfraRN {
 
         $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlRelTriagemAtv($idsTriagem, InfraDTO::$OPER_IN);
         $objMdUtlRelTriagemAtvDTO->setOrdStrNomeAtividade(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
         $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlAdmAtividade();
         $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
         $objMdUtlRelTriagemAtvDTO->retTodos();

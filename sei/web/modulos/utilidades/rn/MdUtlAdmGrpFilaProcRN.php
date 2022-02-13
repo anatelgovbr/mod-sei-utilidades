@@ -248,7 +248,7 @@ class MdUtlAdmGrpFilaProcRN extends InfraRN {
             if(count($arrAtv)>1){
                 $registroTabela[] = 'Múltiplas';
             }else{
-                $registroTabela[] = $arrAtv[0]->getStrNomeAtividade();
+                $registroTabela[] = $arrAtv[0]->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $arrAtv[0]->getNumComplexidadeAtividade() ];
             }
             $arrIdNomeAtv ="";
 
@@ -256,7 +256,7 @@ class MdUtlAdmGrpFilaProcRN extends InfraRN {
                 if($arrIdNomeAtv!=""){
                     $arrIdNomeAtv=$arrIdNomeAtv.'§';
                 }
-                $arrIdNomeAtv =$arrIdNomeAtv. ($arrAtv[$j]->getNumIdMdUtlAdmAtividade() ."#". $arrAtv[$j]->getStrNomeAtividade());
+                $arrIdNomeAtv =$arrIdNomeAtv. ($arrAtv[$j]->getNumIdMdUtlAdmAtividade() ."#". $arrAtv[$j]->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $arrAtv[0]->getNumComplexidadeAtividade() ]);
             }
 
             $registroTabela[] = $arrIdNomeAtv;

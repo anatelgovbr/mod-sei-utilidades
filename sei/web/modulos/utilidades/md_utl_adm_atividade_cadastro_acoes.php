@@ -33,12 +33,13 @@ if($idAtividade>0){
     $mdUtlAdmAtividadeDTO->setBolExclusaoLogica(false);
     $mdUtlAdmAtividade      = $mdUtlAdmAtividadeRN->consultar($mdUtlAdmAtividadeDTO);
 
-    $strAtividade       = $_POST['txtAtividade']  ? $_POST['txtAtividade']  : $mdUtlAdmAtividade->getStrNome() ;
-    $strDescricao       = $_POST['txaDescricao']  ? $_POST['txaDescricao']  : $mdUtlAdmAtividade->getStrDescricao() ;
-    $strValorUndEsforco = $_POST['txtUndEsforco'] ? $_POST['txtUndEsforco'] : $mdUtlAdmAtividade->getNumUndEsforcoAtv() ;
-    $strPrazoExeAtv     = $_POST['txtExecucaoAtividade'] ? $_POST['txtExecucaoAtividade'] : $mdUtlAdmAtividade->getNumPrzExecucaoAtv() ;
-    $strUndEsforcoRev   = $_POST['txtRevUnidEsf'] ? $_POST['txtRevUnidEsf'] : $mdUtlAdmAtividade->getNumUndEsforcoRev() ;
-    $strPrzRevisaoAtv   = $_POST['txtRevAtividade'] ? $_POST['txtRevAtividade'] : $mdUtlAdmAtividade->getNumPrzRevisaoAtv() ;
+    $strAtividade        = $_POST['txtAtividade']            ? $_POST['txtAtividade']            : $mdUtlAdmAtividade->getStrNome() ;
+    $numComplexidade     = $_POST['complexidade']            ? $_POST['complexidade']            : $mdUtlAdmAtividade->getNumComplexidade() ;
+    $strDescricao        = $_POST['txaDescricao']            ? $_POST['txaDescricao']            : $mdUtlAdmAtividade->getStrDescricao() ;
+    $strValorTmpExecucao = $_POST['txtTmpExecucao']           ? $_POST['txtTmpExecucao']           : $mdUtlAdmAtividade->getNumTmpExecucaoAtv() ;
+    $strPrazoExeAtv      = $_POST['txtExecucaoAtividade']    ? $_POST['txtExecucaoAtividade']    : $mdUtlAdmAtividade->getNumPrzExecucaoAtv() ;
+    $strTmpExecucaoRev    = $_POST['txtRevUnidEsf']           ? $_POST['txtRevUnidEsf']           : $mdUtlAdmAtividade->getNumTmpExecucaoRev() ;
+    $strPrzRevisaoAtv    = $_POST['txtRevAtividade']         ? $_POST['txtRevAtividade']         : $mdUtlAdmAtividade->getNumPrzRevisaoAtv() ;
 
     $rdnTpAtividade     = $_POST['rdnTpAtivdade'] ? $_POST['rdnTpAtivdade'] : $mdUtlAdmAtividade->getStrSinAnalise() ;
     
@@ -57,14 +58,14 @@ if($idAtividade>0){
 
 }else{
 
-    $strAtividade       = $_POST['txtAtividade']  ? $_POST['txtAtividade']  : '';
-    $strDescricao       = $_POST['txaDescricao']  ? $_POST['txaDescricao']  : '';
-    $strValorUndEsforco = $_POST['txtUndEsforco'] ? $_POST['txtUndEsforco'] : '';
-    $strPrazoExeAtv     = $_POST['txtExecucaoAtividade'] ? $_POST['txtExecucaoAtividade'] : '';
-    $strUndEsforcoRev   = $_POST['txtRevUnidEsf'] ? $_POST['txtRevUnidEsf'] : '';
-    $strPrzRevisaoAtv   = $_POST['txtRevAtividade'] ? $_POST['txtRevAtividade'] : '';
-
-    $rdnTpAtividade     = $_POST['rdnTpAtivdade'] ? $_POST['rdnTpAtivdade'] : '';
+    $strAtividade         = $_POST['txtAtividade']  ? $_POST['txtAtividade']  : '';
+    $strDescricao         = $_POST['txaDescricao']  ? $_POST['txaDescricao']  : '';
+    $numComplexidade      = $_POST[ 'complexidade' ]  ? $_POST[ 'complexidade' ]  : '' ;
+    $strValorTmpExecucao  = $_POST['txtTmpExecucao'] ? $_POST['txtTmpExecucao'] : '';
+    $strPrazoExeAtv       = $_POST['txtExecucaoAtividade'] ? $_POST['txtExecucaoAtividade'] : '';
+    $strTmpExecucaoRev    = $_POST['txtRevUnidEsf'] ? $_POST['txtRevUnidEsf'] : '';
+    $strPrzRevisaoAtv     = $_POST['txtRevAtividade'] ? $_POST['txtRevAtividade'] : '';
+    $rdnTpAtividade       = $_POST['rdnTpAtivdade'] ? $_POST['rdnTpAtivdade'] : '';
 
     if($rdnTpAtividade == 'S'){
 
@@ -82,6 +83,23 @@ if($idAtividade>0){
 $strItensSelTpProduto          = MdUtlAdmTpProdutoINT::montarSelectTpProduto($idTipoControle);
 $strItensSelTpDocumentoExterno = MdUtlAdmAtividadeINT::montarSelectTipoDocumentoExterno();
 $strItensSelTpDocumentoInterno = MdUtlAdmAtividadeINT::montarSelectTipoDocumentoInterno();
+
+$objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
+$objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+
+$objMdUtlAdmTpCtrlDesempDTO->retTodos();
+$objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
+$objMdUtlAdmTpCtrlDesemp = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+$objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+$objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+
+$objMdUtlAdmPrmGrDTO->retDblPercentualTeletrabalho();
+$objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+
+$objMdUtlAdmPrmGrDTO    = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+$percentualTeletrabalho = $objMdUtlAdmPrmGrDTO->getDblPercentualTeletrabalho();
 
 
 if(is_null($objTipoControleUtlDTO)){
@@ -101,7 +119,7 @@ switch($_GET['acao']){
 
         if(isset($_POST['sbmCadastrarAtividade'])){
 
-            if($mdUtlAdmAtividadeRN->verificarNomeDuplicidade(array($_POST['txtAtividade'],$idTipoControle))) {
+            if($mdUtlAdmAtividadeRN->verificarNomeDuplicidade(array($_POST['txtAtividade'],$idTipoControle, $_POST[ 'selComplexidade' ]))) {
 
                 $mdUtlAdmAtividadeDTO = $mdUtlAdmAtividadeRN->cadastrarAtividade($idTipoControle);
                 header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . PaginaSEI::getInstance()->getAcaoRetorno() . '&acao_origem=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTipoControle . PaginaSEI::getInstance()->montarAncora($mdUtlAdmAtividadeDTO->getNumIdMdUtlAdmAtividade())));

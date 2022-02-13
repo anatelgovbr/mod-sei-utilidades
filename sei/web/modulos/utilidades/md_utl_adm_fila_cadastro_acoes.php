@@ -93,10 +93,13 @@ switch($_GET['acao']){
 
             $idsUsuarioFila = InfraArray::converterArrInfraDTO($objArrFilaUsuarioDTO, 'IdUsuario');
 
-            $arrUsuariosVinculados = $objControleDsmpRN->getArrVinculosExistentes(array($idsUsuarioFila, $idFila));
+            $arrUsuariosVinculados = array();
+            if ($idsUsuarioFila) {
+                $arrUsuariosVinculados = $objControleDsmpRN->getArrVinculosExistentes(array($idsUsuarioFila, $idFila));
+            }
 
             $arrGrid = array();
-          
+
             foreach($objArrFilaUsuarioDTO as $objVincUsuario){
                 $idAparente++;
                 $strAnalista = $objVincUsuario->getStrSinAnalista() == 'S' ? 'Sim' : 'Não';
@@ -145,7 +148,7 @@ switch($_GET['acao']){
             $objFilaDTO->setNumIdMdUtlAdmFila($_POST['hdnIdFila']);
             $objFilaDTO->setStrNome($_POST['txtNome']);
             $objFilaDTO->setStrDescricao($_POST['txaDescricao']);
-            $objFilaDTO->setStrUndEsforcoTriagem($_POST['txtUndEsforcoTriagem']);
+            $objFilaDTO->setNumTmpExecucaoTriagem($_POST['txtTmpExecucaoTriagem']);
             $objFilaDTO->setNumPrazoTarefa($_POST['txtPrazoTarefa']);
             $objFilaDTO->setStrRespTacitaDilacao($_POST['selDilacao']);
             $objFilaDTO->setStrSinDistribuicaoAutomatica($sinDstAutomatica);
@@ -248,5 +251,5 @@ switch($_GET['acao']){
         throw new InfraException("Ação '".$_GET['acao']."' não reconhecida.");
 }
 
-  
+
 ?>

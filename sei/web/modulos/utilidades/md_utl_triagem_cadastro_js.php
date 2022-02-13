@@ -78,9 +78,10 @@ function inicializarTabelaDinamicaAtividade(consultar){
             if (arrhdnLista.length > 0) {
                 for (i = 0; i < arrhdnLista.length; i++) {
                     var hdnListaTela = arrhdnLista[i].split('±');
-                    var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" +hdnListaTela[0]+ "')\"" + " title='Remover Item' alt='Remover Item' src='/infra_css/imagens/remover.gif' class='infraImg'/> ";
-
-                    objTabelaDinamicaAtividade.adicionarAcoes(hdnListaTela[0], btnRemoverAtividade);
+                    for (j = 0; j < hdnListaTela.length; j++) {
+                        var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" +hdnListaTela[j]+ "')\"" + " title='Remover Item' alt='Remover Item' src='/infra_css/imagens/remover.gif' class='infraImg'/> ";
+                        objTabelaDinamicaAtividade.adicionarAcoes(hdnListaTela[j], btnRemoverAtividade);
+                    }
                 }
             }
         }
@@ -95,9 +96,7 @@ function inicializarTabelaDinamicaAtividade(consultar){
             objTabelaDinamicaAtividade.removerLinha(row);
             controlarExibicaoEncaminhamento();
         }
-
     };
-
 
     objTabelaDinamicaAtividade.procuraLinha = function (id) {
         var qtd;
@@ -149,9 +148,25 @@ function inicializarTabelaDinamicaAtividade(consultar){
             controlarExibicaoEncaminhamento();
         }
 
-       var valor = objTabelaDinamicaAtividade.somarAtividadeUE(3);
-       valor = valor - obj[3];
-       document.getElementById('lblVlTltAtividade').innerText = valor;
+        var valor = objTabelaDinamicaAtividade.somarTempoExecucao(3);
+
+        // se o valor for composto somente por minutos soma o valor total dos minutos e caso tenha horas converte as horas em minutos para somar junto
+        var arrValorCell = obj[3].split(" ");
+        var valorText    = arrValorCell[0].toString();
+        if(arrValorCell.length == 1){
+            if(valorText.indexOf("h") == -1){
+                valor = valor - (parseInt(arrValorCell) ? parseInt(arrValorCell) : 0);
+            }else{
+                var horas = parseInt(arrValorCell[0]);
+                valor = valor - (horas * 60);
+            }
+        } else {
+            var horas = parseInt(arrValorCell[0]);
+            var min = parseInt(arrValorCell[1]);
+            valor = valor - ((60 * horas) + min);
+        }
+
+       document.getElementById('lblVlTltAtividade').innerText = convertToHoursMins(valor);
 
        return true;
     }
@@ -165,6 +180,34 @@ function inicializarTabelaDinamicaAtividade(consultar){
             linha = document.getElementById('tbAtividade').rows[i];
             var valorText  = $.trim(linha.cells[posicao].innerText);
             var valorLinha = valorText != '' && valorText != 'undefined' ? parseInt(valorText) : 0;
+            valorTotal += valorLinha;
+        }
+
+        return valorTotal;
+    };
+
+    objTabelaDinamicaAtividade.somarTempoExecucao = function (posicao) {
+        var linha;
+        var valorTotal = 0;
+        var qtdLinhas  = document.getElementById('tbAtividade').rows.length;
+
+        for (i = 1; i < qtdLinhas; i++) {
+            linha = document.getElementById('tbAtividade').rows[i];
+            var valorText  = $.trim(linha.cells[posicao].innerText);
+
+            var arrValorCell = valorText.split(" ");
+            // se o valor for composto somente por minutos soma o valor total dos minutos e caso tenha horas converte as horas em minutos para somar junto
+            if(arrValorCell.length == 1){
+                var valorLinha = valorText != '' && valorText != 'undefined' && valorText != 'min' ? parseInt(valorText) : 0;
+                if(valorText.indexOf("h") != -1) {
+                    valorLinha = parseInt(valorText) * 60;
+                }
+            } else {
+                var horas = arrValorCell[0] != '' && arrValorCell[0] != 'undefined' ? parseInt(arrValorCell[0]) : 0;
+                var min = arrValorCell[1] != '' && arrValorCell[1] != 'undefined' ? parseInt(arrValorCell[1]) : 0;
+                var valorLinha = (60 * horas) + min;
+            }
+
             valorTotal += valorLinha;
         }
 
@@ -199,7 +242,7 @@ function fechar() {
 }
 
 function selecionarAtividade(){
-    objLupaAtividade.selecionar(700,500);
+    objLupaAtividade.selecionar(850,500);
 }
 
 
@@ -344,6 +387,7 @@ function limparSelectedComponentes(select) {
 
 function adicionarRegistroTabelaAtividade(){
     var arrAtividades = document.getElementById('selAtividade');
+    var percentualDesempenho = '<?=$percentualDesempenho['numPercentualDesempenho']?>'
 
     if(arrAtividades.length == 0){
         alert(msg49);
@@ -354,10 +398,18 @@ function adicionarRegistroTabelaAtividade(){
     var atvComAnalise = false;
     var atvSemAnalise = false;
 
-    for (var i = 0; i < arrAtividades.length; i++) {
-        var idsAtividade    = arrAtividades[i].value;
-        var nomeAtividade   = arrAtividades[i].text;
-
+    for (var i = 0; i < arrAtividades.length; i++) {       
+        var idsAtividade       = arrAtividades[i].value;       
+        var nomeAtividadeTexto = arrAtividades[i].text;
+        nomeAtividadeAux       = nomeAtividadeTexto.split('');
+        var qtdCaracter        = nomeAtividadeAux.length;
+        for(var j = qtdCaracter ; j > 1 ; j--){
+            if(nomeAtividadeAux[j] == '(' ){
+                nomeAtividadeTexto = nomeAtividadeTexto.substr( 0 , j - 1 );
+                break;
+            }
+        }
+        var nomeAtividade   = nomeAtividadeTexto;
         var hdnTbAtividade  = document.getElementById('hdnContadorTableAtv');
         var arrIdsAtv       = idsAtividade.split('_');
         var idMain          = hdnContador +'_'+ arrIdsAtv[0];
@@ -374,11 +426,13 @@ function adicionarRegistroTabelaAtividade(){
             atvSemAnalise = true;
         }
 
+        var complexidade = arrIdsAtv.length > 3 ? ' ('+ arrIdsAtv[3] + ')' : '';
+
         idMain = idMain.trim();
         var arrLinha = [ idMain,
             arrIdsAtv[0],
-            nomeAtividade,
-            vlAtvComAnalise,
+            nomeAtividade + complexidade,
+            convertToHoursMins(parseInt(vlAtvComAnalise / (1 + (percentualDesempenho / 100)))),
             arrIdsAtv[1],
             strTipoAnalise,
             arrIdsAtv[2],
@@ -388,17 +442,38 @@ function adicionarRegistroTabelaAtividade(){
 
         var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" + idMain + "')\"" + " title='Remover Item' alt='Remover Item' src='/infra_css/imagens/remover.gif' class='infraImg'/> ";
         objTabelaDinamicaAtividade.adicionarAcoes(idMain, btnRemoverAtividade, false, false);
+
     }
 
     document.getElementById('divTbAtividade').style.display = '';
-    var valorAtividadeUe = objTabelaDinamicaAtividade.somarAtividadeUE(3);
+    var valorAtividadeUe = convertToHoursMins(objTabelaDinamicaAtividade.somarTempoExecucao(3));
     document.getElementById('lblVlTltAtividade').innerText = valorAtividadeUe;
 
     var vlAtividadeTotal = objTabelaDinamicaAtividade.somarAtividadeUE(6);
-    document.getElementById('hdnUndEsforco').value = vlAtividadeTotal;
+    document.getElementById('hdnTmpExecucao').value = vlAtividadeTotal;
 
     limparCamposDependentesTabela();
     controlarExibicaoEncaminhamento();
+}
+
+function convertToHoursMins(time) {
+
+    hours = Math.trunc(time / 60);
+    minutes = (time % 60);
+    if (time == 0 ) {
+        format = '0min';
+    } else {
+        if (time < 60) {
+            format = minutes + 'min';
+        } else {
+            if(minutes == 0)
+                format = hours + 'h';
+            else
+                format = hours + 'h ' + minutes + 'min';
+        }
+    }
+
+    return format;
 }
 
 function controlarExibicaoFila(obj){
@@ -524,6 +599,13 @@ function onSubmitForm(){
             valido = false;
             alert(msg48);
        }
+
+       var txtInfoComplementar = document.getElementById('txaInformacaoComplementar');
+       if( !validaQtdCaracteres(txtInfoComplementar,500) ){
+            alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Informação Complementar', '500'))?>");
+            txtInfoComplementar.focus();
+            return false;
+        }
    }
 
     if(valido){
@@ -542,7 +624,7 @@ function onSubmitForm(){
 
         document.getElementById('hdnIsPossuiAnalise').value = document.getElementById('tbAtividade').rows[1].cells[4].innerText;
         var vlAtividadeTotal = objTabelaDinamicaAtividade.somarAtividadeUE(6);
-        document.getElementById('hdnUndEsforco').value = vlAtividadeTotal;
+        document.getElementById('hdnTmpExecucao').value = vlAtividadeTotal;
 
         var nomeFila      = document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText;
         document.getElementById('hdnSelFila').value = nomeFila.trim();

@@ -37,7 +37,7 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlRevisao', 'id_md_utl_revisao');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'UnidadeEsforco', 'unidade_esforco');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucao', 'tempo_execucao');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTH, 'Atual', 'dth_atual');
 
@@ -58,10 +58,18 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimaFila', 'sin_ultima_fila');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinUltimoResponsavel', 'sin_ultimo_responsavel');
-      
+
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAjustePrazo', 'id_md_utl_ajuste_prazo');
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlContestRevisao', 'id_md_utl_contest_revisao');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaAtribuido', 'sta_atribuido');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaTipoPresenca', 'sta_tipo_presenca');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoAtribuido', 'tempo_de_execucao_atribuido');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PercentualDesempenho', 'percentual_desempenho');
 
     $this->configurarPK('IdMdUtlHistControleDsmp',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdProcedimento', 'procedimento p', 'p.id_procedimento');
@@ -81,6 +89,8 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'ProtocoloProcedimentoFormatado','protocolo_formatado','protocolo');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuario','ua.nome','usuario ua');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SiglaUsuario','ua.sigla','usuario ua');
+
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeTpControle','nome','md_utl_adm_tp_ctrl_desemp');
 
     $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'SinVerificarPermissao');
 

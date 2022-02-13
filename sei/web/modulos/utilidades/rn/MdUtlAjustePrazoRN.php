@@ -223,50 +223,69 @@ class MdUtlAjustePrazoRN extends InfraRN {
     }
   }
 
-  protected function solicitarAjustePrazoControlado($arrParams){
+    protected function solicitarAjustePrazoControlado($arrParams)
+    {
 
-      //Cadastro da solicitação de ajuste;
-      $objDTO  = $arrParams[0];
-      $objDTO  = $this->cadastrar($objDTO);
+        //Cadastro da solicitação de ajuste;
+        $objDTO = $arrParams[0];
+        $objDTO = $this->cadastrar($objDTO);
 
-      //Controle do Fluxo de Atendimento;
-      $objControleDTO         = $arrParams[1];
-      $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
-      $objHistoricoRN         = new MdUtlHistControleDsmpRN();
+        //Controle do Fluxo de Atendimento;
+        $objControleDTO = $arrParams[1];
+        $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+        $objHistoricoRN = new MdUtlHistControleDsmpRN();
 
-      $isAlterar = array_key_exists(2, $arrParams) ? $arrParams[2] : false;
+        $isAlterar = array_key_exists(2, $arrParams) ? $arrParams[2] : false;
 
-      $idProcedimento  = $objControleDTO->getDblIdProcedimento();
-      $idFila          = $objControleDTO->getNumIdFila();
-      $idTpCtrl        = $objControleDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-      $strNovoStatus   = $objControleDTO->getStrStaAtendimentoDsmp();
-      $idTriagem       = $objControleDTO->getNumIdMdUtlTriagem();
-      $idAnalise       = $objControleDTO->getNumIdMdUtlAnalise();
-      $idRevisao       = $objControleDTO->getNumIdMdUtlRevisao();
-      $undEsforco      = $objControleDTO->getNumUnidadeEsforco();
-      $idUsuarioDistr  = $objControleDTO->getNumIdUsuarioDistribuicao();
-      $strDetalheAjust = $_POST['hdnDetalheFluxoAtend'];
-      $arrIds          = array($idProcedimento);
-      $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIds);
-      $arrRetorno      = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais ,$arrIds, 'N','N'));
-      $dthPrazo        = $arrRetorno[$idProcedimento]['DTH_PRAZO_TAREFA'];
+        $idProcedimento = $objControleDTO->getDblIdProcedimento();
+        $idFila = $objControleDTO->getNumIdFila();
+        $idTpCtrl = $objControleDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+        $strNovoStatus = $objControleDTO->getStrStaAtendimentoDsmp();
+        $idTriagem = $objControleDTO->getNumIdMdUtlTriagem();
+        $idAnalise = $objControleDTO->getNumIdMdUtlAnalise();
+        $idRevisao = $objControleDTO->getNumIdMdUtlRevisao();
+        $tempoExecucao = $objControleDTO->getNumTempoExecucao();
+        $idUsuarioDistr = $objControleDTO->getNumIdUsuarioDistribuicao();
+        $strDetalheAjust = $_POST['hdnDetalheFluxoAtend'];
+        $arrIds = array($idProcedimento);
+        $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIds);
+        $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIds, 'N', 'N'));
+        $dthPrazo = $arrRetorno[$idProcedimento]['DTH_PRAZO_TAREFA'];
 
-      if(!is_null($objControleDTO->getNumIdMdUtlAjustePrazo())){
-          $objAjustPrazoDTODes = new MdUtlAjustePrazoDTO();
-          $objAjustPrazoDTODes->setNumIdMdUtlAjustePrazo($objControleDTO->getNumIdMdUtlAjustePrazo());
-          $objAjustPrazoDTODes->retTodos();
-          $objAjustPrazoDTODes->setNumMaxRegistrosRetorno(1);
-          $objAjustPrazoDTODes = $this->consultar($objAjustPrazoDTODes);
-          $this->desativar(array($objAjustPrazoDTODes));
-      }
+        if (!is_null($objControleDTO->getNumIdMdUtlAjustePrazo())) {
+            $objAjustPrazoDTODes = new MdUtlAjustePrazoDTO();
+            $objAjustPrazoDTODes->setNumIdMdUtlAjustePrazo($objControleDTO->getNumIdMdUtlAjustePrazo());
+            $objAjustPrazoDTODes->retTodos();
+            $objAjustPrazoDTODes->setNumMaxRegistrosRetorno(1);
+            $objAjustPrazoDTODes = $this->consultar($objAjustPrazoDTODes);
+            $this->desativar(array($objAjustPrazoDTODes));
+        }
 
-      $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+        $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
-      $strTipoAcao = $isAlterar ? MdUtlControleDsmpRN::$STR_TIPO_ACAO_ALT_AJUSTE_PRAZO : MdUtlControleDsmpRN::$STR_TIPO_ACAO_CAD_AJUSTE_PRAZO;
-      //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-      $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $objDTO->getNumIdMdUtlAjustePrazo(), $dthPrazo));
+        $strTipoAcao = $isAlterar ? MdUtlControleDsmpRN::$STR_TIPO_ACAO_ALT_AJUSTE_PRAZO : MdUtlControleDsmpRN::$STR_TIPO_ACAO_CAD_AJUSTE_PRAZO;
+        //Cadastrando para essa fila, e esse procedimento e unidade o novo status
+        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $objDTO->getNumIdMdUtlAjustePrazo(), $dthPrazo));
 
-      return $objControleDesempenhoNovoDTO;
-  }
+        $tipoControleDsmpRN = new MdUtlAdmTpCtrlDesempRN();
+        $tipoControleDsmpDTO = new MdUtlAdmTpCtrlDesempDTO();
+        $tipoControleDsmpDTO->retStrNome();
+        $tipoControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
+
+        $objTipoControleDsmpDTO = $tipoControleDsmpRN->listar($tipoControleDsmpDTO);
+
+        $acaoEmail = $isAlterar ? 'alterada' : 'incluída';
+        $arrDadosEmail = array(
+            'acao_email' => $acaoEmail,
+            'tipo' => 'Solicitação de Ajuste de Prazo',
+            'id_tipo' => $idTpCtrl,
+            'protocolo_formatado' => $objControleDTO->getStrProtocoloProcedimentoFormatado(),
+            'nome_controle' => $objTipoControleDsmpDTO[0]->getStrNome(),
+        );
+        $objGestaoAjustePrazoRN = new MdUtlGestaoAjustPrazoRN();
+        $objGestaoAjustePrazoRN->getGestoresTpControle($arrDadosEmail);
+
+        return $objControleDesempenhoNovoDTO;
+    }
   
 }

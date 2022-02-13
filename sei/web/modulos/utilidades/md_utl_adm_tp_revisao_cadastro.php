@@ -34,7 +34,7 @@ try {
   switch($_GET['acao']){
     case 'md_utl_adm_tp_revisao_cadastrar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Novo Resultado da Revisão - '.$nomeTpCtrl;
+      $strTitulo = 'Novo Resultado da Avaliação - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="submit" accesskey="S" name="sbmCadastrarMdUtlAdmTpRevisao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
       $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
@@ -61,7 +61,7 @@ try {
 
     case 'md_utl_adm_tp_revisao_alterar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Alterar Resultado da Revisão - '.$nomeTpCtrl;
+      $strTitulo = 'Alterar Resultado da Avaliação - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="submit" accesskey="S" name="sbmAlterarMdUtlAdmTpRevisao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
       $strDesabilitar = 'disabled="disabled"';
 
@@ -91,7 +91,7 @@ try {
         try{
           $objMdUtlAdmTpRevisaoRN = new MdUtlAdmTpRevisaoRN();
           $objMdUtlAdmTpRevisaoRN->alterar($objMdUtlAdmTpRevisaoDTO);
-          PaginaSEI::getInstance()->adicionarMensagem('Tipo de Revisão "'.$objMdUtlAdmTpRevisaoDTO->getNumIdMdUtlAdmTpRevisao().'" alterado com sucesso.');
+          PaginaSEI::getInstance()->adicionarMensagem('Tipo de Avaliação "'.$objMdUtlAdmTpRevisaoDTO->getNumIdMdUtlAdmTpRevisao().'" alterado com sucesso.');
           header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.PaginaSEI::getInstance()->montarAncora($objMdUtlAdmTpRevisaoDTO->getNumIdMdUtlAdmTpRevisao())));
           die;
         }catch(Exception $e){
@@ -102,7 +102,7 @@ try {
 
     case 'md_utl_adm_tp_revisao_consultar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo = 'Consultar Resultado da Revisão - '.$nomeTpCtrl;
+      $strTitulo = 'Consultar Resultado da Avaliação - '.$nomeTpCtrl;
       $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" value="Fechar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao'].PaginaSEI::getInstance()->montarAncora($_GET['id_md_utl_adm_tp_revisao'])).'\';" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
       $objMdUtlAdmTpRevisaoDTO->setNumIdMdUtlAdmTpRevisao($_GET['id_md_utl_adm_tp_revisao']);
       $objMdUtlAdmTpRevisaoDTO->setBolExclusaoLogica(false);
@@ -178,7 +178,7 @@ require_once 'md_utl_geral_js.php';
 
   function validarCadastro() {
     if (infraTrim(document.getElementById('txtNome').value)=='') {
-      var msg = setMensagemPersonalizada(msgPadraoObrigatoriedade, ['Resultado da Revisão']);
+      var msg = setMensagemPersonalizada(msgPadraoObrigatoriedade, ['Resultado da Avaliação']);
       alert(msg);
       document.getElementById('txtNome').focus();
       return false;
@@ -210,8 +210,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     //PaginaSEI::getInstance()->montarAreaValidacao();
     PaginaSEI::getInstance()->abrirAreaDados('4.5em');
     ?>
-    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Resultado da Revisão:</label>
-    <a href="javascript:void(0);" id="ancAjudaNome" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome do Resultado da Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
+    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Resultado da Avaliação:</label>
+    <a href="javascript:void(0);" id="ancAjudaNome" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome do Resultado da Avaliação.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
 
     <input type="text" id="txtNome" name="txtNome" maxlength="50" class="infraText"  value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrNome());?>" onkeypress="return infraMascaraTexto(this,event,50);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
     <?
@@ -219,7 +219,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     PaginaSEI::getInstance()->abrirAreaDados('9em');
     ?>
     <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:</label>
-    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que descreve o resultado da Revisão.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
+    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que descreve o resultado da Avaliação.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
     <textarea type="text" id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,250);" maxlength="250" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrDescricao());?></textarea>
     <?
     PaginaSEI::getInstance()->fecharAreaDados();

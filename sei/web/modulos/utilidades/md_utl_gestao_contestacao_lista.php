@@ -24,12 +24,13 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
         //Cabeçalho da Tabela
         $strResultadoContest .= '<tr>';
 
-        $strResultadoContest .= '<th class="infraTh" width="5%" style="text-align: center"> Processo </th>';
-        $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: center"> Servidor </th>';
-        $strResultadoContest .= '<th class="infraTh" width="8%" style="text-align: center"> Data da Contestação </th>';
-        $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: center"> Justificativa </th>';
-        $strResultadoContest .= '<th class="infraTh" width="12%" style="text-align: center"> Revisor</th>';
-        $strResultadoContest .= '<th class="infraTh" width="5%" style="text-align: center"> Ações </th>';
+        $strResultadoContest .= '<th class="infraTh" width="5%" style="text-align: left"> Processo </th>';
+        $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: left"> Tipo de Controle </th>';
+        $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: left"> Servidor </th>';
+        $strResultadoContest .= '<th class="infraTh" width="8%" style="text-align: left"> Data da Contestação </th>';
+        $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: left"> Justificativa </th>';
+        $strResultadoContest .= '<th class="infraTh" width="11%" style="text-align: left"> Revisor</th>';
+        $strResultadoContest .= '<th class="infraTh" width="6%" style="text-align: center"> Ações </th>';
 
         $strResultadoContest .= '</tr>';
 
@@ -43,6 +44,7 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
             $strNomeProcCont           = $objMdUtlControleDsmpDTOCont[$i]->getStrNomeTipoProcesso();
             $numIdTriagemCont          = $objMdUtlControleDsmpDTOCont[$i]->getNumIdMdUtlTriagem();
             $strProcessoCont           = $objMdUtlControleDsmpDTOCont[$i]->getStrProtocoloProcedimentoFormatado();
+            $strNmTpCtrlCont           = $objMdUtlControleDsmpDTOCont[$i]->getStrNomeTpControle();
             $strJustificativaCont      = $objMdUtlControleDsmpDTOCont[$i]->getStrNomeJustContestacao();
             $strObservacaoCont         = $objMdUtlControleDsmpDTOCont[$i]->getStrInformacoesComplementares();
             $numIdContest              = $objMdUtlControleDsmpDTOCont[$i]->getNumIdMdUtlAdmJustContest();
@@ -70,6 +72,11 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
             //Linha Processo
             $strResultadoContest .= '<td class="tdIdProcessoCont" >';
             $strResultadoContest .= '<a href="#" onclick="window.open(\'' . $linkProcedimentoCont . '\')" alt="' . $strNomeProcCont . '" title="' . $strNomeProcCont . '" class="ancoraPadraoAzul">' . $strProcessoCont . '</a>';
+            $strResultadoContest .= '</td>';
+
+            // Nome Tipo de Controle
+            $strResultadoContest .= '<td class="tdSolicitacao" >';
+            $strResultadoContest .= $strNmTpCtrlCont;
             $strResultadoContest .= '</td>';
 
             //Linha Servidor

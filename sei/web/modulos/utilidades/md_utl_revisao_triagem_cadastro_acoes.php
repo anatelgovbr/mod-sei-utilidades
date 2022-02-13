@@ -13,11 +13,15 @@ $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
 
 $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
 $objMdUtlRelTriagemAtvDTO->retTodos();
+$objMdUtlRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
 $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
+
+$exibirCol = " display:none; ";
 
 if ($isConsultar) {
 
     $disabled = 'disabled="disabled"';
+    $ckbRealizarAvalProdProd = '';
 
     $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
     $MdUtlRevisaoRN = new MdUtlRevisaoRN();
@@ -40,7 +44,9 @@ if ($isConsultar) {
     $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
     $MdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
 
-    if ($objMdUtlRevisaoDTO) {
+    if ( $objMdUtlRevisaoDTO && $objMdUtlRevisaoDTO->getStrSinRealizarAvalProdProd() == 'S' ) {
+        $exibirCol = "";
+        $ckbRealizarAvalProdProd = 'checked';
         $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($objMdUtlRevisaoDTO->getNumIdMdUtlRevisao());
         $objMdUtlRelRevisTrgAnlsDTO->retTodos();
         $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
@@ -69,7 +75,7 @@ if ($isEdicao) {
     $objMdUtlRelRevisTrgAnlsDTO->retTodos();
     $objMdUtlRelRevisTrgAnlsDTO->retNumIdMdUtlAdmAtividade();
 
-    //array com as atividades da triagem da última revisão
+    //array com as atividades da triagem da última avaliação
     $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
 
     $objUltimoRelTriagemAtvRN  = new MdUtlRelTriagemAtvRN();
@@ -95,9 +101,9 @@ $MdUtlRelTriagemAtv = $MdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
 
 $strResultado="";
 
-$strResultado .= '<table width="99%" class="infraTable" summary="Revisao">';
+$strResultado .= '<table width="99%" class="infraTable" summary="Revisao" id="tb_avaliacao">';
 $strResultado .= '<caption class="infraCaption">';
-$strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Revisão:', $numRegistro);
+$strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Avaliação:', $numRegistro);
 $strResultado .= '</caption>';
 
 //Cabeçalho da Tabela
@@ -105,9 +111,9 @@ $strResultado .= '<tr>';
 $strResultado .= '<th class="infraTh" style="display: none" width="10%">Id_RelTriagem</th>';
 //$strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtvSerieProdDTO, 'Atividade', 'NomeAtividade', $arrObjs) . '</th>';
 $strResultado .= '<th class="infraTh" width="13%">Atividade</th>';
-$strResultado .= '<th class="infraTh" width="15%">Resultado</th>';
-$strResultado .= '<th class="infraTh" width="14%">Justificativa</th>';
-$strResultado .= '<th class="infraTh" width="25%">Observação sobre a Revisão</th>';
+$strResultado .= '<th class="infraTh" width="15%" style="'.$exibirCol.'">Resultado</th>';
+$strResultado .= '<th class="infraTh" width="14%" style="'.$exibirCol.'">Justificativa</th>';
+$strResultado .= '<th class="infraTh" width="25%" style="'.$exibirCol.'">Observação sobre a Avaliação</th>';
 $strResultado .= '</tr>';
 
 $hdnTbRevisaoAnalise = "";
@@ -160,14 +166,14 @@ for ($i = 0 ; $i < $numRegistro ; $i++){
     $validarSelect = $displayJustificativa == '' ? 'style="width:100%"' : $displayJustificativa;
     $strResultado .= '<tr class="infraTrClara">';
     $strResultado .= '<td style="display: none" >'.$idMdUtlRelTriagemAtv.'</td>';
-    $strResultado .= '<td>'.$MdUtlRelTriagemAtv[$i]->getStrNomeAtividade().'</td>';
-    $strResultado .= '<td>';
+    $strResultado .= '<td>'.$MdUtlRelTriagemAtv[$i]->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$MdUtlRelTriagemAtv[$i]->getNumComplexidadeAtividade()].'</td>';
+    $strResultado .= '<td style="'.$exibirCol.'">';
     $strResultado .= '<select  campo="R"  style="width:100%" class="infraSelect" '.$disabled.' id="selRev_'.$idMdUtlRelTriagemAtv.'" name="selRev_'.$idMdUtlRelTriagemAtv.'" onchange="verificarJustificativa(this);" >'.$selRevisao.'</select>';
     $strResultado .= '</td>';
-    $strResultado .= '<td>';
+    $strResultado .= '<td style="'.$exibirCol.'">';
     $strResultado .= '<select  campo="J"  '.$validarSelect.' class="infraSelect" '.$disabled.' id="selJust_'.$idMdUtlRelTriagemAtv.'" name="selJust_'.$idMdUtlRelTriagemAtv.'" >'.$selJustRevisao.'</select>';
     $strResultado .= '</td>';
-    $strResultado .= '<td><input onpaste="return infraLimitarTexto(this,event,250);" onkeypress="return infraLimitarTexto(this,event,250);" class="inputObservacao" id="obs_'.$idMdUtlRelTriagemAtv.'" '.$disabled.' name="obs_'.$idMdUtlRelTriagemAtv.'" type="text" value="'.$strObservacao.'"/></td>';
+    $strResultado .= '<td style="'.$exibirCol.'"><input onpaste="return infraLimitarTexto(this,event,250);" onkeypress="return infraLimitarTexto(this,event,250);" class="inputObservacao" id="obs_'.$idMdUtlRelTriagemAtv.'" '.$disabled.' name="obs_'.$idMdUtlRelTriagemAtv.'" type="text" value="'.$strObservacao.'" style="'.$exibirCol.'"/></td>';
     $strResultado .= '</tr>';
 
     if($hdnTbRevisaoAnalise != ""){

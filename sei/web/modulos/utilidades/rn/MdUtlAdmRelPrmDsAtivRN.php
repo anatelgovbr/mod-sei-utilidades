@@ -135,6 +135,7 @@ class MdUtlAdmRelPrmDsAtivRN extends InfraRN{
 
         $objMdUtlAdmRelPrmDsAtividadeDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
         $objMdUtlAdmRelPrmDsAtividadeDTO->retTodos();
+        $objMdUtlAdmRelPrmDsAtividadeDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_DESC);
         $objMdUtlAdmRelPrmDsAtividade = $objMdUtlAdmRelPrmDsAtividadeRN->listar($objMdUtlAdmRelPrmDsAtividadeDTO);
 
         foreach ($objMdUtlAdmRelPrmDsAtividade as $key => $dadosAtividade) {
@@ -148,7 +149,7 @@ class MdUtlAdmRelPrmDsAtivRN extends InfraRN{
             $objMdUtlAdmAtividade = $objMdUtlAdmAtividadeRN->consultar($objMdUtlAdmAtividadeDTO);
 
             $atividade[] = $dadosAtividade->getNumIdMdUtlAdmAtividade();
-            $atividade[] = $objMdUtlAdmAtividade->getStrNome().' - '.$objMdUtlAdmAtividade->getStrDescricao();
+            $atividade[] = $objMdUtlAdmAtividade->getStrNome() . ' - ' . $objMdUtlAdmAtividade->getStrDescricao() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $objMdUtlAdmAtividade->getNumComplexidade() ];
 
             $prioridade = $dadosAtividade->getNumPrioridade();
             $idSelect = 'selPriAtividade_'.$dadosAtividade->getNumIdMdUtlAdmAtividade();
@@ -170,5 +171,32 @@ class MdUtlAdmRelPrmDsAtivRN extends InfraRN{
         }
 
         return array('itensTabela'=>$arrAtividade,'qtdAtividade'=>count($arrAtividade));
+    }
+
+    protected function montarArrAtiviPrioridadeControlado($idMdUtlAdmPrmDs){
+        $objMdUtlAdmRelPrmDsAtividadeDTO = new MdUtlAdmRelPrmDsAtivDTO();
+        $objMdUtlAdmRelPrmDsAtividadeRN  = new MdUtlAdmRelPrmDsAtivRN();
+        $objMdUtlAdmAtividadeDTO         = new MdUtlAdmAtividadeDTO();
+        $objMdUtlAdmAtividadeRN          = new MdUtlAdmAtividadeRN();
+
+        $objMdUtlAdmRelPrmDsAtividadeDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
+        $objMdUtlAdmRelPrmDsAtividadeDTO->retTodos();
+        $objMdUtlAdmRelPrmDsAtividadeDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlAdmRelPrmDsAtividade = $objMdUtlAdmRelPrmDsAtividadeRN->listar($objMdUtlAdmRelPrmDsAtividadeDTO);
+
+        $arrAtividade = array();
+        foreach ($objMdUtlAdmRelPrmDsAtividade as $key => $dadosAtividade) {
+
+            $objMdUtlAdmAtividadeDTO->setNumIdMdUtlAdmAtividade($dadosAtividade->getNumIdMdUtlAdmAtividade());
+            $objMdUtlAdmAtividadeDTO->retTodos();
+            $objMdUtlAdmAtividadeDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+            $objMdUtlAdmAtividade = $objMdUtlAdmAtividadeRN->consultar($objMdUtlAdmAtividadeDTO);
+
+            $arrAtividade[$key]['id'] = $dadosAtividade->getNumIdMdUtlAdmAtividade();
+            $arrAtividade[$key]['desc'] = $objMdUtlAdmAtividade->getStrNome() . ' - ' . $objMdUtlAdmAtividade->getStrDescricao() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $objMdUtlAdmAtividade->getNumComplexidade() ];
+            $arrAtividade[$key]['prioridade'] = $dadosAtividade->getNumPrioridade();
+        }
+
+        return $arrAtividade;
     }
 }

@@ -10,6 +10,14 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 
 class MdUtlAdmRelTpCtrlDesempUndDTO extends InfraDTO {
 
+  private $tpCtrlFK = null;
+
+  public function __construct()
+  {
+    $this->tpCtrlFK = InfraDTO::$TIPO_FK_OPCIONAL;
+    parent::__construct();
+  }
+
   public function getStrNomeTabela() {
   	 return 'md_utl_adm_rel_tp_ctrl_und';
   }
@@ -24,12 +32,21 @@ class MdUtlAdmRelTpCtrlDesempUndDTO extends InfraDTO {
     $this->configurarPK('IdUnidade', InfraDTO::$TIPO_PK_INFORMADO);
 
     $this->configurarFK('IdUnidade', 'unidade u', 'u.id_unidade');
-    $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp mutc', 'mutc.id_md_utl_adm_tp_ctrl_desemp', InfraDTO::$TIPO_FK_OPCIONAL);
+    $this->configurarFK('IdMdUtlAdmTpCtrlDesemp', 'md_utl_adm_tp_ctrl_desemp mutc', 'mutc.id_md_utl_adm_tp_ctrl_desemp', $this->getTpControleTIPOFK());
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SiglaUnidade','u.sigla','unidade u');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'DescricaoUnidade','u.descricao','unidade u');
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'NomeTipoControle', 'mutc.nome', 'md_utl_adm_tp_ctrl_desemp mutc');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmPrmGr', 'mutc.id_md_utl_adm_prm_gr', 'md_utl_adm_tp_ctrl_desemp mutc');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinAtivo', 'mutc.sin_ativo', 'md_utl_adm_tp_ctrl_desemp mutc');
+  }
+
+  public function setTpControleTIPOFK($tpCtrlFK){
+    $this->tpCtrlFK = $tpCtrlFK;
+  }
+
+  public function getTpControleTIPOFK(){
+    return $this->tpCtrlFK;
   }
 }

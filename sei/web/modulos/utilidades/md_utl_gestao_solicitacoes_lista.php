@@ -21,6 +21,7 @@ $isContatoVazioRev          = array_key_exists('is_contato_vazio', $_GET) ? $_GE
 $txtProcessoCampo     = array_key_exists('txtProcessoMdGestao', $_POST) ? $_POST['txtProcessoMdGestao'] : PaginaSEI::getInstance()->recuperarCampo('txtProcessoMdGestao');
 $selStatusProcCampo   = array_key_exists('selStatusProcMdGestao', $_POST) ? $_POST['selStatusProcMdGestao'] : PaginaSEI::getInstance()->recuperarCampo('selStatusProcMdGestao');
 $selServidorCampo     = array_key_exists('selServidorMdGestao', $_POST) ? $_POST['selServidorMdGestao'] : PaginaSEI::getInstance()->recuperarCampo('selServidorMdGestao');
+$selTpControleCampo   = array_key_exists('selTpControle', $_POST) ? $_POST['selTpControle'] : PaginaSEI::getInstance()->recuperarCampo('selTpControle');
 $isProcessoConcluido  = array_key_exists('is_processo_concluido', $_GET) ? $_GET['is_processo_concluido'] : 0;
 $isProcessoAutorizadoConcluir = array_key_exists('hdnIsConcluirProcesso', $_POST) ? $_POST['hdnIsConcluirProcesso'] : 0;
 $idProcedimentoAprovacao = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
@@ -50,40 +51,60 @@ $strUrlContest = 'controlador.php?acao=md_utl_gestao_contestacao_';
 
 $strUrlFechar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']);
 
-$arrPostDados = array('txtProcessoMdGestao' => $txtProcessoCampo, 'selStatusProcMdGestao'=> $selStatusProcCampo, 'selServidorMdGestao' => $selServidorCampo);
+$arrPostDados = array('txtProcessoMdGestao' => $txtProcessoCampo, 'selStatusProcMdGestao'=> $selStatusProcCampo, 'selServidorMdGestao' => $selServidorCampo, 'selTpControle' => $selTpControleCampo);
 
-$objMdUtlControleDsmpDTO    =null;
+$objMdUtlControleDsmpDTO = null;
 
 /* Id Tipo de Controle */
-$idTipoControle = $objMdUtlAdmTpCtrlUndRN->getTipoControleUnidadeLogada();
+$idTipoControle   = isset($_POST['selTpControle']) && !empty($_POST['selTpControle']) ? $_POST['selTpControle'] : null;
+$arrIdsTpControle = array();
+
+//Retorna tipos de controles onde o usuário é gestor
+$arrGestorSipSei  = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
+
+//Retorna os tipos de controles da unidade
+$arrObjTpControle    = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
+$existeTpCtrlUnidade = !is_null( $arrObjTpControle );
+
+//Relaciona os tipos de controle da unidade onde o usuario é gestor
+if ( count($arrObjTpControle) > 0 && ($arrGestorSipSeicount || ( $arrGestorSipSei ) > 0 ) ){
+    foreach ($arrObjTpControle as $k => $v) {
+        if ( in_array( $v->getNumIdMdUtlAdmTpCtrlDesemp() , $arrGestorSipSei ) ) array_push( $arrIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
+        else unset( $arrObjTpControle[$k] );
+    }
+}
+
+$existeTpCtrlGestorUnid = !empty( $arrIdsTpControle );
+
+$selTpControle = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',$_POST['selTpControle']);
 
 $objSeridores = $objMdUtlGestaoAjustPrazoRN->recuperarServidoresSolicitacoes($idTipoControle);
 
 /* Verifica se é gestor */
-$isGestorSipSei  = count($objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle()) > 0;
-
+#$isGestorSipSei  = count($objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle()) > 0;
 
 $isPesquisar = array_key_exists('pesquisar',$_GET) ? $_GET['pesquisar'] : 0;
 
-if(!is_null($idTipoControle)){
+$isParametrizado = true;
+
+if(!is_null($idTipoControle) || count($arrIdsTpControle) > 0 ){
     $numIdControleDsmp = '';
     $numIdAjustePrazo = '';
     $numIdControleDsmpCont = '';
     $idContestRevisaoExistente = '';
+    $paramsTpCtrl = is_null($idTipoControle) ? $arrIdsTpControle : $idTipoControle;
     $objMdUtlControleDsmpDTO  = new MdUtlControleDsmpDTO();
-    $objMdUtlControleDsmpDTO  = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesAjustePrazo(array($idTipoControle, $arrPostDados));
-    $objMdUtlControleDsmpDTOCont  = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesContestacao(array($idTipoControle, $arrPostDados));
+    $objMdUtlControleDsmpDTO  = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesAjustePrazo(array($paramsTpCtrl, $arrPostDados));
+    $objMdUtlControleDsmpDTOCont  = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesContestacao(array($paramsTpCtrl, $arrPostDados));
 
-    $objMdUtlControleDsmpDist = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesAjustePrazo(array($idTipoControle, null));
+    $objMdUtlControleDsmpDist = $objMdUtlGestaoAjustPrazoRN->buscarSolicitacoesAjustePrazo(array($paramsTpCtrl, null));
     $arrStatusProcesso       = MdUtlGestaoAjustPrazoINT::montarSelectStatusProcesso($selStatusProcCampo);
     $arrObjsServidorDTO      = !is_null($objSeridores) ? InfraArray::distinctArrInfraDTO($objSeridores, 'IdUsuarioDistribuicao') : null;
     $arrSelServidor          = !is_null($arrObjsServidorDTO) ? MdUtlGestaoAjustPrazoINT::montarSelectServidor($selServidorCampo, $arrObjsServidorDTO) : '';
     $strUrlPadraoTela = 'controlador.php?acao=md_utl_gestao_solicitacoes_';
 
-    $strUrlPesquisar  = SessaoSEI::getInstance()->assinarLink($strUrlPadraoTela . 'listar&acao_origem=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTipoControle.'&pesquisar=1');
+    $strUrlPesquisar  = SessaoSEI::getInstance()->assinarLink($strUrlPadraoTela . 'listar&acao_origem=' . $_GET['acao'] . '&pesquisar=1');
     $strUrlRecarregar = SessaoSEI::getInstance()->assinarLink($strUrlPadraoTela . 'listar&acao_origem=' . $_GET['acao']);
-
-    $isParametrizado = $objMdUtlAdmUtlTpCtrlRN->verificaTipoControlePossuiParametrizacao($idTipoControle);
 }
 
 require_once 'md_utl_gestao_ajust_prazo_lista.php';
@@ -339,25 +360,15 @@ if (0) { ?>
     img[id^="imgAjuda"] {
         margin-bottom: -4px;
     }
-
-    #divProcesso {
-        position: absolute;
-        margin-top: 10px;
-        width: 17.1%;
+    
+    .div_comun{
+        position: relative;
+        margin-top: 9px;
+        width: 20%;
     }
 
-    #divStatusProc {
-        position: absolute;
-        margin-left: 14.8%;
-        margin-top: 8px;
-        width: 20.5%;
-    }
-
-    #divServidor {
-        position: absolute;
-        margin-left: 32%;
-        margin-top: 8px;
-        width: 24%;
+    a.ancoraPadraoAzul{
+        padding: 0;
     }
 
     <?
@@ -379,7 +390,7 @@ require_once 'md_utl_geral_js.php';
     function inicializar() {
         var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
         var idParam  = document.getElementById('hdnIdParametroCtrlUtl').value;
-        var tpCtrl   = document.getElementById('hdnIdTipoControleUtl').value;
+        var tpCtrl   = document.getElementById('hdnValidaTpCtrl').value;
         var isGestor = document.getElementById('hdnIsGestor').value;
         var isPesquisar = '<?=$isPesquisar?>';
         var numRegistros = '<?=$numRegistros?>';
@@ -519,7 +530,15 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
     PaginaSEI::getInstance()->abrirAreaDados('7em');
     ?>
-    <div class="bloco" id="divProcesso">
+    <div id="divTpCtrl" class="bloco div_comun">
+        <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
+        <select id="selTpControle" name="selTpControle" class="infraSelect padraoSelect"
+                onchange="pesquisar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <?= $selTpControle ?>
+        </select>
+    </div>
+
+    <div class="bloco div_comun" id="divProcesso">
         <label id="lblProcesso" for="txtProcessoMdGestao" class="infraLabelOpcional">
             Processo:
         </label>
@@ -533,7 +552,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     </div>
 
 
-    <div id="divStatusProc">
+    <div id="divStatusProc" class="bloco div_comun">
         <label id="lblStatusProc" for="selStatusProcMdGestao" accesskey="" class="infraLabelOpcional">Status do Processo:</label>
         <select id="selStatusProcMdGestao" name="selStatusProcMdGestao" class="infraSelect padraoSelect"
                 onchange="pesquisar();"
@@ -543,7 +562,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     </div>
 
 
-    <div id="divServidor">
+    <div id="divServidor" class="bloco div_comun">
         <label id="lblServidor" for="selServidorMdGestao" accesskey="" class="infraLabelOpcional">Servidor:</label>
         <select id="selServidorMdGestao" name="selServidorMdGestao" class="infraSelect padraoSelect"
                 onchange="pesquisar();"
@@ -606,9 +625,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
            value="<?php echo SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acaoorigem=' . $_GET['acao']); ?>"/>
     <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
            value="<?php echo is_null($idTipoControle) ? '0' : $idTipoControle; ?>"/>
+    <input type="hidden" id="hdnValidaTpCtrl" name="hdnValidaTpCtrl" value="<?= $existeTpCtrlUnidade ? '1' : '0' ?>">
     <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
            value="<?php echo $isParametrizado ? '1' : '0'; ?>"/>
-    <input type="hidden" id="hdnIsGestor" name="hdnIsGestor" value="<?php echo $isGestorSipSei ? '1' : '0';?>"/>
+    <input type="hidden" id="hdnIsGestor" name="hdnIsGestor" value="<?= $existeTpCtrlGestorUnid ? '1' : '0';?>"/>
     <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value=""/>
     <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
     <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?php echo $idProcedimentoAprovacao ?>"/>

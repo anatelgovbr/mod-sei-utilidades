@@ -57,18 +57,19 @@ try {
         $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlAnalise($objControleDesempenhoDTO->getNumIdMdUtlAnalise());
         $objMdUtlRelAnaliseProdutoDTO->retTodos(true);
         $arrObjMdUtlRelAnaliseProdutoDTO = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
-
+        
         $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
         $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
         $objMdUtlRelRevisTrgAnlsDTO->setNumIdMdUtlRevisao($objControleDesempenhoDTO->getNumIdMdUtlRevisao());
         $objMdUtlRelRevisTrgAnlsDTO->retTodos();
         $objMdUtlRelRevisTrgAnlsDTO->retStrNomeTipoRevisao();
         $objMdUtlRelRevisTrgAnlsDTO->retStrNomeJustificativaRevisao();
+        $objMdUtlRelRevisTrgAnlsDTO->retStrObservacao();
         $arrObjMdUtlRelRevisTrgAnlsDTO = $objMdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
-
+        
         foreach ($arrObjMdUtlRelAnaliseProdutoDTO as $objRelAnaliseProdutoDTO) {
-            $nomeAtividade = $objRelAnaliseProdutoDTO->getStrNomeAtividade();
 
+            $nomeAtividade = $objRelAnaliseProdutoDTO->getStrNomeAtividade().' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objRelAnaliseProdutoDTO->getNumComplexidadeAtividade()];
             $objDTORevisao = InfraArray::filtrarArrInfraDTO($arrObjMdUtlRelRevisTrgAnlsDTO, 'IdMdUtlRelAnaliseProduto', $objRelAnaliseProdutoDTO->getNumIdMdUtlRelAnaliseProduto());
             reset($objDTORevisao);
             $objDTORevisao = current($objDTORevisao);
@@ -79,9 +80,8 @@ try {
             $strCssTr = $strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">';
 
             $strResultado .= $strCssTr;
-
             //Atividade
-            $strResultado .= '<td>'.$objRelAnaliseProdutoDTO->getStrNomeAtividade().'</td>';
+            $strResultado .= '<td>'.$objRelAnaliseProdutoDTO->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objRelAnaliseProdutoDTO->getNumComplexidadeAtividade()].'</td>';
 
             //Produto
             $bolDocSei = $objRelAnaliseProdutoDTO->getStrNomeSerie() != "" ? true : false;
@@ -109,7 +109,8 @@ try {
             $strResultado .= '<td>'.$justificativaRevisao.'</td>'; //todo
 
             //Observação
-            $strResultado .= '<td>'.$objDTORevisao->getStrObservacao().'</td>';
+            $strObsRev = !empty($objDTORevisao) ? $objDTORevisao->getStrObservacao() : '';
+            $strResultado .= '<td>'. $strObsRev .'</td>';
             $strResultado .= '</tr>';
 
         }
@@ -120,6 +121,7 @@ try {
         $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
         $objMdUtlRelTriagemAtvDTO->setNumIdMdUtlTriagem($objControleDesempenhoDTO->getNumIdMdUtlTriagem());
         $objMdUtlRelTriagemAtvDTO->retTodos();
+        $objMdUtlRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
         $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
         $arrObjMdUtlRelTriagemAtDTO = $objMdUtlRelTriagemAtvRN->listar($objMdUtlRelTriagemAtvDTO);
 
@@ -137,10 +139,9 @@ try {
             $objDTORevisao = InfraArray::filtrarArrInfraDTO($arrObjMdUtlRelRevisTrgAnlsDTO, 'IdMdUtlRelTriagemAtv', $objDTOTriagem->getNumIdMdUtlRelTriagemAtv());
             reset($objDTORevisao);
             $objDTORevisao = current($objDTORevisao);
-
             //Atividade
             $strResultado .= $strCssTr;
-            $strResultado .= '<td>'.$objDTOTriagem->getStrNomeAtividade().'</td>';
+            $strResultado .= '<td>'.$objDTOTriagem->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTOTriagem->getNumComplexidadeAtividade()].'</td>';
 
             //Resultado
             $strResultado .= '<td>'.$objDTORevisao->getStrNomeTipoRevisao().'</td>';
@@ -158,7 +159,7 @@ try {
 
     switch ($_GET['acao']) {
         case 'md_utl_contest_revisao_cadastrar':
-            $strTitulo = 'Nova Contestação de Revisão';
+            $strTitulo = 'Nova Contestação de Avaliação';
             $arrComandos[] = '<button type="submit" accesskey="S" name="sbmCadastrarMdUtlContestacao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idControleDesempenho).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
@@ -187,7 +188,7 @@ try {
             break;
 
         case 'md_utl_contest_revisao_alterar':
-            $strTitulo = 'Alterar Contestação de Revisão';
+            $strTitulo = 'Alterar Contestação de Avaliação';
             $arrComandos[] = '<button type="submit" accesskey="S" name="sbmAlterarMdUtlContestacao" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
             $arrComandos[] = '<button type="button" accesskey="L" name="sbmCancelarContestacao" id="sbmCancelarContestacao" value="Cancelar Contestação" onclick="deletaContestacao()" class="infraButton">Cance<span class="infraTeclaAtalho">l</span>ar Contestação</button>';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idControleDesempenho).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
@@ -256,7 +257,7 @@ try {
             break;
 
         case 'md_utl_contest_revisao_consultar':
-            $strTitulo = 'Consultar Contestação de Revisão';
+            $strTitulo = 'Consultar Contestação de Avaliação';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idControleDesempenho).'\';" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $idContestRevisao = array_key_exists('id_contestacao_revisao', $_GET) ? $_GET['id_contestacao_revisao'] : $_POST['hdnIdMdUtlContestRevisao'];
@@ -350,7 +351,7 @@ require_once 'md_utl_geral_js.php';
     }
 
     function deletaContestacao() {
-        var ok = confirm('Confirma o Cancelamento da Contestação de Revisão?');
+        var ok = confirm('Confirma o Cancelamento da Contestação de Avaliação?');
         if (ok) {
             document.getElementById('sbmCancelarContestacao').type = 'submit';
         } else {
@@ -408,7 +409,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
         <div id="resultadoRevisao" >
             <fieldset class="infraFieldset" style="padding-bottom: 3%; margin-top: 25px;" >
-                <legend class="infraLegend" >Resultado da Revisão</legend>
+                <legend class="infraLegend" >Resultado da Avaliação</legend>
                 </br>
                 <div id="divInfraAreaTabela" class="infraAreaTabela">
                     <table width="99%" class="infraTable" summary="ResultadoRevisão" id="tbResultadoRevisão">
@@ -422,15 +423,15 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                             <?php } ?>
                             <th class="infraTh"  align="center">Resultado</th>
                             <th class="infraTh" align="center">Justificativa</th>
-                            <th class="infraTh" align="center">Observação  sobre a Revisão</th>
+                            <th class="infraTh" align="center">Observação  sobre a Avaliação</th>
                         </tr>
                         <?php echo $strResultado ?>
                     </table>
                 </div>
 
-                <!-- TextArea Informações complementares da Revisão -->
+                <!-- TextArea Informações complementares da Avaliação -->
                 <div style="margin-top: 19px;">
-                    <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelOpcional">Informações Complementares da Revisão:</label>
+                    <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelOpcional">Informações Complementares da Avaliação:</label>
                 </div>
                 <div>
                     <textarea type="text" id="txaInformacoesRevisao" rows="4" maxlength="500" name="txaInformacoesRevisao" disabled="disabled"
@@ -443,7 +444,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
         <div id="contestacaoRevisao"  >
             <fieldset class="infraFieldset" style="padding-bottom: 4%; margin-top: 2%;" >
-                <legend class="infraLegend" >Contestação da Revisão</legend>
+                <legend class="infraLegend" >Contestação da Avaliação</legend>
                 </br>
 
                 <div id="divContestacaoRevisao" >

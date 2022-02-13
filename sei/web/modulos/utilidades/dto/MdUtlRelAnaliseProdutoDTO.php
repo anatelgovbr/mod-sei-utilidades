@@ -53,9 +53,12 @@ class MdUtlRelAnaliseProdutoDTO extends InfraDTO
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'DocumentoFormatado', 'prot.protocolo_formatado', 'protocolo prot' );
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeSerie','s.nome','serie s');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeProduto','tp.nome','md_utl_adm_tp_produto tp');
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'ComplexidadeAtividade','mat.complexidade','md_utl_adm_atividade mat');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeAtividade','mat.nome','md_utl_adm_atividade mat');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SinAtivoAnalise','man.sin_ativo','md_utl_analise man');
+
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'TempoExecucao','mrt.tempo_execucao','md_utl_rel_triagem_atv mrt');
 
         $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'SinObjPreenchido');
         $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'SinVerificarPermissao');

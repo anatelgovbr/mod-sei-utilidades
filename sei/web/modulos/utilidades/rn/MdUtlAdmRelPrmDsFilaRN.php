@@ -1,25 +1,30 @@
 <?php
 
-require_once dirname(__FILE__).'/../../../SEI.php';
+require_once dirname(__FILE__) . '/../../../SEI.php';
 
-class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
+class MdUtlAdmRelPrmDsFilaRN extends InfraRN
+{
 
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct();
     }
 
-    protected function inicializarObjInfraIBanco() {
+    protected function inicializarObjInfraIBanco()
+    {
         return BancoSEI::getInstance();
     }
 
-    private function validarNumIdMdUtlAdmParamDs(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO, InfraException $objInfraException){
-        if (InfraString::isBolVazia($objMdUtlAdmRelPrmDsFilaDTO->getNumIdMdUtlAdmParamDs())){
+    private function validarNumIdMdUtlAdmParamDs(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO, InfraException $objInfraException)
+    {
+        if (InfraString::isBolVazia($objMdUtlAdmRelPrmDsFilaDTO->getNumIdMdUtlAdmParamDs())) {
             $objMdUtlAdmRelPrmDsFilaDTO->setNumIdMdUtlAdmParamDs(null);
         }
     }
 
-    protected function cadastrarControlado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO) {
-        try{
+    protected function cadastrarControlado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO)
+    {
+        try {
 
             //Valida Permissao
             SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_rel_prm_ds_fila_cadastrar', __METHOD__, $objMdUtlAdmRelPrmDsFilaDTO);
@@ -32,16 +37,19 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
             $objInfraException->lancarValidacoes();
 
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
+
+//            var_dump($objMdUtlAdmRelPrmDsFilaDTO);die;
             $ret = $objMdUtlAdmRelPrmDsFilaBD->cadastrar($objMdUtlAdmRelPrmDsFilaDTO);
 
             return $ret;
 
-        }catch(Exception $e){
-            throw new InfraException('Erro cadastrando .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro cadastrando .', $e);
         }
     }
 
-    protected function alterarControlado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO){
+    protected function alterarControlado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO)
+    {
         try {
 
             //Valida Permissao
@@ -50,7 +58,7 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
             //Regras de Negocio
             $objInfraException = new InfraException();
 
-            if ($objMdUtlAdmRelPrmDsFilaDTO->isSetNumIdMdUtlAdmParamDs()){
+            if ($objMdUtlAdmRelPrmDsFilaDTO->isSetNumIdMdUtlAdmParamDs()) {
                 $this->validarNumIdMdUtlAdmParamDs($objMdUtlAdmRelPrmDsFilaDTO, $objInfraException);
             }
 
@@ -59,28 +67,30 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
             $objMdUtlAdmRelPrmDsFilaBD->alterar($objMdUtlAdmRelPrmDsFilaDTO);
 
-        }catch(Exception $e){
-            throw new InfraException('Erro alterando .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro alterando .', $e);
         }
     }
 
-    protected function excluirControlado($arrObjMdUtlAdmRelPrmDsFilaDTO){
+    protected function excluirControlado($arrObjMdUtlAdmRelPrmDsFilaDTO)
+    {
         try {
 
             //Valida Permissao
 //            SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_rel_prm_ds_excluir', __METHOD__, $arrObjMdUtlAdmRelPrmDsFilaDTO);
 
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
-            for($i=0;$i<count($arrObjMdUtlAdmRelPrmDsFilaDTO);$i++){
+            for ($i = 0; $i < count($arrObjMdUtlAdmRelPrmDsFilaDTO); $i++) {
                 $obj = $objMdUtlAdmRelPrmDsFilaBD->excluir($arrObjMdUtlAdmRelPrmDsFilaDTO[$i]);
 
             }
-        }catch(Exception $e){
-            throw new InfraException('Erro excluindo .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro excluindo .', $e);
         }
     }
 
-    protected function consultarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO){
+    protected function consultarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO)
+    {
         try {
 
             //Valida Permissao
@@ -91,50 +101,54 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
 
             return $ret;
 
-        }catch(Exception $e){
-            throw new InfraException('Erro consultando .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro consultando .', $e);
         }
     }
 
-    protected function listarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO) {
+    protected function listarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO)
+    {
         try {
 
             //Valida Permissao
-/*            SessaoSEI::getInstance()->validarPermissao('md_utl_adm_rel_prm_ds_listar');*/
+            /*            SessaoSEI::getInstance()->validarPermissao('md_utl_adm_rel_prm_ds_listar');*/
 
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
             $ret = $objMdUtlAdmRelPrmDsFilaBD->listar($objMdUtlAdmRelPrmDsFilaDTO);
 
             return $ret;
 
-        }catch(Exception $e){
-            throw new InfraException('Erro listando .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro listando .', $e);
         }
     }
 
-    protected function contarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO){
+    protected function contarConectado(MdUtlAdmRelPrmDsFilaDTO $objMdUtlAdmRelPrmDsFilaDTO)
+    {
         try {
 
             //Valida Permissao
-           // SessaoSEI::getInstance()->validarPermissao('md_utl_adm_rel_prm_ds_listar');
+            // SessaoSEI::getInstance()->validarPermissao('md_utl_adm_rel_prm_ds_listar');
 
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
             $ret = $objMdUtlAdmRelPrmDsFilaBD->contar($objMdUtlAdmRelPrmDsFilaDTO);
 
             return $ret;
-        }catch(Exception $e){
-            throw new InfraException('Erro contando .',$e);
+        } catch (Exception $e) {
+            throw new InfraException('Erro contando .', $e);
         }
     }
 
-    protected function montarArrFilaControlado($idMdUtlAdmPrmDs){
+    protected function montarArrFilaControlado($idMdUtlAdmPrmDs)
+    {
         $objMdUtlAdmRelPrmDsFilaDTO = new MdUtlAdmRelPrmDsFilaDTO();
-        $objMdUtlAdmRelPrmDsFilaRN  = new MdUtlAdmRelPrmDsFilaRN();
-        $objMdUtlAdmFilaDTO         = new MdUtlAdmFilaDTO();
-        $objMdUtlAdmFilaRN          = new MdUtlAdmFilaRN();
+        $objMdUtlAdmRelPrmDsFilaRN = new MdUtlAdmRelPrmDsFilaRN();
+        $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
+        $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
 
         $objMdUtlAdmRelPrmDsFilaDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
         $objMdUtlAdmRelPrmDsFilaDTO->retTodos();
+        $objMdUtlAdmRelPrmDsFilaDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_DESC);
         $arrObjMdUtlAdmRelPrmDsFila = $objMdUtlAdmRelPrmDsFilaRN->listar($objMdUtlAdmRelPrmDsFilaDTO);
 
         foreach ($arrObjMdUtlAdmRelPrmDsFila as $key => $dadosFila) {
@@ -148,27 +162,57 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN{
             $objMdUtlAdmFila = $objMdUtlAdmFilaRN->consultar($objMdUtlAdmFilaDTO);
 
             $fila[] = $dadosFila->getNumIdMdUtlAdmFila();
-            $fila[] = $objMdUtlAdmFila->getStrNome().' - '.$objMdUtlAdmFila->getStrDescricao();
+            $fila[] = $objMdUtlAdmFila->getStrNome() . ' - ' . $objMdUtlAdmFila->getStrDescricao();
 
             $prioridade = $dadosFila->getNumPrioridade();
-            $idSelect = 'selPriFila_'.$dadosFila->getNumIdMdUtlAdmFila();
+            $idSelect = 'selPriFila_' . $dadosFila->getNumIdMdUtlAdmFila();
 
             for ($i = 0; $i < count($arrObjMdUtlAdmRelPrmDsFila); $i++) {
-                $opt[] = $i+1;
-                $valor = $i+1;
-                if($opt[$prioridade-1] == $valor) {
-                    $opcoes .= "<option selected>".$valor."</option>";
+                $opt[] = $i + 1;
+                $valor = $i + 1;
+                if ($opt[$prioridade - 1] == $valor) {
+                    $opcoes .= "<option selected>" . $valor . "</option>";
                 } else {
-                    $opcoes .= "<option>".$valor."</option>";
+                    $opcoes .= "<option>" . $valor . "</option>";
                 }
             }
 
-            $selectOption = '<select style="width: 100%;" class="infraSelect selectFila" id="' . $idSelect . '" name="' . $idSelect.'" >'.$opcoes.'</select>';
+            $selectOption = '<select style="width: 100%;" class="infraSelect selectFila" id="' . $idSelect . '" name="' . $idSelect . '" >' . $opcoes . '</select>';
             $fila[] = $selectOption;
 
-            $arrFila[]= $fila;
+            $arrFila[] = $fila;
         }
 
-        return array('itensTabela'=>$arrFila,'qtdFila'=>count($arrFila));
+        return array('itensTabela' => $arrFila, 'qtdFila' => count($arrFila));
+    }
+
+    protected function montarArrFilaPrioridadeControlado($idMdUtlAdmPrmDs)
+    {
+        $objMdUtlAdmRelPrmDsFilaDTO = new MdUtlAdmRelPrmDsFilaDTO();
+        $objMdUtlAdmRelPrmDsFilaRN = new MdUtlAdmRelPrmDsFilaRN();
+        $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
+        $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
+
+        $objMdUtlAdmRelPrmDsFilaDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
+        $objMdUtlAdmRelPrmDsFilaDTO->retTodos();
+        $objMdUtlAdmRelPrmDsFilaDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $arrObjMdUtlAdmRelPrmDsFila = $objMdUtlAdmRelPrmDsFilaRN->listar($objMdUtlAdmRelPrmDsFilaDTO);
+
+        $filaPrioridade = array();
+        foreach ($arrObjMdUtlAdmRelPrmDsFila as $key => $dadosFila) {
+
+            $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($dadosFila->getNumIdMdUtlAdmFila());
+            $objMdUtlAdmFilaDTO->retTodos();
+            $objMdUtlAdmFilaDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_DESC);
+            $objMdUtlAdmFila = $objMdUtlAdmFilaRN->consultar($objMdUtlAdmFilaDTO);
+
+            $filaPrioridade[$key]['id'] = $dadosFila->getNumIdMdUtlAdmFila();
+            $filaPrioridade[$key]['desc'] = $objMdUtlAdmFila->getStrNome() . ' - ' . $objMdUtlAdmFila->getStrDescricao();
+            $filaPrioridade[$key]['prioridade'] = $dadosFila->getNumPrioridade();
+
+
+        }
+
+        return $filaPrioridade;
     }
 }

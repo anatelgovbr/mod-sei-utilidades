@@ -17,7 +17,7 @@ try {
             $isPrmDistrib    = $vlisPrmDistrib == 1;
             $nomeTpCtrl     = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
 
-            $strTitulo = 'Selecionar Status';
+            $strTitulo = 'Selecionar Situação';
             $isSelecionar = true;
 
             $objLupaStatus         =  array_key_exists('id_object', $_GET) ? $_GET['id_object'] : $_POST['hdnObjLupaStatus'];
@@ -58,12 +58,12 @@ $numRegistros = count($arrObjStatus);
 if ($numRegistros > 0) {
     $strResultado .= '<table width="99%" class="infraTable" summary="Status">';
     $strResultado .= '<caption class="infraCaption">';
-    $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Status', $numRegistros);
+    $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Situação', $numRegistros);
     $strResultado .= '</caption>';
     //Cabeçalho da Tabela
     $strResultado .= '<tr>';
     $strResultado .= '<th class="infraTh" align="center" width="1%" style="display: ">' . PaginaSEI::getInstance()->getThCheck() . '</th>';
-    $strResultado .= '<th class="infraTh" width=140px" style="text-align: left; padding-left: 5px;">' . 'Status' . '</th>';
+    $strResultado .= '<th class="infraTh" width=140px" style="text-align: left; padding-left: 5px;">' . 'Situação' . '</th>';
     $strResultado .= '<th class="infraTh" width="20%">Ações</th>';
     $strResultado .= '</tr>';
 

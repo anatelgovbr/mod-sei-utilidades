@@ -1,10 +1,10 @@
 <?
 /**
-* TRIBUNAL REGIONAL FEDERAL DA 4ª REGIÃO
+* TRIBUNAL REGIONAL FEDERAL DA 4 REGIÃO
 *
 * 25/09/2018 - criado por jhon.carvalho
 *
-* Versão do Gerador de Código: 1.41.0
+* Verso do Gerador de Código: 1.41.0
 */
 
 try {
@@ -261,31 +261,13 @@ PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
 ?>
 <?if(0){?><style><?}?>
-
-    #lblNome{
-        top: 0%;
-        position: absolute;
-    }
-  #txtNome{
-    top: 20%;
-    position: absolute;
-    width: 25%;
-    margin-top: 1%;
+  .bloco {
+    position: relative;
+    float: left;
   }
-    #lblDescricao{
 
-        top: 0%;
-        position: absolute;
-        margin-left: 27%;
-
-    }
-  #txtDescricao{
-
-    top: 20%;
-    position: absolute;
-    margin-left: 27%;
-    width: 30%;
-    margin-top: 1%;
+  .clear {
+    clear: both;
   }
 <?if(0){?></style><?}?>
 <?
@@ -354,16 +336,24 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 <form id="frmMdUtlAdmJustPrazoLista" method="POST" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
   <?
   PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-  PaginaSEI::getInstance()->abrirAreaDados('4em');
   ?>
-    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelOpcional">Justificativa:</label>
-    <input type="text" id="txtNome" name="txtNome" class="infraText" value="<?=$_POST['txtNome']?>" onkeypress="return infraMascaraTexto(this,event,100);" maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+    <div id="divInfraAreaDados" class="infraAreaDados">
 
-    <label id="lblDescricao" for="txtDescricao" accesskey="" class="infraLabelOpcional">Descrição:</label>
-    <input type="text" id="txtDescricao" name="txtDescricao" class="infraText" value="<?=$_POST['txtDescricao']?>" onkeypress="return infraMascaraTexto(this,event,100);" maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+      <div style="width: 27%;" class="bloco">
+        <label id="lblTpJustificativa" for="txtNome" accesskey="S" class="infraLabelOpcional">Justificativa:</label>
+        <div class="clear"></div>
+        <input type="text" id="txtNome" name="txtNome" class="infraText" size="30" value="<?=$_POST['txtNome']?>" maxlength="100" tabindex="502"/>
+      </div>
+      <div style="width: 45%;" class="bloco">
+        <label id="lblDescricao" for="txtDescricao" accesskey="S" class="infraLabelOpcional">Descrição: </label>
+        <div class="clear"></div>
+        <input style="width: 68%" type="text" id="txtDescricao" name="txtDescricao" class="infraText"
+               size="30" value="<?=$_POST['txtDescricao']?>" maxlength="100" tabindex="502"/>
+      </div>
+    </div>
 
     <?
-  PaginaSEI::getInstance()->fecharAreaDados();
+  
   PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
   //PaginaSEI::getInstance()->montarAreaDebug();
   //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
@@ -371,6 +361,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
     <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"  value="<?=$idTipoControle?>"/>
 </form>
+
 <?
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

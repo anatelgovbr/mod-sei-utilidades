@@ -71,6 +71,22 @@ class MdUtlAdmAtividadeINT extends InfraINT {
 
     }
 
+    public static function montarSelectComplexidade( $strValorItemSelecionado = null ){
+        $strValorItemSelecionado = is_null($strValorItemSelecionado) ? 3 : $strValorItemSelecionado;        
+        $arrItensComplex         = MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE;
+        $ordItens                = array('Muito Baixa', 'Baixa', 'Média', 'Alta', 'Muito Alta', 'Especial');
+        $strItensDefinitivo      = '';
+        foreach ( $ordItens as $k => $v ) {
+            $item = array_search( $v , $arrItensComplex ); //captura valor/indice original dos itens
+            if( (int) $strValorItemSelecionado == (int) $item ){
+                $strItensDefinitivo .= "<option value = '$item' selected>$v</option>";
+            }else{
+                $strItensDefinitivo .= "<option value = '$item'>$v</option>";
+            }
+        }
+        return $strItensDefinitivo;
+    }
+
     public static function autoCompletarAtividadeFiltroGrupo($strPalavrasPesquisa, $idTpCtrl, $idsGrupoAtividade, $idsTipoProcedimento){
 
         $mdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
@@ -118,9 +134,12 @@ class MdUtlAdmAtividadeINT extends InfraINT {
         $arrRetorno = array();
         foreach($mdUtlAdmAtividade as $objDTO){
             $possuiAnalise = $objDTO->getStrSinAnalise();
-            $vlAnalise     = $possuiAnalise == 'S' ? $objDTO->getNumUndEsforcoAtv() : $objDTO->getNumUndEsforcoRev();
-            $novoId = $objDTO->getNumIdMdUtlAdmAtividade().'_'.$possuiAnalise.'_'.$vlAnalise;
+            $vlAnalise     = $possuiAnalise == 'S' ? $objDTO->getNumTmpExecucaoAtv() : $objDTO->getNumTmpExecucaoRev();
+            $novoId = $objDTO->getNumIdMdUtlAdmAtividade().'_'.$possuiAnalise.'_'.$vlAnalise.'_'. MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()];
             $objDTO->setStrIdAutoComplete($novoId);
+            $vlrUnidEsf = MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv() ?: '0');
+            $nomeExibicao = $objDTO->getStrNome().' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ') - ' . trim($vlrUnidEsf);
+            $objDTO->setStrNome($nomeExibicao);
             $arrRetorno[] = $objDTO;
         }
 
@@ -164,7 +183,12 @@ class MdUtlAdmAtividadeINT extends InfraINT {
 
         if($isPrmDistrib){
             foreach ($mdUtlAdmAtividade as $objDTO){
-                $nomeExibicao = $objDTO->getStrNome().' - '.$objDTO->getStrDescricao();
+                $nomeExibicao = $objDTO->getStrNome() . ' - ' . $objDTO->getStrDescricao() . ' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')';
+                $objDTO->setStrNome($nomeExibicao);
+            }
+        } else {
+            foreach ($mdUtlAdmAtividade as $objDTO){
+                $nomeExibicao = $objDTO->getStrNome().' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')';
                 $objDTO->setStrNome($nomeExibicao);
             }
         }
@@ -178,7 +202,10 @@ class MdUtlAdmAtividadeINT extends InfraINT {
     {
 
         $objTriagemAtividadeDTO = InfraArray::distinctArrInfraDTO($arrObjsTriagemAtividade, 'IdMdUtlAdmAtividade');
-
+        foreach ($arrObjsTriagemAtividade as $chave => $obj) {
+            $strNome =  $obj->getStrNomeAtividade().' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$obj->getNumComplexidadeAtividade()] . ')';
+            $arrObjsTriagemAtividade[$chave]->setStrNomeAtividade($strNome);
+        }
         return parent::montarSelectArrInfraDTO(null, null, $selAtividadeCampo, $objTriagemAtividadeDTO, 'IdMdUtlAdmAtividade', 'NomeAtividade');
     }
 

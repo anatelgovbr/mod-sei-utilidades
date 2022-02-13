@@ -147,10 +147,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <div id="blocoRsultTatico">
             <fieldset class="infraFieldset" style="padding-bottom: 6%; margin-top: 15px;width: 52%" >
                 </br>
-                <legend class="infraLegend" >Resultado Tácito de Contestação de Revisão</legend>
+                <legend class="infraLegend" >Resultado Tácito de Contestação de Avaliação</legend>
                 <div>
-                    <label id="lblResultado" for="selResultado" accesskey="" class="infraLabelObrigatorio">Deseja ter Reprovação Tácita na Contestação de Revisão:</label>
-                    <a style="" id="btnResultado" <?= PaginaSEI::montarTitleTooltip('Informe se deseja que as Solicitações de Contestações de Revisão sejam reprovadas automaticamente.') ?>
+                    <label id="lblResultado" for="selResultado" accesskey="" class="infraLabelObrigatorio">Deseja ter Reprovação Tácita na Contestação de Avaliação:</label>
+                    <a style="" id="btnResultado" <?= PaginaSEI::montarTitleTooltip('Informe se deseja que as Solicitações de Contestações de Avaliação sejam reprovadas automaticamente.') ?>
                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                         <img id="imgAjudaResultado" border="0" style="width: 16px;height: 16px;"
                              src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>

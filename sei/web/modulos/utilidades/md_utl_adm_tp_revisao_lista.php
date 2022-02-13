@@ -114,7 +114,7 @@ try {
       die;
 
     case 'md_utl_adm_tp_revisao_reativar':
-      $strTitulo = 'Reativar Tipo de Revisão';
+      $strTitulo = 'Reativar Tipo de Avaliação';
       if ($_GET['acao_confirmada']=='sim'){
         try{
           $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
@@ -138,7 +138,7 @@ try {
 
     case 'md_utl_adm_tp_revisao_listar':
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
-      $strTitulo  = 'Resultado da Revisão - '.$nomeTpCtrl;
+      $strTitulo  = 'Resultado da Avaliação - '.$nomeTpCtrl;
       $bolAcaoReativar = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_revisao_reativar');
       break;
 
@@ -237,11 +237,11 @@ try {
     $strResultado = '';
 
     if ($_GET['acao']!='md_utl_adm_tp_revisao_reativar'){
-      $strSumarioTabela = 'Tabela de Resultado da Revisão.';
-      $strCaptionTabela = 'Resultados da Revisão';
+      $strSumarioTabela = 'Tabela de Resultado da Avaliação.';
+      $strCaptionTabela = 'Resultados da Avaliação';
     }else{
-      $strSumarioTabela = 'Tabela de Resultado da Revisão Inativos.';
-      $strCaptionTabela = 'Resultados da Revisão Inativos';
+      $strSumarioTabela = 'Tabela de Resultado da Avaliação Inativos.';
+      $strCaptionTabela = 'Resultados da Avaliação Inativos';
     }
 
     $strResultado .= '<table width="99%" class="infraTable" summary="'.$strSumarioTabela.'">'."\n";
@@ -250,7 +250,7 @@ try {
     if ($bolCheck) {
       $strResultado .= '<th class="infraTh" width="1%" style="display: none">'.PaginaSEI::getInstance()->getThCheck().'</th>'."\n";
     }
-    $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpRevisaoDTO,'Resultado da Revisão ','Nome',$arrObjMdUtlAdmTpRevisaoDTO).'</th>'."\n";
+    $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpRevisaoDTO,'Resultado da Avaliação ','Nome',$arrObjMdUtlAdmTpRevisaoDTO).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="50%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpRevisaoDTO,'Descrição','Descricao',$arrObjMdUtlAdmTpRevisaoDTO).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="15%">Ações</th>'."\n";
     $strResultado .= '</tr>'."\n";
@@ -274,11 +274,11 @@ try {
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmTpRevisaoDTO[$i]->getNumIdMdUtlAdmTpRevisao());
 
       if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_revisao='.$arrObjMdUtlAdmTpRevisaoDTO[$i]->getNumIdMdUtlAdmTpRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Resultado da Revisão" alt="Consultar Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_revisao='.$arrObjMdUtlAdmTpRevisaoDTO[$i]->getNumIdMdUtlAdmTpRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Resultado da Avaliação" alt="Consultar Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_revisao='.$arrObjMdUtlAdmTpRevisaoDTO[$i]->getNumIdMdUtlAdmTpRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Resultado da Revisão" alt="Alterar Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_revisao_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_revisao='.$arrObjMdUtlAdmTpRevisaoDTO[$i]->getNumIdMdUtlAdmTpRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Resultado da Avaliação" alt="Alterar Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -287,16 +287,16 @@ try {
       }
 
       if ($bolAcaoDesativar && $arrObjMdUtlAdmTpRevisaoDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Resultado da Revisão" alt="Desativar Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Resultado da Avaliação" alt="Desativar Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoReativar && $arrObjMdUtlAdmTpRevisaoDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Resultado da Revisão" alt="Reativar Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Resultado da Avaliação" alt="Reativar Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
 
       if ($bolAcaoExcluir){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Resultado da Revisão" alt="Excluir Resultado da Revisão" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Resultado da Avaliação" alt="Excluir Resultado da Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       $strResultado .= '</td></tr>'."\n";
@@ -358,7 +358,7 @@ require_once 'md_utl_geral_js.php';
 
   <? if ($bolAcaoDesativar){ ?>
   function acaoDesativar(id,desc){
-      var msg = setMensagemPersonalizada(msg70, ['Resultado da Revisão', desc]);
+      var msg = setMensagemPersonalizada(msg70, ['Resultado da Avaliação', desc]);
     if (confirm(msg)){
       document.getElementById('hdnInfraItemId').value=id;
       document.getElementById('frmMdUtlAdmTpRevisaoLista').action='<?=$strLinkDesativar?>';
@@ -370,7 +370,7 @@ require_once 'md_utl_geral_js.php';
 
   <? if ($bolAcaoReativar){ ?>
   function acaoReativar(id,desc){
-    var msg = setMensagemPersonalizada(msg72, ['Resultado da Revisão', desc]);
+    var msg = setMensagemPersonalizada(msg72, ['Resultado da Avaliação', desc]);
     if (confirm(msg)){
       document.getElementById('hdnInfraItemId').value=id;
       document.getElementById('frmMdUtlAdmTpRevisaoLista').action='<?=$strLinkReativar?>';
@@ -382,7 +382,7 @@ require_once 'md_utl_geral_js.php';
 
   <? if ($bolAcaoExcluir){ ?>
   function acaoExcluir(id,desc){
-    var msg = setMensagemPersonalizada(msg74, ['Resultado da Revisão', desc]);
+    var msg = setMensagemPersonalizada(msg74, ['Resultado da Avaliação', desc]);
     if (confirm(msg)){
       document.getElementById('hdnInfraItemId').value=id;
       document.getElementById('frmMdUtlAdmTpRevisaoLista').action='<?=$strLinkExcluir?>';
@@ -407,7 +407,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
       <div style="width: 27%;" class="bloco">
         <label id="lblTpRevisao" for="txtTpRevisao" accesskey="S" class="infraLabelOpcional">
-          Resultado da Revisão:
+          Resultado da Avaliação:
         </label>
 
         <div class="clear"></div>

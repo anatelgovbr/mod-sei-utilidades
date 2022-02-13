@@ -11,20 +11,45 @@ require_once dirname(__FILE__).'/../../../SEI.php';
 
 class MdUtlAdmGrpINT extends InfraINT {
 
-  public static function montarSelectIdMdUtlAdmGrp($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $numIdMdUtlAdmTpCtrlDesemp=''){
-    $objMdUtlAdmGrpDTO = new MdUtlAdmGrpDTO();
-    $objMdUtlAdmGrpDTO->retNumIdMdUtlAdmGrp();
-    $objMdUtlAdmGrpDTO->retNumIdMdUtlAdmGrp();
+    public static function montarSelectIdMdUtlAdmGrp($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $numIdMdUtlAdmTpCtrlDesemp=''){
+        $objMdUtlAdmGrpDTO = new MdUtlAdmGrpDTO();
+        $objMdUtlAdmGrpDTO->retNumIdMdUtlAdmGrp();
+        $objMdUtlAdmGrpDTO->retNumIdMdUtlAdmGrp();
 
-    if ($numIdMdUtlAdmTpCtrlDesemp!==''){
-      $objMdUtlAdmGrpDTO->setNumIdMdUtlAdmTpCtrlDesemp($numIdMdUtlAdmTpCtrlDesemp);
+        if ($numIdMdUtlAdmTpCtrlDesemp!==''){
+          $objMdUtlAdmGrpDTO->setNumIdMdUtlAdmTpCtrlDesemp($numIdMdUtlAdmTpCtrlDesemp);
+        }
+
+        $objMdUtlAdmGrpDTO->setOrdNumIdMdUtlAdmGrp(InfraDTO::$TIPO_ORDENACAO_ASC);
+
+        $objMdUtlAdmGrpRN = new MdUtlAdmGrpRN();
+        $arrObjMdUtlAdmGrpDTO = $objMdUtlAdmGrpRN->listar($objMdUtlAdmGrpDTO);
+
+        return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlAdmGrpDTO, 'IdMdUtlAdmGrp', 'IdMdUtlAdmGrp');
     }
 
-    $objMdUtlAdmGrpDTO->setOrdNumIdMdUtlAdmGrp(InfraDTO::$TIPO_ORDENACAO_ASC);
+    public static function verificarExisteGruposParametrizado($idTipoControle, $idFila, $idTpProcedimento){
 
-    $objMdUtlAdmGrpRN = new MdUtlAdmGrpRN();
-    $arrObjMdUtlAdmGrpDTO = $objMdUtlAdmGrpRN->listar($objMdUtlAdmGrpDTO);
+        $objMdUtlAdmGrpFilaProcRN = new MdUtlAdmGrpFilaProcRN();
+        $idsGrupoFila = $objMdUtlAdmGrpFilaProcRN->getGruposFilaDesteProcesso($idTpProcedimento);
 
-    return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlAdmGrpDTO, 'IdMdUtlAdmGrp', 'IdMdUtlAdmGrp');
-  }
+        if( is_null($idsGrupoFila)) return false;
+
+        $objMdUtlAdmGrpFilaDTO = new MdUtlAdmGrpFilaDTO();
+        $objMdUtlAdmGrpFilaDTO->setNumIdMdUtlAdmFila($idFila);
+        $objMdUtlAdmGrpFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+        $objMdUtlAdmGrpFilaDTO->setNumIdMdUtlAdmGrpFila($idsGrupoFila, InfraDTO::$OPER_IN);
+        $objMdUtlAdmGrpFilaDTO->retNumIdMdUtlAdmGrpFila();
+        $objMdUtlAdmGrpFilaDTO->retTodos();
+
+        $objMdUtlAdmGrpFilaRN = new MdUtlAdmGrpFilaRN();
+        $arrObjMdUtlAdmGrpFilaDTO = $objMdUtlAdmGrpFilaRN->listar($objMdUtlAdmGrpFilaDTO);
+
+        $retorno = false;
+        if (count($arrObjMdUtlAdmGrpFilaDTO) > 0){
+            $retorno = true;
+        }
+
+        return $retorno;
+    }
 }

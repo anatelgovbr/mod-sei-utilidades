@@ -89,16 +89,16 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <!--  EsforcoTriagem -->
         <div id="divEsforcoTriagem" class="bloco">
 
-            <label id="lblUndEsforcoTriagem" for="txtUndEsforcoTriagem" accesskey="" class="infraLabelObrigatorio">Unidade de Esforço de Triagem:</label>
+            <label id="lblTmpExecucaoTriagem" for="txtTmpExecucaoTriagem" accesskey="" class="infraLabelObrigatorio">Tempo de execução de Triagem (em minutos):</label>
 
-            <a style="" id="btAjudaUndEsforcoTriagem" <?=PaginaSEI::montarTitleTooltip('Unidade de Esforço que será considerada  para usuários que fizerem a triagem nessa fila')?>
+            <a style="" id="btAjudaTmpExecucaoTriagem" <?=PaginaSEI::montarTitleTooltip('Tempo de execução de Triagem (em minutos) que será considerado  para usuários que fizerem a triagem nessa fila')?>
                tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                <img id="imgAjudaUndEsforcoTriagem" border="0" class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
+                <img id="imgAjudaTmpExecucaoTriagem" border="0" class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
             </a>
 
             <div class="clear"></div>
 
-            <input utlSomenteNumeroPaste="true" maxlength="6" type="text" value="<?=!is_null($objFilaDTO) ? $objFilaDTO->getStrUndEsforcoTriagem() : $_POST['txtUndEsforcoTriagem'] ?>" onkeypress="return infraMascaraNumero(this,event,6);" id="txtUndEsforcoTriagem" name="txtUndEsforcoTriagem" class="infraText" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+            <input utlSomenteNumeroPaste="true" maxlength="6" type="text" value="<?=!is_null($objFilaDTO) ? $objFilaDTO->getNumTmpExecucaoTriagem() : $_POST['txtTmpExecucaoTriagem'] ?>" onkeypress="return infraMascaraNumero(this,event,6);" id="txtTmpExecucaoTriagem" name="txtTmpExecucaoTriagem" class="infraText" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
 
         </div>
 
@@ -119,7 +119,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         <!-- Resposta tácita para dilação de prazo-->
         <div id="divRespostaTacita" class="bloco">
             <label id="lblDilacao" for="selDilacao" accesskey="" class="infraLabelOpcional">Resposta Tácita para Dilação de Prazo: </label>
-            <a id="hintDilacao" <?= PaginaSEI::montarTitleTooltip('Informa o Tipo de Resposta Tácita para Solicitação de Dilação de Prazo.') ?>
+            <a id="hintDilacao" <?= PaginaSEI::montarTitleTooltip('Informar o Tipo de Resposta Tácita para Solicitação de Dilação de Prazo.') ?>
                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <img id="imgDilacao" border="0" style="width: 16px;height: 16px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
@@ -135,7 +135,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                 <?php $checkedDstAutomatica = !is_null($objFilaDTO) && $objFilaDTO->getStrSinDistribuicaoAutomatica() == 'S' || $_POST['rdoDstAutomatica'] && $_POST['rdoDstAutomatica'] == 'S' ? 'checked="checked"' : '' ?>
                 <input <?php echo $checkedDstAutomatica; ?> value="S" type="checkbox" name="rdoDstAutomatica" id="rdoDstAutomatica" class="infraCheckbox" onchange="habilitarUltimaFila(this);"/>
                 <label style="position:absolute;margin-top: 1px;" class="infraLabelCheckbox infraLabelOpcional" for="rdoDstAutomatica" id="lblDstAuto">Distribuição Automática
-                    <img align="top" style="height:16px; width:16px;" id="imgAjuda" src="/infra_css/imagens/ajuda.gif" name="ajuda" onmouseover="return infraTooltipMostrar('Indica se a fila terá suas atividades distribuídas por meio de rotina ou não. Independente da distribuição automática, o Gestor do Controle pode distribuir diretamente ou o membro que participa do Controle pode assumir diretamente qualquer processo pendente de distribuição.');" onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
+                    <img align="top" style="height:16px; width:16px;" id="imgAjuda" src="/infra_css/imagens/ajuda.gif" name="ajuda" onmouseover="return infraTooltipMostrar('Indicar se a fila terá suas atividades distribuídas por meio de rotina ou não. Independente da distribuição automática, o Gestor do Controle pode distribuir diretamente ou o membro que participa do Controle pode assumir diretamente qualquer processo pendente de distribuição.');" onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
                 </label>
 
             </div>
@@ -150,7 +150,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                 ?>
                 <input  <?php echo $checkedDstUltFila ?>  value="S"  <?php echo $disabledDstUltFila ?> type="checkbox" name="rdoDstUltimaFila" id="rdoDstUltimaFila" class="infraCheckbox"/>
                 <label style="position:absolute;margin-top: 1px;" class="infraLabelCheckbox infraLabelOpcional" for="rdoDstUltimaFila" id="lblDstUltimaFila">Distribuição Último Servidor
-                    <img align="top" style="height:16px; width:16px;" id="imgAjuda" src="/infra_css/imagens/ajuda.gif" name="ajuda" onmouseover="return infraTooltipMostrar('Indica se os processos da fila serão atribuídos automaticamente para o usuário que fez a última análise do processo na área.');" onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
+                    <img align="top" style="height:16px; width:16px;" id="imgAjuda" src="/infra_css/imagens/ajuda.gif" name="ajuda" onmouseover="return infraTooltipMostrar('Indicar se os processos da fila serão atribuídos automaticamente para o usuário que fez a última análise do processo na área.');" onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
                 </label>
                 <!-- <a style="margin-left: 13.9%" id="btAjudaUltimaFila" <?/*= PaginaSEI::montarTitleTooltip('Indica se os processos da fila serão atribuídos automaticamente para o usuário que fez a última análise do processo na área.') */?>
            tabindex="<?/*= PaginaSEI::getInstance()->getProxTabDados() */?>">
@@ -197,7 +197,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
                     <div style="margin-bottom: 7px;">
                         <label id="lblPapel" name="lblPapel" class="infraLabelObrigatorio">Papel: </label>
-                        <a style="" id="btAjudaPapel" <?= PaginaSEI::montarTitleTooltip('Informa o papel do Usuário Participante nesta Fila.') ?>
+                        <a style="" id="btAjudaPapel" <?= PaginaSEI::montarTitleTooltip('Informar o papel do Usuário Participante nesta Fila.') ?>
                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                             <img id="imgAjudaPapel" border="0"
                                  class="tamanhoBtnAjuda" src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
@@ -220,15 +220,15 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                     <!-- Revisor -->
                     <div style="margin-top: 8px">
                         <input type="checkbox" name="rdoRevisor" id="rdoRevisor" class="infraCheckbox checkedPapel"/>
-                        <label style="position:absolute;margin-top: 1px;" class="infraLabelCheckbox infraLabelOpcional" for="rdoRevisor" id="lblRevisor">Revisor</label>
+                        <label style="position:absolute;margin-top: 1px;" class="infraLabelCheckbox infraLabelOpcional" for="rdoRevisor" id="lblRevisor">Avaliador</label>
                     </div>
                 </div>
 
 
-                <!-- Tipo de Revisão do Analista -->
+                <!-- Tipo de Avaliação do Analista -->
                 <div id="divTipoRevisao">
-                    <label id="lblTipoRevisao" name="lblTipoRevisao" for="selTipoRevisao" class="infraLabelOpcional">Tipo de Revisão:</label>
-                    <a style="" id="btAjudaPercRevisao" <?=PaginaSEI::montarTitleTooltip('Define se os processos do usuário irão ou não para Revisão.')?>
+                    <label id="lblTipoRevisao" name="lblTipoRevisao" for="selTipoRevisao" class="infraLabelOpcional">Tipo de Avaliação:</label>
+                    <a style="" id="btAjudaPercRevisao" <?=PaginaSEI::montarTitleTooltip('Define se os processos do usuário irão ou não para Avaliação.')?>
                        tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
                         <img class="tamanhoBtnAjuda" id="imgAjudaPercRevisao" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
                     </a>
@@ -263,8 +263,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                             <th class="infraTh" width="0" style="display: none;">SinTriador</th>
                             <th class="infraTh" align="center" width="10%">Analista</th>
                             <th class="infraTh" width="0" style="display: none;">SinAnalista</th>
-                            <th class="infraTh" align="center" width="15%">Tipo de Revisão</th>
-                            <th class="infraTh" align="center" width="10%"> Revisor </th>
+                            <th class="infraTh" align="center" width="15%">Tipo de Avaliação</th>
+                            <th class="infraTh" align="center" width="10%"> Avaliador </th>
                             <th class="infraTh" width="0" style="display: none;">SinRevisor</th>
                             <th class="infraTh" width="0" style="display: none;">usuario sem html</th>
                             <th class="infraTh" width="0" style="display: none;">possui vinc distr</th>

@@ -282,7 +282,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
           $objMdUtlAdmPrmGrDTO = $this->cadastrar($objMdUtlAdmPrmGrDTO);
           $idMdUtlAdmPrmGr = $objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmPrmGr();
           $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
-          $objMdUtlAdmTpCtrlRN->alterar($objMdUtlAdmTpCtrlDTO);
+          $objMdUtlAdmTpCtrlRN->incluiridMdUtlAdmPrmGrEmMdUtlAdmTpCtrlDesemp($objMdUtlAdmTpCtrlDTO);
       }
 
       return $idMdUtlAdmPrmGr;
@@ -297,22 +297,43 @@ class MdUtlAdmPrmGrRN extends InfraRN {
           $mdUtlAdmRelPrmGrProcDTO->setNumIdMdUtlAdmParamGr($idMdUtlAdmPrmGr);
           $mdUtlAdmRelPrmGrProcDTO->retTodos();
 
-          $count = $mdUtlAdmRelPrmGrProcRN->contar($mdUtlAdmRelPrmGrProcDTO);
-          if($count > 0) {
-              $objsAlteracaoDTO = $mdUtlAdmRelPrmGrProcRN->listar($mdUtlAdmRelPrmGrProcDTO);
-              $mdUtlAdmRelPrmGrProcRN->excluir($objsAlteracaoDTO);
+          $arrObjs = $mdUtlAdmRelPrmGrProcRN->listar($mdUtlAdmRelPrmGrProcDTO);
+          $newArr = array();
+          $oldArr = array();
+
+          foreach ($arrObjs as $objBdDTO) {
+              $oldArr[] = $objBdDTO->getNumIdTipoProcedimento();
           }
 
-      }
+          foreach ($arrTpProcesso as $objTela) {
+              $newArr[] = $objTela[0];
+          }
 
-      // Cadastros dos tipos de Processos
-      for ($i = 0; $i < count($arrTpProcesso); $i++) {
+          for ($i = 0; $i < count($oldArr); $i++) {
+              if (!in_array($oldArr[$i], $newArr)) {
+                  $objDTO = new MdUtlAdmRelPrmGrProcDTO();
+                  $objDTO->setNumIdMdUtlAdmParamGr($idMdUtlAdmPrmGr);
+                  $objDTO->setNumIdTipoProcedimento($oldArr[$i]);
+                  $objDTO->retTodos();
 
-          $mdUtlAdmRelPrmGrProcDTO = new MdUtlAdmRelPrmGrProcDTO();
-          $mdUtlAdmRelPrmGrProcDTO->setNumIdMdUtlAdmParamGr($idMdUtlAdmPrmGr);
-          $mdUtlAdmRelPrmGrProcDTO->setNumIdTipoProcedimento($arrTpProcesso[$i][0]);
-          $mdUtlAdmRelPrmGrProcRN->cadastrar($mdUtlAdmRelPrmGrProcDTO);
+                  $objsAlteracaoDTO = $mdUtlAdmRelPrmGrProcRN->listar($objDTO);
+                  $mdUtlAdmRelPrmGrProcRN->excluir($objsAlteracaoDTO);
+              }
+          }
 
+          for ($i = 0; $i < count($arrTpProcesso); $i++) {
+              if (count($oldArr) < 1) {
+                  $mdUtlAdmRelPrmGrProcDTO = new MdUtlAdmRelPrmGrProcDTO();
+                  $mdUtlAdmRelPrmGrProcDTO->setNumIdMdUtlAdmParamGr($idMdUtlAdmPrmGr);
+                  $mdUtlAdmRelPrmGrProcDTO->setNumIdTipoProcedimento($arrTpProcesso[$i][0]);
+                  $mdUtlAdmRelPrmGrProcRN->cadastrar($mdUtlAdmRelPrmGrProcDTO);
+              }elseif (!in_array($arrTpProcesso[$i][0], $oldArr)) {
+                  $mdUtlAdmRelPrmGrProcDTO = new MdUtlAdmRelPrmGrProcDTO();
+                  $mdUtlAdmRelPrmGrProcDTO->setNumIdMdUtlAdmParamGr($idMdUtlAdmPrmGr);
+                  $mdUtlAdmRelPrmGrProcDTO->setNumIdTipoProcedimento($arrTpProcesso[$i][0]);
+                  $mdUtlAdmRelPrmGrProcRN->cadastrar($mdUtlAdmRelPrmGrProcDTO);
+              }
+          }
       }
   }
 
@@ -385,7 +406,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
     }
 
-  private function _cadastrarRelParametrizacaoUsuario($isBolAlterarParametrizacao, $arrUsuarioPart, $idMdUtlAdmPrmGr){
+  private function _cadastrarRelParametrizacaoUsuario($isBolAlterarParametrizacao, $arrUsuarioPart, $idMdUtlAdmPrmGr, $idTipoControleUtl){
       $idsUsuariosExcl  = array();
       $idsUsuariosAlter = array();
 
@@ -412,14 +433,14 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
       if(count($idsUsuariosNovos) > 0){
           $arrObjsParametrizados = $this->_cadastrarAlterarUsuariosParticipantes($idsUsuariosNovos, $arrDadosUsuario, $idMdUtlAdmPrmGr);
-          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados);
+          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados, $idTipoControleUtl);
       }
 
 
       if(count($idsUsuariosAlter) > 0){
           $arrObjsParametrizados = $this->_cadastrarAlterarUsuariosParticipantes($idsUsuariosAlter, $arrDadosUsuario, $idMdUtlAdmPrmGr, true);
           $this->_cadastrarDataFinalUsuarios($idMdUtlAdmPrmGr, $idsUsuariosAlter);
-          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados);
+          $this->_cadastrarNovoUsuarioHistorico($arrObjsParametrizados, $idTipoControleUtl);
       }
 
 
@@ -430,7 +451,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
   }
 
-  private function _cadastrarNovoUsuarioHistorico($arrObjsParametrizados){
+  private function _cadastrarNovoUsuarioHistorico($arrObjsParametrizados, $idTipoControleUtl){
       if(count($arrObjsParametrizados) > 0) {
           $objHistoricoRN = new MdUtlAdmHistPrmGrUsuRN();
           foreach($arrObjsParametrizados as $objDTOParametrizado) {
@@ -439,6 +460,9 @@ class MdUtlAdmPrmGrRN extends InfraRN {
                   $objHistoricoDTO->setDthInicial(InfraData::getStrDataHoraAtual());
                   $objHistoricoDTO->setNumIdUsuarioAtual(SessaoSEI::getInstance()->getNumIdUsuario());
                   $objHistoricoRN->cadastrar($objHistoricoDTO);
+
+                  //atualizar distribuições no controle de desempenho para usuario alterado
+                  MdUtlAdmPrmGrUsuINT::atualizarControleDesempenhoAoAlterarUsuario($objHistoricoDTO->getNumIdUsuario(), $idTipoControleUtl);
               }
           }
       }
@@ -498,7 +522,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
   public function cadastrarParametrizacao($idMdUtlAdmPrmGr, $idTipoControleUtl, $objMdUtlAdmPrmGrDTO, $objMdUtlAdmTpCtrlDTO){
       //Get Vars Iniciais
-      $bolAlterar              = $idMdUtlAdmPrmGr > 0;
+      $bolAlterar              = true; #$idMdUtlAdmPrmGr > 0;
       $isValido                = true;
       $arrUsuarioPart          = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbUsuario']);
       $arrTpProcesso           = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTpProcesso']);
@@ -514,7 +538,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
       $idMdUtlAdmPrmGr = $this->_cadastrarAlterarParametrizacao($idMdUtlAdmPrmGr, $objMdUtlAdmPrmGrDTO, $objMdUtlAdmTpCtrlDTO);
       $this->_cadastrarRelParametrizacaoTpProcesso($bolAlterar, $idMdUtlAdmPrmGr, $arrTpProcesso);
-      $this->_cadastrarRelParametrizacaoUsuario($bolAlterar, $arrUsuarioPart, $idMdUtlAdmPrmGr);
+      $this->_cadastrarRelParametrizacaoUsuario($bolAlterar, $arrUsuarioPart, $idMdUtlAdmPrmGr, $idTipoControleUtl);
 
   }
 

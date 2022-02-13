@@ -223,6 +223,7 @@ class MdUtlAnaliseRN extends InfraRN {
               $objRNGerais = new MdUtlRegrasGeraisRN();
               $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
               $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
+              $this->_atualizaObjAnalise($idProcedimento, $objAnalise, $idTpCtrl, $idUsuarioAtb);
           }
 
           return $isProcessoConcluido;
@@ -231,12 +232,30 @@ class MdUtlAnaliseRN extends InfraRN {
       }
   }
 
+    private function _atualizaObjAnalise($idProcedimento, $objMdUtlAnaliseDTO, $idTpCtrl, $idUsuarioAtb)
+    {
+        $regrasGerais = new MdUtlRegrasGeraisRN();
+        $objTodosHistDesmp = $regrasGerais->recuperarObjHistorico($idProcedimento);
+        $arrParams = $regrasGerais->regraAcaoAnalise($objTodosHistDesmp, $objMdUtlAnaliseDTO);
+        $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho($arrParams['tempoExecucao'] ? $arrParams['tempoExecucao'] : 0, $idTpCtrl, $idUsuarioAtb);
+
+        $objMdUtlAnaliseDTO->setDthInicio($arrParams['dataInicio'] ? $arrParams['dataInicio'] : '');
+        $objMdUtlAnaliseDTO->setDthPrazo($arrParams['dataPrazo'] ? $arrParams['dataPrazo'] : '');
+        $objMdUtlAnaliseDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
+
+        $objMdUtlAnaliseDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
+        $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+        $objMdUtlAnaliseDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+
+        return $this->alterar($objMdUtlAnaliseDTO);
+    }
+
   private function _continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno)
     {
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $idProcedimento         = $dados['hdnIdProcedimento'];
         $idFila                 = $dados['hdnIdFilaAtiva'];
-        $undEsforco             = $this->_getUnidadeEsforcoAnalise($dados);
+        $tempoExecucao             = $this->_getTempoExecucaoAnalise($dados);
         $idTpCtrl               = $dados['hdnIdTpCtrl'];
         $idRevisao              = $arrRetorno[$idProcedimento]['ID_REVISAO'];
 
@@ -247,57 +266,55 @@ class MdUtlAnaliseRN extends InfraRN {
             $this->desativarPorIds(array($idAntigaAnalise));
         }
 
-        $arrParams = array($idProcedimento, $idFila, $idTpCtrl, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO, null, $undEsforco, null, $idTriagem, $objAnalise->getNumIdMdUtlAnalise(), $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+        $arrParams = array($idProcedimento, $idFila, $idTpCtrl, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO, null, $tempoExecucao, null, $idTriagem, $objAnalise->getNumIdMdUtlAnalise(), $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
         $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
     }
 
-  private function _getUnidadeEsforcoAnalise($dados){
+  private function _getTempoExecucaoAnalise($dados){
         $numItensSelecionados = split(',', $dados['hdnItensSelecionados']);
         $numRegistros = count($numItensSelecionados);
 
-        $numUndEsforco = [];
-        $somaUndEsforco = 0;
+        $numTmpExecucao = [];
+        $somaTmpExecucao = 0;
 
         if($numRegistros > 0){
             for($i = 0; $i < $numRegistros; $i++){
                 $id = $numItensSelecionados[$i];
-                array_push($numUndEsforco, $dados['undEsforco_'.$id]);
-                $somaUndEsforco += $numUndEsforco[$i];
+                array_push($numTmpExecucao, $dados['TmpExecucao_'.$id]);
+                $somaTmpExecucao += $numTmpExecucao[$i];
             }
         }
 
-        return $somaUndEsforco;
+        return $somaTmpExecucao;
     }
 
   private function _salvaObjAnalise($dados, $isTpProcParametrizado){
 
-        $arrStrIdsSel           = explode(',',$dados['hdnItensSelecionados']);
-        $idFilaEncaminhamento   = $dados['selFila'];
-        $idEncaminhamentoAnl    = $dados['selEncaminhamentoAnl'];
+    $arrStrIdsSel           = explode(',',$dados['hdnItensSelecionados']);
+    $idFilaEncaminhamento   = $dados['selFila'];
+    $idEncaminhamentoAnl    = $dados['selEncaminhamentoAnl'];
+    $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+    $objMdUtlAnaliseDTO->setStrInformacoesComplementares(trim($dados['txaInformacaoComplementar']));
+    $objMdUtlAnaliseDTO->setStrSinAtivo('S');
+    $objMdUtlAnaliseDTO->setDthAtual(InfraData::getStrDataHoraAtual());
+    $objMdUtlAnaliseDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
 
-        $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
-
-        $objMdUtlAnaliseDTO->setStrInformacoesComplementares($dados['txaInformacaoComplementar']);
-        $objMdUtlAnaliseDTO->setStrSinAtivo('S');
-        $objMdUtlAnaliseDTO->setDthAtual(InfraData::getStrDataHoraAtual());
-        $objMdUtlAnaliseDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
-
-        if($isTpProcParametrizado) {
-            $objMdUtlAnaliseDTO->setStrStaEncaminhamentoAnalise($idEncaminhamentoAnl);
-            $objMdUtlAnaliseDTO->setNumIdMdUtlAdmFila($idFilaEncaminhamento);
-        }
-
-        $objMdUtlAnaliseDTO->retTodos();
-
-        $objMdUtlAnaliseDTO   = $this->cadastrar($objMdUtlAnaliseDTO);
-        if(!is_null($objMdUtlAnaliseDTO)) {
-            $this->_cadastrarRelacionamentosAnaliseProduto($arrStrIdsSel, $dados, $objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
-
-            return $objMdUtlAnaliseDTO;
-        }
-
-        return false;
+    if($isTpProcParametrizado) {
+        $objMdUtlAnaliseDTO->setStrStaEncaminhamentoAnalise($idEncaminhamentoAnl);
+        $objMdUtlAnaliseDTO->setNumIdMdUtlAdmFila($idFilaEncaminhamento);
     }
+
+    $objMdUtlAnaliseDTO->retTodos();
+
+    $objMdUtlAnaliseDTO   = $this->cadastrar($objMdUtlAnaliseDTO);
+    if(!is_null($objMdUtlAnaliseDTO)) {
+        $this->_cadastrarRelacionamentosAnaliseProduto($arrStrIdsSel, $dados, $objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
+
+        return $objMdUtlAnaliseDTO;
+    }
+
+    return false;
+  }
 
   private function _cadastrarRelacionamentosAnaliseProduto($arrStrIdsSel, $dados, $idMdUtlAnalise){
       $objDocumentoRN       = new DocumentoRN();
@@ -334,7 +351,7 @@ class MdUtlAnaliseRN extends InfraRN {
           $objRelAnaliseProduto->setNumIdMdUtlAnalise($idMdUtlAnalise);
           $objRelAnaliseProduto->setNumIdMdUtlRelTriagemAtv($dados['idRelTriagem_'. $arrStrIdsSel[$i]]);
           $objRelAnaliseProduto->setNumIdMdUtlAdmTpProduto($dados['idProduto_'. $arrStrIdsSel[$i]]);
-          $objRelAnaliseProduto->setStrObservacaoAnalise($dados['observacao_' . $arrStrIdsSel[$i]]);
+          $objRelAnaliseProduto->setStrObservacaoAnalise(trim($dados['observacao_' . $arrStrIdsSel[$i]]));
 
           $objRelSerieAnaliseRN->cadastrar($objRelAnaliseProduto);
       }

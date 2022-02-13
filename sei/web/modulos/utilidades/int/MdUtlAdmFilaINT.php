@@ -165,4 +165,135 @@ class MdUtlAdmFilaINT extends InfraINT {
         return $select;
     }
 
+    /*
+    public static function montarListaTpControle( $idUnidade , $idTipoControle = null , $combo = false )
+    {        
+        $objListaTpCtrlUsu = self::retListaTpCtrlUsu();
+        $objListaTpCtrlUnd = self::retListaTpCtrlUnd($idUnidade);
+        $arrObjTpCtrl      = self::retListaTpCtrlUsu_Und($objListaTpCtrlUsu, $objListaTpCtrlUnd);
+
+        // se null retorna o valor null
+        if (empty($arrObjTpCtrl)) {
+            return $arrObjTpCtrl; 
+        }
+
+        // monta a combo
+        if( $combo ){
+            $sel = '<option value=""></option>';
+            foreach( $arrObjTpCtrl as $ctrl ){
+                if( $idTipoControle == $ctrl->getNumIdMdUtlAdmTpCtrlDesemp() ){
+                    $sel.= '<option value="'.$ctrl->getNumIdMdUtlAdmTpCtrlDesemp().'" selected>'. $ctrl->getStrNome() .'</option>';
+                }else{
+                    $sel.= '<option value="'.$ctrl->getNumIdMdUtlAdmTpCtrlDesemp().'">'. $ctrl->getStrNome() .'</option>';
+                }            
+            }
+            return $sel;
+        }        
+
+        //montar as urls de acordo com os tipo de controle de desempenho        
+        foreach ($arrObjTpCtrl as $ctrl) {
+            $arrTpControle[$ctrl->getNumIdMdUtlAdmTpCtrlDesemp()] = $ctrl->getStrNome(); 
+        }
+        return $arrTpControle;        
+    }
+    */
+
+    public static function montarSelectTpControle($arrObj , $val , $desc , $val_selected, $tela = null){
+        $sel  = '<option value=""></option>';
+        $tipo = null;
+        if (count($arrObj) == 1 ) {
+            if( $tela == 'associar') 
+                $tipo = 1;
+            else
+                $tipo = 2;
+        } else {
+            $tipo = 1;
+        }
+
+        switch ($tipo) {
+            case 1:
+                foreach( $arrObj as $el ){
+                    $p1 = "get".$val;
+                    $p2 = "get".$desc;
+                    if( $val_selected == $el->$p1() ){
+                        $sel.= '<option value="'.$el->$p1().'" selected>'. $el->$p2() .'</option>';
+                    }else{
+                        $sel.= '<option value="'.$el->$p1().'">'. $el->$p2() .'</option>';
+                    }            
+                }
+                break;
+            case 2:
+                foreach( $arrObj as $el ){
+                    $p1 = "get".$val;
+                    $p2 = "get".$desc;
+                    $sel.= '<option value="'.$el->$p1().'" selected>'. $el->$p2() .'</option>';           
+                }
+                break;
+            default:
+                break;
+        }
+        return $sel;
+    }
+
+    private static function retListaTpCtrlUsu()
+    {
+        $objMdUtlAdmRelTpCtrlDesempUsuRN  = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $objMdUtlAdmRelTpCtrlDesempUsuDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
+        $objMdUtlAdmRelTpCtrlDesempUsuDTO->setNumIdUsuario( SessaoSEI::getInstance()->getNumIdUsuario() );
+        $objMdUtlAdmRelTpCtrlDesempUsuDTO->retNumIdMdUtlAdmTpCtrlDesemp();              
+        $arrObjTpCtrlUsu = $objMdUtlAdmRelTpCtrlDesempUsuRN->listar( $objMdUtlAdmRelTpCtrlDesempUsuDTO );
+        $arrLista = array();
+        foreach ($arrObjTpCtrlUsu as $row) {
+            $arrLista[$row->getNumIdMdUtlAdmTpCtrlDesemp()] = $row->getNumIdMdUtlAdmTpCtrlDesemp();
+        }
+        return $arrLista;
+    }
+
+    private static function retListaTpCtrlUnd($idUnidade)
+    {
+        $objMdUtlAdmRelTpCtrlDesempUndRN  = new MdUtlAdmRelTpCtrlDesempUndRN();
+        $objMdUtlAdmRelTpCtrlDesempUndDTO = new MdUtlAdmRelTpCtrlDesempUndDTO();
+        $objMdUtlAdmRelTpCtrlDesempUndDTO->setNumIdUnidade( $idUnidade );
+        $objMdUtlAdmRelTpCtrlDesempUndDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $arrObjTpCtrlUnd = $objMdUtlAdmRelTpCtrlDesempUndRN->listar( $objMdUtlAdmRelTpCtrlDesempUndDTO );
+        $arrLista = array();
+        foreach ($arrObjTpCtrlUnd as $row) {
+            $arrLista[$row->getNumIdMdUtlAdmTpCtrlDesemp()] = $row->getNumIdMdUtlAdmTpCtrlDesemp();
+        }
+        return $arrLista;
+    }
+
+    private static function retListaTpCtrlUsu_Und($arrUsu , $arrUnd)
+    {        
+        // Valida retorno dos arrays, continuando na function, somente, se ambos retornarem registros        
+        if (empty($arrUsu) && $arrUnd ) {
+            return $arrUnd;
+        } elseif (empty($arrUsu) && empty($arrUnd)) {
+            return null;
+        } elseif ($arrUsu && empty($arrUnd)) {
+            return null;
+        }
+
+        $arrListaRet = array();
+        foreach ($arrUsu as $k => $v) {
+            if (array_key_exists($k, $arrUnd)) {
+                array_push($arrListaRet,$v);
+            }
+        }
+
+        // Se não existir uma interseção de tipos de controle de usuario x unidade retorna null
+        if( empty($arrListaRet)) {
+            return null;
+        }
+       
+        $objMdUtlAdmTpCtrlDesempRN  = new MdUtlAdmTpCtrlDesempRN();
+        $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($arrListaRet,InfraDTO::$OPER_IN);
+        $objMdUtlAdmTpCtrlDesempDTO->setStrSinAtivo('S');        
+        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmPrmGr(null,InfraDTO::$OPER_DIFERENTE);
+
+        $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $objMdUtlAdmTpCtrlDesempDTO->retStrNome();
+        return $objMdUtlAdmTpCtrlDesempRN->listar($objMdUtlAdmTpCtrlDesempDTO);
+    }
 }

@@ -482,7 +482,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $count = $objMdUtlAdmJustRevisaoRN->contar($objMdUtlAdmJustRevisaoDTO);
 
     if ($count > 0) {
-      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_04, array($acao, 'Justificativa de Revisão'));
+      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_04, array($acao, 'Justificativa de Avaliação'));
       $objInfraException = new InfraException();
       $objInfraException->lancarValidacao($msg);
       return false;
@@ -541,7 +541,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $count = $objMdUtlRevisaoRN->contar($objMdUtlRevisaoDTO);
 
     if ($count > 0) {
-      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_05, array($acao, 'Resultado de Revisão'));
+      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_05, array($acao, 'Resultado de Avaliação'));
       $objInfraException = new InfraException();
       $objInfraException->lancarValidacao($msg);
       return false;
@@ -625,6 +625,21 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     }
   }
 
+  private function _excluirRelPrmDsProc($idsParams)
+  {
+      $objMdUtlAdmRelPrmDsProcRN = new MdUtlAdmRelPrmDsProcRN();
+      $objMdUtlAdmRelPrmDsProcDTO = new MdUtlAdmRelPrmDsProcDTO();
+      $objMdUtlAdmRelPrmDsProcDTO->setNumIdMdUtlAdmParamDs($idsParams, InfraDTO::$OPER_IN);
+      $objMdUtlAdmRelPrmDsProcDTO->retTodos();
+
+      $count = $objMdUtlAdmRelPrmDsProcRN->contar($objMdUtlAdmRelPrmDsProcDTO);
+
+      if ($count > 0) {
+          $arrObjs = $objMdUtlAdmRelPrmDsProcRN->listar($objMdUtlAdmRelPrmDsProcDTO);
+          $objMdUtlAdmRelPrmDsProcRN->excluir($arrObjs);
+      }
+  }
+
   private function _excluirTpProcPrmGr($idsParams){
     $objMdUtlAdmPrmProcRN = new MdUtlAdmRelPrmGrProcRN();
     $objMdUtlAdmPrmProcDTO = new MdUtlAdmRelPrmGrProcDTO();
@@ -666,6 +681,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
       if (is_array($idsParams) && !is_null($idsParams))
       {
         $isParametrizacaoTpCtrl = true;
+          $this->_excluirRelPrmDsProc($idsParams);
           $this->_excluirUsuariosPrmGr($idsParams);
           $this->_excluirTpProcPrmGr($idsParams);
           $this->_excluirHistoricoUsuarios($idsParams);
@@ -687,36 +703,55 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     }
   }
 
-  private function verificarVinculosUnidade($idsRemovidos){
+  public function verificarVinculosUnidade($idsRemovidos, $idTipoControleDsmp){
 
       if(count($idsRemovidos) > 0) {
           $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
           $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
           $objMdUtlControleDsmpDTO->setNumIdUnidade($idsRemovidos, InfraDTO::$OPER_IN);
+          $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleDsmp);
+          $objMdUtlControleDsmpDTO->setOrdStrSiglaUnidade(InfraDTO::$TIPO_ORDENACAO_ASC);
           $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
           $objMdUtlControleDsmpDTO->retNumIdUnidade();
+          $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+          $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
 
-          if ($objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO) > 0) {
-              $arrObjs = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
-              $arrObjs = InfraArray::distinctArrInfraDTO($arrObjs, 'IdUnidade');
+          // verifica se tem mais de 15 registros para sinalisar a existencia de mais registros além dos exibidos na tela
+          $qtdMdUtlControleDsmp = $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO);
+          $msgFim = '';
+          if ($qtdMdUtlControleDsmp > 15) {
+              $msgFim = '...';
+          }
 
-              if(count($arrObjs) == 1){
-                  $msgFim  = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_03, $arrObjs[0]->getStrSiglaUnidade());
+          // limita a busca para exibir somente 10, que eh o padrao SEI
+          $objMdUtlControleDsmpDTO->setNumMaxRegistrosRetorno(15);
+          $arrMdUtlControleDsmp = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
 
-              }else {
-                  $arrNomeUnidades = InfraArray::converterArrInfraDTO($arrObjs, 'SiglaUnidade');
-                  $msgUnidades = implode('\n - ', $arrNomeUnidades);
-                  $msgInicio = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_02);
-                  $msgInicio .= ' \n \n - ';
-                  $msgFim = $msgInicio . $msgUnidades;
+          if (!empty($arrMdUtlControleDsmp)) {
+
+              $idUnidade = current($arrMdUtlControleDsmp)->getNumIdUnidade();
+              $maisDeUmaUnidade = false;
+
+              foreach ($arrMdUtlControleDsmp as $objMdUtlControleDsmp) {
+                  $msgCorpo .= $objMdUtlControleDsmp->getStrSiglaUnidade() . ": ". $objMdUtlControleDsmp->getStrProtocoloProcedimentoFormatado() . "\n";
+                  if ($idUnidade != $objMdUtlControleDsmp->getNumIdUnidade()) {
+                      $maisDeUmaUnidade = true;
+                  }
               }
 
+              // adequação de texto para plural ou singular
+              $msgInicio = "A Unidade não pode ser removida, pois está vinculada com processos em fluxo de atendimento em andamento.\n \n";
+              if ($maisDeUmaUnidade) {
+                  $msgInicio = "As Unidades não podem ser removidas, pois está vinculada com processos em fluxo de atendimento em andamento.\n \n";
+              }
+
+              $msg = $msgInicio . $msgCorpo . $msgFim;
+
               $objInfraException = new InfraException();
-              $objInfraException->lancarValidacao($msgFim);
+              $objInfraException->lancarValidacao($msg);
               return false;
           }
       }
-
       return  true;
   }
 
@@ -730,10 +765,10 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
       $idParametro       = null;
 
       //Validar se já existe uma unidade cadastrada para outro tipo de controle.
-      $objTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
-      $objTipoControleUtilidadesUnidadeRN->validarDuplicidadeUnidade(array($arrUnidades,$_POST['hdnIdTipoControleUtilidades']));
+      #$objTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+      #$objTipoControleUtilidadesUnidadeRN->validarDuplicidadeUnidade(array($arrUnidades,$_POST['hdnIdTipoControleUtilidades']));
 
-      if ($this->verificarVinculosUnidade($idsRemovidos)) {
+      if ($this->verificarVinculosUnidade($idsRemovidos, $objTipoControleUtilidadesDTO->getNumIdMdUtlAdmTpCtrlDesemp())) {
           $this->excluirRelacionamentos($objTipoControleUtilidadesDTO->getNumIdMdUtlAdmTpCtrlDesemp());
           $this->cadastrarRelacionamentos($objTipoControleUtilidadesDTO);
           $this->alterar($objTipoControleUtilidadesDTO);
@@ -773,12 +808,12 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
 
   protected function validaNovosDadosParametrizacaoConectado($idTipoControle){
 
-
     $objMdUtlAdmTpControleDTO = new MdUtlAdmTpCtrlDesempDTO();
     $objMdUtlAdmTpControleRN = new MdUtlAdmTpCtrlDesempRN();
-    $objMdUtlAdmTpControleDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+    $objMdUtlAdmTpControleDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle , InfraDTO::$OPER_IN);
     $objMdUtlAdmTpControleDTO->retNumIdMdUtlAdmPrmGr();
-    $objMdUtlAdmTpControleDTO->setNumMaxRegistrosRetorno(1);
+    $objMdUtlAdmTpControleDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+    //$objMdUtlAdmTpControleDTO->setNumMaxRegistrosRetorno(1);
 
     $objMdUtlAdmTpControleDTO->retStrRespTacitaDilacao();
     $objMdUtlAdmTpControleDTO->retStrRespTacitaInterrupcao();
@@ -788,17 +823,22 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $objMdUtlAdmTpControleDTO->retStrPrazoMaxInterrupcao();
     $objMdUtlAdmTpControleDTO->setParametroFk(InfraDTO::$TIPO_FK_OBRIGATORIA);
 
-    $objMdUtlAdmTpControleDTO = $objMdUtlAdmTpControleRN->consultar($objMdUtlAdmTpControleDTO);
+    $objMdUtlAdmTpControleDTO = $objMdUtlAdmTpControleRN->listar($objMdUtlAdmTpControleDTO);
     
+    $arrRetorno = array();
 
-    $isPrazoSusNull =   $objMdUtlAdmTpControleDTO->getStrPrazoMaxSuspensao() == 0 || is_null($objMdUtlAdmTpControleDTO->getStrPrazoMaxSuspensao());
-    $isPrazoIntNull =   $objMdUtlAdmTpControleDTO->getStrPrazoMaxInterrupcao() == 0 || is_null($objMdUtlAdmTpControleDTO->getStrPrazoMaxInterrupcao());
+    foreach ($objMdUtlAdmTpControleDTO as $k => $v) {
+      $isPrazoSusNull =   $v->getStrPrazoMaxSuspensao() == 0 || is_null($v->getStrPrazoMaxSuspensao());
+      $isPrazoIntNull =   $v->getStrPrazoMaxInterrupcao() == 0 || is_null($v->getStrPrazoMaxInterrupcao());
 
-    if($isPrazoIntNull || $isPrazoSusNull || is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaSuspensao()) ||  is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaInterrupcao()) || is_null($objMdUtlAdmTpControleDTO->getStrRespTacitaDilacao())) {
-      return false;
+      if($isPrazoIntNull || $isPrazoSusNull || is_null($v->getStrRespTacitaSuspensao()) ||  is_null($v->getStrRespTacitaInterrupcao()) || is_null($v->getStrRespTacitaDilacao())) {
+        $arrRetorno[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = false;
+      }else{
+        $arrRetorno[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = true;
+      }
     }
-
-    return true;
+    
+    return $arrRetorno;
   }
 
   protected function getTiposProcessoTodosTipoControleConectado()
@@ -919,5 +959,42 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
             $objMdUtlAdmHistPrmGrUsuRN->excluir($arrObjExcluir);
         }
   }
+
+    /**
+     * @param MdUtlAdmTpCtrlDesempDTO $objMdUtlAdmTpCtrlDesempDTO
+     * @throws InfraException
+     */
+    protected function incluiridMdUtlAdmPrmGrEmMdUtlAdmTpCtrlDesempControlado(MdUtlAdmTpCtrlDesempDTO $objMdUtlAdmTpCtrlDesempDTO)
+    {
+        try {
+
+            //TODO
+            //fazer refectory para remover o idMdUtlAdmPrmGr da tabela MdUtlAdmTpCtrl e colocar o idMdUtlAdmTpCtrl na
+            //tabela MdUtlAdmPrmGr e alterar toda aplicação
+            //Apos fazer o refectory remover essa function
+
+            //Regras de Negocio
+            $objInfraException = new InfraException();
+
+            $this->validarNumIdMdUtlAdmTpCtrlDesemp($objMdUtlAdmTpCtrlDesempDTO, $objInfraException);
+
+            if ($objMdUtlAdmTpCtrlDesempDTO->isSetStrNome()) {
+                $this->validarStrNome($objMdUtlAdmTpCtrlDesempDTO, $objInfraException);
+            }
+            if ($objMdUtlAdmTpCtrlDesempDTO->isSetStrDescricao()) {
+                $this->validarStrDescricao($objMdUtlAdmTpCtrlDesempDTO, $objInfraException);
+            }
+
+            $objInfraException->lancarValidacoes();
+
+            $objMdUtlAdmTpCtrlDesempBD = new MdUtlAdmTpCtrlDesempBD($this->getObjInfraIBanco());
+            $objMdUtlAdmTpCtrlDesempBD->alterar($objMdUtlAdmTpCtrlDesempDTO);
+
+            //Auditoria
+
+        } catch (Exception $e) {
+            throw new InfraException('Erro alterando .', $e);
+        }
+    }
 
 }

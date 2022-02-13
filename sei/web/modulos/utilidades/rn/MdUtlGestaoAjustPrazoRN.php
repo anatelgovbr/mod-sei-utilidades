@@ -50,7 +50,12 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
 
 
         $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
-        $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
+        if( is_array($idTipoControle)) 
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle,InfraDTO::$OPER_IN);
+        else
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
         $objMdUtlControleDsmpDTO->setNumIdMdUtlAjustePrazo(null, InfraDTO::$OPER_DIFERENTE);
         $objMdUtlControleDsmpDTO->setStrStaSolicitacaoAjustePrazo(MdUtlAjustePrazoRN::$PENDENTE_RESPOSTA);
         $objMdUtlControleDsmpDTO->setOrdDthPrazoInicialAjustePrazo(InfraDTO::$TIPO_ORDENACAO_ASC);
@@ -73,6 +78,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $objMdUtlControleDsmpDTO->retDthAtual();
         $objMdUtlControleDsmpDTO->retStrObservacao();
         $objMdUtlControleDsmpDTO->retNumIdContato();
+        $objMdUtlControleDsmpDTO->retStrNomeTpControle();
         $count = $objRN->contar($objMdUtlControleDsmpDTO);
         if ($count > 0) {
             $objMdUtlControleDsmpDTO = $objRN->listar($objMdUtlControleDsmpDTO);
@@ -107,7 +113,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $idTriagem = $objControleDsmpDTO->getNumIdMdUtlTriagem();
         $idAnalise = $objControleDsmpDTO->getNumIdMdUtlAnalise();
         $idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
-        $undEsforco = $objControleDsmpDTO->getNumUnidadeEsforco();
+        $tempoExecucao = $objControleDsmpDTO->getNumTempoExecucao();
         $idUsuarioDistr = $objControleDsmpDTO->getNumIdUsuarioDistribuicao();
         $idAjustePrazo = $objControleDsmpDTO->getNumIdMdUtlAjustePrazo(); /*Adicionar apenas em Suspensão ou Interrupção*/
         $idContato = $objControleDsmpDTO->getNumIdContato();
@@ -165,9 +171,9 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
 
         //Cadastrando para essa fila, e esse procedimento e unidade o novo status
         if ($objAjustPrazoDTO->getStrStaTipoSolicitacao() == MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
-            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo));
+            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo));
         } else {
-            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $idAjustePrazo, $dthPrazo));
+            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $idAjustePrazo, $dthPrazo));
         }
     }
 
@@ -177,7 +183,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objHistoricoRN = new MdUtlHistControleDsmpRN();
         $objMdUtlAjustePrazoRN = new MdUtlAjustePrazoRN();
-        $objMdUtlContestacaoRN = new MdUtlContestacaoRN(); 
+        $objMdUtlContestacaoRN = new MdUtlContestacaoRN();
         $isContestacao = false;
         $isAjustePrazo = false;
 
@@ -190,7 +196,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
             $objAjustPrazoDTO = $objMdUtlAjustePrazoRN->consultar($objAjustPrazoDTO);
         }
 
-        if (!is_null($objControleDsmpDTO->getNumIdMdUtlContestRevisao())){
+        if (!is_null($objControleDsmpDTO->getNumIdMdUtlContestRevisao())) {
             $isContestacao = true;
             $objContestacaoDTO = new MdUtlContestacaoDTO();
             $objContestacaoDTO->setNumIdMdUtlContestRevisao($objControleDsmpDTO->getNumIdMdUtlContestRevisao());
@@ -199,35 +205,35 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
             $objContestacaoDTO = $objMdUtlContestacaoRN->consultar($objContestacaoDTO);
         }
 
-        $strProcesso    = $objControleDsmpDTO->getStrProtocoloProcedimentoFormatado();
+        $strProcesso = $objControleDsmpDTO->getStrProtocoloProcedimentoFormatado();
         $idProcedimento = $objControleDsmpDTO->getDblIdProcedimento();
-        $idFila         = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
-        $idTpCtrl       = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-        $strNovoStatus  = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
-        $idTriagem      = $objControleDsmpDTO->getNumIdMdUtlTriagem();
-        $idAnalise      = $objControleDsmpDTO->getNumIdMdUtlAnalise();
-        $idRevisao      = $objControleDsmpDTO->getNumIdMdUtlRevisao();
-        $undEsforco     = $objControleDsmpDTO->getNumUnidadeEsforco();
+        $idFila = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
+        $idTpCtrl = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+        $strNovoStatus = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
+        $idTriagem = $objControleDsmpDTO->getNumIdMdUtlTriagem();
+        $idAnalise = $objControleDsmpDTO->getNumIdMdUtlAnalise();
+        $idRevisao = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+        $tempoExecucao = $objControleDsmpDTO->getNumTempoExecucao();
         $idUsuarioDistr = $objControleDsmpDTO->getNumIdUsuarioDistribuicao();
-        $dthPrazo       = $objControleDsmpDTO->getDthPrazoTarefa();
-        $idContato      = $objControleDsmpDTO->getNumIdContato();
-        $idUnidade      = $objControleDsmpDTO->getNumIdUnidade();
-        
-        if($isAjustePrazo){
-            $strTipoAcao     = MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_AJUSTE_PRAZO;
-            $idAjustePrazo   = $objControleDsmpDTO->getNumIdMdUtlAjustePrazo(); /*Adicionar apenas em Suspensão ou Interrupção*/
+        $dthPrazo = $objControleDsmpDTO->getDthPrazoTarefa();
+        $idContato = $objControleDsmpDTO->getNumIdContato();
+        $idUnidade = $objControleDsmpDTO->getNumIdUnidade();
+
+        if ($isAjustePrazo) {
+            $strTipoAcao = MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_AJUSTE_PRAZO;
+            $idAjustePrazo = $objControleDsmpDTO->getNumIdMdUtlAjustePrazo(); /*Adicionar apenas em Suspensão ou Interrupção*/
             $tipoSolicitacao = $objAjustPrazoDTO->getStrStaTipoSolicitacao();
         }
 
-        if($isContestacao){
-            $strTipoAcao   = MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_CONTESTACAO;
+        if ($isContestacao) {
+            $strTipoAcao = MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_CONTESTACAO;
             $idContestacao = $objControleDsmpDTO->getNumIdMdUtlContestRevisao();
             $objContestacaoDTO->setStrStaSolicitacao(MdUtlAjustePrazoRN::$REPROVADA);
             $strDetalheAjust = MdUtlAjustePrazoRN::$STR_REPROVADA;
         }
-      
 
-        $objContatoRN  = new ContatoRN();
+
+        $objContatoRN = new ContatoRN();
         $objContatoDTO = new ContatoDTO();
         $objContatoDTO->setNumIdContato($idContato);
         $objContatoDTO->retTodos();
@@ -236,7 +242,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $strNome = $objContatoDTO[0]->getStrNome();
         $strEmailSolicitante = $objContatoDTO[0]->getStrEmail();
 
-        if($isAjustePrazo) {
+        if ($isAjustePrazo) {
             /*Alterar status para reprovada*/
             if ($tipoSolicitacao == MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
                 $strDetalheAjust = MdUtlControleDsmpRN::$STR_TP_SOLICITACAO_DILACAO;
@@ -258,11 +264,11 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
 
         /*Enviar e-mail para solicitante*/
         if ($strEmailSolicitante != '') {
-            $arrDados =array($strNome, $strEmailSolicitante, $strProcesso, $strNovoStatus, false);
+            $arrDados = array($strNome, $strEmailSolicitante, $strProcesso, $strNovoStatus, false);
 
             if ($isContestacao) {
-                $strAssunto = 'Resultado da Solicitação de Contestação de Revisão';
-                $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de Contestação de Revisão referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
+                $strAssunto = 'Resultado da Solicitação de Contestação de Avaliação';
+                $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de Contestação de Avaliação referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
                 array_push($arrDados, $strAssunto);
                 array_push($arrDados, $strConteudo);
             }
@@ -275,18 +281,18 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimentoPorUnidade(array($arrIds, $idUnidade));
         $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIds, 'N', 'N', 'N', $idUnidade));
 
-        if($isAjustePrazo) {
+        if ($isAjustePrazo) {
             $objMdUtlAjustePrazoRN->alterar($objAjustPrazoDTO);
             $objMdUtlAjustePrazoRN->desativar(array($objAjustPrazoDTO));
         }
 
-        if($isContestacao){
+        if ($isContestacao) {
             $objMdUtlContestacaoRN->alterar($objContestacaoDTO);
             $objMdUtlContestacaoRN->desativar(array($objContestacaoDTO));
         }
 
         $objMdUtlControleDsmpRN->excluir(array($objControleDsmpDTO));
-        $arrSituacao = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo);
+        $arrSituacao = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo);
         $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrSituacao);
     }
 
@@ -298,13 +304,13 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $strProcesso = array_key_exists(2, $arrDadosEmail) ? $arrDadosEmail[2] : null;
         $strNovoStatus = array_key_exists(3, $arrDadosEmail) ? $arrDadosEmail[3] : null;
         $isAprovado = array_key_exists(4, $arrDadosEmail) ? $arrDadosEmail[4] : false;
-        $strAssunto  = array_key_exists(5, $arrDadosEmail) ? $arrDadosEmail[5] : null;
+        $strAssunto = array_key_exists(5, $arrDadosEmail) ? $arrDadosEmail[5] : null;
         $strConteudo = array_key_exists(6, $arrDadosEmail) ? $arrDadosEmail[6] : null;
-        $strStatus  = array_key_exists(7, $arrDadosEmail) ? $arrDadosEmail[7] : null;
+        $strStatus = array_key_exists(7, $arrDadosEmail) ? $arrDadosEmail[7] : null;
         //Enviar Email
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
 
-        if(is_null($strStatus)){
+        if (is_null($strStatus)) {
             $strStatus = $strNovoStatus;
         }
 
@@ -328,7 +334,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $strDe .= '<' . $objInfraParametro->getValor('SEI_EMAIL_SISTEMA') . '>';
         $strPara = $strEmailSolicitante;
 
-        if(is_null($strAssunto)) {
+        if (is_null($strAssunto)) {
             $strAssunto = 'Resultado da Solicitação do Ajuste de Prazo';
             $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de ajuste de prazo referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
         }
@@ -375,7 +381,12 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
 
 
         $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
-        $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
+        if( is_array($idTipoControle)) 
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle,InfraDTO::$OPER_IN);
+        else
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+
         $objMdUtlControleDsmpDTO->setNumIdMdUtlContestRevisao(null, InfraDTO::$OPER_DIFERENTE);
         $objMdUtlControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_ASC);
         $objMdUtlControleDsmpDTO->setStrStaSolicitacaoContestacao(MdUtlContestacaoRN::$PENDENTE_RESPOSTA);
@@ -395,6 +406,7 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $objMdUtlControleDsmpDTO->retStrIdJustContestacao();
         $objMdUtlControleDsmpDTO->retStrInformacoesComplementares();
         $objMdUtlControleDsmpDTO->retDthAtual();
+        $objMdUtlControleDsmpDTO->retStrNomeTpControle();
         $count = $objRN->contar($objMdUtlControleDsmpDTO);
 
         if ($count > 0) {
@@ -433,6 +445,98 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
 
         return null;
 
+    }
+
+    public function getGestoresTpControle($arrDadosEmail)
+    {
+        $idUnidadeLogado = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+        $strTipoAcao = $arrDadosEmail['acao_email'];
+        $strItemMantido = $arrDadosEmail['tipo'];
+        $idTpCtrl = $arrDadosEmail['id_tipo'];
+        $strNomeControle = $arrDadosEmail['nome_controle'];
+        $strProtocolo = $arrDadosEmail['protocolo_formatado'];
+        $strNomeUsuario = SessaoSEI::getInstance()->getStrNomeUsuario();
+        $strSiglaUnidade = SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+
+        $objTipoControleUtilidadesUsuarioDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
+        $objTipoControleUtilidadesUsuarioDTO->retTodos();
+        $objTipoControleUtilidadesUsuarioDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
+        $objTipoControleUtilidadesUsuarioDTO->setOrdStrNomeUsuario(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objTipoControleUtilidadesUsuarioDTO->retStrNomeUsuario();
+        $objTipoControleUtilidadesUsuarioDTO->retStrSiglaUsuario();
+
+        $objRelTipoControleUtilidadesUsuarioRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $arrGestoresDTO = $objRelTipoControleUtilidadesUsuarioRN->listar($objTipoControleUtilidadesUsuarioDTO);
+
+        foreach ($arrGestoresDTO as $usuario) {
+
+            $isGestor = $this->verificaUnidadeGestor($usuario, $idUnidadeLogado);
+
+            if ($isGestor) {
+                $objUsuarioDTO = new UsuarioDTO();
+                $objUsuarioRN = new UsuarioRN();
+                $objUsuarioDTO->setNumIdUsuario($usuario->getNumIdUsuario());
+                $objUsuarioDTO->retNumIdContato();
+                $objUsuarioDTO = $objUsuarioRN->consultarRN0489($objUsuarioDTO);
+
+                $objContatoDTO = new ContatoDTO();
+                $objContatoRN = new ContatoRN();
+                $objContatoDTO->retStrEmail();
+                $objContatoDTO->setNumIdContato($objUsuarioDTO->getNumIdContato());
+                $objContatoDTO = $objContatoRN->consultarRN0324($objContatoDTO);
+
+                if ($objContatoDTO->getStrEmail()) {
+                    $this->emailSolicitacaoAjustePrazo($strTipoAcao, $strItemMantido, $strNomeControle, $strNomeUsuario, $strProtocolo, $strSiglaUnidade, $objContatoDTO->getStrEmail());
+                }
+            }
+        }
+    }
+
+    public function verificaUnidadeGestor($usuario, $idUnidadeSolicitante)
+    {
+        $objInfraSip = new InfraSip(SessaoSEI::getInstance());
+        $arrPerfisSip = $objInfraSip->carregarPerfis(SessaoSEI::getInstance()->getNumIdSistema(), $usuario->getNumIdUsuario(), $idUnidadeSolicitante);
+
+        for ($i = 0; $i < count($arrPerfisSip); $i++) {
+            if ($arrPerfisSip[$i][1] == 'Gestor de Controle de Desempenho') {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Dispara email ao solicitar ajuste de prazo
+     * @param $strTipoAcao
+     * @param $strItemMantido
+     */
+    public function emailSolicitacaoAjustePrazo($strTipoAcao, $strItemMantido, $strNomeControle, $strNomeUsuario, $strProtocolo, $strSiglaUnidade, $email)
+    {
+        $strAssunto = '[Controle de Desempenho] @acao@ a @item mantido@';
+        $strAssunto = str_replace('@acao@', ucfirst($strTipoAcao), $strAssunto);
+        $strAssunto = str_replace('@item mantido@', $strItemMantido, $strAssunto);
+
+        $strConteudo = '
+            :: Este é um e-mail automático ::
+            
+            Uma ' . $strItemMantido . ' foi ' . $strTipoAcao . ' no Controle de Desempenho '.$strNomeControle.' do SEI por '.$strNomeUsuario.' sobre o Processo nº '.$strProtocolo.' e no momento está pendente de resposta.
+            
+            Assim, o Gestor do citado Controle de Desempenho na Unidade '.$strSiglaUnidade.' deve acessar o menu Constrole de Desempenho > Gestão de Solicitações para mais informações.';
+
+        //Enviar Email
+        $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+
+        //Monta Email
+        $strDe = SessaoSEI::getInstance()->getStrSiglaSistema();
+        $strDe .= '<' . $objInfraParametro->getValor('SEI_EMAIL_SISTEMA') . '>';
+        $strPara = $email;
+
+        $objEmailDTO = new EmailDTO();
+        $objEmailDTO->setStrDe($strDe);
+        $objEmailDTO->setStrPara($strPara);
+        $objEmailDTO->setStrAssunto($strAssunto);
+        $objEmailDTO->setStrMensagem($strConteudo);
+
+        EmailRN::processar(array($objEmailDTO));
     }
 
 }

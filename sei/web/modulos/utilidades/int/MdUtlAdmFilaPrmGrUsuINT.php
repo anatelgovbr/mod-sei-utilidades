@@ -67,7 +67,7 @@ class MdUtlAdmFilaPrmGrUsuINT extends InfraINT {
         return $pesquisa;
     }
 
-    public static function montarSelectResponsavel($valorSelecionado = '', $arrObjsResponsavelDTO = null){
+    public static function montarSelectResponsavel($valorSelecionado = '', $arrObjsResponsavelDTO = null, $isDistr = false){
         $numRegistros = count($arrObjsResponsavelDTO);
         $select='<option value=""></option>';
         $add='';
@@ -79,7 +79,9 @@ class MdUtlAdmFilaPrmGrUsuINT extends InfraINT {
                 $add = 'selected = selected';
             }
 
-            $select .= '<option ' . $add . ' value="' . $arrObjsResponsavelDTO[$i]->getNumIdUsuario() . '" >' . $arrObjsResponsavelDTO[$i]->getStrNomeUsuario() . '</option>';
+            $strNomeUsu = $isDistr ? $arrObjsResponsavelDTO[$i]->getStrNome() : $arrObjsResponsavelDTO[$i]->getStrNomeUsuario();
+
+            $select .= '<option ' . $add . ' value="' . $arrObjsResponsavelDTO[$i]->getNumIdUsuario() . '" >' . $strNomeUsu . '</option>';
         }
 
         return $select;

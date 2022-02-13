@@ -233,7 +233,7 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
                 $sinObrigatorio = $produtoAlterado[6] == 'Sim' ? 'S' : 'N';
 
                 $objAlterarDTO->setStrSinObrigatorio($sinObrigatorio);
-                $objAlterarDTO->setNumUnidadeEsforcoProduto(intval($produtoAlterado[5]));
+                $objAlterarDTO->setNumTempoExecucaoProduto(intval($produtoAlterado[5]));
 
                 $this->alterar($objAlterarDTO);
             }
@@ -279,7 +279,7 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
                     }
                 }
                 $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmAtividade($idAtividade);
-                $mdUtlAdmAtvSerieProdDTO->setNumUnidadeEsforcoProduto($registro[5]);
+                $mdUtlAdmAtvSerieProdDTO->setNumTempoExecucaoProduto($registro[5]);
 
                 $obrigatorio = $registro[7] == 'true' ? 'S' : 'N';
                 $mdUtlAdmAtvSerieProdDTO->setStrSinObrigatorio($obrigatorio);
@@ -318,7 +318,7 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
             $linha[] = $item->getStrNomeSerie();
         }
 
-          $linha[] = $item->getNumUnidadeEsforcoProduto();
+          $linha[] = $item->getNumTempoExecucaoProduto();
 
           if($item->getStrSinObrigatorio() == self::$S_OBRIGATORIO[0]){
 

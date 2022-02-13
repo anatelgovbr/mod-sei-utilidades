@@ -23,10 +23,12 @@ class MdUtlRevisaoINT extends InfraINT {
     return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjMdUtlRevisaoDTO, '', 'idMdUtlRevisao');
   }
 
-  public static function montarSelectEncaminhamento($strEncaminhamento){
-      $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_RESPONSAVEL] = MdUtlRevisaoRN::$STR_VOLTAR_PARA_RESPONSAVEL;
+  public static function montarSelectEncaminhamento($strEncaminhamento,$isConsultar){
+
+      $arrOption[MdUtlRevisaoRN::$NOVA_FILA]               = MdUtlRevisaoRN::$STR_NOVA_FILA;
       $arrOption[MdUtlRevisaoRN::$FLUXO_FINALIZADO]        = MdUtlRevisaoRN::$STR_FLUXO_FINALIZADO;
-      $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_FILA]        = MdUtlRevisaoRN::$STR_VOLTAR_PARA_FILA;
+      $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_FILA]        = MdUtlRevisaoRN::$STR_VOLTAR_OUTRO_PARTICIPANTE;
+      $arrOption[MdUtlRevisaoRN::$VOLTAR_PARA_RESPONSAVEL] = MdUtlRevisaoRN::$STR_VOLTAR_PARA_O_MESMO_PARTICIPANTE;
 
       $option = '<option value=""></option>';
       foreach ($arrOption as $key => $op){
@@ -41,6 +43,13 @@ class MdUtlRevisaoINT extends InfraINT {
 
       return $option;
   }
+
+  public static function montarSelectEncaminhamentoString(){
+        return  MdUtlRevisaoRN::$NOVA_FILA.'_'.MdUtlRevisaoRN::$STR_NOVA_FILA.'#'.
+            MdUtlRevisaoRN::$FLUXO_FINALIZADO.'_'.MdUtlRevisaoRN::$STR_FLUXO_FINALIZADO.'#'.
+            MdUtlRevisaoRN::$VOLTAR_PARA_FILA.'_'.MdUtlRevisaoRN::$STR_VOLTAR_OUTRO_PARTICIPANTE.'#'.
+            MdUtlRevisaoRN::$VOLTAR_PARA_RESPONSAVEL.'_'.MdUtlRevisaoRN::$STR_VOLTAR_PARA_O_MESMO_PARTICIPANTE;
+    }
 
   public static function montarSelectEncaminhamentoContestacao($strEncaminhamento){
       $arrOption[MdUtlRevisaoRN::$MANTER_O_RESPONSAVEL]        = MdUtlRevisaoRN::$STR_MANTER_O_RESPONSAVEL;

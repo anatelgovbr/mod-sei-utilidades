@@ -31,6 +31,29 @@ function inicializar() {
         return false;
     });
 
+    // TET = Tempo de execução (em minutos) no Regime de Trabalho Teletrabalho
+    // TE= Tempo de execução (em minutos)
+    // PDMT = Percentual de Desempenho a Maior para Teletrabalho
+    // TET = TE / (1 + (PDMT/100))
+    $('#txtTmpExecucao').on('keypress keyup keydown',function(e) {
+        var pdmt = <?=$percentualTeletrabalho?>;
+        var te = $('#txtTmpExecucao').val();
+        tet = te / (1 + (pdmt/100));
+        var re = new RegExp('^-?\\d+(?:\.\\d{0,' + (2 || -1) + '})?');
+        total = tet.toString().match(re)[0];
+
+        $('#txtTempoExecucaoAnaliseAtividade').val(total);
+    });
+
+    <?php if ( $_GET['acao'] == 'md_utl_adm_atividade_alterar' || $_GET['acao'] == 'md_utl_adm_atividade_consultar' ) { ?>
+        var pdmt = <?= $percentualTeletrabalho?>;
+        var te = $('#txtTmpExecucao').val();
+        tet = te / (1 + (pdmt/100));
+        var re = new RegExp('^-?\\d+(?:\.\\d{0,' + (2 || -1) + '})?');
+        total = tet.toString().match(re)[0];
+
+        $('#txtTempoExecucaoAnaliseAtividade').val(total);    
+    <?php } ?>
 }
 
 function isNumber(n) {
@@ -79,11 +102,7 @@ function realizarValidacaoVinculoAnalise(item) {
 
 function iniciarTabelaDinamicaListaProduto(){
 
-    var bolConsultar = "<?php echo $bolConsultar?>";
-    var acaoRemover  = bolConsultar  ? false : true;
-    var acaoAlterar  = bolConsultar  ? false : true;
-
-    objTabelaDinamicaListaProduto = new infraTabelaDinamica('tbProdutoEsperado','hdnTbProdutoEsperado',acaoAlterar,acaoRemover);
+    objTabelaDinamicaListaProduto = new infraTabelaDinamica('tbProdutoEsperado','hdnTbProdutoEsperado',true,true);
     objTabelaDinamicaListaProduto.gerarEfeitoTabela = true;
 
     objTabelaDinamicaListaProduto.remover = function(item){
@@ -368,7 +387,7 @@ function adicionarRegistroTabelaProduto() {
         var obrigatorio = chkobrigatorio ? 'Sim' : 'Não';
         var pkTabela = isAlterarGrid ? valorPkAlteracao : 'NOVO_REGISTRO_' + contadorTabelaDinamica;
         var isRegistroNovo =(pkTabela.indexOf('NOVO_REGISTRO_') -1);
-        var isAlteracao = isAlterarGrid && !isRegistroNovo ? 'S' : 'N';
+        var isAlteracao = isAlterarGrid ? 'S' : 'N';
 
         var arrLinha = [
             pkTabela,
@@ -464,11 +483,12 @@ function verificaTabela(qtdLinha) {
 }
 
 function onSubmitForm(){
-
-  if(!validarAtividadeComAnalise()){
-      return false;
-  }
-
+    //Retirado a obrigatoriedade destes campos
+    /*
+    if(!validarAtividadeComAnalise()){
+        return false;
+    }
+    */
     return utlValidarObrigatoriedade();
 }
 
@@ -482,7 +502,7 @@ function validarAtividadeComAnalise() {
             alert(msg);
             return false;
         } else if(parseInt(txtRevAtividade.value) == 0) {
-            var msg = setMensagemPersonalizada(msg15Padrao, ['Prazo para Revisão da Atividade']);
+            var msg = setMensagemPersonalizada(msg15Padrao, ['Prazo para Avaliação da Atividade']);
             alert(msg);
             return false;
         }
@@ -569,10 +589,10 @@ function validarFieldsetListaProduto() {
 
     }
 
-    // validar Valor da revisão do produto em Unidades de Esforço
+    // validar Tempo de Execução da Avaliação do Produto (em minutos)
     if(infraGetElementById('txtRevUnidade').value == ''){
         infraGetElementById('txtRevUnidade').focus();
-        var msg = setMensagemPersonalizada(msg11Padrao, ['Valor da revisão do produto em Unidades de Esforço (EU)']);
+        var msg = setMensagemPersonalizada(msg11Padrao, ['Tempo de Execução da Avaliação do Produto (em minutos)']);
         alert(msg);
         return false;
     }

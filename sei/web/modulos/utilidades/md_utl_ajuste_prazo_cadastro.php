@@ -495,10 +495,10 @@ PaginaSEI::getInstance()->abrirAreaDados('45em');
 
 
             <tr>
-                <td class="colunaPrincipal"><label id="lblUnidadeEsforcoDesc" name="lblUnidadeEsforcoDesc" class="infraLabelObrigatorio">Unidade de Esforço: </label>
+                <td class="colunaPrincipal"><label id="lblTempoExecucaoDesc" name="lblTempoExecucaoDesc" class="infraLabelObrigatorio">Tempo de Execução: </label>
                 </td>
-                <td><label id="lblUnidadeEsforcoValor" name="lblUnidadeEsforcoValor"
-                           class="infraLabelOpcional"> <?php echo $objControleDesempenhoDTO->getNumUnidadeEsforco(); ?> </label>
+                <td><label id="lblTempoExecucaoValor" name="lblTempoExecucaoValor"
+                           class="infraLabelOpcional"> <?php echo  MdUtlAdmPrmGrINT::convertToHoursMins($objControleDesempenhoDTO->getNumTempoExecucao()); ?> </label>
                 </td>
             </tr>
 

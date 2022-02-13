@@ -143,8 +143,7 @@ class MdUtlAdmRelTpCtrlDesempUndRN extends InfraRN {
       //$objInfraException->lancarValidacoes();
 
       $objMdUtlAdmRelTpCtrlDesempUndBD = new MdUtlAdmRelTpCtrlDesempUndBD($this->getObjInfraIBanco());
-      $ret = $objMdUtlAdmRelTpCtrlDesempUndBD->contar($objMdUtlAdmRelTpCtrlDesempUndDTO);
-
+      $ret = $objMdUtlAdmRelTpCtrlDesempUndBD->contar($objMdUtlAdmRelTpCtrlDesempUndDTO);      
       //Auditoria
 
       return $ret;
@@ -252,6 +251,113 @@ class MdUtlAdmRelTpCtrlDesempUndRN extends InfraRN {
         }
 
         return $idTpCtrl;
+    }
+
+    protected function getArrayTipoControleUnidadeLogadaConectado($params = array())
+    {
+        $arrObjTpCtrl = null;
+        $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+        $objMdUtlAdmTpCtrlUndDTO = new MdUtlAdmRelTpCtrlDesempUndDTO();
+        $objMdUtlAdmTpCtrlUndDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());        
+        $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmPrmGr(null, InfraDTO::$OPER_DIFERENTE);
+        $objMdUtlAdmTpCtrlUndDTO->setOrdStrNomeTipoControle(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlAdmTpCtrlUndDTO->setTpControleTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA); 
+        if(empty($params)){
+          $objMdUtlAdmTpCtrlUndDTO->setStrSinAtivo('S');
+        }
+        
+        $objMdUtlAdmTpCtrlUndDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $objMdUtlAdmTpCtrlUndDTO->retStrNomeTipoControle();
+
+        $count = $objMdUtlAdmTpCtrlUndRN->contar($objMdUtlAdmTpCtrlUndDTO);
+
+        if ($count > 0) {
+          $arrObjTpCtrl = $objMdUtlAdmTpCtrlUndRN->listar($objMdUtlAdmTpCtrlUndDTO);
+        }
+
+        return $arrObjTpCtrl;
+    }
+
+    protected function getArrayTipoControleUnidadeLogadaQueExisteProcessoConectado($params = array())
+    {
+        //buscar processos que estão atribuidos para usuário logado
+        $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+        $objMdUtlControleDsmpDTO->setNumIdUsuarioDistribuicao(SessaoSEI::getInstance()->getNumIdUsuario());
+        $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $arrobjMdUtlControleDsmp = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+      
+        if (empty($arrobjMdUtlControleDsmp)) {
+            return null;
+        }
+
+        $arrListaIdsTpControleExistentes = array();
+        foreach ($arrobjMdUtlControleDsmp as $ControleDsmp) {
+            array_push( $arrListaIdsTpControleExistentes , $ControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+        }
+
+        // buscar tipos de controle para listar no select
+        $return = null;
+        $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
+        $objMdUtlAdmTpCtrlUndDTO = new MdUtlAdmRelTpCtrlDesempUndDTO();
+        $objMdUtlAdmTpCtrlUndDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmPrmGr('',InfraDTO::$OPER_DIFERENTE);
+        $objMdUtlAdmTpCtrlUndDTO->setOrdStrNomeTipoControle(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlAdmTpCtrlUndDTO->setTpControleTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
+
+        if (!empty($arrListaIdsTpControleExistentes)) {
+            $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmTpCtrlDesemp($arrListaIdsTpControleExistentes, InfraDTO::$OPER_IN);
+        }
+
+        if(empty($params)){
+            $objMdUtlAdmTpCtrlUndDTO->setStrSinAtivo('S');
+        }
+
+        $objMdUtlAdmTpCtrlUndDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $objMdUtlAdmTpCtrlUndDTO->retStrNomeTipoControle();
+        $arrObjTpCtrl = $objMdUtlAdmTpCtrlUndRN->listar($objMdUtlAdmTpCtrlUndDTO);
+
+        if (count($arrObjTpCtrl) > 0) {
+            $return = $arrObjTpCtrl;
+        }
+
+        return $return;
+    }
+
+    protected function getArrayTipoControleUnidadeUsuMembroConectado($idsTpCptr)
+    {
+      if( empty( $idsTpCptr ) ) return array();
+
+      // retorna os ids do parametro geral da lista de tipos de controle passado como parametro
+      $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+      $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
+      $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+      $objMdUtlAdmPrmGrUsuRN  = new MdUtlAdmPrmGrUsuRN();
+
+      $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idsTpCptr,InfraDTO::$OPER_IN);
+      $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+
+      $idsPrmGr = InfraArray::converterArrInfraDTO( $objMdUtlAdmTpCtrlDesempRN->listar( $objMdUtlAdmTpCtrlDesempDTO ) , 'IdMdUtlAdmPrmGr');
+      
+      // retorna os ids do parametro geral filtrado pelo id do usuario e do resultado anterior
+      $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idsPrmGr,InfraDTO::$OPER_IN);
+      $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario( SessaoSEI::getInstance()->getNumIdUsuario() );
+      $objMdUtlAdmPrmGrUsuDTO->retNumIdMdUtlAdmPrmGr();
+
+      $idsPrmGrUsuMembro = InfraArray::converterArrInfraDTO( $objMdUtlAdmPrmGrUsuRN->listar( $objMdUtlAdmPrmGrUsuDTO ) , 'IdMdUtlAdmPrmGr');
+
+      if( empty( $idsPrmGrUsuMembro ) ) return array();
+
+      // retorna os tipos de controle onde o usuario é membro participante apos as consultas anteriores
+      $objMdUtlAdmTpCtrlDesempDTO = null;
+      $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+      $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmPrmGr($idsPrmGrUsuMembro,InfraDTO::$OPER_IN);
+      $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+
+      $idsTpCtrlUsuMembroUnid = InfraArray::converterArrInfraDTO( $objMdUtlAdmTpCtrlDesempRN->listar( $objMdUtlAdmTpCtrlDesempDTO ) , 'IdMdUtlAdmTpCtrlDesemp');
+
+      return $idsTpCtrlUsuMembroUnid;
     }
 
     protected function getObjTipoControleUnidadeLogadaConectado()

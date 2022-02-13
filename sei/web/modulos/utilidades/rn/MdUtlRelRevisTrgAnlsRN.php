@@ -147,7 +147,6 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
   }
 
   protected function cadastrarRevisaoTriagemAnaliseControlado($objControleDsmpDTO){
-
       try {
       $objHistoricoRN           = new MdUtlHistControleDsmpRN();
       $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
@@ -156,23 +155,33 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
       $idProcedimento = $_POST['hdnIdProcedimento'];
       $idFila         = $_POST['hdnIdFilaAtiva'];
       $idTpCtrl       = $_POST['hdnIdTpCtrl'];
-      $undEsforco     = $_POST['hdnUndEsforco'];
+      $TmpExecucao     = $_POST['hdnTmpExecucao'];
       $strDetalheRev  = $_POST['hdnEncaminhamento'];
       $idUnidade      = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
       $idEncaminhamento = $_POST['selEncaminhamento'];
       $isAnalise     = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar'? true : false;
       $objMdUtlRevisaoRN  = new MdUtlRevisaoRN();
-      $idRevisao = $objMdUtlRevisaoRN->salvarObjRevisao();
+      //$idRevisao = $objMdUtlRevisaoRN->salvarObjRevisao();
+      $objRevisao = $objMdUtlRevisaoRN->salvarObjRevisao();
+      $idRevisao = $objRevisao->getNumIdMdUtlRevisao();
       $objRNGerais        = new MdUtlRegrasGeraisRN();
-
-      $this->_salvarObjsRelacionadosRevisao($idRevisao, $isAnalise);
-
+      
+      if( isset($_POST['cbkRealizarAvalProdAProd'])){
+        $this->_salvarObjsRelacionadosRevisao($idRevisao, $isAnalise);
+      }
 
       switch ($idEncaminhamento){
 
           case MdUtlRevisaoRN::$VOLTAR_PARA_FILA:
               $strNovoStatus = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' ? MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE : MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM;
               $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
+              
+              if($strNovoStatus == MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE){ // unidade de esforco sera o tempo das atividades analisadas
+                $TmpExecucao = MdUtlAdmPrmGrUsuINT::_retornaUnidEsforcoAtividadesAnalisadas( $arrObjsAtuais[0]->getNumIdMdUtlAnalise() );
+              }else{ // unidade de esforco sera o tempo configurado na Fila
+                $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
+                $TmpExecucao = $objMdUtlAdmFilaRN->getTempoExecucaoFila($idFila);
+              }
 
               if(!is_null($arrObjsAtuais)) {
                   $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, array($idProcedimento), 'N','S', 'S'));
@@ -187,12 +196,13 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                   $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
 
                   //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-                  $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $undEsforco, null, $idTriagem, $idAnalise, $idRevisao, $strDetalheRev, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO));
+                  $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $TmpExecucao, null, $idTriagem, $idAnalise, $idRevisao, $strDetalheRev, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO));
 
                   $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
                   $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
               }
 
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb);
 
               break;
 
@@ -220,6 +230,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                       $isProcessoConcluido = 1;
                   }
               }
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb);
 
               break;
 
@@ -257,19 +268,62 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
 
               //Cadastrar Histórico - Solicitação Negocial
-              $objHistoricoRN->salvarObjHistoricoRevisao(array($idProcedimento, $arrRetorno, $idRevisao, $strDetalheRev, $strNovoStatus, $idUsuarioDistr));
+              $objHistoricoRN->salvarObjHistoricoRevisao(array($idProcedimento, $arrRetorno, $idRevisao, $strDetalheRev, $strNovoStatus, $idUsuarioDistr, $idFila));
 
               //Cadastrando para essa fila, e esse procedimento e unidade o novo status
               $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , 0, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheDistr, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO));
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioDistr);
               break;
       }
+
       }catch(Exception $e){
-          throw new InfraException('Erro cadastrando Revisão .',$e);
+          throw new InfraException('Erro cadastrando Avaliação .',$e);
       }
 
       return $isProcessoConcluido;
 
   }
+
+    private function _atualizaObjRevisao($idProcedimento, $objMdUtlRevisaoDTO, $idTpCtrl, $idUsuarioAtb) {
+
+        $objMdUtlRevisaoRN = new MdUtlRevisaoRN();
+        $objMdUtlRevisao = new MdUtlRevisaoDTO();
+        $objMdUtlRevisao->retNumIdMdUtlRevisao();
+        $objMdUtlRevisao->retTodos();
+        $objMdUtlRevisao->setOrd('IdMdUtlRevisao', InfraDTO::$TIPO_ORDENACAO_DESC);
+        $objMdUtlRevisao->setNumMaxRegistrosRetorno(1);
+
+        $objMdUtlRevisao = $objMdUtlRevisaoRN->consultar($objMdUtlRevisao);
+
+        if ($objMdUtlRevisao->getDthInicio() || $objMdUtlRevisao->getDthPrazo() || $objMdUtlRevisao->getNumTempoExecucao()) {
+
+            $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho($objMdUtlRevisao->getNumTempoExecucao(), $idTpCtrl, $idUsuarioAtb);
+
+            $objMdUtlRevisao->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
+            $objMdUtlRevisao->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+            $objMdUtlRevisao->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+            $objMdUrltRevisaoRN = new MdUtlRevisaoRN();
+            $objMdUrltRevisaoRN->alterar($objMdUtlRevisao);
+
+            return $objMdUtlRevisao;
+        } else {
+            $regrasGerais = new MdUtlRegrasGeraisRN();
+            $objTodosHistDesmp = $regrasGerais->recuperarObjHistorico($idProcedimento);
+            $arrParams = $regrasGerais->regraAcaoRevisao($objTodosHistDesmp);
+            $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho($arrParams['tempoExecucao'] ? $arrParams['tempoExecucao'] : 0, $idTpCtrl, $idUsuarioAtb);
+
+            $objMdUtlRevisaoDTO->setDthInicio($arrParams['dataInicio'] ? $arrParams['dataInicio'] : '');
+            $objMdUtlRevisaoDTO->setDthPrazo($arrParams['dataPrazo'] ? $arrParams['dataPrazo'] : '');
+            $objMdUtlRevisaoDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
+
+            $objMdUtlRevisaoDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
+            $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+            $objMdUtlRevisaoDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+
+            $objMdUrltRevisaoRN = new MdUtlRevisaoRN();
+            return $objMdUrltRevisaoRN->alterar($objMdUtlRevisaoDTO);
+        }
+    }
 
     protected function cadastrarRevisaoTriagemAnaliseContestControlado($arrParams){
 
@@ -284,7 +338,9 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             $objRNGerais            = new MdUtlRegrasGeraisRN();
             $arrIdsProcedimentos    = array($idProcedimento);
             $arrObjsAtuais          = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIdsProcedimentos);
-            $idNovaRevisao          = $objMdUtlRevisaoRN->salvarObjRevisao(true);
+//            $idNovaRevisao          = $objMdUtlRevisaoRN->salvarObjRevisao(true);
+            $objRevisao          = $objMdUtlRevisaoRN->salvarObjRevisao(true);
+            $idNovaRevisao          = $objRevisao->getNumIdMdUtlRevisao();
             $isAnalise              = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar';
             $this->_salvarObjsRelacionadosRevisao($idNovaRevisao, $isAnalise);
             $strStatus              = null;
@@ -344,8 +400,8 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
             $objMdUtlGestaoAjusteRN = new MdUtlGestaoAjustPrazoRN();
             if ($strEmailSolicitante != '') {
-                $strAssunto = 'Resultado da Solicitação de Contestação de Revisão';
-                $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de Contestação de Revisão referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
+                $strAssunto = 'Resultado da Solicitação de Contestação de Avaliação';
+                $strConteudo = '@nome_usuario_solicitante@, a sua solicitação de Contestação de Avaliação referente à @status_solicitacao@ do Processo @numero_processo@ foi @acao_solicitacao@. Na dúvida converse com o Gestor do Tipo de Controle da sua área.';
 
                 $arrDados = array($strNome, $strEmailSolicitante, $strNumeroProcesso, $strStatus, true, $strAssunto, $strConteudo);
                 $isContatoVazio = 0;
@@ -355,7 +411,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             return array($isProcessoConcluido, $isContatoVazio);
 
         } catch(Exception $e){
-            throw new InfraException('Erro cadastrando Revisão .',$e);
+            throw new InfraException('Erro cadastrando Avaliação .',$e);
         }
 
     }

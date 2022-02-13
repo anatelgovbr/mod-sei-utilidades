@@ -22,6 +22,7 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
         parent::montar();
 
         $this->configurarFK('IdProcedimento', 'md_utl_controle_dsmp cpf', 'cpf.id_procedimento', $this->getControleDsmpTIPOFK(), $this->getControleDsmpTIPOWhere());
+        $this->configurarFK('IdMdUtlTriagem', 'md_utl_triagem tri', 'tri.id_md_utl_triagem', InfraDTO::$TIPO_FK_OPCIONAL);
         $this->configurarFK('IdUnidade', 'unidade u', 'u.id_unidade', InfraDTO::$TIPO_FK_OPCIONAL);
         $this->configurarFK('IdFila', 'md_utl_adm_fila af', 'af.id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);
         $this->configurarFK('IdProcedimento', 'documento doc', 'doc.id_procedimento');
@@ -30,6 +31,9 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
         $this->configurarFK('IdUsuarioDistribuicao', 'usuario ud', 'ud.id_usuario', InfraDTO::$TIPO_FK_OPCIONAL);
         $this->configurarFK('IdMdUtlAjustePrazo', 'md_utl_ajuste_prazo mdap', 'mdap.id_md_utl_ajuste_prazo', InfraDTO::$TIPO_FK_OPCIONAL);
         $this->configurarFK('IdMdUtlContestRevisao', 'md_utl_contest_revisao mdcr', 'mdcr.id_md_utl_contest_revisao', InfraDTO::$TIPO_FK_OPCIONAL);
+
+        // novo relacionamento para retornar info da tabela tipo de controle de desempenho
+        $this->configurarFK('IdTipoCtrlDsmp','md_utl_adm_tp_ctrl_desemp tp_ctrl','tp_ctrl.id_md_utl_adm_tp_ctrl_desemp');
 
         //$this->configurarFK('IdDocumento', 'documento d', 'd.id_documento');
 
@@ -61,6 +65,18 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'IdMdUtlAdmTpCtrlDesemp',
             'cpf.id_md_utl_adm_tp_ctrl_desemp',
             'md_utl_controle_dsmp cpf');
+        
+        // retorna info do tipo de controle desempenho - relaciona
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,
+            'IdTipoCtrlDsmp',
+            'cpf.id_md_utl_adm_tp_ctrl_desemp',
+            'md_utl_controle_dsmp cpf');
+
+        // retorna info do tipo de controle desempenho - get nome do tipo de controle
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,
+            'NomeTpCtrlDsmp',
+            'tp_ctrl.nome',
+            'md_utl_adm_tp_ctrl_desemp tp_ctrl');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
             'IdFila',
@@ -73,8 +89,8 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'md_utl_controle_dsmp cpf');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
-            'UnidadeEsforco',
-            'cpf.unidade_esforco',
+            'TempoExecucao',
+            'cpf.tempo_execucao',
             'md_utl_controle_dsmp cpf');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
@@ -157,6 +173,11 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'IdMdUtlTriagem',
             'cpf.id_md_utl_triagem',
             'md_utl_controle_dsmp cpf');
+
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTH,
+            'PrazoResposta',
+            'tri.dth_prazo_resposta',
+            'md_utl_triagem tri');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
             'IdMdUtlAjustePrazo',

@@ -47,6 +47,10 @@ PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
+if(!is_null($strValorTmpExecucao) && !is_null($idUsuario)){
+    $tempoExecucaoTeletrabalho = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($strValorTmpExecucao, $idTipoControle, $idUsuario);
+}
+
 ?>
 <form id="frmTipoControleUtilidadesCadastro" method="post" onsubmit="return onSubmitForm();" action="<?=PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao']))?>">
     <?
@@ -91,66 +95,94 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         </div>
     </div>
     <br>
-    <div class="bloco blocoExibir" id="divComAnalise" >
-
-        <label  id="lblUndEsforco" for="txtUndEsforco" class="infraLabelObrigatorio">Valor da Atividade em Unidades de Esforço (EU):</label>
-        <a style="" id="btAjudaUndEsforco" <?=PaginaSEI::montarTitleTooltip('Indicar o valor do esforço atribuído a essa atividade. Esse valor será levado em consideração na distribuição do processo.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaUndEsforco" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
+    <div class="bloco">
+        <label id="lblAtividade" for="txtAtividade" class="infraLabelObrigatorio">Complexidade: </label>
+        <a style="" id="btAjudaAtividade" <?=PaginaSEI::montarTitleTooltip('Complexidade da Atividade.') ?>
+           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" >
+            <img id="imgAjudaAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg" />
         </a>
         <div class="clear"></div>
 
-        <input utlSomenteNumeroPaste="true" utlCampoObrigatorio="o" type="text" id="txtUndEsforco" name="txtUndEsforco" style="width: 35%" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strValorUndEsforco) ? PaginaSEI::tratarHTML($strValorUndEsforco) : $_POST['txtUndEsforco'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
+        <select style="width: 215px" id="selComplexidade" name="selComplexidade" class="infraSelect"	tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=$strDesabilitar?> >
+            <?
+            if( $mdUtlAdmAtividade )
+                echo MdUtlAdmAtividadeINT::montarSelectComplexidade( $mdUtlAdmAtividade->getNumComplexidade() );
+            else
+                echo  MdUtlAdmAtividadeINT::montarSelectComplexidade(null);
+            ?>
+        </select>
+    </div>
+    <br>
+    <div class="bloco blocoExibir" id="divAtvRevAmost" >
+        <input type="checkbox" <?=$chkAmostragem?> <?=$strDesabilitar?> name="chkAtvRevAmost" id="chkAtvRevAmost">
+        <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Avaliação</label>
+        <a style="" id="btAjudaAtvRevAmost" <?=PaginaSEI::montarTitleTooltip('A Atividade passará por Avaliação.')?>
+           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+            <img id="imgAjudaAtvRevAmost" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
+        </a>
+        <br><br>
+    </div>
+    <div class="bloco blocoExibir" id="divComAnalise" >
+
+        <label  id="lblTmpExecucao" for="txtTmpExecucao" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade (em minutos):</label>
+        <a style="" id="btAjudaTmpExecucao" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Análise da Atividade (em minutos) atribuído a essa atividade. Esse valor será levado em consideração na distribuição do processo.')?>
+           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+            <img id="imgAjudaTmpExecucao" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
+        </a>
+
+        <div class="clear"></div>
+
+        <input utlSomenteNumeroPaste="true" utlCampoObrigatorio="o" type="text" id="txtTmpExecucao" name="txtTmpExecucao" style="width: 35%" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strValorTmpExecucao) ? PaginaSEI::tratarHTML($strValorTmpExecucao) : $_POST['txtTmpExecucao'];?>" onkeypress="return infraMascaraNumero(this, event,6);"
                maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+
+        <div class="clear">&nbsp;</div>
+
+        <label id="lblTempoExecucaoAnaliseAtividade" for="txtTempoExecucaoAnaliseAtividade" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade em Teletrabalho (em minutos):</label>
         </br></br>
-        <label id="lblExecucaoAtividade" for="txtExecucaoAtividade" class="infraLabelObrigatorio">Prazo para Execução da Atividade:</label>
-        <a style="" id="btAjudaExecucaoAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em que a atividade deve ser concluída.')?>
+        <input type="text" id="txtTempoExecucaoAnaliseAtividade" name="txtTempoExecucaoAnaliseAtividade" style="width: 35%" class="infraText" value="<?= !is_null($strValorTmpExecucao) ? $tempoExecucaoTeletrabalho : '0.00';?>"
+               maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" readonly <?=$strDesabilitar?> />
+
+        <div class="clear">&nbsp;</div>
+
+        <label id="lblExecucaoAtividade" for="txtExecucaoAtividade">Prazo em Dias para Análise:</label>
+        <a style="" id="btAjudaExecucaoAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em dias úteis em que a análise da atividade deve ser concluída.')?>
            tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
             <img id="imgAjudaExecucaoAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
         </a>
         <div class="clear"></div>
 
-        <input utlSomenteNumeroPaste="true"  type="text" utlCampoObrigatorio="o" id="txtExecucaoAtividade" style="width: 35%" name="txtExecucaoAtividade" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrazoExeAtv) ? PaginaSEI::tratarHTML($strPrazoExeAtv) : $_POST['txtExecucaoAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
+        <input utlSomenteNumeroPaste="true"  type="text" id="txtExecucaoAtividade" style="width: 35%" name="txtExecucaoAtividade" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrazoExeAtv) ? PaginaSEI::tratarHTML($strPrazoExeAtv) : $_POST['txtExecucaoAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
                maxlength="3" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+
     </div>
 
     <div class="bloco blocoExibir" id="divSemAnalise">
-        <label id="lblRevUnidEsf" for="txtRevUnidEsf" class="infraLabelObrigatorio">Valor da Revisão da Atividade em Unidades de Esforço (EU):</label>
-        <a style="" id="btAjudaRevUnidEsf" <?=PaginaSEI::montarTitleTooltip('Indicar o valor do esforço atribuído a revisão dessa atividade. Esse valor será levado em consideração na distribuição do processo para a revisão.')?>
+        <label id="lblRevUnidEsf" for="txtRevUnidEsf" class="infraLabelObrigatorio">Tempo de Execução da Avaliação da Atividade (em minutos):</label>
+        <a style="" id="btAjudaRevUnidEsf" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação da Atividade (em minutos) atribuído a avaliação dessa atividade. Esse tempo será levado em consideração na distribuição do processo para a avaliação.')?>
            tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
             <img id="imgAjudaRevUnidEsf" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
         </a>
         <div class="clear"></div>
 
-        <input utlSomenteNumeroPaste=true  type="text" utlCampoObrigatorio="o" id="txtRevUnidEsf" style="width: 35%" name="txtRevUnidEsf" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strUndEsforcoRev) ? PaginaSEI::tratarHTML($strUndEsforcoRev) : $_POST['txtRevUnidEsf'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
+        <input utlSomenteNumeroPaste=true  type="text" utlCampoObrigatorio="o" id="txtRevUnidEsf" style="width: 35%" name="txtRevUnidEsf" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strTmpExecucaoRev) ? PaginaSEI::tratarHTML($strTmpExecucaoRev) : $_POST['txtRevUnidEsf'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
                maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
 
     </div>
 
     <div class="bloco" id="divRevATividade" style="display: none">
         </br>
-        <label id="lblRevAtividade" for="txtRevAtividade" class="infraLabelObrigatorio">Prazo para Revisão da Atividade:</label>
-        <a style="" id="btAjudaRevAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em que a revisão da atividade deve ser concluída.')?>
+        <label id="lblRevAtividade" for="txtRevAtividade" class="infraLabelObrigatorio">Prazo para Avaliação da Atividade:</label>
+        <a style="" id="btAjudaRevAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em que a avaliação da atividade deve ser concluída.')?>
            tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
             <img id="imgAjudaRevAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
         </a>
 
         <div class="clear"></div>
 
-        <input utlSomenteNumeroPaste=true type="text" utlCampoObrigatorio="o" id="txtRevAtividade" name="txtRevAtividade" style="width: 35%" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrzRevisaoAtv) ? PaginaSEI::tratarHTML($strPrzRevisaoAtv) : $_POST['txtRevAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
+        <input utlSomenteNumeroPaste=true type="text" id="txtRevAtividade" name="txtRevAtividade" style="width: 35%" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrzRevisaoAtv) ? PaginaSEI::tratarHTML($strPrzRevisaoAtv) : $_POST['txtRevAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
                maxlength="50" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        <div class="clear">&nbsp</div>
     </div>
-        </br>
-    <div class="bloco blocoExibir" id="divAtvRevAmost" >
-        <input type="checkbox" <?=$chkAmostragem?> <?=$strDesabilitar?> name="chkAtvRevAmost" id="chkAtvRevAmost">
-        <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Revisão</label>
-        <a style="" id="btAjudaAtvRevAmost" <?=PaginaSEI::montarTitleTooltip('A Atividade passará por Revisão.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaAtvRevAmost" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <br><br>
-    </div>
-
     <div class="bloco blocoExibir" id="blocoListaProduto" >
         <fieldset class="infraFieldset" id="fieldListaProduto">
             <legend class="infraLegend">Lista de Produtos Esperados</legend>
@@ -220,8 +252,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
                 <div class="clear"></div>
                 <div id="divVlRevisaoProdEsforco">
-                <label id="lblRevUnidade" for="txtRevUnidade" class="infraLabelObrigatorio">Valor da Revisão do Produto em Unidades de Esforço (EU):</label>
-                <a style="" id="btAjudaRevUnidade" <?=PaginaSEI::montarTitleTooltip('Indicar o valor do esforço atribuído a revisão desse produto quando essa atividade for para revisão. Esse valor será levado em consideração na distribuição do processo para a revisão. Após o preenchimento de todos os campos clicar no botão Adicionar.')?>
+                <label id="lblRevUnidade" for="txtRevUnidade" class="infraLabelObrigatorio">Tempo de Execução da Avaliação do Produto (em minutos):</label>
+                <a style="" id="btAjudaRevUnidade" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação do Produto (em minutos) atribuído a avaliação desse produto quando essa atividade for para avaliação. Esse valor será levado em consideração na distribuição do processo para a avaliação. Após o preenchimento de todos os campos clicar no botão Adicionar.')?>
                    tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
                     <img id="imgAjudaRevUnidade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
                 </a>
@@ -246,7 +278,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
                     <th style="display: none">tipo</th>
                     <th style="display: none">aplicabilidade</th>
                     <th class="infraTh"  align="center" width="30%" >Tipo de Documento SEI/Tipo de Produto</th> <!--1-->
-                    <th class="infraTh"  align="center" width="30%" >Valor da Revisão do Produto em Unidades de Esforço (EU)</th> <!--2-->
+                    <th class="infraTh"  align="center" width="30%" >Tempo de Execução da Avaliação do Produto (em minutos)</th> <!--2-->
                     <th class="infraTh"  align="center" width="25%" >Obrigatório</th>
                     <th style="display: none">chk_obrigatorio</th>
                     <th style="display: none">id_vinculo</th><!--0-->

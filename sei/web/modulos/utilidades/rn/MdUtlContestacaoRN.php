@@ -170,7 +170,6 @@ class MdUtlContestacaoRN extends InfraRN
 
         //Cadastro da solicitação de Conntestação;
         $objDTO  = $arrParams[0];
-
         $objDTO  = $this->cadastrar($objDTO);
 
         //Controle do Fluxo de Atendimento;
@@ -178,22 +177,24 @@ class MdUtlContestacaoRN extends InfraRN
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objHistoricoRN         = new MdUtlHistControleDsmpRN();
 
-        $isAlterar = array_key_exists(2, $arrParams) ? $arrParams[2] : false;
+//        $isAlterar = array_key_exists(2, $arrParams) ? $arrParams[2] : false;
 
         //Detalhe Fluxo Atendimento; //fazer a funcionalidade
         $strDetalheFluxoAtend   = $arrParams[2];
 
         if($strDetalheFluxoAtend == MdUtlContestacaoRN::$SOLICITACAO) {
             $detalheContestacao = MdUtlContestacaoRN::$STR_SOLICITACAO;
+            $acaoEmail = 'incluída';
             $idContestacao = $objDTO->getNumIdMdUtlContestRevisao();
         } elseif ($strDetalheFluxoAtend == MdUtlContestacaoRN::$ALTERACAO) {
             $detalheContestacao = MdUtlContestacaoRN::$STR_ALTERACAO;
+            $acaoEmail = 'alterada';
             $idContestacao = $objDTO->getNumIdMdUtlContestRevisao();
         } else {
             $detalheContestacao = MdUtlContestacaoRN::$STR_CANCELAMENTO;
+            $acaoEmail = 'cancelada';
             $idContestacao = null;
         }
-
 
         $idProcedimento  = $objControleDTO->getDblIdProcedimento();
         $idFila          = $objControleDTO->getNumIdFila();
@@ -202,7 +203,7 @@ class MdUtlContestacaoRN extends InfraRN
         $idTriagem       = $objControleDTO->getNumIdMdUtlTriagem();
         $idAnalise       = $objControleDTO->getNumIdMdUtlAnalise();
         $idRevisao       = $objControleDTO->getNumIdMdUtlRevisao();
-        $undEsforco      = $objControleDTO->getNumUnidadeEsforco();
+        $tempoExecucao      = $objControleDTO->getNumTempoExecucao();
         $idUsuarioDistr  = $objControleDTO->getNumIdUsuarioDistribuicao();
         $strDetalheContest = $detalheContestacao;
         $arrIds          = array($idProcedimento);
@@ -215,8 +216,23 @@ class MdUtlContestacaoRN extends InfraRN
         $strTipoAcao = MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO;
 
         //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $undEsforco, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheContest, $strTipoAcao, null, null, $dthPrazo, null, $idContestacao));
+        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheContest, $strTipoAcao, null, null, $dthPrazo, null, $idContestacao));
 
+        $tipoControleDsmpRN = new MdUtlAdmTpCtrlDesempRN();
+        $tipoControleDsmpDTO = new MdUtlAdmTpCtrlDesempDTO();
+        $tipoControleDsmpDTO->retStrNome();
+        $tipoControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
+
+        $objTipoControleDsmpDTO = $tipoControleDsmpRN->listar($tipoControleDsmpDTO);
+
+        $arrDadosEmail = array(
+            'acao_email' => $acaoEmail,
+            'tipo' => 'Contestação de Avaliação',
+            'id_tipo' => $idTpCtrl,
+            'protocolo_formatado' => $objControleDTO->getStrProtocoloProcedimentoFormatado(),
+            'nome_controle' => $objTipoControleDsmpDTO[0]->getStrNome(),
+        );
+        $this->getArrGestoresTpControle($arrDadosEmail);
         return $objControleDesempenhoNovoDTO;
     }
 
@@ -251,7 +267,7 @@ class MdUtlContestacaoRN extends InfraRN
             return $ret;
 
         }catch(Exception $e){
-            throw new InfraException('Erro listando Contestacao de Revisão.',$e);
+            throw new InfraException('Erro listando Contestacao de Avaliação.',$e);
         }
     }
     
@@ -360,5 +376,95 @@ class MdUtlContestacaoRN extends InfraRN
             $objMdUtlContestacaoDTO->setNumIdMdUtlRevisao($idRevisao);
             $objMdUtlContestacaoDTO->setStrStaSolicitacao(self::$APROVADA);
             $this->alterar($objMdUtlContestacaoDTO);
+    }
+
+    /**
+     * Recupera os gestores do tipo de controle e envia e-mail
+     * @param $idTpCtrl
+     * @param $acao
+     */
+    public function getArrGestoresTpControle($arrDadosEmail)
+    {
+        $idUnidadeLogado = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+        $strTipoAcao = $arrDadosEmail['acao_email'];
+        $strItemMantido = $arrDadosEmail['tipo'];
+        $idTpCtrl = $arrDadosEmail['id_tipo'];
+        $strNomeControle = $arrDadosEmail['nome_controle'];
+        $strProtocolo = $arrDadosEmail['protocolo_formatado'];
+        $strNomeUsuario = SessaoSEI::getInstance()->getStrNomeUsuario();
+        $strSiglaUnidade = SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+
+        $objTipoControleUtilidadesUsuarioDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
+        $objTipoControleUtilidadesUsuarioDTO->retTodos();
+        $objTipoControleUtilidadesUsuarioDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
+        $objTipoControleUtilidadesUsuarioDTO->setOrdStrNomeUsuario(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objTipoControleUtilidadesUsuarioDTO->retStrNomeUsuario();
+        $objTipoControleUtilidadesUsuarioDTO->retStrSiglaUsuario();
+
+        $objRelTipoControleUtilidadesUsuarioRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $arrGestoresDTO = $objRelTipoControleUtilidadesUsuarioRN->listar($objTipoControleUtilidadesUsuarioDTO);
+
+        foreach ($arrGestoresDTO as $usuario) {
+
+            $isGestor = $this->verificaUnidadeGestor($usuario, $idUnidadeLogado);
+
+            if ($isGestor) {
+                $objUsuarioDTO = new UsuarioDTO();
+                $objUsuarioRN = new UsuarioRN();
+                $objUsuarioDTO->setNumIdUsuario($usuario->getNumIdUsuario());
+                $objUsuarioDTO->retNumIdContato();
+                $objUsuarioDTO = $objUsuarioRN->consultarRN0489($objUsuarioDTO);
+
+                $objContatoDTO = new ContatoDTO();
+                $objContatoRN = new ContatoRN();
+                $objContatoDTO->retStrEmail();
+                $objContatoDTO->setNumIdContato($objUsuarioDTO->getNumIdContato());
+                $objContatoDTO = $objContatoRN->consultarRN0324($objContatoDTO);
+
+                if ($objContatoDTO->getStrEmail()) {
+                    $this->emailContestacao($strTipoAcao, $strItemMantido, $strNomeControle, $strNomeUsuario, $strProtocolo, $strSiglaUnidade, $objContatoDTO->getStrEmail());
+                }
+            }
+        }
+    }
+
+    public function verificaUnidadeGestor($usuario, $idUnidadeSolicitante) {
+        $objInfraSip = new InfraSip(SessaoSEI::getInstance());
+        $arrPerfisSip = $objInfraSip->carregarPerfis(SessaoSEI::getInstance()->getNumIdSistema(), $usuario->getNumIdUsuario(), $idUnidadeSolicitante);
+
+        for ($i = 0; $i < count($arrPerfisSip); $i++) {
+            if ($arrPerfisSip[$i][1] == 'Gestor de Controle de Desempenho') {
+                return true;
+            }
+        }
+    }
+
+    public function emailContestacao($strTipoAcao, $strItemMantido, $strNomeControle, $strNomeUsuario, $strProtocolo, $strSiglaUnidade, $email) {
+        $strAssunto = '[Controle de Desempenho] @acao@ a @item mantido@';
+        $strAssunto = str_replace('@acao@', ucfirst($strTipoAcao), $strAssunto);
+        $strAssunto = str_replace('@item mantido@', $strItemMantido, $strAssunto);
+
+        $strConteudo = '
+            :: Este é um e-mail automático ::
+            
+            Uma ' . $strItemMantido . ' foi ' . $strTipoAcao . ' no Controle de Desempenho '.$strNomeControle.' do SEI por '.$strNomeUsuario.' sobre o Processo nº '.$strProtocolo.' e no momento está pendente de resposta.
+            
+            Assim, o Gestor do citado Controle de Desempenho na Unidade '.$strSiglaUnidade.' deve acessar o menu Constrole de Desempenho > Gestão de Solicitações para mais informações.';
+
+        //Enviar Email
+        $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+
+        //Monta Email
+        $strDe = SessaoSEI::getInstance()->getStrSiglaSistema();
+        $strDe .= '<' . $objInfraParametro->getValor('SEI_EMAIL_SISTEMA') . '>';
+        $strPara = $email;
+
+        $objEmailDTO = new EmailDTO();
+        $objEmailDTO->setStrDe($strDe);
+        $objEmailDTO->setStrPara($strPara);
+        $objEmailDTO->setStrAssunto($strAssunto);
+        $objEmailDTO->setStrMensagem($strConteudo);
+
+        EmailRN::processar(array($objEmailDTO));
     }
 }

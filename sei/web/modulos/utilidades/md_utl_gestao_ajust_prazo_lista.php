@@ -22,14 +22,15 @@ if (!is_null($objMdUtlControleDsmpDTO)) {
 
         //Cabeçalho da Tabela
         $strResultado .= '<tr>';
-        $strResultado .= '<th class="infraTh" width="18%" style="text-align: center"> Processo </th>';
-        $strResultado .= '<th class="infraTh" width="12%" style="text-align: center"> Tipo de Solicitação </th>';
-        $strResultado .= '<th class="infraTh" width="10%" style="text-align: center"> Servidor </th>';
-        $strResultado .= '<th class="infraTh" width="12%" style="text-align: center"> Data da Solicitação </th>';
-        $strResultado .= '<th class="infraTh" width="15%" style="text-align: center"> Justificativa </th>';
-        $strResultado .= '<th class="infraTh" width="10%" style="text-align: center"> Prazo Entrega </th>';
-        $strResultado .= '<th class="infraTh" width="10%" style="text-align: center"> Prazo Solicitado </th>';
-        $strResultado .= '<th class="infraTh" width="14%" style="text-align: center"> Ações </th>';
+        $strResultado .= '<th class="infraTh" width="16%" style="text-align: left"> Processo </th>';
+        $strResultado .= '<th class="infraTh" width="10%" style="text-align: left"> Tipo de Controle  </th>';
+        $strResultado .= '<th class="infraTh" width="10%" style="text-align: left"> Tipo de Solicitação </th>';
+        $strResultado .= '<th class="infraTh" width="10%" style="text-align: left"> Servidor </th>';
+        $strResultado .= '<th class="infraTh" width="9%" style="text-align: left"> Data da Solicitação </th>';
+        $strResultado .= '<th class="infraTh" width="14%" style="text-align: left"> Justificativa </th>';
+        $strResultado .= '<th class="infraTh" width="9%" style="text-align: left"> Prazo Entrega </th>';
+        $strResultado .= '<th class="infraTh" width="10%" style="text-align: left"> Prazo Solicitado </th>';
+        $strResultado .= '<th class="infraTh" width="17%" style="text-align: center"> Ações </th>';
 
         $strResultado .= '</tr>';
 
@@ -44,6 +45,7 @@ if (!is_null($objMdUtlControleDsmpDTO)) {
             $strNomeProc = $objMdUtlControleDsmpDTO[$i]->getStrNomeTipoProcesso();
             $strProcesso = $objMdUtlControleDsmpDTO[$i]->getStrProtocoloProcedimentoFormatado();
             $strTpSolicitacao = $objMdUtlControleDsmpDTO[$i]->getStrStaTipoSolicitacaoAjustePrazo();
+            $strNmTpCtrl      = $objMdUtlControleDsmpDTO[$i]->getStrNomeTpControle();
             $strSiglaUsuario = $objMdUtlControleDsmpDTO[$i]->getStrSiglaUsuarioDistribuicao();
             $strNomeUsuario = $objMdUtlControleDsmpDTO[$i]->getStrNomeUsuarioDistribuicao();
             $arrDataSolicitacao = explode(' ', $objMdUtlControleDsmpDTO[$i]->getDthAtual());
@@ -71,6 +73,11 @@ if (!is_null($objMdUtlControleDsmpDTO)) {
             //Linha Processo
             $strResultado .= '<td class="tdIdProcesso" >';
             $strResultado .= '<a href="#" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $strNomeProc . '" title="' . $strNomeProc . '" class="ancoraPadraoAzul">' . $strProcesso . '</a>';
+            $strResultado .= '</td>';
+            
+            // Nome Tipo de Controle
+            $strResultado .= '<td class="tdSolicitacao" >';
+            $strResultado .= $strNmTpCtrl;
             $strResultado .= '</td>';
 
             //Linha Tipo de Solicitação

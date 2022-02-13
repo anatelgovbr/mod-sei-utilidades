@@ -24,6 +24,7 @@ class MdUtlAdmGrpFlProcAtvDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmGrpFilaProc', 'id_md_utl_adm_grp_fila_proc');
 
       $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmAtividade', 'a.id_md_utl_adm_atividade', 'md_utl_adm_atividade a');
+      $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'ComplexidadeAtividade', 'a.complexidade', 'md_utl_adm_atividade a');
       $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeAtividade', 'a.nome', 'md_utl_adm_atividade a');
 
 

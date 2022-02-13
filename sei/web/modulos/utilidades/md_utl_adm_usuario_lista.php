@@ -38,6 +38,7 @@ try {
   $tpSelecao         = array_key_exists('tipo_selecao', $_GET) ? $_GET['tipo_selecao'] : null;
   $idFila            = array_key_exists('id_fila', $_GET) ? $_GET['id_fila'] : null;
   $idStatus          = array_key_exists('id_status', $_GET) ? $_GET['id_status'] : null;
+  $arrProcedimentos  = array_key_exists('arr_procedimentos', $_GET) ? $_GET['arr_procedimentos'] : null;
   $possuiRegistrosDist = false;
   $arrObjUsuarioDTO  = null;
   $isVazioUsers      = false;
@@ -145,6 +146,15 @@ try {
                 $isVazioUsers = true;
             }else{
                 $idsUsuario = InfraArray::converterArrInfraDTO($arrDTO, 'IdUsuario');
+
+                // se tiver informado o procedimento, não retorna pessoas que possam ser avaliadoras dela mesma.
+                $moduloAutoAvaliacaoLiberado = MdUtlAdmPrmGrUsuINT::verificaModoluloLiberarAutoAvaliacaoAtivado();
+                $arrProcedimentos = explode(",", trim($arrProcedimentos));
+                if (!$moduloAutoAvaliacaoLiberado && count($arrProcedimentos)>0){
+                    $arrIdsPessoasQueNaoPodeDistribuir = MdUtlAdmPrmGrUsuINT::buscarArrayPessoasNaoPodeDistribuir($arrProcedimentos);
+                    $idsUsuario = array_diff($idsUsuario, $arrIdsPessoasQueNaoPodeDistribuir);
+                }
+
                 $possuiRegistrosDist = count($idsUsuario) > 0;
                 if (count($idsUsuario) > 0) {
                     $objUsuarioDTO->setNumIdUsuario($idsUsuario, InfraDTO::$OPER_IN);

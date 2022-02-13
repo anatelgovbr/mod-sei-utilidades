@@ -233,10 +233,11 @@ class MdUtlAdmPrmGrINT extends InfraINT {
     public static function autoCompletarTipoProcedimento($strPalavrasPesquisa){
 
         $objTipoProcedimentoDTO = new TipoProcedimentoDTO();
-        $objTipoProcedimentoDTO->retNumIdTipoProcedimento();
-        $objTipoProcedimentoDTO->retStrNome();
+        $objTipoProcedimentoDTO->setStrNome('%'.trim($strPalavrasPesquisa).'%',InfraDTO::$OPER_LIKE);
         $objTipoProcedimentoDTO->setNumMaxRegistrosRetorno(50);
         $objTipoProcedimentoDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objTipoProcedimentoDTO->retNumIdTipoProcedimento();
+        $objTipoProcedimentoDTO->retStrNome();        
 
         $objTipoProcedimentoRN = new TipoProcedimentoRN();
 
@@ -301,6 +302,163 @@ class MdUtlAdmPrmGrINT extends InfraINT {
 
         return $arrObjUsuarioDTO;
     }
-    
 
+    public static function convertToHoursMins($time)
+    {
+        $hours = intVal($time / 60);
+        $minutes = ($time % 60);
+        if ($time == 0) {
+            $format = '0min';
+        } else {
+            if ($time < 60) {
+                $format = sprintf('%1dmin', $minutes);
+            } else {
+                if($minutes > 0) {
+                    $format = sprintf("%1dh %1dmin", $hours, $minutes);
+                } else {
+                    $format = sprintf('%1dh', $hours);
+                }
+            }
+        }
+
+        return trim($format);
+    }
+
+    public static function convertToMins($valor)
+    {
+        $arrValor = explode(" ", trim($valor));
+        $minutos = 0;
+
+        if(count($arrValor) == 1){
+            if(strripos($arrValor[0], 'min') !== false){
+                $minutos = (int) str_replace("min", "", $arrValor[0]) + $minutos;
+            }
+            if(strripos($arrValor[0], 'h') !== false) {
+                $minutos = (int) str_replace("h", "", $arrValor[0]) * 60;
+            }
+        } else {
+            $minutos = (int)str_replace("h", "", $arrValor[0]) * 60;
+            $minutos = (int)str_replace("h", "", $arrValor[1]) + $minutos;
+        }
+        return $minutos;
+    }
+
+
+    public static function recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho = null)
+    {
+        $objTpCtrlDsmpRN = new MdUtlAdmTpCtrlDesempRN();
+        $objTpCtrlDsmpDTO = new MdUtlAdmTpCtrlDesempDTO();
+
+        $objTpCtrlDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp( $idControleDesempenho );
+        $objTpCtrlDsmpDTO->retNumIdMdUtlAdmPrmGr();
+
+        $rs = $objTpCtrlDsmpRN->consultar( $objTpCtrlDsmpDTO );
+
+        $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+        $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+        $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr( $rs->getNumIdMdUtlAdmPrmGr() );
+        $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
+        $objMdUtlAdmPrmGrDTO->retNumInicioPeriodo();
+        $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+
+        $frequencia = '';
+
+        switch ($objMdUtlAdmPrmGr->getStrStaFrequencia()){
+             case 'D':
+                 $frequencia = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_DIARIO;
+                 $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Diário", tendo sempre início "todo dia às 0h", o que marca o fim do Período anterior.';
+                 break;
+             case 'S':
+                 $frequencia = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_SEMANAL;
+                 switch ($objMdUtlAdmPrmGr->getNumInicioPeriodo()){
+                     case MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO:
+                         $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início "todo domingo às 0h", o que marca o fim do Período anterior.';
+                         break;
+                     case MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA:
+                         $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início "toda segunda-feira às 0h", o que marca o fim do Período anterior.';
+                         break;
+                 }
+                 break;
+             case 'M':
+                 $frequencia = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_MENSAL;
+                 switch ($objMdUtlAdmPrmGr->getNumInicioPeriodo()){
+                     case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES:
+                         $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Mensal", tendo sempre início "todo primeiro dia do mês às 0h", o que marca o fim do Período anterior.';
+                         break;
+                     case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES:
+                         $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Mensal", tendo sempre início "todo primeiro dia útil do mês às 0h", o que marca o fim do Período anterior.';
+                         break;
+                     case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES:
+                         $textoFrequencia = 'Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Mensal", tendo sempre início "toda primeira segunda-feira do mês às 0h", o que marca o fim do Período anterior.';
+                         break;
+                 }
+                 break;
+        }
+
+        $retorno['frequencia'] = $frequencia;
+        $retorno['textoFrequencia'] = $textoFrequencia;
+
+        return $retorno;
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idControleDesempenho = null)
+    {
+        if (!$idControleDesempenho){
+            return 'O Total abrange toda e qualquer execução realizada pelo usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+
+        return 'O Total abrange toda e qualquer execução realizada pelo usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirProcessos($idControleDesempenho)
+    {
+        if (!$idControleDesempenho) {
+            return 'O Total de Tempo Executado no Período somente será exibido depois que for aplicado o filtro "Responsável".\n \n O Total abrange toda e qualquer execução realizada pelo responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+        return 'O Total de Tempo Executado no Período somente será exibido depois que for aplicado o filtro "Responsável".\n \n O Total abrange toda e qualquer execução realizada pelo responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirPessoaCargaHoraria($idControleDesempenho)
+    {
+        if (!$idControleDesempenho) {
+            return 'A Carga Horária Distribuída no Período somente será exibida depois que for selecionado o Membro Participante.\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o Membro Participante no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+        return 'A Carga Horária Distribuída no Período somente será exibida depois que for selecionado o Membro Participante.\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o Membro Participante no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirPessoaTempoExecutadoPeriodo($idControleDesempenho)
+    {
+        if (!$idControleDesempenho) {
+            return 'O Total de Tempo Executado no Período somente será exibido depois que for selecionado o Membro Participante.\n \n O Total abrange toda e qualquer execução realizada pelo Membro Participante no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+        return 'O Total de Tempo Executado no Período somente será exibido depois que for selecionado o Membro Participante.\n \n O Total abrange toda e qualquer execução realizada pelo Membro Participante no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
+    {
+        if (!$idControleDesempenho) {
+            return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+        return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+    }
+
+    public static function recuperarTextoFrequenciaTooltipDistribuicaoDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
+    {
+        if (!$idControleDesempenho) {
+            return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+        }
+
+        $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
+        return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
+    }
 }

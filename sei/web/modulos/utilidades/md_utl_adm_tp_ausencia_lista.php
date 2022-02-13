@@ -64,7 +64,7 @@ try {
       die;
 
     case 'md_utl_adm_tp_ausencia_reativar':
-      $strTitulo = 'Reativar Tipos de Ausência';
+      $strTitulo = 'Reativar Motivos de Ausência';
       if ($_GET['acao_confirmada']=='sim'){
         try{
           $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
@@ -88,7 +88,7 @@ try {
 
 
     case 'md_utl_adm_tp_ausencia_selecionar':
-      $strTitulo = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Tipo de Ausência','Selecionar Tipos de Ausência');
+      $strTitulo = PaginaSEI::getInstance()->getTituloSelecao('Selecionar Motivo de Ausência','Selecionar Motivos de Ausência');
 
       //Se cadastrou alguem
       if ($_GET['acao_origem']=='md_utl_adm_tp_ausencia_cadastrar'){
@@ -99,7 +99,7 @@ try {
       break;
 
     case 'md_utl_adm_tp_ausencia_listar':
-      $strTitulo = 'Tipos de Ausência';
+      $strTitulo = 'Motivo de Ausência';
       $bolAcaoReativar = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_tp_ausencia_reativar');
         break;
 
@@ -216,11 +216,11 @@ try {
     $strResultado = '';
 
     if ($_GET['acao']!='md_utl_adm_tp_ausencia_reativar'){
-      $strSumarioTabela = 'Tabela de Tipos de Ausência.';
-      $strCaptionTabela = 'Tipos de Ausência';
+      $strSumarioTabela = 'Tabela de Motivos de Ausência.';
+      $strCaptionTabela = 'Motivos de Ausência';
     }else{
-      $strSumarioTabela = 'Tabela de Tipos de Ausência Inativos.';
-      $strCaptionTabela = 'Tipos de Ausência Inativos';
+      $strSumarioTabela = 'Tabela de Motivos de Ausência Inativos.';
+      $strCaptionTabela = 'Motivos de Ausência Inativos';
     }
 
     $strResultado .= '<table width="99%" class="infraTable" summary="'.$strSumarioTabela.'">'."\n";
@@ -229,7 +229,7 @@ try {
     if ($bolCheck) {
       $strResultado .= '<th class="infraTh" width="1%" style="display: none">'.PaginaSEI::getInstance()->getThCheck().'</th>'."\n";
     }
-    $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpAusenciaDTO,'Tipo de Ausência','Nome',$arrObjMdUtlAdmTpAusenciaDTO).'</th>'."\n";
+    $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpAusenciaDTO,'Motivo de Ausência','Nome',$arrObjMdUtlAdmTpAusenciaDTO).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="50%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmTpAusenciaDTO,'Descrição','Descricao',$arrObjMdUtlAdmTpAusenciaDTO).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="15%">Ações</th>'."\n";
     $strResultado .= '</tr>'."\n";
@@ -253,11 +253,11 @@ try {
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmTpAusenciaDTO[$i]->getNumIdMdUtlAdmTpAusencia());
 
       if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_ausencia_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_ausencia='.$arrObjMdUtlAdmTpAusenciaDTO[$i]->getNumIdMdUtlAdmTpAusencia()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Tipo de Ausência" alt="Consultar Tipo de Ausência" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_ausencia_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_ausencia='.$arrObjMdUtlAdmTpAusenciaDTO[$i]->getNumIdMdUtlAdmTpAusencia()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Motivo de Ausência" alt="Consultar Motivo de Ausência" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_ausencia_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_ausencia='.$arrObjMdUtlAdmTpAusenciaDTO[$i]->getNumIdMdUtlAdmTpAusencia()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Tipo de Ausência" alt="Alterar Tipo de Ausência" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_ausencia_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_ausencia='.$arrObjMdUtlAdmTpAusenciaDTO[$i]->getNumIdMdUtlAdmTpAusencia()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Motivo de Ausência" alt="Alterar Motivo de Ausência" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -266,16 +266,16 @@ try {
       }
 
       if ($bolAcaoDesativar && $arrObjMdUtlAdmTpAusenciaDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Tipo de Ausência" alt="Desativar Tipo de Ausência" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Motivo de Ausência" alt="Desativar Motivo de Ausência" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoReativar && $arrObjMdUtlAdmTpAusenciaDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Tipo de Ausência" alt="Reativar Tipo de Ausência" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Motivo de Ausência" alt="Reativar Motivo de Ausência" class="infraImg" /></a>&nbsp;';
       }
 
 
       if ($bolAcaoExcluir){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Tipo de Ausência" alt="Excluir Tipo de Ausência" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Motivo de Ausência" alt="Excluir Motivo de Ausência" class="infraImg" /></a>&nbsp;';
       }
 
       $strResultado .= '</td></tr>'."\n";
@@ -334,7 +334,7 @@ PaginaSEI::getInstance()->abrirJavaScript();
 }
 
 function acaoDesativar(id,desc){
-  if (confirm("Confirma desativação do Tipo de Ausência \""+desc+"\"?")){
+  if (confirm("Confirma desativação do Motivo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkDesativar?>';
     document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
@@ -344,7 +344,7 @@ function acaoDesativar(id,desc){
 
 
 function acaoReativar(id,desc){
-  if (confirm("Confirma reativação do Tipo de Ausência \""+desc+"\"?")){
+  if (confirm("Confirma reativação do Motivo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkReativar?>';
     document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
@@ -352,7 +352,7 @@ function acaoReativar(id,desc){
 }
 
 function acaoExcluir(id,desc){
-  if (confirm("Confirma exclusão do Tipo de Ausência \""+desc+"\"?")){
+  if (confirm("Confirma exclusão do Motivo de Ausência \""+desc+"\"?")){
     document.getElementById('hdnInfraItemId').value=id;
     document.getElementById('frmMdUtlAdmTpAusenciaLista').action='<?=$strLinkExcluir?>';
     document.getElementById('frmMdUtlAdmTpAusenciaLista').submit();
@@ -379,7 +379,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
     <div style="width: 27%;" class="bloco">
       <label id="lblTpAusencia" for="txtTpAusencia" accesskey="S" class="infraLabelOpcional">
-        Tipo de Ausência:
+        Motivo de Ausência:
       </label>
 
       <div class="clear"></div>

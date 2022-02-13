@@ -269,6 +269,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
       $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
       $mdUtlAdmPrmGrUsuDTO->retTodos(true);
       $mdUtlAdmPrmGrUsuDTO->setOrdStrSigla(InfraDTO::$TIPO_ORDENACAO_DESC);
+      $mdUtlAdmPrmGrUsuDTO->setOrdNumIdMdUtlAdmPrmGrUsu(InfraDTO::$TIPO_ORDENACAO_DESC);
       $mdUtlAdmPrmGrUsu = $this->listar($mdUtlAdmPrmGrUsuDTO);
 
       $arrPresenca = array( MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO =>'Diferenciado',
@@ -359,9 +360,13 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
         $objMdUtlAdmPrmGrUsuDTO->retNumFatorDesempDiferenciado();
         $objMdUtlAdmPrmGrUsuDTO->retStrStaTipoJornada();
         $objMdUtlAdmPrmGrUsuDTO->retNumFatorReducaoJornada();
+        $objMdUtlAdmPrmGrUsuDTO->setOrd('IdMdUtlAdmPrmGrUsu', 'desc');
+        $objMdUtlAdmPrmGrUsuDTO->setNumMaxRegistrosRetorno(1);
 
         $objPrmGrUsuDTO = $this->consultar($objMdUtlAdmPrmGrUsuDTO);
 
+        if( is_null($objPrmGrUsuDTO)) return 0;
+        
         $staTipoPresenca = $objPrmGrUsuDTO->getStrStaTipoPresenca();
         $numFatorDesempDife = $objPrmGrUsuDTO->getNumFatorDesempDiferenciado();
         $staTipoJornada  = $objPrmGrUsuDTO->getStrStaTipoJornada();
@@ -374,11 +379,11 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
                 break;
 
             case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO:
-                $fatorDesempUsu = 1 + ($numPercentualTele/100);
+                $fatorDesempUsu = $numPercentualTele;
                 break;
 
             case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO:
-                $fatorDesempUsu = 1 + ($numFatorDesempDife/100);
+                $fatorDesempUsu = $numFatorDesempDife;
                 break;
         }
 
@@ -388,14 +393,11 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
                 break;
 
             case MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_REDUZIDO:
-                $fatorReducaoFornada = $numFatorReducaoJor/100;
+                $fatorReducaoFornada = $numFatorReducaoJor / 100;
                 break;
         }
-        
-        $cargaPadrao = $numCargaPadrao * $fatorDesempUsu * $fatorReducaoFornada * $diasUteis;
-        $cargaPadraoTotal = round ($cargaPadrao , 0 );
-     
-        return $cargaPadraoTotal;
+
+        return intval(($numCargaPadrao * $diasUteis) / (1 + ($fatorDesempUsu / 100)) * $fatorReducaoFornada);
     }
 
     protected function getDiasUteisNoPeriodoConectado($staFrequencia){
@@ -417,7 +419,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
                 $dataAtualFormatada = implode('-',$dataAtualFormatada);
                 $dataPrimeiroDiaSemana = $dataAtualFormatada;
 
-                $dataPrimeiroDiaSemana = MdUtlPrazoRN::retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
+                $dataPrimeiroDiaSemana = $MdUtlPrazoRN->retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
                 $dtFinalSemana   = date('d/m/Y', strtotime('+6 days', strtotime($dataPrimeiroDiaSemana)));
 
                 $arrDataPrimeiroDiaSemana = explode('-',$dataPrimeiroDiaSemana);

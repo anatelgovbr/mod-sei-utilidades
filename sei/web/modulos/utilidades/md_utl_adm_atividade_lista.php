@@ -166,10 +166,11 @@ try {
   $objMdUtlAdmAtividadeDTO->retNumIdMdUtlAdmAtividade();
   $objMdUtlAdmAtividadeDTO->retStrNome();
   $objMdUtlAdmAtividadeDTO->retStrDescricao();
+  $objMdUtlAdmAtividadeDTO->retNumComplexidade() ;
   $objMdUtlAdmAtividadeDTO->retStrSinAtivo();
   $objMdUtlAdmAtividadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
-  $objMdUtlAdmAtividadeDTO->retNumUndEsforcoAtv();
-  $objMdUtlAdmAtividadeDTO->retNumUndEsforcoRev();
+  $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoAtv();
+  $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoRev();
   $objMdUtlAdmAtividadeDTO->retStrSinAnalise();
   if($bolAcaoReativar) {
     $objMdUtlAdmAtividadeDTO->setBolExclusaoLogica(false);
@@ -273,19 +274,27 @@ try {
     if ($bolCheck) {
       $strResultado .= '<th class="infraTh" width="1%" '.$displayNone.'>'.PaginaSEI::getInstance()->getThCheck().'</th>'."\n";
     }
-    $strResultado .= '<th class="infraTh" width="30%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO,'Atividade ','Nome',$arrObjMdUtlAdmAtividadeDTO).'</th>'."\n";
-    $strResultado .= '<th class="infraTh" width="35%">'.PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO,'Descrição','Descricao',$arrObjMdUtlAdmAtividadeDTO).'</th>'."\n";
-    $strResultado .= '<th class="infraTh" width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO) . '</th>' . "\n";
+    $strResultado .= '<th class="infraTh" width="15%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Atividade ','Nome',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
+    $strResultado .= '<th class="infraTh" width="25%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Descrição','Descricao',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
+    $strResultado .= '<th class="infraTh" width="20%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Complexidade','Complexidade',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
+    $strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Tempo de Execucão', 'UndEsforcoAtv', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
+    $strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
+    
 
     $strResultado .= '<th class="infraTh" width="15%">Ações</th>'."\n";
     $strResultado .= '</tr>'."\n";
     $strCssTr='';
     for($i = 0;$i < $numRegistros; $i++){
         $strNomeFila                = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome();
-        $strNomeFilaChecked         = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome();
+        $strNomeFilaChecked         = ''; #$arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome();
+        $numComplexidade            = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumComplexidade() ;
         $strDescricaoAtividade      = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrDescricao();
+        $vlrUndEsforco              = trim( MdUtlAdmPrmGrINT::convertToHoursMins($arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoAtv() ?: '0') );
+
         if($isPrmDistrib){
-            $strNomeFilaChecked = $strNomeFila.' - '.$strDescricaoAtividade;
+            $strNomeFilaChecked = $strNomeFila.' - '.$strDescricaoAtividade.' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$numComplexidade] . ') - ' . $vlrUndEsforco;
+        } else {
+            $strNomeFilaChecked = $strNomeFila.' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$numComplexidade] . ') - '. $vlrUndEsforco;
         }
 
       $strCssTr = ($strCssTr=='<tr class="infraTrClara">')?'<tr class="infraTrEscura">':'<tr class="infraTrClara">';
@@ -304,11 +313,11 @@ try {
         {
           if($isSemAnalise)
           {
-            $vlTriagem = 'N_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumUndEsforcoRev();
+            $vlTriagem = 'N_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoRev();
           }
           if($isComAnalise)
           {
-            $vlTriagem = 'S_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumUndEsforcoAtv();
+            $vlTriagem = 'S_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoAtv().'_'.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$numComplexidade];
           }
 
           $idSelecao = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade().'_'.$vlTriagem;
@@ -322,10 +331,11 @@ try {
 
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome()).'</td>';
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrDescricao()).'</td>';
+      $strResultado .= '<td>'.PaginaSEI::tratarHTML(MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjMdUtlAdmAtividadeDTO[$i]->getNumComplexidade()]).'</td>';  
+      $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlrUndEsforco).'</td>';
 
-          $vlAnalise     = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
-          $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlAnalise).'</td>';
-
+      $vlAnalise     = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';      
+      $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlAnalise).'</td>';     
 
       $strResultado .= '<td align="center">';
 

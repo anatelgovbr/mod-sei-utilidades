@@ -16,7 +16,8 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_03 = 'A Unidade "@VALOR1@" não pode ser removida pois está vinculada à um Fluxo de Atendimento Ativo no Controle de Desempenho.';
     public static $MSG_UTL_04 = 'Não é possível @VALOR1@ este Tipo de Controle pois o mesmo está vinculado a uma @VALOR2@.';
     public static $MSG_UTL_05 = 'Não é possível @VALOR1@ este Tipo de Controle pois o mesmo está vinculado a um @VALOR2@.';
-    public static $MSG_UTL_06 = '@VALOR1@ possui tamanho superior a @VALOR2@ caracteres.';
+    public static $MSG_UTL_06 = 'Tamanho do campo @VALOR1@ excedido (máximo @VALOR2@ caracteres).';
+    #public static $MSG_UTL_06 = '@VALOR1@ possui tamanho superior a @VALOR2@ caracteres.';
     public static $MSG_UTL_07 = 'Já existe um @VALOR1@ com este nome.';
     public static $MSG_UTL_08 = 'Já existe uma @VALOR1@ com este nome neste Tipo de Controle.';
     public static $MSG_UTL_09 = 'O Tipo de Atividade não pode ser alterado pois a mesma está vinculada a um Fluxo de Atendimento Ativo no Controle de Desempenho.';
@@ -27,7 +28,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_14 = 'Os Usuários listados abaixo já estão cadastrados como Usuários Participantes para esta parametrização:';
     public static $MSG_UTL_15 = '@VALOR1@ deve ser maior que zero.';
     public static $MSG_UTL_16 = 'Este @VALOR1@ já foi adicionado.';
-    public static $MSG_UTL_17 = 'Não é possível @VALOR1@ este Tipo de Revisão pois o mesmo está vinculado a uma Revisão.';
+    public static $MSG_UTL_17 = 'Não é possível @VALOR1@ este Tipo de Avaliação pois o mesmo está vinculado a uma Avaliação.';
     public static $MSG_UTL_18 = 'Informe ao menos uma @VALOR1@.';
     public static $MSG_UTL_19 = 'Já existe um @VALOR1@ com este nome neste Tipo de Controle.';
     public static $MSG_UTL_20 = 'Não é possível @VALOR1@ este Tipo de Produto pois o mesmo está vinculado a um Fluxo de Atendimento no Controle de Desempenho.';
@@ -42,8 +43,9 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_29 = 'Número SEI Inválido!';
     public static $MSG_UTL_30 = 'O Número SEI informado não pertence a este Processo.';
     public static $MSG_UTL_31 = 'O Número SEI informado possui um Tipo de Documento diferente do Produto esperado.';
-    public static $MSG_UTL_32 = 'Os documentos permitidos para realizar este cadastro devem ser Internos ou Externos.';
-    public static $MSG_UTL_33 = 'Não é possível @VALOR1@ este Tipo de Justificativa pois o mesmo está vinculado a uma Revisão.';
+    // TODO: Desativada valiação desnecessária do tipo de documento permitido do protocolo na tela de Análise
+    //public static $MSG_UTL_32 = 'Os documentos permitidos para realizar este cadastro devem ser Internos ou Externos.';
+    public static $MSG_UTL_33 = 'Não é possível @VALOR1@ este Tipo de Justificativa pois o mesmo está vinculado a uma Avaliação.';
     public static $MSG_UTL_34 = 'Não é possível @VALOR1@ este Tipo de Documento pois o mesmo está vinculado a uma Atividade no Controle de Desempenho.';
     public static $MSG_UTL_35 = 'Não é possível @VALOR1@ este Tipo de Produto pois o mesmo está vinculado a uma Atividade no Controle de Desempenho.';
     public static $MSG_UTL_36 = 'Não é possível @VALOR1@ este Usuário pois o mesmo está vinculado a uma Parametrização no Tipo de Controle do Controle de Desempenho.';
@@ -118,7 +120,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_105 = 'Confirma o retorno do processo no Status atual @VALOR1@ para o Status anterior?';
     public static $MSG_UTL_106 = 'Não é possível excluir esta Justificativa pois a mesma está vinculada a uma Contestação.';
     public static $MSG_UTL_107 = 'Confirma a Conclusão do Processo "@VALOR1@" na Unidade "@VALOR2@"?';
-    public static $MSG_UTL_108 = 'Confirma a @VALOR1@ da Contestação de Revisão no Processo @VALOR2@?';
+    public static $MSG_UTL_108 = 'Confirma a @VALOR1@ da Contestação de Avaliação no Processo @VALOR2@?';
     public static $MSG_UTL_109 = 'Selecione ao menos @VALOR1@ para adicionar na Parametrização da Distribuição.';
     public static $MSG_UTL_110 = 'As @VALOR1@ listadas abaixo já estão cadastradas como @VALOR2@ para esta parametrização:';
     public static $MSG_UTL_111 = 'Os @VALOR1@ listados abaixo já estão cadastrados como @VALOR2@ para esta parametrização:';
@@ -126,6 +128,12 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_113 = 'Existe uma prioridade duplicada na tabela @VALOR1@';
     public static $MSG_UTL_114 = 'Não é possível @VALOR1@ esta Fila pois a mesma está cadastrada em uma lista de Filas priorizadas no Parâmetro de Distribuição do Tipo de Controle.';
     public static $MSG_UTL_115 = 'Não é possível @VALOR1@ esta Atividade pois a mesma está cadastrada em uma lista de Atividades priorizadas no Parâmetro de Distribuição do Tipo de Controle.';
+    public static $MSG_UTL_116 = 'Não é permitido repetir a Prioridade Geral. Reveja as parametrizações atribuídas em @VALOR1@';
+    public static $MSG_UTL_117 = 'Não é possível remover este Tipo de Processo, pois o mesmo possui vinculo ativo com o Controle de Desempenho.';
+    public static $MSG_UTL_118 = 'Não é possível ainda acessar a tela de "Atividades", pois antes é necessário preencher os campos na tela "Parametrizar Tipo de Controle".';
+    public static $MSG_UTL_119 = 'Não é possível ainda acessar a tela de "Filas", pois antes é necessário preencher os campos na tela "Parametrizar Tipo de Controle".';
+    public static $MSG_UTL_120 = 'Não é possível associar Processos de Tipos de Controle de Desempenho distintos em uma Fila. Selecione Processos de apenas um Tipo de Controle para realizar a Associação a Fila.';
+
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;

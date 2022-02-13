@@ -133,6 +133,7 @@ class MdUtlAdmRelPrmDsAtenRN extends InfraRN{
 
         $objMdUtlAdmRelPrmDsStatusDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
         $objMdUtlAdmRelPrmDsStatusDTO->retTodos();
+        $objMdUtlAdmRelPrmDsStatusDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_DESC);
         $objMdUtlAdmRelPrmDsAten = $objMdUtlAdmRelPrmDsStatusRN->listar($objMdUtlAdmRelPrmDsStatusDTO);
 
         $arrObjStatus = array(
@@ -173,6 +174,33 @@ class MdUtlAdmRelPrmDsAtenRN extends InfraRN{
         }
 
         return array('itensTabela'=>$arrStatus,'qtdStatus'=>count($arrStatus));
+    }
+
+    protected function montarArrStatusPrioridadeControlado($idMdUtlAdmPrmDs)
+    {
+        $objMdUtlAdmRelPrmDsAtendDTO = new MdUtlAdmRelPrmDsAtenDTO();
+        $objMdUtlAdmRelPrmDsAtendRN = new MdUtlAdmRelPrmDsAtenRN();
+        $objMdUtlAdmRelPrmDsAtendDTO->setNumIdMdUtlAdmParamDs($idMdUtlAdmPrmDs);
+        $objMdUtlAdmRelPrmDsAtendDTO->retTodos();
+        $objMdUtlAdmRelPrmDsAtendDTO->setOrdNumPrioridade(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlAdmRelPrmDsAtend = $objMdUtlAdmRelPrmDsAtendRN->listar($objMdUtlAdmRelPrmDsAtendDTO);
+
+        $arrObjStatus = array(
+            MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM => MdUtlControleDsmpRN::$STR_AGUARDANDO_TRIAGEM,
+            MdUtlControleDsmpRN::$AGUARDANDO_ANALISE => MdUtlControleDsmpRN::$STR_AGUARDANDO_ANALISE,
+            MdUtlControleDsmpRN::$AGUARDANDO_REVISAO => MdUtlControleDsmpRN::$STR_AGUARDANDO_REVISAO,
+            MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM => MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_TRIAGEM,
+            MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE => MdUtlControleDsmpRN::$STR_AGUARDANDO_CORRECAO_ANALISE,
+        );
+
+        $statusPrioridade = array();
+        foreach ($objMdUtlAdmRelPrmDsAtend as $key => $dadosStatus) {
+            $statusPrioridade[$key]['id'] = $dadosStatus->getNumStaAtendimentoDsmp();
+            $statusPrioridade[$key]['desc'] = $arrObjStatus[$dadosStatus->getNumStaAtendimentoDsmp()];
+            $statusPrioridade[$key]['prioridade'] = $dadosStatus->getNumPrioridade();
+        }
+
+        return $statusPrioridade;
     }
 
 }

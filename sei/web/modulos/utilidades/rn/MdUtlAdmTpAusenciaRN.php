@@ -57,6 +57,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
   private function validarDuplicacao($objMdUtlAdmTpAusenciaDTO, $objInfraException){
       $idTpAusencia = $objMdUtlAdmTpAusenciaDTO->getNumIdMdUtlAdmTpAusencia();
       $objMdUtlAdmTpAusenciaDTO2 = new MdUtlAdmTpAusenciaDTO();
+      $objMdUtlAdmTpAusenciaDTO2->setBolExclusaoLogica(false);
       $objMdUtlAdmTpAusenciaDTO2->setStrNome($objMdUtlAdmTpAusenciaDTO->getStrNome());
 
       if(!is_null($idTpAusencia)){
@@ -66,7 +67,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       $existeRegistroDupl = $this->contar($objMdUtlAdmTpAusenciaDTO2) > 0;
 
       if($existeRegistroDupl){
-        $objInfraException->lancarValidacao('Já existe um Tipo de Ausência cadastrado com este nome.');
+        $objInfraException->lancarValidacao('Já existe um Motivo de Ausência cadastrado com este nome.');
       }
   }
 
@@ -76,11 +77,16 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_tp_ausencia_cadastrar', __METHOD__, $objMdUtlAdmTpAusenciaDTO);
       $objMdUtlAdmTpAusenciaBD = new MdUtlAdmTpAusenciaBD($this->getObjInfraIBanco());
       $ret = $objMdUtlAdmTpAusenciaBD->cadastrar($objMdUtlAdmTpAusenciaDTO);
+      
+        //Regras de Negocio
+        $objInfraException = new InfraException();
+        $this->validarDuplicacao($objMdUtlAdmTpAusenciaDTO, $objInfraException);
+        $objInfraException->lancarValidacoes();
 
-      return $ret;
+        return $ret;
 
     }catch(Exception $e){
-      throw new InfraException('Erro cadastrando Tipo de Ausência.',$e);
+      throw new InfraException('Erro cadastrando Motivo de Ausência.',$e);
     }
   }
 
@@ -113,7 +119,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro alterando Tipo de Ausência.',$e);
+      throw new InfraException('Erro alterando Motivo de Ausência.',$e);
     }
   }
 
@@ -136,7 +142,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro excluindo Tipo de Ausência.',$e);
+      throw new InfraException('Erro excluindo Motivo de Ausência.',$e);
     }
   }
 
@@ -158,7 +164,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
 
       return $ret;
     }catch(Exception $e){
-      throw new InfraException('Erro consultando Tipo de Ausência.',$e);
+      throw new InfraException('Erro consultando Motivo de Ausência.',$e);
     }
   }
 
@@ -181,7 +187,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       return $ret;
 
     }catch(Exception $e){
-      throw new InfraException('Erro listando Tipos de Ausência.',$e);
+      throw new InfraException('Erro listando Motivos de Ausência.',$e);
     }
   }
 
@@ -203,7 +209,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
 
       return $ret;
     }catch(Exception $e){
-      throw new InfraException('Erro contando Tipos de Ausência.',$e);
+      throw new InfraException('Erro contando Motivos de Ausência.',$e);
     }
   }
 
@@ -226,7 +232,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro desativando Tipo de Ausência.',$e);
+      throw new InfraException('Erro desativando Motivo de Ausência.',$e);
     }
   }
 
@@ -249,7 +255,7 @@ class MdUtlAdmTpAusenciaRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro reativando Tipo de Ausência.',$e);
+      throw new InfraException('Erro reativando Motivo de Ausência.',$e);
     }
   }
 

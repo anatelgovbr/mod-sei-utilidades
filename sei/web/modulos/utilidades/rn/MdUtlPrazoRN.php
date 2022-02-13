@@ -259,7 +259,7 @@ class MdUtlPrazoRN extends InfraRN
 
                case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES:
                    $ultimoDiaMes = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
-                   $dtInicial =  '01 /' . $mesAtual . '/' . $anoAtual;
+                   $dtInicial =  '01/' . $mesAtual . '/' . $anoAtual;
                    $dtFinal   = $ultimoDiaMes . '/' . $mesAtual . '/' . $anoAtual;
                    break;
 
@@ -293,7 +293,7 @@ class MdUtlPrazoRN extends InfraRN
 
                default:
                    $ultimoDiaMes = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
-                   $dtInicial =  '01 /' . $mesAtual . '/' . $anoAtual;
+                   $dtInicial =  '01/' . $mesAtual . '/' . $anoAtual;
                    $dtFinal   = $ultimoDiaMes . '/' . $mesAtual . '/' . $anoAtual;
                    break;
            }

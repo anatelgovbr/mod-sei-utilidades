@@ -41,7 +41,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
     $existeRegistroDupl = $this->contar($objMdUtlAdmDTO2) > 0;
 
     if($existeRegistroDupl){
-      $objInfraException->lancarValidacao('Já existe um Tipo de Revisão cadastrado com este nome.');
+      $objInfraException->lancarValidacao('Já existe um Tipo de Avaliação cadastrado com este nome.');
     }
   }
 
@@ -115,7 +115,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
       return $ret;
 
     }catch(Exception $e){
-      throw new InfraException('Erro cadastrando Revisão.',$e);
+      throw new InfraException('Erro cadastrando Avaliação.',$e);
     }
   }
 
@@ -154,7 +154,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro alterando Revisão.',$e);
+      throw new InfraException('Erro alterando Avaliação.',$e);
     }
   }
 
@@ -177,7 +177,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro excluindo Revisão.',$e);
+      throw new InfraException('Erro excluindo Avaliação.',$e);
     }
   }
 
@@ -199,7 +199,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
 
       return $ret;
     }catch(Exception $e){
-      throw new InfraException('Erro consultando Revisão.',$e);
+      throw new InfraException('Erro consultando Avaliação.',$e);
     }
   }
 
@@ -267,7 +267,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro desativando Revisão.',$e);
+      throw new InfraException('Erro desativando Avaliação.',$e);
     }
   }
 
@@ -290,7 +290,7 @@ class MdUtlAdmTpRevisaoRN extends InfraRN {
       //Auditoria
 
     }catch(Exception $e){
-      throw new InfraException('Erro reativando Revisão.',$e);
+      throw new InfraException('Erro reativando Avaliação.',$e);
     }
   }
   

@@ -139,6 +139,30 @@ if (0){ ?>
 
             heigthTamanhoDivAreaPart= parseInt(infraGetElementById('divInfraAreaDados1').style.height.split('em').join(''));
 
+            objLupaTpProcesso.procuraLinha = function (id) {
+                var qtd;
+                var linha;
+                qtd = objLupaTpProcesso.sel.length;
+                for (i = 1; i < qtd; i++) {
+                    linha = objLupaTpProcesso.sel[i].value;
+                    if (linha == id) {
+                        return i;
+                    }
+                }
+                return null;
+            };
+
+            objLupaTpProcesso.removerLinha = function (index) {
+                var listaTpProcesso = document.getElementById('selTpProcesso');
+                listaTpProcesso.remove(index);
+                objLupaTpProcesso.atualizar();
+            }
+
+            // Sobrescrevendo o método para remover verificando vinculo
+            objLupaTpProcesso.processarRemocao = function (valor) {
+                verificarVinculoTpProcesso(valor[0].value);
+            };
+
         }
 
         function validarCadastro() {
@@ -147,6 +171,7 @@ if (0){ ?>
             var tbUsuario   = document.getElementById('tbUsuario');
             var cargaPadrao        = document.getElementById('txtCargaPadrao').value;
             var tpProcesso         = document.getElementById('hdnTpProcesso').value;
+            var retornoUltFila     = document.getElementById('selRetorno').selectedIndex;
             var tbUsuario          = document.getElementById('tbUsuario');
             var selDilacao         = document.getElementById('selDilacao').selectedIndex;
             var selSuspensao       = document.getElementById('selSuspensao').selectedIndex;
@@ -162,7 +187,7 @@ if (0){ ?>
 
 
           if(cargaPadrao == '' || cargaPadrao <1 ){
-                var msg = setMensagemPersonalizada(msg11, ['Carga Padrão de Unidade de Esforço']);
+                var msg = setMensagemPersonalizada(msg11, ['Carga Padrão Diária (em minutos)']);
                 alert(msg);
                 document.getElementById('txtCargaPadrao').focus();
                 return false;
@@ -180,6 +205,13 @@ if (0){ ?>
                 var msg = setMensagemPersonalizada(msg11, ['Início do Período']);
                 alert(msg);
                 document.getElementById('selInicioPeriodo').focus();
+                return false;
+            }
+
+            if(retornoUltFila == ''){
+                msg = setMensagemPersonalizada(msg11Padrao, ['Retorno para Última Fila ']);
+                alert(msg);
+                document.getElementById('selRetorno').focus();
                 return false;
             }
 
@@ -474,11 +506,11 @@ if (0){ ?>
             document.getElementById('txtFtReduc').value = dadosUsuario[7]!= "null" ?dadosUsuario[7].split('%')[0] : "";
 
             if(dadosUsuario[3] == 'D') {
-                document.getElementById('divFtDesemp').style.display = 'inherit';
+                document.getElementById('divFtDesemp').style.display = 'inline-block';
                 bolFatorDesempenho = true;
             }
             if(dadosUsuario[6] == 'R') {
-                document.getElementById('divRedJornada').style.display = 'inherit';
+                document.getElementById('divRedJornada').style.display = 'inline-block';
                 bolFatorReducao = true;
             }
 
@@ -773,7 +805,7 @@ if (0){ ?>
 
         function validarTpPresenca(val){
             if(val == 'D'){
-                document.getElementById('divFtDesemp').style.display='inherit';
+                document.getElementById('divFtDesemp').style.display='inline-block';
                 bolFatorDesempenho = true;
             }else{
                 document.getElementById('divFtDesemp').style.display='none';
@@ -784,7 +816,7 @@ if (0){ ?>
 
         function validarTpJornada(val){
             if(val == 'R'){
-                document.getElementById('divRedJornada').style.display='inherit';
+                document.getElementById('divRedJornada').style.display='inline-block';
                 bolFatorReducao = true;
             }else{
                 document.getElementById('divRedJornada').style.display='none';
@@ -884,6 +916,38 @@ if (0){ ?>
             }
 
             fimPeriodo.disabled = true;
+        }
+
+        function verificarVinculoTpProcesso(obj){
+
+            var idControle = document.getElementById('hdnIdTipoControleUtl').value;
+
+            var retorno = '';
+                $.ajax({
+                    type: "POST",
+                    url: "<?= $strLinkAjaxVincDesProc ?>",
+                    //dataType: "json",
+                    dataType: "xml",
+                    data: {
+                        idControle: idControle,
+                        idVinculo: obj
+                    },
+                    success: function (result) {
+                        var valido = $(result).find('sucesso').text();
+                        if (valido == 1) {
+                            var msg = $(result).find('msg').text();
+                            alert(msg);
+                            return false;
+                        } else {
+                            var row = objLupaTpProcesso.procuraLinha(obj);
+                            objLupaTpProcesso.removerLinha(row);
+                        }
+                    },
+                    error: function (msgError) {
+                        msgCommit = "Erro ao processar o XML do SEI: " + msgError.responseText;
+                    }
+                });
+                return retorno;
         }
 
         <?

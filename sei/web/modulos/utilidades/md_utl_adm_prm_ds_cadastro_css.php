@@ -8,20 +8,81 @@
 if (0) { ?>
 <style><? }?>
 
-    #selFila {
+    #selDiasUteis {
         width: 25.5%;
+    }
+
+    #lblQtdDiasUteis {
+        position: absolute;
+        left: 27%;
+        top: 30%;
+        width: 25.5%;
+    }
+
+    #qtdDiasUteis {
+        position: absolute;
+        left: 27%;
+        top: 58%;
+        width: 14.5%;
+    }
+
+    #lblPrioridadeDiasUteis {
+        position: absolute;
+        left: 47%;
+        top: 30%;
+        width: 25.5%;
+    }
+
+    #selPrioridadeDiasUteis {
+        position: absolute;
+        left: 47%;
+        top: 58%;
+        width: 25.5%;
+    }
+
+    #selTipoProcesso {
+        width: 51.0%;
+    }
+
+    #selPrioridadeTipoProcesso {
+        width: 51.0%;
+    }
+
+    #selPrioridadeFila {
+        width: 51.0%;
+    }
+
+    #selPrioridadeAtividade {
+        width: 51.0%;
+    }
+
+    #lblSelAtividade {
+        left: 0%;
+        width: 25.5%;
+    }
+
+    #selPrioridadeStatus {
+        width: 51.0%;
+    }
+
+    #selPrioridadeDistribuicao {
+        width: 51.0%;
+    }
+
+    #selFila {
+        width: 51.0%;
     }
 
     #selStatus {
-        width: 25.5%;
+        width: 51.0%;
     }
 
     #selAtividade {
-        width: 25.5%;
+        width: 51.0%;
     }
 
     #selDistribuicao {
-        width: 25.5%;
+        width: 51.0%;
     }
 
     #divFila {
@@ -36,6 +97,10 @@ if (0) { ?>
         margin: 6px 8px 7px;
     }
 
+    #divTipoProcesso {
+        margin: 6px 8px 7px;
+    }
+
     #txtFila {
         width: 52%;
     }
@@ -45,6 +110,10 @@ if (0) { ?>
     }
 
     #txtAtividade {
+        width: 52%;
+    }
+
+    #txtTipoProcesso {
         width: 52%;
     }
 
@@ -114,11 +183,15 @@ if (0) { ?>
         margin: -0.5% 85% 0.5%;
     }
 
+    #divBtnAdicionarTipoProcesso {
+        margin: -0.5% 85% 0.5%;
+    }
+
     #txtNome {
         width: 45% !important;
     }
 
-    #txtUndEsforcoTriagem {
+    #txtTmpExecucaoTriagem {
         width: 25% !important;
     }
 

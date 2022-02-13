@@ -8,6 +8,9 @@
     var msg50Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_50); ?>';
     var msg51 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_51); ?>';
     var isChecked = false;
+    var isValidadoNumSei = true;
+    var qtdAtividadesTriag = <?= count($idsAtividades) ?>;
+    var isRetriagem = false;
 
     $( document ).ready(function() {
         verificarItemChecado();
@@ -145,29 +148,30 @@
     function validarDocumentoSEI(idSerie, idCampo){
         var id = 'numeroSEI_' + idCampo;
 
+        var valorNumeroSei =  document.getElementById(id).value;
+
         var params = {
             idProcedimento       : document.getElementById('hdnIdProcedimento').value,
-            numeroSEI            : document.getElementById(id).value,
+            numeroSEI            : valorNumeroSei,
             idSerieSolicitado    : idSerie
         };
-
-        var valorNumeroSei =  document.getElementById(id).value;
-        $('#'+id).val('');
 
         $.ajax({
             url : '<?= $strUrlValidarDocumentoSEI ?>',
             type: 'POST',
             data: params,
             dataType: 'XML',
+            async: false,
             success: function (r) {
                 var erro = $(r).find('Erro').text();
                 var msg = $(r).find('Msg').text();
-                if(erro == '1'){
-                    $('#'+id).val('');
+                if(erro == '1'){                    
                     $('#'+id).focus();
                     alert(msg);
+                    isValidadoNumSei = false;
                 }else{
                     $('#'+id).val(valorNumeroSei);
+                    isValidadoNumSei = true;
                 }
             },
             error: function (e) {
@@ -220,20 +224,22 @@
     }
 
     function validarCamposObrigatoriosNumeroSEI(){
-        var camposObrigatorios = document.getElementsByClassName('campoNumeroSeiObrigatorio');
+        var camposNumSeiObrigatorios = document.getElementsByClassName('campoNumeroSeiObrigatorio');
+        
+        // caso não tenha nenhuma atividade selecionada, volta o valor inicial da variavel
+        if( camposNumSeiObrigatorios.length == 0 ) { isValidadoNumSei = true; }
+        
         var todosPreenchidos = true;
-
-        for(var i=0; i < camposObrigatorios.length; i++){
+        
+        for(var i=0; i < camposNumSeiObrigatorios.length; i++){
             if(todosPreenchidos){
-                var valor    = camposObrigatorios[i].value;
-                if($.trim(valor)== ''){
+                var valor = camposNumSeiObrigatorios[i].value;
+                if( $.trim(valor) == '' ){
                     todosPreenchidos = false;
                 }
             }
         }
-
         return todosPreenchidos;
-
     }
 
     function validarCamposObrigatoriosObservacao(){
@@ -242,9 +248,19 @@
 
         for(var i=0; i < camposObrigatorios.length; i++){
             if(todosPreenchidos){
-                var valor    = camposObrigatorios[i].value;
-                if($.trim(valor)== ''){
+                /*
+                var valor = camposObrigatorios[i].value;                
+                if( $.trim(valor) == '' ){
+                    todosPreenchidos = false;                    
+                    alert(setMensagemPersonalizada(msg11Padrao, ['Observações']));
+                    camposObrigatorios[i].focus();
+                }
+                */
+
+                if( !validaQtdCaracteres(camposObrigatorios[i],500) ){
                     todosPreenchidos = false;
+                    alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Observações', '500'))?>");
+                    camposObrigatorios[i].focus();
                 }
             }
         }
@@ -269,24 +285,56 @@
     }
 
     function validarEncaminhamento(){
-        var existeEncaminhamento = document.getElementById('selEncaminhamentoAnl').value;
-        if(existeEncaminhamento != ''){
-            return true;
-        }
-        document.getElementById('selEncaminhamentoAnl').focus();
-        return false;
-    }
-
-
-    function validarFila(){
-        var existeEncaminhamento = document.getElementById('selEncaminhamentoAnl').value;
-        var existeFila = document.getElementById('selFila').value;
-        if(existeFila == '' && existeEncaminhamento == <?=MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA?>){
+        var existeEncaminhamento = document.getElementById('selEncaminhamentoAnl');
+        if( typeof(existeEncaminhamento) != 'undefined' && existeEncaminhamento != null ){
+            if(existeEncaminhamento.value != ''){
+                return true;
+            }
+            document.getElementById('selEncaminhamentoAnl').focus();
             return false;
         }
         return true;
     }
 
+
+    function validarFila(){
+        var existeEncaminhamento = document.getElementById('selEncaminhamentoAnl');
+        if( typeof(existeEncaminhamento) != 'undefined' && existeEncaminhamento != null ){
+            var existeFila = document.getElementById('selFila').value;
+            if(existeFila == '' && existeEncaminhamento.value == <?=MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA?>){
+                return false;
+            }
+            return true;
+        }
+        return true;
+    }
+
+    function verificaSeRetriagem(){
+        var qtdAtividadesSelecionadas = new Array();
+        var list = document.getElementsByClassName('infraTrMarcada');
+        var bloco = null;
+        $( list ).each( (i , v) => {
+            var row = v.closest("tr");
+            var col = $( row ).find('td');
+            var vlr = $( col[9] ).find('input').val();
+            
+            if( ! qtdAtividadesSelecionadas.includes(vlr) ){
+                qtdAtividadesSelecionadas.push( vlr );
+            }else if( qtdAtividadesSelecionadas.includes(vlr) && bloco != $( col[9] ).find('span').text() ){
+                qtdAtividadesSelecionadas.push( vlr );
+            }
+            bloco = $( col[9] ).find('span').text();
+        });
+
+        if( qtdAtividadesSelecionadas.length < qtdAtividadesTriag ) {
+            document.getElementById('hdnIdRetriagem').value = 1;
+            <?php if( $situacaoAtual == 10 ){ ?>
+                document.getElementById('hdnIdRtgAnlCorrecao').value = 1;
+            <? } ?>
+        }
+
+        document.getElementById('idsAtividades').value = qtdAtividadesSelecionadas.join(',');
+    }
 
     function onSubmitForm(){
 
@@ -300,9 +348,19 @@
             return false;
         }
 
+        if( !validarCamposObrigatoriosObservacao() ){
+            return false;
+        }
+
         if(!validarCamposObrigatoriosNumeroSEI()){
             var msg = setMensagemPersonalizada(msg11Padrao, ['Número SEI dos Produtos Esperados']);
             alert(msg);
+            return false;
+        }
+
+        //variavel global para validar se algum numero SEI foi informado errado
+        if( !isValidadoNumSei ){
+            alert('Número SEI Inválido!');
             return false;
         }
 
@@ -319,11 +377,19 @@
             alert(msg);
             return false;
         }
+        
+        var txtInfoComplementar = document.getElementById('txaInformacaoComplementar');
 
+        if( !validaQtdCaracteres(txtInfoComplementar,500) ){
+            alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Informações Complementares', '500'))?>");
+            txtInfoComplementar.focus();
+            return false;
+        }        
+
+        verificaSeRetriagem();
 
         var nomeFila   = isParametrizadoProcesso == 1 ? document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText : '';
         document.getElementById('hdnSelFila').value = isParametrizadoProcesso == 1 ? nomeFila.trim() : '';
-
         bloquearBotaoSalvar();
         return true;
     }
