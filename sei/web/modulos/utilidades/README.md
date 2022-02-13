@@ -1,14 +1,14 @@
 # Módulo Utilidades
 
 ## Requisitos
-- SEI 3.1.3 instalado/atualizado.
-   - Verificar valor da constante de versão no arquivo /sei/web/SEI.php ou, após logado no sistema, parando o mouse sobre a logo do SEI no canto superior esquerdo.
+- SEI 3.1.7 instalado/atualizado - Não é compatível com o SEI 4.0.x
+   - Verificar valor da constante de versão do SEI no arquivo /sei/web/SEI.php ou, após logado no sistema, parando o mouse sobre a logo do SEI no canto superior esquerdo.
 - Antes de executar os scripts de instalação/atualização, o usuário de acesso aos bancos de dados do SEI e do SIP, constante nos arquivos ConfiguracaoSEI.php e ConfiguracaoSip.php, deverá ter permissão de acesso total ao banco de dados, permitindo, por exemplo, criação e exclusão de tabelas.
-- Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://softwarepublico.gov.br/gitlab/anatel/mod-sei-utilidades/tags](https://softwarepublico.gov.br/gitlab/anatel/mod-sei-utilidades/tags "Clique e acesse")
+- Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://github.com/anatelgovbr/mod-sei-utilidades/releases](https://github.com/anatelgovbr/mod-sei-utilidades/releases "Clique e acesse")
 - Solicitamos que os Órgãos que tenham instalado o Módulo preencham a pesquisa a seguir, para termos um feedback sobre sua utilização: [http://bit.ly/Form_SEI_Mod_Utilidades](http://bit.ly/Form_SEI_Mod_Utilidades "Clique e acesse")
 
 ## Procedimentos para Instalação
-1. Antes, fazer backup dos bancos de dados do SEI e do SIP.
+1. Fazer backup dos bancos de dados do SEI e do SIP.
 2. Carregar no servidor os arquivos do módulo nas pastas correspondentes nos servidores do SEI e do SIP.
    - **Caso se trate de atualização de versão anterior do Módulo**, antes de copiar os códigos-fontes para a pasta "/sei/web/modulos/utilidades", é necessário excluir os arquivos anteriores pré existentes na mencionada pasta, para não manter arquivos de códigos que foram renomeados ou descontinuados.
 3. Editar o arquivo "/sei/config/ConfiguracaoSEI.php", tomando o cuidado de usar editor que não altere o charset do arquivo, para adicionar a referência à classe de integração do módulo e seu caminho relativo dentro da pasta "/sei/web/modulos" na array 'Modulos' da chave 'SEI':
@@ -23,11 +23,11 @@
 4. Antes de seguir para os próximos passos, é importante conferir se o Módulo foi corretamente declarado no arquivo "/sei/config/ConfiguracaoSEI.php". Acesse o menu **Infra > Módulos** e confira se consta a linha correspondente ao Módulo, pois, realizando os passos anteriores da forma correta, independente da execução do script de banco, o Módulo já deve ser reconhecido na tela aberta pelo menu indicado.
 5. Rodar o script de banco "/sip/scripts/sip_atualizar_versao_modulo_utilidades.php" em linha de comando no servidor do SIP, verificando se não houve erro em sua execução, em que ao final do log deverá ser informado "FIM". Exemplo de comando de execução:
 
-		/usr/bin/php -c /etc/php.ini /opt/sip/scripts/sip_atualizar_versao_modulo_utilidades.php 2>&1 > atualizacao_utilidades_sip.log &
+		/usr/bin/php -c /etc/php.ini /opt/sip/scripts/sip_atualizar_versao_modulo_utilidades.php 2>&1 > atualizar_versao_modulo_utilidades_sip.log
 
 6. Rodar o script de banco "/sei/scripts/sei_atualizar_versao_modulo_utilidades.php" em linha de comando no servidor do SEI, verificando se não houve erro em sua execução, em que ao final do log deverá ser informado "FIM". Exemplo de comando de execução:
 
-		/usr/bin/php -c /etc/php.ini /opt/sei/scripts/sei_atualizar_versao_modulo_utilidades.php 2>&1 > atualizacao_modulo_utilidades_sei.log &
+		/usr/bin/php -c /etc/php.ini /opt/sei/scripts/sei_atualizar_versao_modulo_utilidades.php 2>&1 > atualizar_versao_modulo_utilidades_sei.log
 
 7. **IMPORTANTE**: Na execução dos dois scripts de banco acima, ao final deve constar o termo "FIM", o "TEMPO TOTAL DE EXECUÇÃO" e a informação de que a instalação/atualização foi realizada com sucesso na base de dados correspondente (SEM ERROS). Do contrário, o script não foi executado até o final e algum dado não foi inserido/atualizado no respectivo banco de dados, devendo recuperar o backup do banco e repetir o procedimento.
    - Constando ao final da execução do script as informações indicadas, pode logar no SEI e SIP e verificar no menu **Infra > Parâmetros** dos dois sistemas se consta o parâmetro "VERSAO_MODULO_UTILIDADES" com o valor da última versão do módulo.

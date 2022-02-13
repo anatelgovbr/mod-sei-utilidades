@@ -1,38 +1,37 @@
 <?
-try {
+require_once dirname(__FILE__) . '/../web/SEI.php';
 
-require_once dirname(__FILE__).'/../web/SEI.php';
-
-class MdUtlAtualizadorSeiRN extends InfraRN {
-    
-	private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.4.0';
+class MdUtlAtualizadorSeiRN extends InfraRN
+{
+    private $numSeg = 0;
+    private $versaoAtualDesteModulo = '1.5.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0','1.1.0','1.2.0','1.3.0','1.4.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0');
 
-    protected function getHistoricoVersoes() {
+    protected function getHistoricoVersoes()
+    {
         return $this->historicoVersoes;
     }
 
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct();
     }
 
-    protected function inicializarObjInfraIBanco() {
+    protected function inicializarObjInfraIBanco()
+    {
         return BancoSEI::getInstance();
     }
 
-    private function inicializar($strTitulo) {
+    private function inicializar($strTitulo)
+    {
+        session_start();
+        SessaoSEI::getInstance(false);
+
         ini_set('max_execution_time', '0');
         ini_set('memory_limit', '-1');
-
-        try {
-            @ini_set('zlib.output_compression', '0');
-            @ini_set('implicit_flush', '1');
-        } catch (Exception $e) {
-        }
-
+        @ini_set('implicit_flush', '1');
         ob_implicit_flush();
 
         InfraDebug::getInstance()->setBolLigado(true);
@@ -45,17 +44,19 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $this->logar($strTitulo);
     }
 
-    private function logar($strMsg) {
+    private function logar($strMsg)
+    {
         InfraDebug::getInstance()->gravar($strMsg);
         flush();
     }
 
-    private function finalizar($strMsg=null, $bolErro) {
+    private function finalizar($strMsg = null, $bolErro = false)
+    {
         if (!$bolErro) {
             $this->numSeg = InfraUtil::verificarTempoProcessamento($this->numSeg);
-            $this->logar('TEMPO TOTAL DE EXECUÇÃO: '.$this->numSeg.' s');
+            $this->logar('TEMPO TOTAL DE EXECUÇÃO: ' . $this->numSeg . ' s');
         } else {
-            $strMsg = 'ERRO: '.$strMsg;
+            $strMsg = 'ERRO: ' . $strMsg;
         }
 
         if ($strMsg != null) {
@@ -69,19 +70,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         die;
     }
 
-    protected function atualizarVersaoConectado() {
-
+    protected function atualizarVersaoConectado()
+    {
         try {
             $this->inicializar('INICIANDO A INSTALAÇÃO/ATUALIZAÇÃO DO ' . $this->nomeDesteModulo . ' NO SEI VERSÃO ' . SEI_VERSAO);
-
-            //testando versao do framework
-            $numVersaoInfraRequerida = '1.532';
-            $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
-            $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
-
-            if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
-                $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' .$numVersaoInfraRequerida . ')', true);
-            }
 
             //checando BDs suportados
             if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
@@ -89,6 +81,16 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
                 !(BancoSEI::getInstance() instanceof InfraOracle)) {
                 $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
             }
+
+            //testando versao do framework
+            $numVersaoInfraRequerida = '1.532.1';
+            $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
+            $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
+
+            if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
+                $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
+            }
+
 
             //checando permissoes na base de dados
             $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
@@ -102,64 +104,39 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
             $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
 
             $strVersaoModuloUtilidades = $objInfraParametro->getValor($this->nomeParametroModulo, false);
-
-            //VERIFICANDO QUAL VERSAO DEVE SER INSTALADA NESTA EXECUCAO
-            if (InfraString::isBolVazia($strVersaoModuloUtilidades)) {
-                $this->instalarv100();
-                $this->instalarv110();
-                $this->instalarv120();
-                $this->instalarv130();
-                $this->instalarv140();
-                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
-                $this->finalizar('FIM', false);
-            } elseif ($strVersaoModuloUtilidades == '1.0.0') {
-                $this->instalarv110();
-                $this->instalarv120();
-                $this->instalarv130();
-                $this->instalarv140();
-                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
-                $this->finalizar('FIM', false);
-            } elseif ($strVersaoModuloUtilidades == '1.1.0') {
-                $this->instalarv120();
-                $this->instalarv130();
-                $this->instalarv140();
-                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
-                $this->finalizar('FIM', false);
-            } elseif ($strVersaoModuloUtilidades == '1.2.0') {
-                $this->instalarv130();
-                $this->instalarv140();
-                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
-                $this->finalizar('FIM', false);
-            } elseif ($strVersaoModuloUtilidades == '1.3.0') {
-                $this->instalarv140();
-                $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO ' . $this->versaoAtualDesteModulo . ' DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
-                $this->finalizar('FIM', false);
-            }else{
-                $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v ' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
-                $this->finalizar('FIM', false);
+			
+            switch ($strVersaoModuloUtilidades) {
+                case '':
+                    $this->instalarv100();
+                case '1.0.0':
+                    $this->instalarv110();
+                case '1.1.0':
+                    $this->instalarv120();
+                case '1.2.0':
+                    $this->instalarv130();
+                case '1.3.0':
+                    $this->instalarv140();
+                case '1.4.0':
+                    $this->instalarv150();
+                    break;
+                default:
+                    $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
+					$this->finalizar('FIM', false);
+                    break;
             }
 
-            InfraDebug::getInstance()->setBolLigado(false);
-            InfraDebug::getInstance()->setBolDebugInfra(false);
-            InfraDebug::getInstance()->setBolEcho(false);
-
+            $this->finalizar('FIM');
+            InfraDebug::getInstance()->setBolDebugInfra(true);
         } catch (Exception $e) {
-
-            var_dump($e);
             InfraDebug::getInstance()->setBolLigado(true);
             InfraDebug::getInstance()->setBolDebugInfra(true);
             InfraDebug::getInstance()->setBolEcho(true);
-            $this->logar($e->getTraceAsString());
-            $this->finalizar('FIM', true);
-            print_r($e);
-            die;
             throw new InfraException('Erro instalando/atualizando versão.', $e);
         }
     }
 
-    //Contem atualizações da versao 1.0.0
-    protected function instalarv100(){
-
+    protected function instalarv100()
+    {
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
@@ -463,20 +440,18 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_grp');
         BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_grp', 1);
 
-
         $this->logar('CRIANDO A TABELA md_utl_adm_grp_fila');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_grp_fila (
 				id_md_utl_adm_grp_fila ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_grp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_fila ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
-				sin_ativo '.  $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_grp_fila', 'pk_md_utl_adm_grp_fila', array('id_md_utl_adm_grp_fila'));
 
         $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_grp_fila');
         BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_grp_fila', 1);
-
 
         $this->logar('CRIANDO A TABELA md_utl_adm_grp_fila_proc');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_grp_fila_proc (
@@ -523,7 +498,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_grp_fl_proc_atv', 'md_utl_adm_grp_fl_proc_atv',
             array('id_md_utl_adm_atividade'), 'md_utl_adm_atividade', array('id_md_utl_adm_atividade'));
 
-
         //Justificativa de prazo
         $this->logar('CRIANDO A TABELA md_utl_adm_just_prazo');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_just_prazo (
@@ -547,10 +521,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 				id_md_utl_triagem ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				dth_prazo_resposta ' . $objInfraMetaBD->tipoDataHora() . ' NULL,
 				informacao_complementar ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NULL,
-				sin_possui_analise ' .$objInfraMetaBD->tipoTextoFixo(1). ' NOT NULL,
-				sta_encaminhamento_triagem '.$objInfraMetaBD->tipoTextoFixo(1). ' NULL,
-				id_md_utl_adm_fila '.$objInfraMetaBD->tipoNumero(). ' NULL,
-				sin_ativo '.$objInfraMetaBD->tipoTextoFixo(1). ' NOT NULL) '
+				sin_possui_analise ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				sta_encaminhamento_triagem ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NULL,
+				id_md_utl_adm_fila ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_triagem', 'pk_md_utl_triagem', array('id_md_utl_triagem'));
@@ -561,13 +535,12 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $this->logar('CRIANDO A SEQUENCE seq_md_utl_triagem');
         BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_triagem', 1);
 
-
         $this->logar('CRIANDO A TABELA md_utl_rel_triagem_atv');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_rel_triagem_atv (
 				id_md_utl_rel_triagem_atv ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_triagem ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_atividade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
-				unidade_esforco '.$objInfraMetaBD->tipoNumero(). ' NOT NULL) '
+				unidade_esforco ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_rel_triagem_atv', 'pk_md_utl_rel_triagem_atv', array('id_md_utl_rel_triagem_atv'));
@@ -581,15 +554,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_rel_triagem_atv', 'md_utl_rel_triagem_atv',
             array('id_md_utl_adm_atividade'), 'md_utl_adm_atividade', array('id_md_utl_adm_atividade'));
 
-
         //Iniciando tabela de Análise
         $this->logar('CRIANDO A TABELA md_utl_analise');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_analise (
 				id_md_utl_analise ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				informacoes_complementares ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NULL,
-				sta_encaminhamento_analise '.$objInfraMetaBD->tipoTextoFixo(1). ' NULL,
-				id_md_utl_adm_fila '.$objInfraMetaBD->tipoNumero(). ' NULL,
-				sin_ativo '.$objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+				sta_encaminhamento_analise ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NULL,
+				id_md_utl_adm_fila ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_analise', 'pk_md_utl_analise', array('id_md_utl_analise'));
@@ -600,7 +572,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $this->logar('CRIANDO A SEQUENCE seq_md_utl_analise');
         BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_analise', 1);
 
-
         $this->logar('CRIANDO A TABELA md_utl_rel_analise_produto');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_rel_analise_produto (
 				id_md_utl_rel_analise_produto ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
@@ -610,7 +581,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 				id_md_utl_rel_triagem_atv ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_serie ' . $objInfraMetaBD->tipoNumero() . ' NULL,
 				id_documento ' . $objInfraMetaBD->tipoNumeroGrande() . ' NULL,
-				observacao '. $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL) '
+				observacao ' . $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_rel_analise_produto', 'pk_md_utl_rel_analise_produto', array('id_md_utl_rel_analise_produto'));
@@ -636,14 +607,13 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->adicionarChaveEstrangeira('fk6_md_utl_rel_analise_produto', 'md_utl_rel_analise_produto',
             array('id_md_utl_rel_triagem_atv'), 'md_utl_rel_triagem_atv', array('id_md_utl_rel_triagem_atv'));
 
-
         $this->logar('CRIANDO A TABELA md_utl_revisao');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_revisao (
 				id_md_utl_revisao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 			    sta_encaminhamento_revisao ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
 			    sin_analise ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
 				informacoes_complementares ' . $objInfraMetaBD->tipoTextoVariavel(500) . ' NULL,
-				sin_ativo '.$objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+				sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_revisao', 'pk_md_utl_revisao', array('id_md_utl_revisao'));
@@ -658,7 +628,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 				id_md_utl_rel_analise_produto ' . $objInfraMetaBD->tipoNumero() . ' NULL,
 				id_md_utl_adm_tp_revisao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_tp_just_revisao ' . $objInfraMetaBD->tipoNumero() . ' NULL,
-				observacao '. $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL) '
+				observacao ' . $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_rel_revis_trg_anls', 'pk_md_utl_rel_revis_trg_anls', array('id_md_utl_rel_revis_trg_anls'));
@@ -747,8 +717,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 				detalhe ' . $objInfraMetaBD->tipoTextoGrande() . ' NULL,
 				dth_prazo_tarefa ' . $objInfraMetaBD->tipoDataHora() . ' NULL,
 				sta_atendimento_dsmp ' . $objInfraMetaBD->tipoTextoFixo(2) . ' NOT NULL,
-				sin_ultima_fila '. $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
-				sin_ultimo_responsavel '. $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+				sin_ultima_fila ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+				sin_ultimo_responsavel ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_hist_controle_dsmp', 'pk_md_utl_hist_controle_dsmp', array('id_md_utl_hist_controle_dsmp'));
@@ -802,11 +772,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
             array('id_md_utl_revisao'), 'md_utl_revisao', array('id_md_utl_revisao'));
         $objInfraMetaBD->criarIndice('md_utl_hist_controle_dsmp', 'i06_md_utl_hist_controle_dsmp', array('id_procedimento', 'id_unidade', 'id_md_utl_revisao'));
 
-        $this->logar('ADICIONANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $this->logar('ADICIONANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( \'1.0.0\',  \'' . $this->nomeParametroModulo . '\' )');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
 
-    protected function instalarv110(){
+    protected function instalarv110()
+    {
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
@@ -823,17 +796,17 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         //Triagem
         $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
         $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_triagem','md_utl_triagem',array('id_usuario'),'usuario',array('id_usuario'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_triagem', 'md_utl_triagem', array('id_usuario'), 'usuario', array('id_usuario'));
 
         //Analise
         $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
         $objInfraMetaBD->adicionarColuna('md_utl_analise', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_analise','md_utl_analise',array('id_usuario'),'usuario',array('id_usuario'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_analise', 'md_utl_analise', array('id_usuario'), 'usuario', array('id_usuario'));
 
         //Revisao
         $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'null');
         $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_revisao','md_utl_revisao',array('id_usuario'),'usuario',array('id_usuario'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_revisao', 'md_utl_revisao', array('id_usuario'), 'usuario', array('id_usuario'));
 
         //Correção do Histórico
         $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'dth_final', $objInfraMetaBD->tipoDataHora(), 'null');
@@ -845,8 +818,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'dth_final', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'sin_acao_concluida', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
 
-        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
 
     protected function instalarv120()
@@ -875,24 +850,23 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         //MduTriagem
         $objInfraMetaBD->alterarColuna('md_utl_triagem', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->excluirChaveEstrangeira('md_utl_triagem', 'fk2_md_utl_triagem');
-        $objInfraMetaBD->excluirIndice('md_utl_triagem','fk2_md_utl_triagem');
+        $objInfraMetaBD->excluirIndice('md_utl_triagem', 'fk2_md_utl_triagem');
         $objInfraMetaBD->alterarColuna('md_utl_triagem', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_triagem','md_utl_triagem',array('id_usuario'),'usuario',array('id_usuario'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_triagem', 'md_utl_triagem', array('id_usuario'), 'usuario', array('id_usuario'));
 
         //MdUtlAnalise
         $objInfraMetaBD->alterarColuna('md_utl_analise', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->excluirChaveEstrangeira('md_utl_analise', 'fk2_md_utl_analise');
-        $objInfraMetaBD->excluirIndice('md_utl_analise','fk2_md_utl_analise');
+        $objInfraMetaBD->excluirIndice('md_utl_analise', 'fk2_md_utl_analise');
         $objInfraMetaBD->alterarColuna('md_utl_analise', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_analise','md_utl_analise',array('id_usuario'),'usuario',array('id_usuario'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_analise', 'md_utl_analise', array('id_usuario'), 'usuario', array('id_usuario'));
 
         //MdUtlRevisao
         $objInfraMetaBD->alterarColuna('md_utl_revisao', 'dth_atual', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->excluirChaveEstrangeira('md_utl_revisao', 'fk1_md_utl_revisao');
-        $objInfraMetaBD->excluirIndice('md_utl_revisao','fk1_md_utl_revisao');
+        $objInfraMetaBD->excluirIndice('md_utl_revisao', 'fk1_md_utl_revisao');
         $objInfraMetaBD->alterarColuna('md_utl_revisao', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_revisao','md_utl_revisao',array('id_usuario'),'usuario',array('id_usuario'));
-
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_revisao', 'md_utl_revisao', array('id_usuario'), 'usuario', array('id_usuario'));
 
         $this->logar('ALTERANDO A TABELA md_utl_adm_prm_gr');
         $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'resp_tacita_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NULL');
@@ -956,9 +930,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
         $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
 
-
         $strDescricao = 'Script para Reprovação/Aprovação dos Ajustes de Prazo';
-        $strComando   = 'MdUtlAgendamentoAutomaticoRN::aprovarReprovarAjustesPrazo';
+        $strComando = 'MdUtlAgendamentoAutomaticoRN::aprovarReprovarAjustesPrazo';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando);
 
         //Iniciando as alteração da 1.2
@@ -991,21 +964,21 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->adicionarChaveEstrangeira('fk3_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu',
             array('id_usuario_atual'), 'usuario', array('id_usuario'));
 
-        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr','inicio_periodo',$objInfraMetaBD->tipoNumero(),'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'inicio_periodo', $objInfraMetaBD->tipoNumero(), 'null');
 
         $objMdUtlAdmHistPrmGrUsuRN = new MdUtlAdmHistPrmGrUsuRN();
         $objMdUtlAdmHistPrmGrUsuRN->migrarDadosExistentesParamHistorico();
 
         $objInfraMetaBD->alterarColuna('md_utl_adm_hist_prm_gr_usu', 'dth_inicial', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->excluirChaveEstrangeira('md_utl_adm_hist_prm_gr_usu', 'fk3_md_utl_adm_hist_prm_gr_usu');
-        $objInfraMetaBD->excluirIndice('md_utl_adm_hist_prm_gr_usu','fk3_md_utl_adm_hist_prm_gr_usu');
+        $objInfraMetaBD->excluirIndice('md_utl_adm_hist_prm_gr_usu', 'fk3_md_utl_adm_hist_prm_gr_usu');
         $objInfraMetaBD->alterarColuna('md_utl_adm_hist_prm_gr_usu', 'id_usuario_atual', $objInfraMetaBD->tipoNumero(), 'not null');
         $objInfraMetaBD->adicionarChaveEstrangeira('fk3_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu', array('id_usuario_atual'), 'usuario', array('id_usuario'));
 
         $objMdUtlAtividadeRN = new MdUtlAdmAtividadeRN();
         $objMdUtlAtividadeRN->preencherCorretamenteHabilitarRevisao();
 
-        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade','sin_atv_rev_amostragem', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade', 'sin_atv_rev_amostragem', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
 
         $objInfraMetaBD->alterarColuna('md_utl_adm_fila_prm_gr_usu', 'percentual_revisao', $objInfraMetaBD->tipoNumero(), 'null');
 
@@ -1013,7 +986,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objMdUtlAdmFilaPrmGrUsuRN->alterarDadosTipoRevisao();
 
         $strDescricao = 'Script para retornar o Status no Final da Suspensão ou Interrupção';
-        $strComando   = 'MdUtlAgendamentoAutomaticoRN::retornarStatusFinal';
+        $strComando = 'MdUtlAgendamentoAutomaticoRN::retornarStatusFinal';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando);
 
         $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
@@ -1024,20 +997,23 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_revisao', 'md_utl_revisao', array('id_md_utl_adm_fila'), 'md_utl_adm_fila', array('id_md_utl_adm_fila'));
 
         $strDescricao = 'Script Responsável por Associar Processos a Fila de forma Automática.';
-        $strComando   = 'MdUtlAgendamentoAutomaticoRN::associarProcessoFila';
+        $strComando = 'MdUtlAgendamentoAutomaticoRN::associarProcessoFila';
         $strPeriodicidadeComplemento = '7,8,9,10,11,12,13,14,15,16,17,18,19,20';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
 
-        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','sin_retorno_ult_fila', $objInfraMetaBD->tipoTextoFixo(1), null);
+        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr', 'sin_retorno_ult_fila', $objInfraMetaBD->tipoTextoFixo(1), null);
 
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objMdUtlControleDsmpRN->corrigirCampoUltimaFila();
 
-        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
 
-    protected function instalarv130(){
+    protected function instalarv130()
+    {
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1112,44 +1088,43 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 				sin_atividade ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
         );
 
-
         $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_prm_ds');
         BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_prm_ds', 1);
 
         $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_prm_ds', 'pk_md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_prm_ds','md_utl_adm_prm_ds',array('id_md_utl_adm_tp_ctrl_desemp'),'md_utl_adm_tp_ctrl_desemp',array('id_md_utl_adm_tp_ctrl_desemp'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_prm_ds', 'md_utl_adm_prm_ds', array('id_md_utl_adm_tp_ctrl_desemp'), 'md_utl_adm_tp_ctrl_desemp', array('id_md_utl_adm_tp_ctrl_desemp'));
 
         $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_fila');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_fila (
                 id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_fila ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
-				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+				prioridade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL) '
         );
 
-        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_fila', 'pk_md_utl_adm_rel_prm_ds_fila', array('id_md_utl_adm_prm_ds','id_md_utl_adm_fila'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_fila','md_utl_adm_rel_prm_ds_fila',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_fila','md_utl_adm_rel_prm_ds_fila',array('id_md_utl_adm_fila'),'md_utl_adm_fila',array('id_md_utl_adm_fila'));
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_fila', 'pk_md_utl_adm_rel_prm_ds_fila', array('id_md_utl_adm_prm_ds', 'id_md_utl_adm_fila'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_fila', 'md_utl_adm_rel_prm_ds_fila', array('id_md_utl_adm_prm_ds'), 'md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_fila', 'md_utl_adm_rel_prm_ds_fila', array('id_md_utl_adm_fila'), 'md_utl_adm_fila', array('id_md_utl_adm_fila'));
 
         $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_ativ');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_ativ (
                 id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				id_md_utl_adm_atividade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
-				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+				prioridade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL) '
         );
 
-        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_ativ', 'pk_md_utl_adm_rel_prm_ds_ativ', array('id_md_utl_adm_prm_ds','id_md_utl_adm_atividade'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_ativ','md_utl_adm_rel_prm_ds_ativ',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_ativ','md_utl_adm_rel_prm_ds_ativ',array('id_md_utl_adm_atividade'),'md_utl_adm_atividade',array('id_md_utl_adm_atividade'));
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_ativ', 'pk_md_utl_adm_rel_prm_ds_ativ', array('id_md_utl_adm_prm_ds', 'id_md_utl_adm_atividade'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_ativ', 'md_utl_adm_rel_prm_ds_ativ', array('id_md_utl_adm_prm_ds'), 'md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_rel_prm_ds_ativ', 'md_utl_adm_rel_prm_ds_ativ', array('id_md_utl_adm_atividade'), 'md_utl_adm_atividade', array('id_md_utl_adm_atividade'));
 
         $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_aten');
         BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_aten (
                 id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				sta_atendimento_dsmp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
-				prioridade '.$objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+				prioridade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL) '
         );
 
-        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_aten', 'pk_md_utl_adm_rel_prm_ds_aten', array('id_md_utl_adm_prm_ds','sta_atendimento_dsmp'));
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_aten','md_utl_adm_rel_prm_ds_aten',array('id_md_utl_adm_prm_ds'),'md_utl_adm_prm_ds',array('id_md_utl_adm_prm_ds'));
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_aten', 'pk_md_utl_adm_rel_prm_ds_aten', array('id_md_utl_adm_prm_ds', 'sta_atendimento_dsmp'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_aten', 'md_utl_adm_rel_prm_ds_aten', array('id_md_utl_adm_prm_ds'), 'md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
 
         //Revisão
         $this->logar('CRIANDO colunas na tabela md_utl_revisao');
@@ -1159,10 +1134,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         //Contestacao
         $this->logar('CRIANDO colunas na tabela md_utl_contest_revisao');
         $objInfraMetaBD->adicionarColuna('md_utl_contest_revisao', 'id_md_utl_revisao', $objInfraMetaBD->tipoNumero(), 'null');
-        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_contest_revisao','md_utl_contest_revisao',array('id_md_utl_revisao'),'md_utl_revisao',array('id_md_utl_revisao'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_contest_revisao', 'md_utl_contest_revisao', array('id_md_utl_revisao'), 'md_utl_revisao', array('id_md_utl_revisao'));
 
         $strDescricao = 'Script Responsável por Reprovar as Contestações de Revisão após o Vencimento do Prazo.';
-        $strComando   = 'MdUtlAgendamentoAutomaticoRN::reprovarContestacao';
+        $strComando = 'MdUtlAgendamentoAutomaticoRN::reprovarContestacao';
         $strPeriodicidadeComplemento = '1';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
 
@@ -1179,15 +1154,1338 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
 
         $this->fixIndices($objInfraMetaBD, $arrTabelas);
 
-        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
 
-    protected function instalarv140(){
+    protected function instalarv140()
+    {
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
-        $this->logar('ATUALIZANDO PARÂMETRO '.$this->nomeParametroModulo.' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.4.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
+
+    protected function instalarv150()
+    {
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+        $this->logar('CRIANDO A TABELA md_utl_adm_rel_prm_ds_proc');
+        BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_rel_prm_ds_proc (
+                id_md_utl_adm_prm_ds ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				id_md_utl_adm_prm_gr_proc ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+				prioridade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL) '
+        );
+
+        $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_rel_prm_ds_proc', 'pk_md_utl_adm_rel_prm_ds_proc', array('id_md_utl_adm_prm_ds', 'id_md_utl_adm_prm_gr_proc'));
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_rel_prm_ds_proc', 'md_utl_adm_rel_prm_ds_proc', array('id_md_utl_adm_prm_ds'), 'md_utl_adm_prm_ds', array('id_md_utl_adm_prm_ds'));
+
+        $this->logar('CRIANDO colunas na tabela md_utl_adm_prm_ds');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'sin_tipo_processo', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'sin_dias_uteis', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'distribuicao_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'fila_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'status_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'atividade_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'tipo_processo_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'dias_uteis_prioridade', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_ds', 'qtd_dias_uteis', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'unidade_esforco', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'dth_inicio', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'dth_prazo', $objInfraMetaBD->tipoDataHora(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_triagem');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'unidade_esforco', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'dth_inicio', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'dth_prazo', $objInfraMetaBD->tipoDataHora(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_analise');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'unidade_esforco', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dth_inicio', $objInfraMetaBD->tipoDataHora(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dth_prazo', $objInfraMetaBD->tipoDataHora(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'sta_atribuido', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_hist_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'sta_atribuido', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $this->_atualizarHistControleDsmp();
+
+        $this->logar('ALTERANDO A TABELA - adicionado md_utl_adm_atividade.complexidade');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_atividade', 'complexidade', $objInfraMetaBD->tipoNumero(), 'NULL');
+
+        $this->logar('ATUALIZANDO A TABELA - populando novo campo campo complexidade com valor 0');
+        $sqlTabela = ' UPDATE md_utl_adm_atividade SET complexidade=0 WHERE complexidade IS NULL ';
+        BancoSEI::getInstance()->executarSql($sqlTabela);
+
+        $this->logar('ALTERANDO A TABELA - alterando md_utl_adm_atividade.complexidade para NOT NULL');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade', 'complexidade', $objInfraMetaBD->tipoNumero(), 'NOT NULL');
+
+        $this->logar('INSERINDO PARÂMETROS DE BLOQUEIO DO MÓDULO ');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_GERAR_PROCESSO_SEM_PELO_MENOS_UM_INTERESSADO\' )');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_ANEXAR_PROCESSO_COM_DOCUMENTO_NAO_ASSINADO\' )');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_NAO_ASSINADO\' )');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL\' )');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_ID_GRUPOS_CONTATO_TRAVAR_CONTATOS\' )');
+        BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_ID_TIPO_DOCUMENTO_EXIGIDO_CANCELAR\' )');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_controle_dsmp de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_controle_dsmp set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_controle_dsmp', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_hist_controle_dsmp de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_hist_controle_dsmp set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_hist_controle_dsmp', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_triagem de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_triagem set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_triagem', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_analise de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_analise set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_analise', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_revisao de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_revisao set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_revisao', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_adm_atividade de und_esforco_atv para tmp_execucao_atv');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_atividade', 'tmp_execucao_atv', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_atividade set tmp_execucao_atv=und_esforco_atv');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_atividade', 'und_esforco_atv');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_adm_atv_serie_prod de und_esforco_rev_produto para tmp_execucao_rev_produto');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_atv_serie_prod', 'tmp_execucao_rev_produto', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_atv_serie_prod set tmp_execucao_rev_produto=und_esforco_rev_produto');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_atv_serie_prod', 'und_esforco_rev_produto');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_rel_triagem_atv de unidade_esforco para tempo_execucao');
+        $objInfraMetaBD->adicionarColuna('md_utl_rel_triagem_atv', 'tempo_execucao', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_rel_triagem_atv set tempo_execucao=unidade_esforco');
+        $objInfraMetaBD->excluirColuna('md_utl_rel_triagem_atv', 'unidade_esforco');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_adm_atividade de und_esforco_rev para tmp_execucao_rev');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_atividade', 'tmp_execucao_rev', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_atividade set tmp_execucao_rev=und_esforco_rev');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_atividade', 'und_esforco_rev');
+
+        $this->logar('RENOMEANDO coluna na tabela md_utl_adm_fila de und_esforco_triagem para tmp_execucao_triagem');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_fila', 'tmp_execucao_triagem', $objInfraMetaBD->tipoNumero(), 'NULL');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_fila set tmp_execucao_triagem=und_esforco_triagem');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_fila', 'und_esforco_triagem');
+
+        $this->logar('CRIANDO colunas na md_utl_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'sta_tipo_presenca', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'tempo_de_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_controle_dsmp', 'percentual_desempenho', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('CRIANDO colunas na md_utl_hist_controle_dsmp');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'sta_tipo_presenca', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'tempo_de_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'percentual_desempenho', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'sta_tipo_presenca', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'tempo_de_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'percentual_desempenho', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_analise');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'sta_tipo_presenca', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'tempo_de_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'percentual_desempenho', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_triagem');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'sta_tipo_presenca', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'tempo_de_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'percentual_desempenho', $objInfraMetaBD->tipoNumero(), 'null');
+
+        $this->logar('ADICIONANDO colunas na tabela md_utl_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'avaliacao_qualitativa', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'sin_realizar_aval_prod_prod', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $this->logar('Ajuste de dados na tabela md_utl_revisao');
+        $this->atualizarSinRealizarAvalProdProd();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_revisao');
+
+        $this->logar('ALTERANDO colunas na tabela md_utl_revisao para not null');
+        $objInfraMetaBD->alterarColuna('md_utl_revisao', 'sin_realizar_aval_prod_prod', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+
+
+        $this->logar('ALTERANDO tablea md_utl_adm_fila coluna prazo_tarefa de not null para nul');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_fila', 'prazo_tarefa', $objInfraMetaBD->tipoTextoVariavel(3), 'null');
+
+        $this->logar('Ajuste de dados na tabela md_utl_hist_controle_dsmp');
+        $this->atualizarTipoAcaoMdUtlHistControleDsmpPercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_hist_controle_dsmp');
+
+        $this->logar('Ajuste de dados na tabela md_utl_triagem');
+        $this->atualizarCamposTriagemNull();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_triagem');
+
+        $this->logar('Ajuste de dados na tabela md_utl_analise');
+        $this->atualizarCamposAnaliseTempoExecucaoNull();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_analise');
+
+        $this->logar('Ajuste de dados na tabela md_utl_revisao');
+        $this->atualizarCamposRevisaoTempoExecucaoNull();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_revisao');
+
+        $this->logar('Montagem dados a serem inseridos na tabela md_utl_triagem');
+        $this->atualizarMdUtlTriagemPercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_triagem');
+
+        $this->logar('Montagem dados a serem inseridos na tabela md_utl_analise');
+        $this->atualizarMdUtlAnalisePercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_analise');
+
+        $this->logar('Montagem dados a serem inseridos na tabela md_utl_revisao');
+        $this->atualizarMdUtlRevisaoPercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_revisao');
+
+        $this->logar('Montagem dados a serem inseridos na tabela md_utl_hist_controle_dsmp');
+        $this->atualizarMdUtlHistControleDsmpPercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_hist_controle_dsmp');
+
+        $this->logar('Montagem dados a serem inseridos na tabela md_utl_controle_dsmp');
+        $this->atualizarMdUtlControleDsmpPercentualDesempenho();
+        $this->logar('FIM da Montagem dados a serem inseridos na tabela md_utl_controle_dsmp');
+
+        $this->logar('ALTERAÇÃO NO TAMANHO DA COLUNA OBSERVACAO, TABELA: MD_UTL_REL_ANALISE_PRODUTO');
+        $objInfraMetaBD->alterarColuna('md_utl_rel_analise_produto', 'observacao', $objInfraMetaBD->tipoTextoVariavel(500), 'null');
+        $this->logar('FIM DA ALTERAÇÃO NO TAMANHO DA COLUNA OBSERVACAO, TABELA: MD_UTL_REL_ANALISE_PRODUTO');
+
+        // altera os dados substituindo tipo_acao de "Revisão para "Avaliação"
+        $this->logar('Altera os dados substituindo tipo_acao de "Revisão para "Avaliação"');
+        $this->replaceRevisaoParaAvaliacao();
+        $this->logar('FIM da Alteração dos dados substituindo tipo_acao de "Revisão para "Avaliação" ');
+
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
+
+    protected function atualizarSinRealizarAvalProdProd()
+    {
+
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+        $objMdUtlRevisaoBD = new MdUtlRevisaoBD(BancoSEI::getInstance());
+
+        $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+        $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+        $objMdUtlRevisaoDTO->setStrSinRealizarAvalProdProd(null, InfraDTO::$OPER_IGUAL);
+        $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+        $totalRegistos = $objMdUtlRevisaoBD->contar($objMdUtlRevisaoDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_revisao: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+            $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+            $objMdUtlRevisaoDTO->setStrSinRealizarAvalProdProd(null, InfraDTO::$OPER_IGUAL);
+            $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
+            $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+
+            $arrObjRevisao = $objMdUtlRevisaoBD->listar($objMdUtlRevisaoDTO);
+
+            foreach ($arrObjRevisao as $objRevisao) {
+
+                $objRevisao->setStrSinRealizarAvalProdProd('S');
+                $objMdUtlRevisaoBD->alterar($objRevisao);
+            }
+
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_revisao " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function replaceRevisaoParaAvaliacao()
+    {
+        // Realizar replace na coluna 'tipo_acao' de 'Revisão' para 'Avaliação'
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+        $objMdUtlControleDsmpDTO->setStrTipoAcao(array('Revisão', 'Contestação de Revisão','Aprovação de Contestatação', 'Reprovação de Contestatação','Retorno de Status'), InfraDTO::$OPER_IN);
+        $objMdUtlControleDsmpDTO->retStrTipoAcao();
+        $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+        $arrObjMdUtlControleDsmp = $objMdUtlControleDsmpBD->listar($objMdUtlControleDsmpDTO);
+
+        foreach ($arrObjMdUtlControleDsmp as $objMdUtlControleDsmp)
+        {
+            $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlControleDsmp($objMdUtlControleDsmp->getNumIdMdUtlControleDsmp());
+            $objMdUtlControleDsmpDTO->retStrTipoAcao();
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+            $objMdUtlControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+            switch ($objMdUtlControleDsmp->getStrTipoAcao())
+            {
+                case 'Revisão':
+                    $objMdUtlControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO);
+                    break;
+                case 'Contestação de Revisão':
+                    $objMdUtlControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO);
+                    break;
+                case 'Aprovação de Contestatação':
+                    $objMdUtlControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_APV_CONTESTACAO);
+                    break;
+                case 'Reprovação de Contestatação':
+                    $objMdUtlControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_CONTESTACAO);
+                    break;
+                case 'Retorno de Status':
+                    $objMdUtlControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETORNO_STATUS);
+                    break;
+            }
+
+            $objMdUtlControleDsmpBD->alterar($objMdUtlControleDsmp);
+        }
+
+        // Realizar replace na coluna 'tipo_acao' de 'Revisão' para 'Avaliação' em historico
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objMdUtlHistControleDsmpDTO->setStrTipoAcao(array('Revisão', 'Contestação de Revisão','Aprovação de Contestatação', 'Reprovação de Contestatação', 'Retorno de Status'), InfraDTO::$OPER_IN);
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+        $arrObjMdUtlHistControleDsmp = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
+
+        foreach ($arrObjMdUtlHistControleDsmp as $objMdUtlHistControleDsmp)
+        {
+            $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+            $objMdUtlHistControleDsmpDTO->setNumIdMdUtlHistControleDsmp($objMdUtlHistControleDsmp->getNumIdMdUtlHistControleDsmp());
+            $objMdUtlHistControleDsmpDTO->retStrTipoAcao();
+            $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+            $objMdUtlHistControleDsmp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+            switch ($objMdUtlHistControleDsmp->getStrTipoAcao())
+            {
+                case 'Revisão':
+                    $objMdUtlHistControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO);
+                    break;
+                case 'Contestação de Revisão':
+                    $objMdUtlHistControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO);
+                    break;
+                case 'Aprovação de Contestatação':
+                    $objMdUtlHistControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_APV_CONTESTACAO);
+                    break;
+                case 'Reprovação de Contestatação':
+                    $objMdUtlHistControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RPV_CONTESTACAO);
+                    break;
+                case 'Retorno de Status':
+                    $objMdUtlHistControleDsmp->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETORNO_STATUS);
+                    break;
+            }
+            $objMdUtlHistControleDsmpBD->alterar($objMdUtlHistControleDsmp);
+        }
+    }
+
+    protected function atualizarTipoAcaoMdUtlHistControleDsmpPercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+        $objMdUtlProcedimentoBD = new MdUtlProcedimentoBD(BancoSEI::getInstance());
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+
+        $objMdUtlProcedimentoDTO = new MdUtlProcedimentoDTO();
+        $objMdUtlProcedimentoDTO->retTodos();
+        $objMdUtlProcedimentoDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlProcedimentoBD->contar($objMdUtlProcedimentoDTO);
+
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros procedimento: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+
+        $pagina = 0;
+
+        while($qtdRegistros < $totalRegistos) {
+            $objMdUtlProcedimentoDTO = new MdUtlProcedimentoDTO();
+            $objMdUtlProcedimentoDTO->retDblIdProcedimento();
+            $objMdUtlProcedimentoDTO->setBolExclusaoLogica(false);
+            $objMdUtlProcedimentoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlProcedimentoDTO->setNumPaginaAtual($pagina);
+            $arrObjProcedimento = $objMdUtlProcedimentoBD->listar($objMdUtlProcedimentoDTO);
+
+            foreach ($arrObjProcedimento as $objProcedimento) {
+
+                $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                $objMdUtlControleDsmpDTO->setDblIdProcedimento($objProcedimento->getDblIdProcedimento());
+                $objMdUtlControleDsmpDTO->setBolExclusaoLogica(false);
+                $objMdUtlControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                $objMdUtlControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+
+                if (empty($objMdUtlControleDsmp)) {
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($objProcedimento->getDblIdProcedimento());
+                    $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_DESC);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retStrTipoAcao();
+                    $objMdUtlHistControleDsmpDTO->retStrStaAtendimentoDsmp();
+                    $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                    $arrMdUtlHistControleDsmp = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
+
+                    if (
+                        $arrMdUtlHistControleDsmp && current($arrMdUtlHistControleDsmp)->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM &&
+                        $arrMdUtlHistControleDsmp[1]->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO &&
+                        ($arrMdUtlHistControleDsmp[1]->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $arrMdUtlHistControleDsmp[1]->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE)
+                    ){
+                        $objHistorico = current($arrMdUtlHistControleDsmp);
+                        $objHistorico->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM);
+                        $objMdUtlHistControleDsmpBD->alterar($objHistorico);
+                    }
+                }
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_hist_controle_dsmp " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarCamposTriagemNull()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlTriagemBD = new MdUtlTriagemBD(BancoSEI::getInstance());
+
+        $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+        $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
+        $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlTriagemBD->contar($objMdUtlTriagemDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_triagem: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+            $objMdUtlTriagemDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlTriagemDTO->setNumPaginaAtual($pagina);
+            $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
+            $objMdUtlTriagemDTO->retNumTempoExecucao();
+            $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
+            $objMdUtlTriagemDTO->retDthInicio();
+            $objMdUtlTriagemDTO->retDthAtual();
+            $objMdUtlTriagemDTO->retDthPrazo();
+            $objMdUtlTriagemDTO->retNumTempoExecucao();
+            $arrObjTriagem = $objMdUtlTriagemBD->listar($objMdUtlTriagemDTO);
+
+            foreach ($arrObjTriagem as $objTriagem) {
+
+                $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                $objMdUtlHistControleDsmpDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
+                $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+                $objMdUtlHistControleDsmpDTO->retNumIdMdUtlTriagem();
+                $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmFila();
+                $objMdUtlHistControleDsmpDTO->retDblIdProcedimento();
+                $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                $objMdUtlHistControleDsmpDTO->retNumIdUnidade();
+                $objMdUtlHistControleDsmpDTO->retStrTipoAcao();
+                $objHistorico = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+
+                if (!$objHistorico){
+                    $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                    $objMdUtlControleDsmpDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmFila();
+                    $objMdUtlControleDsmpDTO->retDblIdProcedimento();
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                    $objMdUtlControleDsmpDTO->retNumIdUnidade();
+                    $objMdUtlControleDsmpDTO->retStrTipoAcao();
+                    $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+                }
+
+                if (($objHistorico || $objControleDsmp ) && (is_null($objTriagem->getDthInicio()) || is_null($objTriagem->getDthPrazo()) || is_null($objTriagem->getNumTempoExecucao()))) {
+
+                    $idProcedimento = $objHistorico ? $objHistorico->getDblIdProcedimento() : $objControleDsmp->getDblIdProcedimento();
+                    $idUnidade = $objHistorico ? $objHistorico->getNumIdUnidade() : $objControleDsmp->getNumIdUnidade();
+
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
+                    $objMdUtlHistControleDsmpDTO->setNumIdUnidade($idUnidade);
+                    $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retStrTipoAcao();
+                    $objMdUtlHistControleDsmpDTO->retDthAtual();
+                    $objMdUtlHistControleDsmpDTO->retDthPrazoTarefa();
+                    $objMdUtlHistControleDsmpDTO->retStrDetalhe();
+                    $objMdUtlHistControleDsmpDTO->retNumTempoExecucao();
+                    $arrObjHistoricoPorProcedimento = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
+
+                    foreach ($arrObjHistoricoPorProcedimento as $objHistoricoPorProcedimento)
+                    {
+                        // caso tenha varios registros no historico depois da triagem feita
+                        if  (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico)
+                        {
+                            if ($objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO){
+                                $params['dataInicio'] = $objHistoricoPorProcedimento->getDthAtual();
+                                $params['tempoExecucao'] = $objHistoricoPorProcedimento->getNumTempoExecucao();
+                                $params['dataPrazo'] = $objHistoricoPorProcedimento->getDthPrazoTarefa() ? $objHistoricoPorProcedimento->getDthPrazoTarefa() : null ;
+                                $idUltimaDistribuicao = $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp();
+                            }
+
+                            if (
+                                $objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_APV_AJUSTE_PRAZO &&
+                                $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() > $idUltimaDistribuicao
+                            ){
+                                $params['dataPrazo'] = $objHistoricoPorProcedimento->getDthPrazoTarefa() ? $objHistoricoPorProcedimento->getDthPrazoTarefa() : null;
+                            }
+
+                        }
+                    }
+                    // se for uma retriagem atribuir o valor da fila
+                    if ($objHistorico && $objHistorico->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM) {
+                        $params['tempoExecucao'] = $this->recuperarTempoExecucaoTriagemFila($objHistorico->getNumIdMdUtlAdmFila());
+                    }
+                    if (!$objHistorico && $objControleDsmp->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM) {
+                        $params['tempoExecucao'] = $this->recuperarTempoExecucaoTriagemFila($objControleDsmp->getNumIdMdUtlAdmFila());
+                    }
+
+                    // verificar se é resultante de uma retriagem retornada ao responsável
+
+//                    1 DESCOBRIR SE O ANTERIOR É UMA DISTRIBUIÇÃO
+//                    2 DESCOBRIR SE O ANTERIOR À DISTRIBUIÇÃO É UMA REVISÃO
+//                    3 SE ESSA REVISÃO FOR RETORNAR PARA O RESPONSAVEL
+
+                    foreach ($arrObjHistoricoPorProcedimento as $objHistoricoPorProcedimento) {
+                        if (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico){
+                            $objetoHistoricoRetriagemAnterior = $objHistoricoPorProcedimento;
+                        }
+                    }
+
+                    // caso seja uma distribuição .... procura se o outro registro é revisao
+                    if ($objetoHistoricoRetriagemAnterior && $objetoHistoricoRetriagemAnterior->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO) {
+                        foreach ($arrObjHistoricoPorProcedimento as $objHistoricoPorProcedimento) {
+                            if ($objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objetoHistoricoRetriagemAnterior->getNumIdMdUtlHistControleDsmp()){
+                                $objetoHistoricoDistribuicaoAnterior = $objHistoricoPorProcedimento;
+                            }
+                        }
+                    }
+                    // DESCOBRIR SE O ANTERIOR É UMA DISTRIBUIÇÃO
+                    // SE ESSA REVISÃO FOR RETORNAR PARA O RESPONSAVEL
+                    if (
+                        $objetoHistoricoDistribuicaoAnterior &&
+                        $objetoHistoricoDistribuicaoAnterior->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO &&
+                        $objetoHistoricoDistribuicaoAnterior->getStrDetalhe() == MdUtlRevisaoRN::$STR_VOLTAR_PARA_RESPONSAVEL
+                    ) {
+                        $params['tempoExecucao'] = 0;
+                    }
+
+                    if (is_null($objTriagem->getDthInicio())) {
+                        $objTriagem->setDthInicio($params['dataInicio']);
+                    }
+
+                    if (is_null($objTriagem->getDthPrazo())) {
+                        $objTriagem->setDthPrazo($params['dataPrazo']);
+                    }
+
+                    if (is_null($objTriagem->getNumTempoExecucao())) {
+                        $objTriagem->setNumTempoExecucao($params['tempoExecucao']);
+                    }
+
+                    $objMdUtlTriagemBD->alterar($objTriagem);
+
+                    // limpa as variaveis para outra verificação
+                    unset($objetoHistoricoRetriagemAnterior);
+                    unset($objetoHistoricoDistribuicaoAnterior);
+                }
+            }
+
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_triagem " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function recuperarTempoExecucaoTriagemFila($idFila) {
+        //pega o tempo de execucao da fila
+        $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
+        $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
+        $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($idFila);
+        $objMdUtlAdmFilaDTO->retNumTmpExecucaoTriagem();
+        $objMdUtlAdmFila = $objMdUtlAdmFilaRN->consultar($objMdUtlAdmFilaDTO);
+
+        return $objMdUtlAdmFila->getNumTmpExecucaoTriagem();
+    }
+
+    protected function atualizarCamposAnaliseTempoExecucaoNull(){
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAnaliseBD = new MdUtlAnaliseBD(BancoSEI::getInstance());
+
+        $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+        $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+        $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
+        $totalRegistos = $objMdUtlAnaliseBD->contar($objMdUtlAnaliseDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_analise: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+            $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+            $objMdUtlAnaliseDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlAnaliseDTO->setNumPaginaAtual($pagina);
+            $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
+            $objMdUtlAnaliseDTO->retDthInicio();
+            $objMdUtlAnaliseDTO->retNumTempoExecucao();
+            $objMdUtlAnaliseDTO->retDthPrazo();
+            $arrObjAnalise = $objMdUtlAnaliseBD->listar($objMdUtlAnaliseDTO);
+
+            foreach ($arrObjAnalise as $objAnalise) {
+
+                if ($objAnalise && (is_null($objAnalise->getNumTempoExecucao()) || is_null($objAnalise->getDthInicio()) || is_null($objAnalise->getDthPrazo()))) {
+
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($objAnalise->getNumIdMdUtlAnalise());
+                    $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                    $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+                    $objMdUtlHistControleDsmpDTO->retDblIdProcedimento();
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retNumIdUnidade();
+                    $objHistorico = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+
+                    if (!$objHistorico){
+                        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                        $objMdUtlControleDsmpDTO->setNumIdMdUtlAnalise($objAnalise->getNumIdMdUtlAnalise());
+                        $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
+                        $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmFila();
+                        $objMdUtlControleDsmpDTO->retDblIdProcedimento();
+                        $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                        $objMdUtlControleDsmpDTO->retNumIdUnidade();
+                        $objMdUtlControleDsmpDTO->retStrTipoAcao();
+                        $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+                    }
+
+                    if (($objHistorico || $objControleDsmp) && (is_null($objAnalise->getNumTempoExecucao()) || is_null($objAnalise->getDthInicio()) || is_null($objAnalise->getDthPrazo()))) {
+
+                        $idProcedimento = $objHistorico ? $objHistorico->getDblIdProcedimento() : $objControleDsmp->getDblIdProcedimento();
+                        $idUnidade = $objHistorico ? $objHistorico->getNumIdUnidade() : $objControleDsmp->getNumIdUnidade();
+
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO = new MdUtlHistControleDsmpDTO();
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->setDblIdProcedimento($idProcedimento);
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->setNumIdUnidade($idUnidade);
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->setBolExclusaoLogica(false);
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->retNumIdMdUtlHistControleDsmp();
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->retNumTempoExecucao();
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->retStrTipoAcao();
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->retDthAtual();
+                        $objMdUtlHistControleDsmpPorProcedimentoDTO->retDthPrazoTarefa();
+                        $arrObjHistoricoPorProcedimento = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpPorProcedimentoDTO);
+
+                        foreach ($arrObjHistoricoPorProcedimento as $objHistoricoPorProcedimento) {
+                            if (
+                                (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico) &&
+                                $objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO
+                            ) {
+                                $tempoExecucao = $objHistoricoPorProcedimento->getNumTempoExecucao();
+                                $dthInicio = $objHistoricoPorProcedimento->getDthAtual();
+                                $dthPrazoTarefa = $objHistoricoPorProcedimento->getDthPrazoTarefa() ? $objHistoricoPorProcedimento->getDthPrazoTarefa() : null;
+                            }
+                        }
+
+                        if (is_null($objAnalise->getNumTempoExecucao())) {
+                            $objAnalise->setNumTempoExecucao($tempoExecucao);
+                        }
+
+                        if (is_null($objAnalise->getDthInicio())) {
+                            $objAnalise->setDthInicio($dthInicio);
+                        }
+
+                        if (is_null($objAnalise->getDthPrazo())) {
+                            $objAnalise->setDthPrazo($dthPrazoTarefa);
+                        }
+
+                        $objMdUtlAnaliseBD->alterar($objAnalise);
+                    }
+                }
+            }
+
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_analise " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarCamposRevisaoTempoExecucaoNull(){
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlRevisaoBD = new MdUtlRevisaoBD(BancoSEI::getInstance());
+
+        $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+        $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+        $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+        $totalRegistos = $objMdUtlRevisaoBD->contar($objMdUtlRevisaoDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_revisao: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+            $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+            $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
+            $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+            $objMdUtlRevisaoDTO->retDthInicio();
+            $objMdUtlRevisaoDTO->retNumTempoExecucao();
+            $objMdUtlRevisaoDTO->retDthAtual();
+            $objMdUtlRevisaoDTO->retDthPrazo();
+            $arrObjRevisao = $objMdUtlRevisaoBD->listar($objMdUtlRevisaoDTO);
+
+            foreach ($arrObjRevisao as $objRevisao) {
+
+                $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                $objMdUtlHistControleDsmpDTO->setNumIdMdUtlRevisao($objRevisao->getNumIdMdUtlRevisao());
+                $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+                $objMdUtlHistControleDsmpDTO->retDblIdProcedimento();
+                $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                $objMdUtlHistControleDsmpDTO->retNumIdUnidade();
+                $objHistorico = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+
+                if (!$objHistorico){
+                    $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                    $objMdUtlControleDsmpDTO->setNumIdMdUtlRevisao($objRevisao->getNumIdMdUtlRevisao());
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmFila();
+                    $objMdUtlControleDsmpDTO->retDblIdProcedimento();
+                    $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                    $objMdUtlControleDsmpDTO->retNumIdUnidade();
+                    $objMdUtlControleDsmpDTO->retStrTipoAcao();
+                    $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+                }
+
+                if (($objHistorico || $objControleDsmp) && (is_null($objRevisao->getNumTempoExecucao()) || is_null($objRevisao->getDthAtual()) || is_null($objRevisao->getDthPrazo()))) {
+
+                    $idProcedimento = $objHistorico ? $objHistorico->getDblIdProcedimento() : $objControleDsmp->getDblIdProcedimento();
+                    $idUnidade = $objHistorico ? $objHistorico->getNumIdUnidade() : $objControleDsmp->getNumIdUnidade();
+
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
+                    $objMdUtlHistControleDsmpDTO->setNumIdUnidade($idUnidade);
+                    $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                    $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retNumTempoExecucao();
+                    $objMdUtlHistControleDsmpDTO->retStrTipoAcao();
+                    $objMdUtlHistControleDsmpDTO->retDthAtual();
+                    $objMdUtlHistControleDsmpDTO->retDthPrazoTarefa();
+                    $objMdUtlHistControleDsmpDTO->retStrDetalhe();
+                    $arrObjHistoricoPorProcedimento = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
+
+                    foreach ($arrObjHistoricoPorProcedimento as $objHistoricoPorProcedimento)
+                    {
+                        if  (
+                            (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico) &&
+                            $objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO
+                        )
+                        {
+                            $tempoExecucao = $objHistoricoPorProcedimento->getNumTempoExecucao();
+                            $dataInicio = $objHistoricoPorProcedimento->getDthAtual();
+                            $dataPrazo = $objHistoricoPorProcedimento->getDthPrazoTarefa() ? $objHistoricoPorProcedimento->getDthPrazoTarefa() : null;
+
+                            $idUltimaDistribuicao = $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp();
+                        }
+
+
+                        //A data inicio é a data da solicitação da contestação aprovada
+                        // A data prazo de uma revisão de uma contestação é nula
+                        if (
+                            $idUltimaDistribuicao &&
+                            $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() > $idUltimaDistribuicao &&
+                            (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() < $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico) &&
+                            $objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO &&
+                            $objHistoricoPorProcedimento->getStrDetalhe() == MdUtlContestacaoRN::$STR_SOLICITACAO
+                        ){
+                            $dataSolicitacao = $objHistoricoPorProcedimento->getDthAtual();
+                        }
+
+                        if (
+                            $dataSolicitacao &&
+                            (($objHistorico && $objHistoricoPorProcedimento->getNumIdMdUtlHistControleDsmp() == $objHistorico->getNumIdMdUtlHistControleDsmp()) || !$objHistorico) &&
+                            $objHistoricoPorProcedimento->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO &&
+                            ($objHistoricoPorProcedimento->getStrDetalhe() == MdUtlAjustePrazoRN::$STR_APROVADA ||
+                                $objHistoricoPorProcedimento->getStrDetalhe() == MdUtlControleDsmpRN::$STR_FLUXO_FINALIZADO)
+                        ){
+                            $dataInicio = $dataSolicitacao;
+                            $tempoExecucao = 0;
+                            $dataPrazo = null;
+                        }
+                    }
+
+                    if(is_null($objRevisao->getNumTempoExecucao())){
+                        $objRevisao->setNumTempoExecucao($tempoExecucao);
+                    }
+
+                    if(is_null($objRevisao->getDthInicio())){
+                        $objRevisao->setDthInicio($dataInicio);
+                    }
+
+                    if(is_null($objRevisao->getDthPrazo())){
+                        $objRevisao->setDthPrazo($dataPrazo);
+                    }
+
+                    $objMdUtlRevisaoBD->alterar($objRevisao);
+                }
+            }
+
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_revisao " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarMdUtlTriagemPercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+        $objMdUtlTriagemBD = new MdUtlTriagemBD(BancoSEI::getInstance());
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAdmHistPrmGrUsuBD = new MdUtlAdmHistPrmGrUsuBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+
+        $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+        $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
+        $objMdUtlTriagemDTO->setStrStaTipoPresenca(null);
+        $objMdUtlTriagemDTO->setNumTempoExecucaoAtribuido(null);
+        $objMdUtlTriagemDTO->setNumPercentualDesempenho(null);
+        $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlTriagemBD->contar($objMdUtlTriagemDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_triagem: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+            $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+            $objMdUtlTriagemDTO->setStrStaTipoPresenca(null);
+            $objMdUtlTriagemDTO->setNumTempoExecucaoAtribuido(null);
+            $objMdUtlTriagemDTO->setNumPercentualDesempenho(null);
+            $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
+            $objMdUtlTriagemDTO->retNumIdUsuario();
+            $objMdUtlTriagemDTO->retDthAtual();
+            $objMdUtlTriagemDTO->retNumTempoExecucao();
+            $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
+            $objMdUtlTriagemDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlTriagemDTO->setNumPaginaAtual(1);
+            $arrObjTriagem = $objMdUtlTriagemBD->listar($objMdUtlTriagemDTO);
+
+            foreach ($arrObjTriagem as $objTriagem) {
+
+                $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                $objMdUtlControleDsmpDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
+                $objMdUtlControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM), InfraDTO::$OPER_IN);
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+
+                if (!$objControleDsmp) {
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
+                    $objMdUtlHistControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM), InfraDTO::$OPER_IN);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                    $objControleDsmp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+                }
+
+                $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+                $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($objControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+                $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+                $objMdUtlAdmTpCtrlDesemp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+                $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+                $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                $objMdUtlAdmHistPrmGrUsuDTO->setNumIdUsuario($objTriagem->getNumIdUsuario());
+                $objMdUtlAdmHistPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+                $objMdUtlAdmHistPrmGrUsuDTO->retStrStaTipoPresenca();
+                $objMdUtlAdmHistPrmGrUsuDTO->retDthInicial();
+                $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+                $arrMdUtlAdmHistPrmGrUsu = $objMdUtlAdmHistPrmGrUsuBD->listar($objMdUtlAdmHistPrmGrUsuDTO);
+                $arrHistPrmGrUsu = $this->buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objTriagem);
+
+                switch ($arrHistPrmGrUsu['tipoPresenca']) {
+                    case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO :
+                        $percentualDesempenho = $arrHistPrmGrUsu['fatorDesempenhoDiferenciado'];
+                        break;
+                    case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO :
+                        $percentualDesempenho = $this->retornarPercentualTeletrabalho($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                        break;
+                    default:
+                        $percentualDesempenho = 0;
+                }
+
+                $tempoExecucao = intval($objTriagem->getNumTempoExecucao() / (1 + ($percentualDesempenho / 100)));
+
+                // Populando tipo de presença, percentual de desempenho e tempo atribuído
+                $objTriagem->setStrStaTipoPresenca($arrHistPrmGrUsu['tipoPresenca']);
+                $objTriagem->setNumPercentualDesempenho($percentualDesempenho);
+                $objTriagem->setNumTempoExecucaoAtribuido($tempoExecucao);
+
+                $objMdUtlTriagemBD->alterar($objTriagem);
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_triagem " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objTabela)
+    {
+        $arrRetorno = [];
+
+        foreach ($arrMdUtlAdmHistPrmGrUsu as $objMdUtlAdmHistPrmGrUsu) {
+            $dataAtual = DateTime::createFromFormat('d/m/Y H:i:s', $objTabela->getDthAtual());
+            $dataInicial = DateTime::createFromFormat('d/m/Y H:i:s', $objMdUtlAdmHistPrmGrUsu->getDthInicial());
+            $dataFinal = $objMdUtlAdmHistPrmGrUsu->getDthFinal() ? DateTime::createFromFormat('d/m/Y H:i:s', $objMdUtlAdmHistPrmGrUsu->getDthFinal()) : $objMdUtlAdmHistPrmGrUsu->getDthFinal();
+
+            if (!empty($dataFinal) && (
+                    $dataAtual >= $dataInicial &&
+                    $dataAtual < $dataFinal)
+            ) {
+                $arrRetorno['tipoPresenca'] = $objMdUtlAdmHistPrmGrUsu->getStrStaTipoPresenca();
+                $arrRetorno['fatorDesempenhoDiferenciado'] = $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado();
+            }
+            if (
+                $dataAtual >= $dataInicial &&
+                empty($dataFinal)
+            ) {
+                $arrRetorno['tipoPresenca'] = $objMdUtlAdmHistPrmGrUsu->getStrStaTipoPresenca();
+                $arrRetorno['fatorDesempenhoDiferenciado'] = $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado();
+            }
+        }
+
+        return $arrRetorno;
+    }
+
+    protected function retornarPercentualTeletrabalho($idMdUtlAdmPrmGr)
+    {
+        $objMdUtlAdmPrmGrBD = new MdUtlAdmPrmGrBD(BancoSEI::getInstance());
+        $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+        $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
+        $objMdUtlAdmPrmGrDTO->retDblPercentualTeletrabalho();
+        $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrBD->consultar($objMdUtlAdmPrmGrDTO);
+
+        return $objMdUtlAdmPrmGr->getDblPercentualTeletrabalho();
+    }
+
+    protected function atualizarMdUtlAnalisePercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlAnaliseBD = new MdUtlAnaliseBD(BancoSEI::getInstance());
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAdmHistPrmGrUsuBD = new MdUtlAdmHistPrmGrUsuBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+
+        $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+        $objMdUtlAnaliseDTO->setStrStaTipoPresenca(null);
+        $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido(null);
+        $objMdUtlAnaliseDTO->setNumPercentualDesempenho(null);
+        $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+        $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
+        $totalRegistos = $objMdUtlAnaliseBD->contar($objMdUtlAnaliseDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_analise: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+            $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+            $objMdUtlAnaliseDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlAnaliseDTO->setNumPaginaAtual(1);
+            $objMdUtlAnaliseDTO->setStrStaTipoPresenca(null);
+            $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido(null);
+            $objMdUtlAnaliseDTO->setNumPercentualDesempenho(null);
+            $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
+            $objMdUtlAnaliseDTO->retDthAtual();
+            $objMdUtlAnaliseDTO->retNumIdUsuario();
+            $objMdUtlAnaliseDTO->retNumTempoExecucao();
+            $arrObjAnalise = $objMdUtlAnaliseBD->listar($objMdUtlAnaliseDTO);
+
+            foreach ($arrObjAnalise as $objAnalise) {
+
+                $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                $objMdUtlControleDsmpDTO->setNumIdMdUtlAnalise($objAnalise->getNumIdMdUtlAnalise());
+                $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+
+                if (!$objControleDsmp) {
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($objAnalise->getNumIdMdUtlAnalise());
+                    $objMdUtlHistControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                    $objControleDsmp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+                }
+
+                if($objControleDsmp) {
+
+                    $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+                    $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($objControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+                    $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+                    $objMdUtlAdmTpCtrlDesemp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+                    $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdUsuario($objAnalise->getNumIdUsuario());
+                    $objMdUtlAdmHistPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retStrStaTipoPresenca();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthInicial();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+                    $arrMdUtlAdmHistPrmGrUsu = $objMdUtlAdmHistPrmGrUsuBD->listar($objMdUtlAdmHistPrmGrUsuDTO);
+                    $arrHistPrmGrUsu = $this->buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objAnalise);
+
+                    switch ($arrHistPrmGrUsu['tipoPresenca']) {
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO :
+                            $percentualDesempenho = $arrHistPrmGrUsu['fatorDesempenhoDiferenciado'];
+                            break;
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO :
+                            $percentualDesempenho = $this->retornarPercentualTeletrabalho($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                            break;
+                        default:
+                            $percentualDesempenho = 0;
+                    }
+
+                    $tempoExecucao = intval($objAnalise->getNumTempoExecucao() / (1 + ($percentualDesempenho / 100)));
+
+                    // Populando tipo de presença, percentual de desempenho e tempo atribuído
+                    $objAnalise->setStrStaTipoPresenca($arrHistPrmGrUsu['tipoPresenca']);
+                    $objAnalise->setNumPercentualDesempenho($percentualDesempenho);
+                    $objAnalise->setNumTempoExecucaoAtribuido($tempoExecucao);
+
+                    $objMdUtlAnaliseBD->alterar($objAnalise);
+                }
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_analise " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarMdUtlRevisaoPercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlRevisaoBD = new MdUtlRevisaoBD(BancoSEI::getInstance());
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAdmHistPrmGrUsuBD = new MdUtlAdmHistPrmGrUsuBD(BancoSEI::getInstance());
+
+        $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+        $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+        $objMdUtlRevisaoDTO->setStrStaTipoPresenca(null);
+        $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido(null);
+        $objMdUtlRevisaoDTO->setNumPercentualDesempenho(null);
+        $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlRevisaoBD->contar($objMdUtlRevisaoDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_revisao: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+            $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
+            $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+            $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlRevisaoDTO->setNumPaginaAtual(1);
+            $objMdUtlRevisaoDTO->setStrStaTipoPresenca(null);
+            $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido(null);
+            $objMdUtlRevisaoDTO->setNumPercentualDesempenho(null);
+            $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+            $objMdUtlRevisaoDTO->retDthAtual();
+            $objMdUtlRevisaoDTO->retNumIdUsuario();
+            $objMdUtlRevisaoDTO->retNumTempoExecucao();
+            $arrObjRevisao = $objMdUtlRevisaoBD->listar($objMdUtlRevisaoDTO);
+
+            foreach ($arrObjRevisao as $objRevisao) {
+
+                $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                $objMdUtlControleDsmpDTO->setNumIdMdUtlRevisao($objRevisao->getNumIdMdUtlRevisao());
+                $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+                $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+
+                if (!$objControleDsmp) {
+                    $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($objRevisao->getNumIdMdUtlRevisao());
+                    $objMdUtlHistControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+                    $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+                    $objControleDsmp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+                }
+
+                if($objControleDsmp) {
+
+                    $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+                    $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($objControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+                    $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+                    $objMdUtlAdmTpCtrlDesemp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+                    $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdUsuario($objRevisao->getNumIdUsuario());
+                    $objMdUtlAdmHistPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retStrStaTipoPresenca();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthInicial();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+                    $arrMdUtlAdmHistPrmGrUsu = $objMdUtlAdmHistPrmGrUsuBD->listar($objMdUtlAdmHistPrmGrUsuDTO);
+                    $arrHistPrmGrUsu = $this->buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objRevisao);
+
+                    switch ($arrHistPrmGrUsu['tipoPresenca']) {
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO :
+                            $percentualDesempenho = $arrHistPrmGrUsu['fatorDesempenhoDiferenciado'];
+                            break;
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO :
+                            $percentualDesempenho = $this->retornarPercentualTeletrabalho($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                            break;
+                        default:
+                            $percentualDesempenho = 0;
+                    }
+
+                    $tempoExecucao = intval($objRevisao->getNumTempoExecucao() / (1 + ($percentualDesempenho / 100)));
+
+                    // Populando tipo de presença, percentual de desempenho e tempo atribuído
+                    $objRevisao->setStrStaTipoPresenca($arrHistPrmGrUsu['tipoPresenca']);
+                    $objRevisao->setNumPercentualDesempenho($percentualDesempenho);
+                    $objRevisao->setNumTempoExecucaoAtribuido($tempoExecucao);
+
+
+                    $objMdUtlRevisaoBD->alterar($objRevisao);
+                }
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_revisao " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarMdUtlHistControleDsmpPercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlHistControleDsmpBD = new MdUtlHistControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAdmHistPrmGrUsuBD = new MdUtlAdmHistPrmGrUsuBD(BancoSEI::getInstance());
+
+        $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+        $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlHistControleDsmpBD->contar($objMdUtlHistControleDsmpDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_hist_controle_dsmp: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+            $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+            $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
+            $objMdUtlHistControleDsmpDTO->retStrStaAtendimentoDsmp();
+            $objMdUtlHistControleDsmpDTO->retNumIdUsuarioDistribuicao();
+            $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+            $objMdUtlHistControleDsmpDTO->retNumTempoExecucao();
+            $objMdUtlHistControleDsmpDTO->retDthAtual();
+            $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+            $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlHistControleDsmpDTO->setNumPaginaAtual($pagina);
+            $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
+            $arrObjHistorico = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
+
+            $arrNaoAtualizar = [MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO];
+            $arrNaoAtualizarTempoExecucaoAtribuido = [MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE];
+
+            foreach ($arrObjHistorico as $objHistorico) {
+
+                if ($objHistorico && !in_array($objHistorico->getStrStaAtendimentoDsmp(), $arrNaoAtualizar) && $objHistorico->getNumIdUsuarioDistribuicao() != null) {
+
+                    $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+                    $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($objHistorico->getNumIdMdUtlAdmTpCtrlDesemp());
+                    $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+                    $objMdUtlAdmTpCtrlDesemp = $objMdUtlHistControleDsmpBD->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+                    $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdUsuario($objHistorico->getNumIdUsuarioDistribuicao());
+                    $objMdUtlAdmHistPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retStrStaTipoPresenca();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthInicial();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+                    $arrMdUtlAdmHistPrmGrUsu = $objMdUtlAdmHistPrmGrUsuBD->listar($objMdUtlAdmHistPrmGrUsuDTO);
+                    $arrHistPrmGrUsu = $this->buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objHistorico);
+
+                    switch ($arrHistPrmGrUsu['tipoPresenca']) {
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO :
+                            $percentualDesempenho = $arrHistPrmGrUsu['fatorDesempenhoDiferenciado'];
+                            break;
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO :
+                            $percentualDesempenho = $this->retornarPercentualTeletrabalho($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                            break;
+                        default:
+                            $percentualDesempenho = 0;
+                    }
+
+                    $tempoExecucao = intval($objHistorico->getNumTempoExecucao() / (1 + ($percentualDesempenho / 100)));
+
+                    // Populando tipo de presença, percentual de desempenho e tempo atribuído
+                    $objHistorico->setStrStaTipoPresenca($arrHistPrmGrUsu['tipoPresenca']);
+                    $objHistorico->setNumPercentualDesempenho($percentualDesempenho);
+
+                    //Campo não preenchido quando o Status for igual a Aguardando Triagem, Aguardando Análise, Aguardando Revisão, Aguardando Correção de Triagem ou Aguardando Correção de Análise
+                    if (!in_array($objHistorico->getStrStaAtendimentoDsmp(), $arrNaoAtualizarTempoExecucaoAtribuido)) {
+                        $objHistorico->setNumTempoExecucaoAtribuido($tempoExecucao);
+                    }
+                    $objMdUtlHistControleDsmpBD->alterar($objHistorico);
+                }
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_hist_controle_dsmp " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
+    }
+
+    protected function atualizarMdUtlControleDsmpPercentualDesempenho()
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros = 0;
+
+        $objMdUtlControleDsmpBD = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+        $objMdUtlAdmTpCtrlDesempBD = new MdUtlAdmTpCtrlDesempBD(BancoSEI::getInstance());
+        $objMdUtlAdmHistPrmGrUsuBD = new MdUtlAdmHistPrmGrUsuBD(BancoSEI::getInstance());
+
+        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+        $objMdUtlControleDsmpDTO->retStrStaAtendimentoDsmp();
+        $objMdUtlControleDsmpDTO->retNumIdUsuarioDistribuicao();
+        $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $objMdUtlControleDsmpDTO->retNumIdUsuarioDistribuicao();
+        $objMdUtlControleDsmpDTO->retNumIdMdUtlControleDsmp();
+        $objMdUtlControleDsmpDTO->retNumTempoExecucao();
+        $objMdUtlControleDsmpDTO->retDthAtual();
+        $objMdUtlControleDsmpDTO->setBolExclusaoLogica(false);
+        $totalRegistos = $objMdUtlControleDsmpBD->contar($objMdUtlControleDsmpDTO);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        $this->logar("Total de Registros md_utl_controle_dsmp: " . $totalRegistos);
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+        $pagina = 0;
+        while($qtdRegistros < $totalRegistos) {
+            $arrObjControleDsmp = $objMdUtlControleDsmpBD->listar($objMdUtlControleDsmpDTO);
+
+            $arrNaoAtualizar = [MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO];
+            $arrNaoAtualizarTempoExecucaoAtribuido = [MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE];
+
+            foreach ($arrObjControleDsmp as $objControleDsmp) {
+
+                if ($objControleDsmp && !in_array($objControleDsmp->getStrStaAtendimentoDsmp(), $arrNaoAtualizar) && $objControleDsmp->getNumIdUsuarioDistribuicao() != null) {
+
+                    $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+                    $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($objControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+                    $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+                    $objMdUtlAdmTpCtrlDesemp = $objMdUtlAdmTpCtrlDesempBD->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+                    $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                    $objMdUtlAdmHistPrmGrUsuDTO->setNumIdUsuario($objControleDsmp->getNumIdUsuarioDistribuicao());
+                    $objMdUtlAdmHistPrmGrUsuDTO->retNumFatorDesempDiferenciado();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retStrStaTipoPresenca();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthInicial();
+                    $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+                    $arrMdUtlAdmHistPrmGrUsu = $objMdUtlAdmHistPrmGrUsuBD->listar($objMdUtlAdmHistPrmGrUsuDTO);
+                    $arrHistPrmGrUsu = $this->buscarHistPrmGrUsu($arrMdUtlAdmHistPrmGrUsu, $objControleDsmp);
+
+                    switch ($arrHistPrmGrUsu['tipoPresenca']) {
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO :
+                            $percentualDesempenho = $arrHistPrmGrUsu['fatorDesempenhoDiferenciado'];
+                            break;
+                        case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO :
+                            $percentualDesempenho = $this->retornarPercentualTeletrabalho($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+                            break;
+                        default:
+                            $percentualDesempenho = 0;
+                    }
+
+                    $tempoExecucao = intval($objControleDsmp->getNumTempoExecucao() / (1 + ($percentualDesempenho / 100)));
+
+                    // Populando tipo de presença, percentual de desempenho e tempo atribuído
+                    $objControleDsmp->setStrStaTipoPresenca($arrHistPrmGrUsu['tipoPresenca']);
+                    $objControleDsmp->setNumPercentualDesempenho($percentualDesempenho);
+
+                    //Campo não preenchido quando o Status for igual a Aguardando Triagem, Aguardando Análise, Aguardando Revisão, Aguardando Correção de Triagem ou Aguardando Correção de Análise
+                    if (!in_array($objControleDsmp->getStrStaAtendimentoDsmp(), $arrNaoAtualizarTempoExecucaoAtribuido)) {
+                        $objControleDsmp->setNumTempoExecucaoAtribuido($tempoExecucao);
+
+                        //Para o Status Em Correção de Análise, onde ocorreu o Retorno ao Responsável, deve ser atribuído o valor igual a 0
+                        if (MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE == $objControleDsmp->getStrStaAtendimentoDsmp()) {
+                            $objControleDsmp->setNumTempoExecucaoAtribuido(0);
+                        }
+                    }
+                    $objMdUtlControleDsmpBD->alterar($objControleDsmp);
+                }
+            }
+            $pagina++;
+            $qtdRegistros += $qtdRegistrosPorVez;
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $this->logar("ALTERANDO md_utl_controle_dsmp " . $qtdRegistros . " de " . $totalRegistos);
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+        }
     }
 
     protected function fixIndices(InfraMetaBD $objInfraMetaBD, $arrTabelas)
@@ -1201,12 +2499,15 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
         InfraDebug::getInstance()->setBolDebugInfra(false);
     }
 
-    private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = 'neijobson@anatel.gov.br', $strPeriodicidade = null){
+    private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = null, $strPeriodicidade = null)
+    {
+        $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+        $strEmailErro = $objInfraParametro->getValor('SEI_EMAIL_ADMINISTRADOR');
 
-        $msgLogar = 'Inserção de Novo Agendamento: '.$strDescricao;
+        $msgLogar = 'Inserção de Novo Agendamento: ' . $strDescricao;
         $this->logar($msgLogar);
 
-        if(is_null($strPeriodicidade)){
+        if (is_null($strPeriodicidade)) {
             $strPeriodicidade = InfraAgendamentoTarefaRN::$PERIODICIDADE_EXECUCAO_HORA;
         }
 
@@ -1232,50 +2533,77 @@ class MdUtlAtualizadorSeiRN extends InfraRN {
             $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
         }
     }
-}
 
-SessaoSEI::getInstance(false);
-BancoSEI::getInstance()->setBolScript(true);
+    private function _atualizarHistControleDsmp()
+    {
+        $msgLogar = 'Atualização do Histórico do Controle de Desempenho: ';
+        $this->logar($msgLogar);
+        $objInfraBanco = BancoSEI::getInstance();
 
-if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI','UsuarioScript')){
-    throw new InfraException('Chave BancoSEI/UsuarioScript não encontrada.');
-}
+        $utlRegrasGeraisRN = new MdUtlRegrasGeraisRN();
 
-if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI','UsuarioScript'))){
-    throw new InfraException('Chave BancoSEI/UsuarioScript não possui valor.');
-}
+        $sql = 'SELECT DISTINCT p.id_procedimento FROM procedimento p
+                INNER JOIN md_utl_hist_controle_dsmp muhcd ON p.id_procedimento = muhcd.id_procedimento
+                ORDER BY p.id_procedimento ASC';
 
-if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI','SenhaScript')){
-    throw new InfraException('Chave BancoSEI/SenhaScript não encontrada.');
-}
-
-if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI','SenhaScript'))){
-    throw new InfraException('Chave BancoSEI/SenhaScript não possui valor.');
-}
-
-$configuracaoSEI = new ConfiguracaoSEI();
-$arrConfig = $configuracaoSEI->getInstance()->getArrConfiguracoes();
-
-if(!isset($arrConfig['SEI']['Modulos'])){
-    throw new InfraException('PARÂMETROS DE MÓDULOS NO CONFIGURAÇÃO DO SEI NÃO DECLARADO');
-} else {
-    $arrModulos = $arrConfig['SEI']['Modulos'];
-    if(!key_exists('UtilidadesIntegracao', $arrModulos)){
-        throw new InfraException('MÓDULO DO UTILIDADES NÃO DECLARADO NA CONFIGURAÇÃO DO SEI');
+        $arrProcedimentos = $objInfraBanco->consultarSql($sql);
+        if (!empty($arrProcedimentos)) {
+            foreach ($arrProcedimentos as $procedimento) {
+                $idProcedimento = $procedimento['id_procedimento'];
+                $objHistorico = $utlRegrasGeraisRN->recuperarObjHistorico($idProcedimento, InfraDTO::$TIPO_ORDENACAO_ASC);
+                if ($objHistorico) {
+                    $utlRegrasGeraisRN->migracaoHistoricoDsmp($objHistorico, $idProcedimento);
+                }
+            }
+        }
     }
 }
 
-if(!class_exists('UtilidadesIntegracao')){
-    throw new InfraException('A CLASSE PRINCIPAL "UTILIDADESINTEGRACAO" DO MÓDULO DO UTILIDADES NÃO FOI ENCONTRADA');
-}
+try {
+    SessaoSEI::getInstance(false);
+    BancoSEI::getInstance()->setBolScript(true);
 
-$objVersaoSeiRN = new MdUtlAtualizadorSeiRN();
-$objVersaoSeiRN->atualizarVersao();
-exit;
+    if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI', 'UsuarioScript')) {
+        throw new InfraException('Chave BancoSEI/UsuarioScript não encontrada.');
+    }
 
-}catch(Exception $e){
+    if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI', 'UsuarioScript'))) {
+        throw new InfraException('Chave BancoSEI/UsuarioScript não possui valor.');
+    }
+
+    if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI', 'SenhaScript')) {
+        throw new InfraException('Chave BancoSEI/SenhaScript não encontrada.');
+    }
+
+    if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI', 'SenhaScript'))) {
+        throw new InfraException('Chave BancoSEI/SenhaScript não possui valor.');
+    }
+
+    $configuracaoSEI = new ConfiguracaoSEI();
+    $arrConfig = $configuracaoSEI->getInstance()->getArrConfiguracoes();
+
+    if (!isset($arrConfig['SEI']['Modulos'])) {
+        throw new InfraException('PARÂMETROS DE MÓDULOS NO CONFIGURAÇÃO DO SEI NÃO DECLARADO');
+    } else {
+        $arrModulos = $arrConfig['SEI']['Modulos'];
+        if (!key_exists('UtilidadesIntegracao', $arrModulos)) {
+            throw new InfraException('MÓDULO DO UTILIDADES NÃO DECLARADO NA CONFIGURAÇÃO DO SEI');
+        }
+    }
+
+    if (!class_exists('UtilidadesIntegracao')) {
+        throw new InfraException('A CLASSE PRINCIPAL "UTILIDADESINTEGRACAO" DO MÓDULO DO UTILIDADES NÃO FOI ENCONTRADA');
+    }
+
+    $objVersaoSeiRN = new MdUtlAtualizadorSeiRN();
+    $objVersaoSeiRN->atualizarVersao();
+    exit;
+
+} catch (Exception $e) {
     echo(InfraException::inspecionar($e));
-    try{LogSEI::getInstance()->gravar(InfraException::inspecionar($e));	}catch (Exception $e){}
+    try {
+        LogSEI::getInstance()->gravar(InfraException::inspecionar($e));
+    } catch (Exception $e) {
+    }
     exit(1);
 }
-?>
