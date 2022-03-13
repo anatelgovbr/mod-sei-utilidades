@@ -488,12 +488,13 @@ select[multiple] {
 
 #divFila{
     display: inline-block;
-    margin-left: 45px;
 }
 
 #divEncaminhamentoAnl{
     margin-top: 1.8%;
     display: inline-block;
+    margin-right: 45px;
+    margin-bottom: 1.8%;
 }
 
 #selFila{
@@ -607,7 +608,29 @@ $txtTooltipEncaminhamentoAnalise = 'A depender das parametrizações em seu perfil
         <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label><br/>
         <div class="clear"></div>
         <input type="text" style="width:300px" id="txtNomeFila" name="txtNomeFila" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeFila() ?>" disabled/><br/><br/>
-
+        <?php if($isTpProcParametrizado){ ?>
+            <div id="divPrincipalEncaminhamento">
+                <div id="divEncaminhamentoAnl">
+                    <label id="lblEncaminhamentoAnl" for="selEncaminhamentoAnl"  class="infraLabelObrigatorio">Encaminhamento da Análise:</label>
+                    <a style="" id="btAjudaEncAnalise" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoAnalise)?>
+                       tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+                        <img class="tamanhoBtnAjuda" id="imgAjudaEncAnalise" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" style="width: 16px; height: 16px; margin-bottom: -3px; margin-left: 4px" class="infraImg"/>
+                    </a>
+                    <select id="selEncaminhamentoAnl" name="selEncaminhamentoAnl" style="width:307px" class="infraSelect padraoSelect"
+                            onchange="controlarExibicaoAnalise(this);"
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados()?>">
+                        <?php echo $selEncaminhamentoAnalise?>
+                    </select>
+                </div>
+                <div id="divFila" style="<?php //echo $displayFila ?>">
+                    <label id="lblFila" for="selFila" class="infraLabelObrigatorio">Fila:</label>
+                    <select id="selFila" name="selFila" class="infraSelect" style="width:307px" onchange="carregarHiddenFila(this)">
+                        <?= $selFila ?>
+                    </select>
+                </div>
+            </div>
+        <? } ?>
+        <br/>
 <?php
 
 
@@ -619,30 +642,9 @@ $txtTooltipEncaminhamentoAnalise = 'A depender das parametrizações em seu perfil
                 Informações Complementares da Análise:
             </label>
 
-            <textarea <?=$disabledConsultar?> id="txaInformacaoComplementar" name="txaInformacaoComplementar" style="resize: none;" rows="4" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?php echo $strInformComp ?></textarea>
+            <textarea <?=$disabledConsultar?> id="txaInformacaoComplementar" name="txaInformacaoComplementar" style="resize: none; width: 98.5%" rows="4" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?php echo $strInformComp ?></textarea>
         </div>
-        <?php if($isTpProcParametrizado){ ?>
-        <div id="divPrincipalEncaminhamento">
-          <div id="divEncaminhamentoAnl">
-                <label id="lblEncaminhamentoAnl" for="selEncaminhamentoAnl"  class="infraLabelObrigatorio">Encaminhamento da Análise:</label>
-                <a style="" id="btAjudaEncAnalise" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoAnalise)?>
-                 tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                  <img class="tamanhoBtnAjuda" id="imgAjudaEncAnalise" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" style="width: 16px; height: 16px; margin-bottom: -3px; margin-left: 4px" class="infraImg"/>
-                </a>
-                <select id="selEncaminhamentoAnl" name="selEncaminhamentoAnl" class="infraSelect padraoSelect"
-                        onchange="controlarExibicaoAnalise(this);"
-                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados()?>">
-                        <?php echo $selEncaminhamentoAnalise?>
-                </select>
-            </div>
-           <div id="divFila" style="<?php echo $displayFila ?>">
-                <label id="lblFila" for="selFila" class="infraLabelObrigatorio">Fila:</label>
-                <select id="selFila" name="selFila" class="infraSelect" onchange="carregarHiddenFila(this)">
-                    <?= $selFila ?>
-                </select>
-            </div>
-        </div>
-    <? } ?>
+
 
 
         <?php

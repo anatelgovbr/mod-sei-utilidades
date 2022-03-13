@@ -997,4 +997,28 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
         }
     }
 
+    public function buscarUnidadesComProcessosEmAndamentoTpControle($idTipoControleDsmp, $arrObjUnidades)
+    {
+        $arrMdUtlControleDsmpVinculadosProcessos = array();
+
+        foreach ($arrObjUnidades as $objUnidades) {
+            $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+            $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+            $objMdUtlControleDsmpDTO->setNumIdUnidade($objUnidades->getNumIdUnidade());
+            $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleDsmp);
+            $objMdUtlControleDsmpDTO->setOrdStrSiglaUnidade(InfraDTO::$TIPO_ORDENACAO_ASC);
+            $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
+            $objMdUtlControleDsmpDTO->retNumIdUnidade();
+            $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+            $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
+
+            $arrMdUtlControleDsmp = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+            foreach ($arrMdUtlControleDsmp as $objMdUtlControleDsmp) {
+                array_push($arrMdUtlControleDsmpVinculadosProcessos, $objMdUtlControleDsmp);
+            }
+        }
+
+        return $arrMdUtlControleDsmpVinculadosProcessos;
+    }
+
 }

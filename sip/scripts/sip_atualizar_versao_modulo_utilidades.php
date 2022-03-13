@@ -24,39 +24,43 @@ class MdUtlAtualizadorSipRN extends InfraRN
         parent::__construct();
     }
 
+    protected function getHistoricoVersoes()
+    {
+        return $this->historicoVersoes;
+    }
+
     protected function inicializarObjInfraIBanco()
     {
         return BancoSip::getInstance();
     }
 
-    private function inicializar($strTitulo)
+    protected function inicializar($strTitulo)
     {
         session_start();
         SessaoSip::getInstance(false);
 
         ini_set('max_execution_time', '0');
         ini_set('memory_limit', '-1');
-        @ini_set('zlib.output_compression', '0');
         @ini_set('implicit_flush', '1');
         ob_implicit_flush();
 
-        $this->objDebug = InfraDebug::getInstance();
-        $this->objDebug->setBolLigado(true);
-        $this->objDebug->setBolDebugInfra(true);
-        $this->objDebug->setBolEcho(true);
-        $this->objDebug->limpar();
+        InfraDebug::getInstance()->setBolLigado(true);
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+        InfraDebug::getInstance()->setBolEcho(true);
+        InfraDebug::getInstance()->limpar();
 
         $this->numSeg = InfraUtil::verificarTempoProcessamento();
+
         $this->logar($strTitulo);
     }
 
-    private function logar($strMsg)
+    protected function logar($strMsg)
     {
         InfraDebug::getInstance()->gravar($strMsg);
         flush();
     }
 
-    private function finalizar($strMsg = null, $bolErro = false)
+    protected function finalizar($strMsg = null, $bolErro = false)
     {
 
         if (!$bolErro) {
@@ -86,12 +90,11 @@ class MdUtlAtualizadorSipRN extends InfraRN
             if (!(BancoSip::getInstance() instanceof InfraMySql) &&
                 !(BancoSip::getInstance() instanceof InfraSqlServer) &&
                 !(BancoSip::getInstance() instanceof InfraOracle)) {
-
                 $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSip::getInstance()), true);
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.532.1';
+            $numVersaoInfraRequerida = '1.532.3';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
@@ -106,7 +109,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             if (count($objInfraMetaBD->obterTabelas('sip_teste')) == 0) {
                 BancoSip::getInstance()->executarSql('CREATE TABLE sip_teste (id ' . $objInfraMetaBD->tipoNumero() . ' null)');
             }
-			
+
             BancoSip::getInstance()->executarSql('DROP TABLE sip_teste');
 
             $objInfraParametro = new InfraParametro(BancoSip::getInstance());

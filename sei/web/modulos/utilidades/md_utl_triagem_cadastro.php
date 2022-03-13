@@ -353,11 +353,13 @@ PaginaSEI::getInstance()->abrirStyle(); ?>
      margin-top: -1.8%;
      margin-bottom: 2%;
      display: inline-block;
+     margin-right: 45px;
     }
 
     #divFila{
       display: inline-block;
-    margin-left: 45px;
+      margin-bottom: 2%;
+      margin-right: 320px;
     }
 
     #divPrincipalEncaminhamento{
@@ -452,6 +454,29 @@ $txtTooltipEncaminhamentoTriagem = 'A depender das parametrizações em seu perfil
         <div class="clear"></div>
         <input type="text" style="width:59.9%" id="txtNomeFila" name="txtNomeFila" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeFila() ?>" disabled/><br/><br/>
 
+        <br/>
+        <div id="divPrincipalEncaminhamento">
+            <div id="divEncaminhamentoTriagem" style="<?php echo $displayEncaminhamento ?>">
+                <label for="selEncaminhamentoTriagem" id="lblEncaminhamentoTriagem" class="infraLabelObrigatorio">Encaminhamento da Triagem:</label>
+                <a style="" Kid="btAjudaEncTriagem" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoTriagem)?>
+                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+                    <img class="tamanhoBtnAjuda" id="imgAjudaEncTriagem" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
+                </a>
+
+                <select onchange="controlarExibicaoFila(this);" id="selEncaminhamentoTriagem" class="infraSelect" name="selEncaminhamentoTriagem">
+                    <?= $selEncaminhamentoTriagem; ?>
+                </select>
+            </div>
+
+            <div id="divFila" style="<?php echo $displayFila ?>">
+                <label for="selFila" id="lblFila" class="infraLabelObrigatorio">Fila:</label>
+
+                <select id="selFila" name="selFila" class="infraSelect">
+                    <?= $selFila; ?>
+                </select>
+            </div>
+        </div>
+
         <div id="divGrupoAtividade" <?php if (!$existeGrupoCadastrado || $isConsultar) { echo 'style="display:none"'; }?>>
             <div style='width: 60%; margin: 0; display:inline; float:left;'>
                 <label id="lblGrupoAtividade" for="selGrupoAtividade" accesskey="" class="infraLabelOpcional">Grupo de Atividade:</label>
@@ -542,28 +567,6 @@ $txtTooltipEncaminhamentoTriagem = 'A depender das parametrizações em seu perfil
         </div>
 
         <input type="hidden" name="hdnTbAtividade" id="hdnTbAtividade" utlCampoObrigatorio="a" value="<?php echo $strGridTriagem; ?>"/>
-
-        <div id="divPrincipalEncaminhamento">
-            <div id="divEncaminhamentoTriagem" style="<?php echo $displayEncaminhamento ?>">
-                <label for="selEncaminhamentoTriagem" id="lblEncaminhamentoTriagem" class="infraLabelObrigatorio">Encaminhamento da Triagem:</label>
-                <a style="" id="btAjudaEncTriagem" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoTriagem)?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img class="tamanhoBtnAjuda" id="imgAjudaEncTriagem" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
-                </a>
-
-                <select onchange="controlarExibicaoFila(this);" id="selEncaminhamentoTriagem" class="infraSelect" name="selEncaminhamentoTriagem">
-                    <?= $selEncaminhamentoTriagem; ?>
-                </select>
-            </div>
-
-            <div id="divFila" style="<?php echo $displayFila ?>">
-                <label for="selFila" id="lblFila" class="infraLabelObrigatorio">Fila:</label>
-
-                <select id="selFila" name="selFila" class="infraSelect">
-                    <?= $selFila; ?>
-                </select>
-            </div>
-        </div>
 
         <div  id="divPrazoResposta">
 

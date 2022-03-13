@@ -1062,6 +1062,7 @@ $txtTooltipTotalTempoExecutadoPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenc
 
 $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDistribuicaoDinamicoCargaHorariaDistribuidaPeriodo($idTipoControle);
 
+$txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão no Período corresponde ao tempo da jornada de trabalho esperada para o Período de distribuição e acompanhamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho, abatendo Feriados que ocorram no Período ou possível jornada reduzida do Participante neste Tipo de Controle de Desempenho.';
 ?>
     <form id="frmTpControleLista" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -1181,7 +1182,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
         <div id="divCargaHrPadrao" style='padding-top: 3px;'>
             <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo) ?>>
+            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao) ?>>
                 <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
             </a>

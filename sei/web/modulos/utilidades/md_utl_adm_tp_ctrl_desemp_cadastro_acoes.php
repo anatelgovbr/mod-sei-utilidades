@@ -129,6 +129,14 @@ switch($_GET['acao']){
                  $strItensSelGestores .= "<option value='" . $arrGestoresDTO[$x]->getNumIdUsuario() .  "'>" . $arrGestoresDTO[$x]->getStrNomeUsuario().' (' .$arrGestoresDTO[$x]->getStrSiglaUsuario().')'."</option>";
             }
 
+            // Buscar unidades que não podem ser desvinculados por ter processos em adamento para validação no front-end
+            $arrUnidadesProcessos = $objTipoControleUtilidadesRN->buscarUnidadesComProcessosEmAndamentoTpControle($_GET['id_tipo_controle_utilidades'], $arrUnidades);
+            $strUnidadesComProcessoVinculado = 'var arrUnidadesComProcessoVinculado = Array();'."\n";
+            $keyUnidade = 0;
+            foreach($arrUnidadesProcessos as $objUnidadeProcessos){
+                $strUnidadesComProcessoVinculado .= 'arrUnidadesComProcessoVinculado['.$keyUnidade++.'] = {id_unidade: \''.$objUnidadeProcessos->getNumIdUnidade().'\', sigla_unidade: \''.$objUnidadeProcessos->getStrSiglaUnidade().'\', processo_formatado: \''.$objUnidadeProcessos->getStrProtocoloProcedimentoFormatado().'\'};'."\n";
+            }
+
         } else {
             $objTipoControleUtilidadesDTO->setNumIdMdUtlAdmTpCtrlDesemp($_POST['hdnIdTipoControleUtilidades']);
             $objTipoControleUtilidadesDTO->setStrNome($_POST['txtNome']);

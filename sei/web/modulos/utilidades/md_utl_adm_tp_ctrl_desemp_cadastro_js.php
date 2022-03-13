@@ -154,6 +154,54 @@ function carregarComponenteUnidades(){
     };
 
     objLupaUnidades = new infraLupaSelect('selUnidades','hdnUnidades','<?=$strLinkUnidadesSelecao?>');
+
+    objLupaUnidades.processarRemocao = function(itens){
+        <?php echo $strUnidadesComProcessoVinculado ?>
+        var msgCorpo = '';
+        var qtde = 0;
+        var qtdeTotal = 0;
+        var idUnidadeQualquer = null;
+        var existeMaisDeUma = false;
+        var idUnidadeQualquer = null;
+
+        for(var i=0;i < itens.length;i++){
+            for(var j=0;j < arrUnidadesComProcessoVinculado.length; j++){
+                if (itens[i].value == arrUnidadesComProcessoVinculado[j].id_unidade) {
+
+                    // limitar a lista em 15 registros
+                    if (qtde < 15) {
+                        msgCorpo += arrUnidadesComProcessoVinculado[j].sigla_unidade + ": " + arrUnidadesComProcessoVinculado[j].processo_formatado + "\n";
+                        qtde++;
+                    }
+
+                    // logica para adequar plural de texto de unidade
+                    if (!idUnidadeQualquer) {
+                        idUnidadeQualquer = arrUnidadesComProcessoVinculado[j].id_unidade;
+                    }
+                    if (itens[i].value != idUnidadeQualquer){
+                        existeMaisDeUma = true;
+                    }
+                    qtdeTotal++;
+                }
+            }
+        }
+
+        // Adequaçoes de mensagem para exibir na tela levando em consideração plural/singular e se possui mais de 15 registros
+        var msgInicio = "A Unidade não pode ser removida, pois está vinculada com processos em fluxo de atendimento em andamento.\n \n";
+        if (existeMaisDeUma){
+            msgInicio = "As Unidades não podem ser removidas, pois está vinculada com processos em fluxo de atendimento em andamento.\n \n";
+        }
+        if (qtdeTotal > 15) {
+            msgCorpo += '...'
+        }
+
+        if (qtde > 0){
+            alert(msgInicio + msgCorpo);
+            return false;
+        }
+
+        return true;
+    }
 }
 
 

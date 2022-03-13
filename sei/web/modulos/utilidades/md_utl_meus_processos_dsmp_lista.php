@@ -67,7 +67,6 @@ $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaC
 
 //Array que sera usado para montar os tipos de controles da unidade
 $arrObjTpControleUnidadeLogada     = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
-#$arrObjTpControle                  = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogadaQueExisteProcesso();
 $arrListaTpControle                = array();
 $arrListaIdsTpControle             = array();
 if (count($arrObjTpControleUnidadeLogada) > 0 ){
@@ -793,6 +792,8 @@ $txtTooltipTotalTempoPendenteExecucao = 'O Total corresponde à soma do Tempo de 
 $txtTooltipTotalTempoExecutadoPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idTipoControle);
 
 $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamicoCargaHorariaDistribuidaPeriodo($idTipoControle);
+
+$txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão no Período corresponde ao tempo da jornada de trabalho esperada para o Período de distribuição e acompanhamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho, abatendo Feriados que ocorram no Período ou possível jornada reduzida do Participante neste Tipo de Controle de Desempenho.';
 ?>
     <form id="frmTpControleLista" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -908,7 +909,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
         <div id="divCargaHrPadrao">
             <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo) ?>>
+            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao) ?>>
                 <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
                      src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
             </a>

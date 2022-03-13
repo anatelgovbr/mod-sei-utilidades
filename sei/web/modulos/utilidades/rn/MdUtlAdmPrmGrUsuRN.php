@@ -367,25 +367,8 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
         if( is_null($objPrmGrUsuDTO)) return 0;
         
-        $staTipoPresenca = $objPrmGrUsuDTO->getStrStaTipoPresenca();
-        $numFatorDesempDife = $objPrmGrUsuDTO->getNumFatorDesempDiferenciado();
         $staTipoJornada  = $objPrmGrUsuDTO->getStrStaTipoJornada();
         $numFatorReducaoJor = $objPrmGrUsuDTO->getNumFatorReducaoJornada();
-
-
-        switch($staTipoPresenca){
-            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_PRESENCIAL:
-                $fatorDesempUsu = 1;
-                break;
-
-            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_TELETRABALHO:
-                $fatorDesempUsu = $numPercentualTele;
-                break;
-
-            case MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO:
-                $fatorDesempUsu = $numFatorDesempDife;
-                break;
-        }
 
         switch ($staTipoJornada){
             case MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_INTEGRAL:
@@ -397,7 +380,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
                 break;
         }
 
-        return intval(($numCargaPadrao * $diasUteis) / (1 + ($fatorDesempUsu / 100)) * $fatorReducaoFornada);
+        return intval(($numCargaPadrao * $diasUteis)   * $fatorReducaoFornada);
     }
 
     protected function getDiasUteisNoPeriodoConectado($staFrequencia){
@@ -406,12 +389,17 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
         $dataAtual = InfraData::getStrDataAtual();
         $dataAtualFormatada = explode('/', $dataAtual);
+        $diaAtual      = $dataAtualFormatada[0];
         $mesAtual      = $dataAtualFormatada[1];
         $anoAtual      = $dataAtualFormatada[2];
 
         switch ($staFrequencia){
             case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
-                $numFrequencia = 1;
+                $dtInicial = $diaAtual . '/' . $mesAtual . '/' . $anoAtual;
+                $dtFinal   = $diaAtual . '/' . $mesAtual . '/' . $anoAtual;
+                $diaUtil = $MdUtlPrazoRN->verificaDiaUtil($dtInicial, $dtFinal, false);
+
+                $numFrequencia = $diaUtil ? 1 : 0;
                 break;
 
             case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
@@ -431,7 +419,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
             case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
                 $numDias = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
-                $dtInicial = 01 . '/' . $mesAtual . '/' . $anoAtual;
+                $dtInicial = '01' . '/' . $mesAtual . '/' . $anoAtual;
                 $dtFinal   = $numDias . '/' . $mesAtual . '/' . $anoAtual;
 
                 $diasUteis = $MdUtlPrazoRN->retornaQtdDiaUtil($dtInicial, $dtFinal, false);

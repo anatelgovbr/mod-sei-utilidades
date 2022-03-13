@@ -232,8 +232,8 @@ switch ($_GET['acao']) {
 
     //region Listar
     case $acaoPrincipal:
-        $arrObjTpControle = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada(array('origem'=>'detalhamento'));         
-        $arrIdsTpCtrlAux  = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',null);        
+        $arrObjTpControle = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogadaQueExisteProcesso($idProcedimento);
+        $arrIdsTpCtrlAux  = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',null);
         break;
     //endregion
 
@@ -435,15 +435,17 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
          PaginaSEI::getInstance()->abrirAreaDados('auto');
         ?>
         <div class="bloco" id="divCabecalho">
-            <div id="divProcesso" style="font-size: 1.1em;">
-                <label class="infraLabelObrigatorio">
-                    Tipo de Controle:
-                </label>
-                <br>
-                <select id="filtrarTipoControle" style="width: 184px;" onchange="atualizarHistorico()">
-                    <?php echo $arrIdsTpCtrlAux ?>
-                </select>
-            </div>
+            <?php if (!empty($arrObjTpControle) && count($arrObjTpControle) > 0 ){ ?>
+                <div id="divProcesso" style="font-size: 1.1em;">
+                    <label class="infraLabelObrigatorio">
+                        Tipo de Controle:
+                    </label>
+                    <br>
+                    <select id="filtrarTipoControle" style="width: 184px;" onchange="atualizarHistorico()">
+                        <?php echo $arrIdsTpCtrlAux ?>
+                    </select>
+                </div>
+            <?php } ?>
             <br>
             <!--
             <div id="divProcesso" style="font-size: 1.1em;">                

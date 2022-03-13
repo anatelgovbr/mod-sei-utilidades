@@ -333,9 +333,20 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                
                 foreach ($arrObjsUltimosResponsaveis as $objDTO) {
                     if($isRetornoNome){
-                        $arrRetorno[$objDTO->getDblIdProcedimento()]['SIGLA'] = $objDTO->getStrSiglaUsuarioDist();
-                        $arrRetorno[$objDTO->getDblIdProcedimento()]['NOME'] = $objDTO->getStrNomeUsuarioDist();
-                        $arrRetorno[$objDTO->getDblIdProcedimento()]['ID_USUARIO'] = $objDTO->getNumIdUsuarioDistribuicao();
+
+                        if (
+                            $objDTO->getStrSiglaUsuarioDist() &&
+                            $objDTO->getStrSiglaUsuarioDist() != '' &&
+                            $objDTO->getStrNomeUsuarioDist() &&
+                            $objDTO->getStrNomeUsuarioDist() != '' &&
+                            $objDTO->getNumIdUsuarioDistribuicao()
+                        ){
+                            $arrRetorno[$objDTO->getDblIdProcedimento()]['SIGLA'] = $objDTO->getStrSiglaUsuarioDist();
+                            $arrRetorno[$objDTO->getDblIdProcedimento()]['NOME'] = $objDTO->getStrNomeUsuarioDist();
+                            $arrRetorno[$objDTO->getDblIdProcedimento()]['ID_USUARIO'] = $objDTO->getNumIdUsuarioDistribuicao();
+                        } else {
+                            throw new InfraException('Erro na operação. Não foi possível localizar os dados do último responsável.');
+                        }
                     }else{
                         $arrRetorno[$objDTO->getDblIdProcedimento()] = $objDTO->getNumIdUsuarioDistribuicao();
                     }

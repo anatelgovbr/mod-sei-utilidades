@@ -57,17 +57,16 @@ switch ($_GET['acao']) {
             $objMdUtlControleDTO = new MdUtlControleDsmpDTO();
             
             $objMdUtlControleDTO->setNumIdMdUtlAdmTpCtrlDesemp( $arrObjMdUtlAdmTpCtrlDesemp[0]->getNumIdMdUtlAdmTpCtrlDesemp() );
-            $objMdUtlControleDTO->setStrStaAtendimentoDsmp(range(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM,MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE) , InfraDTO::$OPER_IN);
             $qtd = $objMdUtlControleRN->contar($objMdUtlControleDTO);
             
             if( $qtd > 0 ){
                 $objMdUtlControleDTO->retStrProtocoloProcedimentoFormatado();
                 $objMdUtlControleDTO->retStrSiglaUnidade();
-                $objMdUtlControleDTO->setNumMaxRegistrosRetorno(10);
+                $objMdUtlControleDTO->setNumMaxRegistrosRetorno(15);
                 $ret = $objMdUtlControleRN->listar($objMdUtlControleDTO);
                 $msg = "Não é possível desativar o Tipo de Controle de Desempenho, pois existem processos em fluxo de atendimento em andamento: \n";
                 foreach ($ret as $k => $v) {
-                    $msg .= $v->getStrProtocoloProcedimentoFormatado() . ": ". $v->getStrSiglaUnidade() . "\n";
+                    $msg .= $v->getStrSiglaUnidade() . ": ". $v->getStrProtocoloProcedimentoFormatado() . "\n";
                 }
                 $msg .= "...";
                 $objInfra = new InfraException();

@@ -278,23 +278,23 @@ class MdUtlAdmRelTpCtrlDesempUndRN extends InfraRN {
         return $arrObjTpCtrl;
     }
 
-    protected function getArrayTipoControleUnidadeLogadaQueExisteProcessoConectado($params = array())
+    protected function getArrayTipoControleUnidadeLogadaQueExisteProcessoConectado($idProcedimento)
     {
         //buscar processos que estão atribuidos para usuário logado
-        $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
-        $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
-        $objMdUtlControleDsmpDTO->setNumIdUsuarioDistribuicao(SessaoSEI::getInstance()->getNumIdUsuario());
-        $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
-        $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
-        $arrobjMdUtlControleDsmp = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+        $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
+        $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+        $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
+        $objMdUtlHistControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+        $arrobjMdUtlHistControleDsmp = $objMdUtlHistControleDsmpRN->listar($objMdUtlHistControleDsmpDTO);
       
-        if (empty($arrobjMdUtlControleDsmp)) {
+        if (empty($arrobjMdUtlHistControleDsmp)) {
             return null;
         }
 
         $arrListaIdsTpControleExistentes = array();
-        foreach ($arrobjMdUtlControleDsmp as $ControleDsmp) {
-            array_push( $arrListaIdsTpControleExistentes , $ControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
+        foreach ($arrobjMdUtlHistControleDsmp as $objMdUtlHistControleDsmp) {
+            array_push( $arrListaIdsTpControleExistentes , $objMdUtlHistControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp());
         }
 
         // buscar tipos de controle para listar no select
@@ -302,23 +302,13 @@ class MdUtlAdmRelTpCtrlDesempUndRN extends InfraRN {
         $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
         $objMdUtlAdmTpCtrlUndDTO = new MdUtlAdmRelTpCtrlDesempUndDTO();
         $objMdUtlAdmTpCtrlUndDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
-        $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmPrmGr('',InfraDTO::$OPER_DIFERENTE);
+        $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmTpCtrlDesemp($arrListaIdsTpControleExistentes,InfraDTO::$OPER_IN);
         $objMdUtlAdmTpCtrlUndDTO->setOrdStrNomeTipoControle(InfraDTO::$TIPO_ORDENACAO_ASC);
-        $objMdUtlAdmTpCtrlUndDTO->setTpControleTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
-
-        if (!empty($arrListaIdsTpControleExistentes)) {
-            $objMdUtlAdmTpCtrlUndDTO->setNumIdMdUtlAdmTpCtrlDesemp($arrListaIdsTpControleExistentes, InfraDTO::$OPER_IN);
-        }
-
-        if(empty($params)){
-            $objMdUtlAdmTpCtrlUndDTO->setStrSinAtivo('S');
-        }
-
         $objMdUtlAdmTpCtrlUndDTO->retNumIdMdUtlAdmTpCtrlDesemp();
         $objMdUtlAdmTpCtrlUndDTO->retStrNomeTipoControle();
         $arrObjTpCtrl = $objMdUtlAdmTpCtrlUndRN->listar($objMdUtlAdmTpCtrlUndDTO);
 
-        if (count($arrObjTpCtrl) > 0) {
+        if (!empty($arrObjTpCtrl)) {
             $return = $arrObjTpCtrl;
         }
 

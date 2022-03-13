@@ -97,6 +97,24 @@ class MdUtlPrazoRN extends InfraRN
         return $qtdDiasUteis;
     }
 
+    public function verificaDiaUtil($dtPrazoInicial, $dtPrazoFinal)
+    {
+
+        $this->_removerTimeDate($dtPrazoInicial);
+        $this->_removerTimeDate($dtPrazoFinal);
+
+        $arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
+
+        if (InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'sábado' &&
+            InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'domingo' &&
+            $dtPrazoInicial != current($arrFeriados)
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
     private function _somarMes($numMes, $strData)
     {
         $strDataFinal = InfraData::calcularData(($numMes + 12), InfraData::$UNIDADE_MESES, InfraData::$SENTIDO_ADIANTE, $strData);
