@@ -9,14 +9,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
     private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0');
 
-    protected function getHistoricoVersoes()
-    {
-        return $this->historicoVersoes;
-    }
-
     public function __construct()
     {
         parent::__construct();
+    }
+
+    protected function getHistoricoVersoes()
+    {
+        return $this->historicoVersoes;
     }
 
     protected function inicializarObjInfraIBanco()
@@ -24,7 +24,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         return BancoSEI::getInstance();
     }
 
-    private function inicializar($strTitulo)
+    protected function inicializar($strTitulo)
     {
         session_start();
         SessaoSEI::getInstance(false);
@@ -44,13 +44,13 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->logar($strTitulo);
     }
 
-    private function logar($strMsg)
+    protected function logar($strMsg)
     {
         InfraDebug::getInstance()->gravar($strMsg);
         flush();
     }
 
-    private function finalizar($strMsg = null, $bolErro = false)
+    protected function finalizar($strMsg = null, $bolErro = false)
     {
         if (!$bolErro) {
             $this->numSeg = InfraUtil::verificarTempoProcessamento($this->numSeg);
@@ -83,7 +83,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.532.1';
+            $numVersaoInfraRequerida = '1.532.3';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
@@ -2012,7 +2012,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlTriagemDTO->retNumTempoExecucao();
             $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
             $objMdUtlTriagemDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlTriagemDTO->setNumPaginaAtual(1);
             $arrObjTriagem = $objMdUtlTriagemBD->listar($objMdUtlTriagemDTO);
 
             foreach ($arrObjTriagem as $objTriagem) {
@@ -2142,7 +2141,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
             $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
             $objMdUtlAnaliseDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlAnaliseDTO->setNumPaginaAtual(1);
             $objMdUtlAnaliseDTO->setStrStaTipoPresenca(null);
             $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido(null);
             $objMdUtlAnaliseDTO->setNumPercentualDesempenho(null);
@@ -2242,7 +2240,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
             $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
             $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlRevisaoDTO->setNumPaginaAtual(1);
             $objMdUtlRevisaoDTO->setStrStaTipoPresenca(null);
             $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido(null);
             $objMdUtlRevisaoDTO->setNumPercentualDesempenho(null);
@@ -2263,7 +2260,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
                 if (!$objControleDsmp) {
                     $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
-                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAnalise($objRevisao->getNumIdMdUtlRevisao());
+                    $objMdUtlHistControleDsmpDTO->setNumIdMdUtlRevisao($objRevisao->getNumIdMdUtlRevisao());
                     $objMdUtlHistControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
                     $objMdUtlHistControleDsmpDTO->retNumIdMdUtlHistControleDsmp();
                     $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
@@ -2488,17 +2485,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         }
     }
 
-    protected function fixIndices(InfraMetaBD $objInfraMetaBD, $arrTabelas)
-    {
-        InfraDebug::getInstance()->setBolDebugInfra(true);
-
-        $this->logar('ATUALIZANDO INDICES...');
-
-        $objInfraMetaBD->processarIndicesChavesEstrangeiras($arrTabelas);
-
-        InfraDebug::getInstance()->setBolDebugInfra(false);
-    }
-
     private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = null, $strPeriodicidade = null)
     {
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
@@ -2557,6 +2543,19 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
         }
     }
+
+    protected function fixIndices(InfraMetaBD $objInfraMetaBD, $arrTabelas)
+    {
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+
+        $this->logar('ATUALIZANDO INDICES...');
+
+        $objInfraMetaBD->processarIndicesChavesEstrangeiras($arrTabelas);
+
+        InfraDebug::getInstance()->setBolDebugInfra(false);
+    }
+
+
 }
 
 try {
