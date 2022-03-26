@@ -36,11 +36,16 @@
 9. Após a execução com sucesso, com um usuário com permissão de Administrador no SEI, seguir os passos dispostos no tópico "Orientações Negociais" mais abaixo.
 
 ## Orientações Negociais
-1. Imediatamente após a instalação com sucesso, com usuário com permissão de "Administrador" do SEI, acessar os menus de administração do Módulo pelo seguinte caminho: Administração > Controle de Desempenho.
-2. O script de banco do SIP já cria todos os Recursos e Menus e os associam automaticamente ao Perfil "Básico" ou ao Perfil "Administrador".
+1. NÃO ESCOPO DO MÓDULO, até a v1.5.0: 
+	- Ainda não foi implementada a integração para envio de dados à API sobre PGDs disponibilizada pelo Ministério da Economia.
+	- O módulo ainda não possui menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, sendo necessário implementar solução de BI própria para ter uma visão geral do acompanhamento do desempenho, especialmente sobre Períodos anteriores ao Período atual.
+		- Para Período atual, no menu Controle de Desempenho > Distribuição é possível realizar filtragem por "Membro Participante" e acompanhar os dados sobre "Total de Tempo Executado no Período", "Carga Horária Padrão no Período" e "Carga Horária Distribuída no Período".
+		- Até disponibilizarmos menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, na pasta "bi_scripts" disponibilizamos três arquivos sql para extração de dados para uso em ferramenta de BI da instituição: "ExtracaoDados_historico.sql", "ExtracaoDados_tempo_executado.sql" e "ExtracaoDados_tempo_pendente.sql".
+2. Imediatamente após a instalação com sucesso, com usuário com permissão de "Administrador" do SEI, acessar os menus de administração do Módulo pelo seguinte caminho: Administração > Controle de Desempenho.
+3. O script de banco do SIP já cria todos os Recursos e Menus e os associam automaticamente ao Perfil "Básico" ou ao Perfil "Administrador".
 	- O script de banco do SIP também cria o Perfil "Gestor de Controle de Desempenho" e associa os Recursos e Menus correspondentes. O mencionado Perfil deve ser concedido aos Gestores de Controle de Desempenho indicados em Administração > Controle de Desempenho > Tipos de Controle de Desempenho.
 	- Independente da criação de outros Perfis, os recursos indicados para o Perfil "Básico" ou "Administrador" devem manter correspondência com os Perfis dos Usuários internos que utilizarão o Módulo e dos Usuários Administradores do Módulo.
 	- Tão quanto ocorre com as atualizações do SEI, versões futuras deste Módulo continuarão a atualizar e criar Recursos e associá-los apenas aos Perfis "Básico", "Administrador" e "Gestor de Controle de Desempenho".
 	- Todos os recursos do Módulo iniciam pelo sufix **"md_utl_"**.
-3. Acesse no link a seguir o Manual de Administração [http://bit.ly/Manual_SEI_Mod_Utilidades_Admin](http://bit.ly/Manual_SEI_Mod_Utilidades_Admin "Clique e acesse")
-4. Acesse no link a seguir o Manual do Usuário Interno: [http://bit.ly/Manual_SEI_Mod_Utilidades_Usuario](http://bit.ly/Manual_SEI_Mod_Utilidades_Usuario "Clique e acesse")
+4. Acesse no link a seguir o Manual de Administração: Ainda em construção
+5. Acesse no link a seguir o Manual do Usuário Interno: Ainda em construção
