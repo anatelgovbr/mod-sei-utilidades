@@ -48,4 +48,23 @@
 	- Tão quanto ocorre com as atualizações do SEI, versões futuras deste Módulo continuarão a atualizar e criar Recursos e associá-los apenas aos Perfis "Básico", "Administrador" e "Gestor de Controle de Desempenho".
 	- Todos os recursos do Módulo iniciam pelo sufix **"md_utl_"**.
 4. Acesse no link a seguir o Manual de Administração: Ainda em construção
-5. Acesse no link a seguir o Manual do Usuário Interno: Ainda em construção
+5. Acesse no link a seguir o Manual do Usuário Interno: Ainda em construção.
+6. Variáveis para bloqueios adicionais no SEI, no Infra > Parâmetros:
+   - MODULO_UTILIDADES_BLOQUEAR_ANEXAR_PROCESSO_COM_DOCUMENTO_NAO_ASSINADO: 
+      - 0: bloqueio desativado. 
+      - 1: ativa bloqueio que impede Anexar Processo em que ainda exista algum documento gerado não assinado. 
+   - MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_NAO_ASSINADO: 
+      - 0: bloqueio desativado. 
+      - 1: ativa bloqueio que impede a última conclusão do processo quando no processo ainda exista algum documento gerado não assinado.
+   - MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL:
+      - Vazio: bloqueio desativado. 
+      - Incluir lista dos IDs das Hipóteses Legais de Restrição de Acesso separados por vírgula para ativar bloqueio que impede a última conclusão do processo quando no processo ou em processo anexado ainda exista algum documento utilizando nível de acesso Restrito utilizando alguma das Hipóteses Legais listadas. Por exemplo, Documento Preparatório (Art. 7º, § 3º, da Lei nº 12.527/2011) e Protocolo Pendente de Análise de Restrição (Art. 6º, III, da Lei nº 12.527/2011).
+   - MODULO_UTILIDADES_BLOQUEAR_GERAR_PROCESSO_SEM_PELO_MENOS_UM_INTERESSADO:
+      - 0: bloqueio desativado.
+      - 1: ativa bloqueio que impede gerar um processo novo sem a indicação de pelo menos um Interessado.
+   - MODULO_UTILIDADES_ID_GRUPOS_CONTATO_TRAVAR_CONTATOS:
+      - Vazio: bloqueio desativado.
+      - Incluir lista dos IDs de Grupos de Contatos de Unidade ou Institucionais sobre os quais os Contatos que estejam associados a tais Grupos terão a alteração ou desativação bloqueada, exceto para a Unidade proprietária Grupo de Contato.
+   - MODULO_UTILIDADES_ID_TIPO_DOCUMENTO_EXIGIDO_CANCELAR:
+      - Vazio: bloqueio desativado.
+      - Incluir ID do Tipo de Documento gerado e assinado que será exigido constar na árvore de documentos do Processo antes de efetivar o uso da funcionalidade Cancelar Documento.
