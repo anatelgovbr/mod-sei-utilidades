@@ -1,23 +1,20 @@
 <?
 require_once dirname(__FILE__) . '/../web/Sip.php';
 
-set_include_path(implode(PATH_SEPARATOR, array(
-    realpath(__DIR__ . '/../../infra/infra_php'),
-    get_include_path(),
-)));
-
-
 class MdUtlAtualizadorSipRN extends InfraRN
 {
 
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.5.0';
+    private $versaoAtualDesteModulo = '2.0.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0');
 
     private $nomeGestorControleDesempenho = 'Gestor de Controle de Desempenho';
     private $descricaoGestorControleDesempenho = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
+
+    private $nomeAdministradorControleDesempenho = 'Administrador - Controle de Desempenho';
+    private $descricaoAdministradorControleDesempenho = 'Acesso aos recursos de Administração do Módulo de Controle de Desempenho.';
 
     public function __construct()
     {
@@ -94,14 +91,13 @@ class MdUtlAtualizadorSipRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.532.3';
+            $numVersaoInfraRequerida = '1.600.0';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
             if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
                 $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
-
 
             //checando permissoes na base de dados
             $objInfraMetaBD = new InfraMetaBD(BancoSip::getInstance());
@@ -129,12 +125,14 @@ class MdUtlAtualizadorSipRN extends InfraRN
                     $this->instalarv140();
                 case '1.4.0':
                     $this->instalarv150();
+                case '1.5.0':
+                    $this->instalarv200();
                     break;
                 default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
-                    $this->finalizar('FIM', false);
                     break;
-            }
+            
+			}
 
             $this->finalizar('FIM');
             InfraDebug::getInstance()->setBolDebugInfra(true);
@@ -529,7 +527,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             , null
             , null
             , 'Controle de Desempenho'
-            , 33);
+            , 0);
 
         $this->logar('CRIANDO e VINCULANDO RECURSO DE MENU A PERFIL - Controle de Processos ao Básico');
 
@@ -763,7 +761,8 @@ class MdUtlAtualizadorSipRN extends InfraRN
             'Ajuste de Jornada',
             30);
 
-        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+		BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
     }
@@ -827,7 +826,8 @@ class MdUtlAtualizadorSipRN extends InfraRN
 
         $this->_cadastrarAuditoria($numIdSistemaSei, $arrAuditoria);
 
-        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+		BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
     }
@@ -956,7 +956,8 @@ class MdUtlAtualizadorSipRN extends InfraRN
 
         $this->_cadastrarAuditoria($numIdSistemaSei, $arrAuditoria);
 
-        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+		BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
     }
@@ -964,7 +965,9 @@ class MdUtlAtualizadorSipRN extends InfraRN
     protected function instalarv140()
     {
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
-        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.4.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+        
+		$this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+		BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.4.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
     }
@@ -1004,9 +1007,300 @@ class MdUtlAtualizadorSipRN extends InfraRN
 
         $this->_cadastrarAuditoria($numIdSistemaSei, $arrAuditoria);
 
-        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+		BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
+    }
+
+    protected function instalarv200()
+    {
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
+
+        $numIdSistemaSei         = $this->_getIdSistema();
+        $numIdPerfilSeiBasico    = $this->_getIdPerfil($numIdSistemaSei, 'Básico');
+        $numIdPerfilSeiGestorUtl = $this->_getIdPerfil($numIdSistemaSei, $this->nomeGestorControleDesempenho);
+        $numIdMenuSei            = $this->_getIdMenu($numIdSistemaSei);
+        $numIdItemMenuSeiContr   = $this->_getIdItemMenuControleDesempenho($numIdSistemaSei, true);
+        $numIdItemMenu           = $this->_getIdItemMenu($numIdSistemaSei,'Gestão de Solicitações');
+        $arrPerfis               = array('Básico','Administrador','Colaborador (Básico sem Assinatura)','Gestor de Controle de Desempenho');
+
+        $this->logar('REMOVENDO ITEM MENU GESTÃO DE SOLICITAÇÕES DO PERFIL - GESTOR DE CONTROLE DE DESEMPENHO');
+        $this->removerItemMenu($numIdSistemaSei, $numIdMenuSei, $numIdItemMenu);
+
+        $this->logar('REMOVENDO RECURSO DO PERFIL GESTOR DE CONTROLE DE DESEMPENHO - GESTÃO DE SOLICITAÇÕES');
+        $this->removerRecursoPerfil($numIdSistemaSei, 'md_utl_gestao_solicitacoes_listar',$numIdPerfilSeiGestorUtl);
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - GESTÃO DE SOLICITAÇÕES em Usuário Básico');
+        $objMdUtlGestaoSolicitacaoListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_gestao_solicitacoes_listar');
+
+        $this->logar('CRIANDO e VINCULANDO RECURSO DE MENU A PERFIL - Usuário Básico');
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiBasico,
+            $numIdMenuSei,
+            $numIdItemMenuSeiContr,
+            $objMdUtlGestaoSolicitacaoListar->getNumIdRecurso(),
+            'Gestão de Solicitações',
+            40);
+
+        foreach ( $arrPerfis as $k => $v ) {
+            $idPerfil = $this->_getIdPerfil( $numIdSistemaSei , $v );
+
+            $this->logar('REMOVENDO RELAÇÃO RECURSO x PERFIL: md_utl_adm_jornada_listar - '. strtoupper($v) );
+            $this->removerRecursoPerfil( $numIdSistemaSei , 'md_utl_adm_jornada_listar' , $idPerfil );
+                     
+            $this->logar('REMOVENDO RELAÇÃO RECURSO x PERFIL: md_utl_adm_tp_ausencia_listar - '. strtoupper($v) );
+            $this->removerRecursoPerfil( $numIdSistemaSei , 'md_utl_adm_tp_ausencia_listar' , $idPerfil );            
+        }
+		
+		$this->logar('INCLUINDO O ÍCONE DO MENU PRINTICPAL CONTROLE DE DESEMPENHO');
+        $objItemMenuRN = new ItemMenuRN();
+        $objItemMenuDTO = new ItemMenuDTO();
+        $objItemMenuDTO->setStrRotulo('Controle de Desempenho');
+        $objItemMenuDTO->adicionarCriterio(
+            array('IdMenuPai','IdMenuPai'),
+            array(InfraDTO::$OPER_IGUAL,InfraDTO::$OPER_IGUAL),
+            array('',null),
+            array(InfraDTO::$OPER_LOGICO_OR)
+        );
+
+        $objItemMenuDTO->retTodos();
+        $objItemMenuDTO = $objItemMenuRN->consultar($objItemMenuDTO);
+        $objItemMenuDTO->setStrIcone('controle_desempenho_utilidades_logo.svg');
+        $objItemMenuRN->alterar($objItemMenuDTO);
+
+        $this->cadastrarPerfilAdministradorControleDesempenho();
+        $this->configurarPerfilAdministradorControleDesempenho();
+
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.0.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
+    }
+
+    protected function cadastrarPerfilAdministradorControleDesempenho()
+    {
+        $numIdSistemaSei = $this->_getIdSistema();
+
+        $objPerfilRN = new PerfilRN();
+        $objPerfilDTO = new PerfilDTO();
+        $objPerfilDTO->retNumIdPerfil();
+        $objPerfilDTO->setNumIdSistema($numIdSistemaSei);
+        $objPerfilDTO->setStrNome($this->nomeAdministradorControleDesempenho);
+        $objPerfilDTO = $objPerfilRN->consultar($objPerfilDTO);
+
+        if (!$objPerfilDTO) {
+            $objPerfilDTO = new PerfilDTO();
+            $objPerfilDTO->setNumIdSistema($numIdSistemaSei);
+            $objPerfilDTO->setStrNome($this->nomeAdministradorControleDesempenho);
+            $objPerfilDTO->setStrDescricao($this->descricaoAdministradorControleDesempenho);
+            $objPerfilDTO->setStrSinCoordenado('N');
+            $objPerfilDTO->setStrSinAtivo('S');
+            $objPerfilRN->cadastrar($objPerfilDTO);
+        }
+    }
+
+    protected function configurarPerfilAdministradorControleDesempenho()
+    {
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Parâmetrização de Tipo de Controle em Administrador de controle de desempenho');
+        $numIdSistemaSei = $this->_getIdSistema();
+        $numIdPerfilSeiAdministradorControleDsmpUtl = $this->_getIdPerfil($numIdSistemaSei, $this->nomeAdministradorControleDesempenho);
+        $numIdItemMenuSeiContr = $this->_getIdItemMenuControleDesempenho($numIdSistemaSei, true);
+        $numIdPerfilSeiBasico = $this->_getIdPerfil($numIdSistemaSei, 'Básico');
+        $numIdPerfilSeiAdmin = $this->_getIdPerfil($numIdSistemaSei);
+        $numIdMenuSei = $this->_getIdMenu($numIdSistemaSei);
+        $numIdItemMenuSeiAdmin = $this->_getIdItemMenu($numIdSistemaSei);
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Parâmetrização de Tipo de Controle em Gestor');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_usu_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_usu_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_gr_usu_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_gr_proc_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_gr_proc_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_gr_proc_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_gr_proc_selecionar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Tipo de Ausência em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_consultar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Fila em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_selecionar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_prm_gr_usu_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_fila_prm_gr_usu_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Ajuste de Jornada em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_jornada_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_jornada_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_jornada_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_jornada_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_jornada_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_jornada_usu_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_jornada_usu_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Tipo de Justificativa em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_just_revisao_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_just_revisao_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_just_revisao_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_just_revisao_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_just_revisao_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Tipo de Produto em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_produto_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_produto_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_produto_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_produto_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_produto_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Tipo de Atividade em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atividade_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atividade_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atividade_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atividade_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atividade_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atv_serie_prod_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atv_serie_prod_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_atv_serie_prod_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Grupo de Atividade em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Grupo/Fila em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Grupo/Processo em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_proc_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_proc_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fila_proc_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Grupo/Processo/Atividade em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fl_proc_atv_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fl_proc_atv_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_grp_fl_proc_atv_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Tipo de Revisão em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_revisao_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_revisao_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_revisao_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_revisao_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_revisao_reativar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Gestao de Solicitao em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_gestao_ajust_prazo_aprovar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_gestao_ajust_prazo_reprovar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Histórico de Parametrização em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_hist_prm_gr_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_hist_prm_gr_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_hist_prm_gr_consultar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_hist_prm_gr_listar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Parametrização de Contestação em Usuário Administrador');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_contest_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_contest_alterar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Justificativa de Contestação em Usuário Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_just_contest_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_just_contest_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_just_contest_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_just_contest_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_just_contest_excluir');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Parametrização de Distribuição em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_ds_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_ds_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_prm_ds_excluir');
+
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_fila_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_fila_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_fila_alterar');
+
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_aten_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_aten_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_aten_alterar');
+
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_ativ_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_ativ_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_ativ_alterar');
+
+        $this->logar('CRIANDO E VINCULANDO RECURSO A PERFIL - Parametrização de Distribuição em Administrador de controle de desempenho');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_proc_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_proc_excluir');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_rel_prm_ds_proc_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_controle_dsmp_detalhar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_controle_dsmp_alterar');
+
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_listar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ausencia_listar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_cadastrar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_alterar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_desativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_reativar');
+        $objRecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_excluir');
+
+
+        //////////////////////////////////////////////////////// MENUS ///////////////////////////////////////////////////////
+        $this->logar('CRIANDO e VINCULANDO ITEM MENU PRINCIPAL DO MÓDULO A PERFIL Administração > Controle de Desempenho');
+        $objItemMenuDTOCtrlDesempenho = $this->adicionarItemMenu($numIdSistemaSei, $numIdPerfilSeiAdmin, $numIdMenuSei, $numIdItemMenuSeiAdmin, null, 'Controle de Desempenho', 0);
+
+        $this->logar('CRIANDO e VINCULANDO ITEM MENU A PERFIL Administração > Controle de Desempenho > Tipo de Ausência em Gestor');
+        $objMdUtlTpAusenciaListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdmin, 'md_utl_adm_tp_ausencia_listar');
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiAdministradorControleDsmpUtl,
+            $numIdMenuSei,
+            $objItemMenuDTOCtrlDesempenho->getNumIdItemMenu(),
+            $objMdUtlTpAusenciaListar->getNumIdRecurso(),
+            'Tipos de Ausência',
+            20);
+
+        $objMdUtlTpControleListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_adm_tp_ctrl_desemp_listar');
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiAdministradorControleDsmpUtl,
+            $numIdMenuSei,
+            $objItemMenuDTOCtrlDesempenho->getNumIdItemMenu(),
+            $objMdUtlTpControleListar->getNumIdRecurso(),
+            'Tipos de Controle de Desempenho',
+            10);
+
+        $this->logar('CRIANDO e VINCULANDO ITEM MENU A PERFIL Administração >  Controle de Desempenho > Ajuste de Jornada em Gestor');
+        $objMdUtlJornadaListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_adm_jornada_listar');
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiAdministradorControleDsmpUtl,
+            $numIdMenuSei,
+            $objItemMenuDTOCtrlDesempenho->getNumIdItemMenu(),
+            $objMdUtlJornadaListar->getNumIdRecurso(),
+            'Ajuste de Jornada',
+            30);
+        $this->logar('CRIANDO RECURSOS QUE SERÃO CHAMADOS VIA MENU');
+        $objMdUtlGestaoSolicitacaoListar = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiAdministradorControleDsmpUtl, 'md_utl_gestao_solicitacoes_listar');
+
+        $this->adicionarItemMenu($numIdSistemaSei,
+            $numIdPerfilSeiAdministradorControleDsmpUtl,
+            $numIdMenuSei,
+            $numIdItemMenuSeiContr,
+            $objMdUtlGestaoSolicitacaoListar->getNumIdRecurso(),
+            'Gestão de Solicitações',
+            40);
     }
 
     private function adicionarRecursoPerfil($numIdSistema, $numIdPerfil, $strNome, $strCaminho = null)
@@ -1210,6 +1504,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             $objItemMenuDTO->setNumSequencia($numSequencia);
             $objItemMenuDTO->setStrSinNovaJanela('N');
             $objItemMenuDTO->setStrSinAtivo('S');
+            $objItemMenuDTO->setStrIcone(null);
 
             $objItemMenuDTO = $objItemMenuRN->cadastrar($objItemMenuDTO);
         }
@@ -1495,32 +1790,15 @@ class MdUtlAtualizadorSipRN extends InfraRN
     }
 }
 
-//========================= INICIO SCRIPT EXECUÇAO =============
-
 try {
 
-    session_start();
     SessaoSip::getInstance(false);
     BancoSip::getInstance()->setBolScript(true);
 
-    if (!ConfiguracaoSip::getInstance()->isSetValor('BancoSip', 'UsuarioScript')) {
-        throw new InfraException('Chave BancoSip/UsuarioScript não encontrada.');
-    }
-
-    if (InfraString::isBolVazia(ConfiguracaoSip::getInstance()->getValor('BancoSip', 'UsuarioScript'))) {
-        throw new InfraException('Chave BancoSip/UsuarioScript não possui valor.');
-    }
-
-    if (!ConfiguracaoSip::getInstance()->isSetValor('BancoSip', 'SenhaScript')) {
-        throw new InfraException('Chave BancoSip/SenhaScript não encontrada.');
-    }
-
-    if (InfraString::isBolVazia(ConfiguracaoSip::getInstance()->getValor('BancoSip', 'SenhaScript'))) {
-        throw new InfraException('Chave BancoSip/SenhaScript não possui valor.');
-    }
-
-    $objVersaoRN = new MdUtlAtualizadorSipRN();
-    $objVersaoRN->atualizarVersao();
+    InfraScriptVersao::solicitarAutenticacao(BancoSip::getInstance());
+    $objVersaoSipRN = new MdUtlAtualizadorSipRN();
+    $objVersaoSipRN->atualizarVersao();
+	exit;
 
 } catch (Exception $e) {
     echo(InfraException::inspecionar($e));
@@ -1530,5 +1808,3 @@ try {
     }
     exit(1);
 }
-
-print PHP_EOL;
