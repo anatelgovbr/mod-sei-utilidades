@@ -1,6 +1,4 @@
-<?php if(0){ ?>
-<script>
-    <?php } ?>
+<script type="text/javascript">
 
     //variaveis globais - declarar fora do escopo das funçoes da pagina
     var objLupaUsuarioParticipante          = null;
@@ -20,7 +18,6 @@
 
     var isAlterar   = false;
 
-
     function inicializar() {
         if ('<?=$_GET['acao']?>'=='md_utl_adm_fila_cadastrar'){
             document.getElementById('txtNome').focus();
@@ -32,7 +29,10 @@
         }
 
         iniciarTabelaDinamicaUsuarioParticipante();
-        carregarComponenteUsuarioParticipante();
+        
+        <?php if( ! $isConsultar ){ ?>
+            carregarComponenteUsuarioParticipante();
+        <?php } ?>
 
         $('input').on('drop', function() {
             return false;
@@ -208,15 +208,15 @@
 
         }
 
-               if (dadosUsuario[6] == 'Total') {
-                   document.getElementById('selTipoRevisao').value = 1;
-               }
-               if (dadosUsuario[6] == 'Por Atividade') {
-                   document.getElementById('selTipoRevisao').value = 2;
-               }
-               if (dadosUsuario[6] == 'Sem Avaliação') {
-                   document.getElementById('selTipoRevisao').value = 3;
-               }
+        if (dadosUsuario[6] == 'Total') {
+            document.getElementById('selTipoRevisao').value = 1;
+        }
+        if (dadosUsuario[6] == 'Por Atividade') {
+            document.getElementById('selTipoRevisao').value = 2;
+        }
+        if (dadosUsuario[6] == 'Sem Avaliação') {
+            document.getElementById('selTipoRevisao').value = 3;
+        }
 
 
         dadosUsuario[3] == "S" ? document.getElementById('rdoTriador').checked  = true : "";
@@ -230,6 +230,9 @@
 
         controlarVisualizacaoPercentual();
         objAutoCompletarUsuarioParticipante.processarResultado(idVinculo, dadosUsuario[9]);
+
+        // scroll barra de rolagem automatico
+        scrollTela('blocoMembrosPart');
     }
 
     function removerLinhaUsuarioParticipante(idVinculo){
@@ -310,24 +313,6 @@
             return false;
         }
 
-        var arrCadastroErrados = [];
-        Array.from(document.querySelectorAll('#tbUsuarioParticipante tr')).forEach(tr => {
-            Array.from(tr.querySelectorAll('td')).forEach((td, index, todas_td) => {
-                if (index === 6) {
-                    if ((todas_td[3].innerText == "S" || todas_td[5].innerText == "S") && todas_td[6].innerText === '') {
-                        arrCadastroErrados.push(todas_td[1].innerText);
-                    }
-                }
-            });
-        });
-        if(arrCadastroErrados.length > 0){
-            var msg = 'É necessario preencher Tipo de Avaliação para:';
-            arrCadastroErrados.forEach((nome) =>{
-                msg = msg + "\n - " + nome;
-            });
-            alert(msg);
-            return false;
-        }
     }
 
     function carregarComponenteUsuarioParticipante(){
@@ -380,17 +365,12 @@
         var triador = infraGetElementById('rdoTriador');
         var analista = infraGetElementById('rdoAnalista');
         var selTipoRevisao = document.getElementById('selTipoRevisao');
-        var lblTipoRevisao = document.getElementById('lblTipoRevisao');
-
 
         if(triador.checked || analista.checked){
             selTipoRevisao.removeAttribute('disabled');
-            lblTipoRevisao.setAttribute('class' ,'infraLabelObrigatorio');
         }else {
             selTipoRevisao.setAttribute('disabled', 'disabled');
             selTipoRevisao.value = '0';
-            lblTipoRevisao.removeAttribute('class' ,'infraLabelObrigatorio');
-
         }
 
     }
@@ -451,11 +431,8 @@
             }
         }
 
-        if((isTriador || isAnalista) && !tipoRevisao){
-            var msg = setMensagemPersonalizada(msgPadrao11, ['Tipo de Avaliação']);
-            alert(msg);
-            return false;
-        }
+
+
 
         return true;
     }
@@ -519,11 +496,12 @@
             var nomeCampAjx = 'IdUsuario' + idVinculo;
             var htmlNomeUsu = '<div style="text-align:center;">'+$(retornoAjax).find(nomeCampAjx).text()+'</div>';
             var nomeSigla   = $.trim(document.getElementById('selUsuarioParticipante').options[i].text) ;
+            var addEmBranco = isAlterar ? '' : htmlNomeUsu;
             var idAparenteAtual = isAlterar ? idAparenteAlteracao : idAparente;
 
             var arrLinha = [
                 idVinculo,
-                htmlNomeUsu,
+                addEmBranco,
                 vlTriador,
                 sinTriador,
                 vlAnalista,
@@ -536,12 +514,21 @@
                 idAparenteAtual
             ];
 
+
+            objTabelaDinamicaUsuParticipante.recarregar();
+            objTabelaDinamicaUsuParticipante.adicionar(arrLinha);
+
+            var linha = objTabelaDinamicaUsuParticipante.procuraLinhaIdAparente(idAparenteAtual);
+
+
             if(isAlterar) {
-                var linha = objTabelaDinamicaUsuParticipante.procuraLinhaIdAparente(idAparenteAtual);
-                objTabelaDinamicaUsuParticipante.removerLinha(linha);
+                document.getElementById('tbUsuarioParticipante').rows[linha].cells[1].innerHTML = htmlNomeUsu;
+                objTabelaDinamicaUsuParticipante.atualizaHdn();
             }
 
-            objTabelaDinamicaUsuParticipante.adicionar(arrLinha);
+
+
+
 
             idVinculoControleAlt = 0;
             isAlterar = false;
@@ -578,10 +565,9 @@
         //Limpando o TipoRevisao
         document.getElementById('selTipoRevisao').setAttribute('disabled','disabled');
         document.getElementById('selTipoRevisao').value = 0;
-
-        var lblTipoRevisao = document.getElementById('lblTipoRevisao');
-        lblTipoRevisao.removeAttribute('class' ,'infraLabelObrigatorio');
     }
+
+
 
     function habilitarUltimaFila(obj){
         if(obj.checked){
@@ -591,9 +577,4 @@
             document.getElementById('rdoDstUltimaFila').checked = false;
         }
     }
-
-    <?php if(0){ ?>
-    <script>
-    <?php } ?>
-
-        
+</script>

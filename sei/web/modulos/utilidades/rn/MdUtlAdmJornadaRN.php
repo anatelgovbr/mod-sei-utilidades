@@ -87,8 +87,6 @@ class MdUtlAdmJornadaRN extends InfraRN {
 
       $objInfraException->lancarValidacoes();
 
-
-
       $objMdUtlAdmJornadaBD = new MdUtlAdmJornadaBD($this->getObjInfraIBanco());
       $objMdUtlAdmJornadaBD->alterar($objMdUtlAdmJornadaDTO);
 
@@ -249,7 +247,7 @@ class MdUtlAdmJornadaRN extends InfraRN {
     $objMdUtlJornadaDTO->setNumPercentualAjuste($_POST['txtPercentualAjuste']);
     $objMdUtlJornadaDTO->setDthInicio($_POST['txtDtInicio']);
     $objMdUtlJornadaDTO->setDthFim($_POST['txtDtFim']);
-    $objMdUtlJornadaDTO->setStrStaTipoAjuste($_POST['hdnTpAjuste']);
+    $objMdUtlJornadaDTO->setStrStaTipoAjuste($_POST['rdoTipoAjuste']);
     $objMdUtlJornadaDTO->setStrSinAtivo('S');
 
     $this->validarDuplicacao($objMdUtlJornadaDTO);

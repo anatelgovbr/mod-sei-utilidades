@@ -16,25 +16,29 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function getNome()
     {
-        return 'Utilidades';
+        return 'SEI Desempenho e Utilidades';
     }
 
     public function getVersao()
     {
 
-        return '1.5.0';
+        return '2.0.0';
     }
 
     public function getInstituicao()
     {
-        return 'ANATEL (Projeto Colaborativo no Portal do SPB)';
+        return 'Anatel - Agência Nacional de Telecomunicações';
     }
 
     public function inicializar($strVersaoSEI)
     {
 
     }
-
+	
+    public function obterDiretorioIconesMenu()
+    {
+        return 'modulos/utilidades/menu';
+    }
 
     public function processarControlador($strAcao)
     {
@@ -358,6 +362,10 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $xml = MdUtlAdmRelPrmDsProcINT::consultarVinculoProcDistribuicao($_POST['idVinculo'], $_POST['idControle']);
                 break;
 
+            case 'md_utl_adm_prm_valida_plano_trab':
+                $xml = MdUtlAdmPrmGrUsuINT::validaPlanoTrabalho( $_POST );
+                break;
+
             case 'md_utl_adm_prm_vinculo_usuario_parametrizado_fila':
                 $xml = MdUtlAdmPrmGrUsuINT::consultarVinculoParametrizacaoUsuario($_POST['idVinculo'], $_POST['idFila']);
                 break;
@@ -442,7 +450,12 @@ class UtilidadesIntegracao extends SeiIntegracao
                 break;
 
             case 'md_utl_atribuir_proximo':
-                $xml = MdUtlRegrasGeraisRN::atribuirProximoPrioridade();
+                $rs = MdUtlRegrasGeraisRN::atribuirProximoPrioridade();
+                if( is_array( $rs ) && array_key_exists('erro' , $rs)){
+                    $xml = '<Erro><Msg>'.$rs['msg'].'</Msg></Erro>';
+                }else{
+                    $xml = $rs;
+                }
                 break;
 
             case 'md_utl_ctrl_dsmp_tp_procedimento':
@@ -484,15 +497,24 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $xml .= '</Documento>';
                 break;
 
-            case 'verificar_bloqueio_processo':
-
-                $retorno = UtilidadesIntegracao::verificarBloqueioProcesso($_GET['id_procedimento']);
+            case 'md_utl_validar_just_prazo_excluir':
+                $retorno = ( new MdUtlAdmJustPrazoRN() )->validarExclusao() ? 'N' : 'S';                
                 $xml = '<Documento>';
-                $xml .= '<Bloqueado>' . $retorno['bloqueado'] . '</Bloqueado>';
-                $xml .= '<Msg>' . $retorno['msg'] . '</Msg>';
+                $xml .= '<Resultado>'. $retorno .'</Resultado>';
                 $xml .= '</Documento>';
                 break;
+            
+            case 'md_utl_usuario_pertence_fila':
+                $rs = ( new MdUtlAdmFilaRN() )->verificaUsuarioLogadoPertenceFila( 
+                    [ $_POST['idFila'] , $_POST['status'] , true , $_POST['id_usuario'] ]
+                );
 
+                $rs = $rs > 0 ? 'S' : 'N';
+
+                $xml = '<Documento>';
+                $xml .= '<Resultado>'. $rs .'</Resultado>';
+                $xml .= '</Documento>';
+                break;
         }
 
         return $xml;
@@ -555,9 +577,10 @@ class UtilidadesIntegracao extends SeiIntegracao
                         $isParametrizado = $objMdUtlAdmUtlTpCtrlRN->verificaTipoControlePossuiParametrizacao($idTipoControle);
                         if ($isParametrizado) {
                             $arrObjsTpProcesso = $objMdUtlControleDsmpRN->getTiposProcessoTipoControle($idTipoControle);
-                            $idsTpProcesso = count($arrObjsTpProcesso) > 0 ? InfraArray::converterArrInfraDTO($arrObjsTpProcesso, 'IdTipoProcedimento') : array();
+
+                            $idsTpProcesso = is_countable($arrObjsTpProcesso) && count($arrObjsTpProcesso) > 0 ? InfraArray::converterArrInfraDTO($arrObjsTpProcesso, 'IdTipoProcedimento') : array();
                             if ((in_array($idTpProcesso, $idsTpProcesso)) || $isHistorico) {
-                                $arrBotoes[] = '<a id="btnDtlhProcesso" href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $objProcedimentoAPI->getIdProcedimento()) . '" class="botaoSEI" tabindex="' . PaginaSEI::getInstance()->getProxTabBarraComandosSuperior() . '"><img src="modulos/utilidades/imagens/triagem_analise_processo.png" class="infraCorBarraSistema" alt="Ver detalhamento do Processo - Controle de Desempenho" title="Ver detalhamento do Processo - Controle de Desempenho"/></a>';
+                                $arrBotoes[] = '<a id="btnDtlhProcesso" href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $objProcedimentoAPI->getIdProcedimento()) . '" class="botaoSEI" tabindex="' . PaginaSEI::getInstance()->getProxTabBarraComandosSuperior() . '"><img src="modulos/utilidades/imagens/svg/triagem_analise_processo.svg" class="infraCorBarraSistema" alt="Ver detalhamento do Processo - Controle de Desempenho" title="Ver detalhamento do Processo - Controle de Desempenho"/></a>';
                                 break;
                             }
                         }
@@ -708,7 +731,6 @@ class UtilidadesIntegracao extends SeiIntegracao
 
     public function concluirProcesso($arrObjProcedimentoAPI)
     {
-
         $ultimaConclusao = $this->verificaUltimaConclusao($arrObjProcedimentoAPI[0]->getIdProcedimento());
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
         $strValor = $objInfraParametro->getValor('MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL', false);
@@ -877,11 +899,14 @@ class UtilidadesIntegracao extends SeiIntegracao
         return $msg == '';
     }
 
-    public function verificarBloqueioProcesso($idProcedimento)
+    /**
+     * @param $arrObjProcedimentoAPI
+     * @return bool|void|null
+     * @throws InfraException
+     */
+    public function bloquearProcesso($arrObjProcedimentoAPI)
     {
-        $return['msg'] = '';
-        $return['bloqueado'] = false;
-
+        $idProcedimento = $arrObjProcedimentoAPI[0]->getIdProcedimento();
         $objAtividadeRN = new AtividadeRN();
         $objAtividadeDTO = new AtividadeDTO();
         $objAtividadeDTO->setDblIdProtocolo($idProcedimento);
@@ -890,7 +915,7 @@ class UtilidadesIntegracao extends SeiIntegracao
         $countOjAtividade = $objAtividadeRN->contarRN0035($objAtividadeDTO);
 
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
-        $strValor = $objInfraParametro->getValor('MODULO_UTILIDADES_BLOQUEAR_CONCLUIR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL', false);
+        $strValor = $objInfraParametro->getValor('MODULO_UTILIDADES_BLOQUEAR_BLOQUEAR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL', false);
         $arrValor = [];
 
         if (!empty($strValor) && $countOjAtividade == 1) {
@@ -979,12 +1004,12 @@ class UtilidadesIntegracao extends SeiIntegracao
             }
 
             if (!empty($listaDocumentos.$listaDocProcessoAnexo.$listaDocProcessoAnexo2.$listaMsgProcesso)) {
-                $return['msg'] = "Não é possível enviar o processo nº ".$objPrcPrincipalDTO->getStrProtocoloProcedimentoFormatado().", pois nele ou em processo anexado ainda constam documentos com Nível de Acesso Restrito usando as Hipóteses Legais abaixo: \n\n" . $listaDocumentos.$listaDocProcessoAnexo.$listaDocProcessoAnexo2.$listaMsgProcesso;
-                $return['bloqueado'] = true;
+                $msg = "Não é possível bloquear o processo n ".$objPrcPrincipalDTO->getStrProtocoloProcedimentoFormatado().", pois nele ou em processo anexado ainda constam documentos com Nível de Acesso Restrito usando as Hipóteses Legais abaixo: \n\n" . $listaDocumentos.$listaDocProcessoAnexo.$listaDocProcessoAnexo2.$listaMsgProcesso;
+                $objInfraException = new InfraException();
+                $objInfraException->lancarValidacao($msg);
             }
-            return $return;
-
         }
+        return $msg == '';
     }
 
     public function validaProcessoAnexo($idProcedimento, $arrValor)
@@ -1206,7 +1231,8 @@ class UtilidadesIntegracao extends SeiIntegracao
         $idDocumento = $objDocumentoAPI->getIdDocumento();
         $objMdUtlControleRN = new MdUtlControleDsmpRN();
 
-        $isValidoExclusao = $objMdUtlControleRN->validaExclusaoDocumento($objDocumentoAPI);
+        #Estória de Usuário #12242
+        $isValidoExclusao = true; #$objMdUtlControleRN->validaExclusaoDocumento($objDocumentoAPI);
 
         if ($isValidoExclusao) {
             return parent::excluirDocumento($objDocumentoAPI);
@@ -1361,8 +1387,9 @@ class UtilidadesIntegracao extends SeiIntegracao
         $idProcedimento = $_GET['id_procedimento'];
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
         $idSerieDocumento = $objInfraParametro->getValor('MODULO_UTILIDADES_ID_TIPO_DOCUMENTO_EXIGIDO_CANCELAR', false);
+        $usuarioLogado = SessaoSEI::getInstance()->getStrSiglaUsuario();
 
-        if (!empty($idSerieDocumento) && is_numeric($idSerieDocumento)) {
+        if ((!empty($idSerieDocumento) && is_numeric($idSerieDocumento)) && $usuarioLogado != SessaoSEI::$USUARIO_SEI) {
             $serieRN = new SerieRN();
             $objSerieDTO = new SerieDTO();
             $objSerieDTO->retNumIdSerie();

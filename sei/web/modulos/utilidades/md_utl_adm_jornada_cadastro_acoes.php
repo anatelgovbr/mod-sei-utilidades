@@ -27,8 +27,6 @@ switch($_GET['acao']){
 
     case 'md_utl_adm_jornada_cadastrar':
         $arrTpsControle         = $objTpControleUtlUsuRN->usuarioLogadoIsGestorTpControle();
-        //$vlSelecionado          = count($arrTpsControle) == 1 ? current($arrTpsControle) : $_POST['selTpCtrlDesempenho'];
-        //$strSelectTipoControle  = MdUtlAdmTpCtrlDesempINT::montarSelectIdMdUtlAdmTpCtrlDesemp($isAlterar, $vlSelecionado);
         $strTitulo = 'Novo Ajuste de Jornada';
         $arrComandos[] = '<button type="submit" accesskey="S" name="sbmCadastrarJornada" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
         $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTipoControle)).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
@@ -75,8 +73,6 @@ switch($_GET['acao']){
 
             $arrTpsControle         = $objTpControleUtlUsuRN->usuarioLogadoIsGestorTpControle();
             $idTpCtrl               = array_key_exists('hdnIdTipoControleUtl', $_POST) ? $_POST['hdnIdTipoControleUtl']: $objJornadaDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-            // $idTpCtrl               = array_key_exists('selTpCtrlDesempenho', $_POST) ? $_POST['selTpCtrlDesempenho']: $objJornadaDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-            // $strSelectTipoControle  = MdUtlAdmTpCtrlDesempINT::montarSelectIdMdUtlAdmTpCtrlDesemp($isAlterar, $idTpCtrl);
             $idTpAjuste             = array_key_exists('hdnTpAjuste',$_POST) ? $_POST['hdnTpAjuste']: $objJornadaDTO->getStrStaTipoAjuste();
 
             //============= INICIO OBTER REGISTROS RELACIONADOS PARA EDIÇAO ===============================

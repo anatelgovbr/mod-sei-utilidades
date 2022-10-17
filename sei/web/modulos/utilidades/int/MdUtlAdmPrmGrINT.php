@@ -84,7 +84,7 @@ class MdUtlAdmPrmGrINT extends InfraINT {
         $arrFrequencia = self::retornaArrFimPeriodoParametros();
         $arrFrequenciaSelecionado = $arrFrequencia[$valorSelecionado];
 
-        if(count($arrFrequenciaSelecionado)> 0) {
+        if(!is_null($arrFrequenciaSelecionado)) {
             foreach ($arrFrequenciaSelecionado as $key => $frequencia) {
                 $add = '';
                 if ($valorSelecionado == $key) {
@@ -445,20 +445,21 @@ class MdUtlAdmPrmGrINT extends InfraINT {
     public static function recuperarTextoFrequenciaTooltipDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
     {
         if (!$idControleDesempenho) {
-            return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+            return 'A Carga total abrange todo e qualquer tempo que foi distribudo para o usurio logado no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Perodo de distribuio e acompanhamento  "Semanal", tendo sempre incio toda segunda-feira s 0h, o que marca o fim do Perodo anterior;';
         }
 
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-        return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+        return 'A Carga total abrange todo e qualquer tempo que foi distribudo para o usurio logado no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
     }
 
     public static function recuperarTextoFrequenciaTooltipDistribuicaoDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
     {
         if (!$idControleDesempenho) {
-            return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+            return 'A Carga Horria Distribuda no Perodo somente ser exibida depois que for aplicado o filtro "Responsvel".\n \n A Carga total abrange todo e qualquer tempo que foi distribudo para o responsvel no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Perodo de distribuio e acompanhamento  "Semanal", tendo sempre incio toda segunda-feira s 0h, o que marca o fim do Perodo anterior;';
         }
 
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-        return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
+        return 'A Carga Horria Distribuda no Perodo somente ser exibida depois que for aplicado o filtro "Responsvel".\n \n A Carga total abrange todo e qualquer tempo que foi distribudo para o responsvel no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
     }
+
 }

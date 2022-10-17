@@ -31,14 +31,16 @@ class MdUtlAdmPrmGrUsuDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'FatorReducaoJornada', 'fator_reducao_jornada');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DBL, 'IdDocumento', 'id_documento');
+
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmPrmGrMdUtlAdmPrmGr', 'id_md_utl_adm_prm_gr', 'md_utl_adm_prm_gr');
 
     $this->configurarPK('IdMdUtlAdmPrmGrUsu',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr', 'id_md_utl_adm_prm_gr');
-
     $this->configurarFK('IdUsuario', 'usuario u', 'u.id_usuario');
     $this->configurarFK('IdOrgao','orgao o','o.id_orgao');
+    $this->configurarFK('IdDocumento', 'documento doc','doc.id_documento', InfraDTO::$TIPO_FK_OPCIONAL);
 
     //Usuario
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'Nome', 'u.nome', 'usuario u');
@@ -50,6 +52,9 @@ class MdUtlAdmPrmGrUsuDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdOrgao','u.id_orgao','usuario u');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SiglaOrgao','o.sigla','orgao o');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'DescricaoOrgao','o.descricao','orgao o');
+
+    //Documento
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdSerie', 'doc.id_serie', 'documento doc');
 
     //Attr
     $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'PalavrasPesquisa');

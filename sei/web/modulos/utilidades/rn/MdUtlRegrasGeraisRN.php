@@ -296,8 +296,8 @@ class MdUtlRegrasGeraisRN extends InfraRN
             if (!is_null($objDocumentoDTO)) {
                 if ($objDocumentoDTO->getStrStaDocumento() == DocumentoRN::$TD_EDITOR_INTERNO) {
                     $isPossuiAssinatura = false;
-                    $arrAssinatura = $objDocumentoDTO->getArrObjAssinaturaDTO();
-                    if (count($arrAssinatura) > 0) {
+                    $arrAssinatura = ! $objDocumentoDTO->isSetArrObjAssinaturaDTO() ? null : $objDocumentoDTO->getArrObjAssinaturaDTO();
+                    if (!is_null($arrAssinatura)) {
                         $objAssinaturaDTO = new AssinaturaDTO();
                         $objAssinaturaDTO->setDblIdDocumento($objDocumentoDTO->getDblIdDocumento());
                         $objAssinaturaDTO->retDthAberturaAtividade();
@@ -402,7 +402,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
             $objProcedimentoDTO = new ProcedimentoDTO();
             $objProcedimentoDTO->setDblIdProcedimento($idProcedimento);
             $objProcedimentoDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
-            $objProcedimentoDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
+            $objProcedimentoDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO, ProtocoloRN::$NA_SIGILOSO), InfraDTO::$OPER_IN);
             $objProcedimentoDTO->setNumMaxRegistrosRetorno(1);
 
             $objProcedimentoRN = new ProcedimentoRN();
@@ -562,11 +562,11 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
         $arrRetorno = array();
 
-        $imgAmarela = 'modulos/utilidades/imagens/icone-controle-utl-amarelo.png';
-        $imgVermelha = 'modulos/utilidades/imagens/icone-controle-utl-vermelho.png';
-        $imgAzul = 'modulos/utilidades/imagens/icone-controle-utl-azul.png';
-        $imgRoxo = 'modulos/utilidades/imagens/icone-controle-utl-roxo.png';
-        $imgVerde = 'modulos/utilidades/imagens/icone-controle-utl-verde.png';
+        $imgAmarela = 'modulos/utilidades/imagens/svg/icone_controle_utl_amarelo.svg';
+        $imgVermelha = 'modulos/utilidades/imagens/svg/icone_controle_utl_vermelho.svg';
+        $imgAzul = 'modulos/utilidades/imagens/svg/icone_controle_utl_azul.svg';
+        $imgRoxo = 'modulos/utilidades/imagens/svg/icone_controle_utl_roxo.svg';
+        $imgVerde = 'modulos/utilidades/imagens/svg/icone_controle_utl_verde.svg';
 
         $strStatus = trim($strStatus);
         switch ($strStatus) {
@@ -712,6 +712,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $params['dataInicio'] = '';
         $params['dataPrazo'] = '';
         $params['tempoExecucao'] = '';
+        $params['tempoExecucaoAtribuido'] = '';
 
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
@@ -753,6 +754,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $params['dataInicio'] = '';
         $params['dataPrazo'] = '';
         $params['tempoExecucao'] = '';
+        $params['tempoExecucaoAtribuido'] = '';
 
         $this->extrairParamsHistAnalise($objHistControleDesmp, $params, $objMdUtlAnaliseDTO);
 
@@ -764,6 +766,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $params['dataInicio'] = '';
         $params['dataPrazo'] = '';
         $params['tempoExecucao'] = '';
+        $params['tempoExecucaoAtribuido'] = '';
 
         $this->extrairParamsHistRevisao($objHistControleDesmp, $params);
 
@@ -788,6 +791,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     $params['dataInicio'] = $historico->getDthAtual();
                     $params['dataPrazo'] = $historico->getDthPrazoTarefa();
                     $params['tempoExecucao'] = $historico->getNumTempoExecucao();
+                    $params['tempoExecucaoAtribuido'] = $historico->getNumTempoExecucaoAtribuido();
                 }
 
                 break;
@@ -817,7 +821,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $dataRetornoStatus = '';
         $dataInicio = '';
         $dataPrazo = '';
-        $tempoExecucao = '';
+        $arrTempoExecucao = [];
         $temRetriagem = false;
         $temAprAjuste = false;
         $temInte = false;
@@ -835,7 +839,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     if ($dataDistribuicao > $dataRetornoStatus) {
                         $dataInicio = $historico->getDthAtual();
                         if (!$temRetriagem) {
-                            $tempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
+                            $arrTempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
                         }
                         if (!$temSusp && !$temAprAjuste) {
                             $dataInicio = $historico->getDthAtual();
@@ -852,7 +856,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         $dataInicio = $historico->getDthAtual();
 
                         if (!$temRetriagem) {
-                            $tempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
+                            $arrTempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
                         }
                         if (!$temSusp && !$temAprAjuste) {
                             $dataInicio = $historico->getDthAtual();
@@ -868,7 +872,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
                 if ($dataRetriagem > $dataDistribuicao) {
                     $temRetriagem = true;
-                    $tempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
+                    $arrTempoExecucao = $this->buscarAtividadesEntregues($objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
                 }
             }
 
@@ -882,7 +886,10 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     $dataRetornoStatus = DateTime::createFromFormat('d/m/Y H:i:s', $historico->getDthAtual());
                     if ($dataRetornoStatus > $dataDistribuicao) {
                         if (!$temRetriagem) {
-                            $tempoExecucao = $historico->getNumTempoExecucao();
+                            $arrTempoExecucao = [
+                                'tempoExecucao'          => $historico->getNumTempoExecucao() , 
+                                'tempoExecucaoAtribuido' => $historico->getNumTempoExecucaoAtribuido()
+                            ];
                         }
                     }
 
@@ -926,14 +933,16 @@ class MdUtlRegrasGeraisRN extends InfraRN
             }
         }
 
-        $params['dataInicio'] = $dataInicio;
-        $params['dataPrazo'] = $dataPrazo;
-        $params['tempoExecucao'] = $tempoExecucao;
+        $params['dataInicio']             = $dataInicio;
+        $params['dataPrazo']              = $dataPrazo;
+        $params['tempoExecucao']          = $arrTempoExecucao['tempoExecucao'];
+        $params['tempoExecucaoAtribuido'] = $arrTempoExecucao['tempoExecucaoAtribuido'];
     }
 
     private function buscarAtividadesEntregues($idAnalise)
     {
-        $tempoExecucao = 0;
+        $tempoExecucao          = 0;
+        $tempoExecucaoAtribuido = 0;
 
         $objMdUtlRelAnaliseProdutoRN = new MdUtlRelAnaliseProdutoRN();
         $obMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
@@ -941,20 +950,16 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $obMdUtlRelAnaliseProdutoDTO->setDistinct(true);
         $obMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlAdmAtividade();
         $obMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlRelTriagemAtv();
+        $obMdUtlRelAnaliseProdutoDTO->retNumTempoExecucao();
+        $obMdUtlRelAnaliseProdutoDTO->retNumTempoExecucaoAtribuido();
         $arrMdUtlRelAnaliseProduto = $objMdUtlRelAnaliseProdutoRN->listar($obMdUtlRelAnaliseProdutoDTO);
 
         foreach ($arrMdUtlRelAnaliseProduto as $MdUtlRelAnaliseProduto) {
-            $objMdUtlAdmAtividadeRN = new MdUtlAdmAtividadeRN();
-            $objMdUtlAdmAtividadeDTO = new MdUtlAdmAtividadeDTO();
-
-            $objMdUtlAdmAtividadeDTO->setNumIdMdUtlAdmAtividade($MdUtlRelAnaliseProduto->getNumIdMdUtlAdmAtividade());
-            $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoAtv();
-            $objMdUtlAdmAtividade = $objMdUtlAdmAtividadeRN->consultar($objMdUtlAdmAtividadeDTO);
-
-            $tempoExecucao += $objMdUtlAdmAtividade->getNumTmpExecucaoAtv();
+            $tempoExecucao +=          $MdUtlRelAnaliseProduto->getNumTempoExecucao();
+            $tempoExecucaoAtribuido += $MdUtlRelAnaliseProduto->getNumTempoExecucaoAtribuido();
         }
 
-        return $tempoExecucao;
+        return ['tempoExecucao' => $tempoExecucao , 'tempoExecucaoAtribuido' => $tempoExecucaoAtribuido];
 
     }
 
@@ -966,6 +971,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $dataInicio = '';
         $dataPrazo = '';
         $tempoExecucao = '';
+        $tempoExecucaoAtribuido = '';
         $temRetriagem = false;
         $temAprAjuste = false;
         $temInte = false;
@@ -984,6 +990,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         $dataInicio = $historico->getDthAtual();
                         if (!$temRetriagem) {
                             $tempoExecucao = $historico->getNumTempoExecucao();
+                            $tempoExecucaoAtribuido = $historico->getNumTempoExecucaoAtribuido();
                         }
                         if (!$temSusp && !$temAprAjuste) {
                             $dataInicio = $historico->getDthAtual();
@@ -1001,6 +1008,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
                         if (!$temRetriagem) {
                             $tempoExecucao = $historico->getNumTempoExecucao();
+                            $tempoExecucaoAtribuido = $historico->getNumTempoExecucaoAtribuido();
                         }
                         if (!$temSusp && !$temAprAjuste) {
                             $dataInicio = $historico->getDthAtual();
@@ -1017,6 +1025,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                 if ($dataRetriagem > $dataDistribuicao) {
                     $temRetriagem = true;
                     $tempoExecucao = $historico->getNumTempoExecucao();
+                    $tempoExecucaoAtribuido = $historico->getNumTempoExecucaoAtribuido();
                 }
             }
 
@@ -1031,6 +1040,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     if ($dataRetornoStatus > $dataDistribuicao) {
                         if (!$temRetriagem) {
                             $tempoExecucao = $historico->getNumTempoExecucao();
+                            $tempoExecucaoAtribuido = $historico->getNumTempoExecucaoAtribuido();
                         }
                     }
 
@@ -1077,6 +1087,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $params['dataInicio'] = $dataInicio;
         $params['dataPrazo'] = $dataPrazo;
         $params['tempoExecucao'] = $tempoExecucao;
+        $params['tempoExecucaoAtribuido'] = $tempoExecucaoAtribuido;
 
     }
 
@@ -1367,6 +1378,10 @@ class MdUtlRegrasGeraisRN extends InfraRN
             //pega os papeis do usuário pelas filas em que ele faz parte
             $arrObjsFilaUsuDTO = $mdUtlAdmFilaPrmGrUsuRN->getPapeisDeUsuario($idsFilasPermitidas);
 
+            if (is_null( $arrObjsFilaUsuDTO )) {
+                throw new Exception("Usuário não está cadastrado nas Filas.");
+            }
+
             $objDTO = $mdUtlControleDsmpRN->getObjDTOParametrizadoDistrib(array($arrObjsFilaUsuDTO, false, $idTipoControle, array()));
 
             if (is_null( $objDTO )) {
@@ -1374,6 +1389,8 @@ class MdUtlRegrasGeraisRN extends InfraRN
             }
 
             $objDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_ASC);
+            $objDTO->setNumIdUsuarioDistribuicao( null , InfraDTO::$OPER_IGUAL );
+            $objDTO->setNumIdUnidade( SessaoSEI::getInstance()->getNumIdUnidadeAtual() );
             $objDTO->retNumIdMdUtlControleDsmp();
             $objDTO->retNumIdUnidade();
             $objDTO->retNumIdTipoProcedimento();
@@ -1608,11 +1625,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $objProcedimentoDto->retNumIdUsuarioDistribuicao();
 
         $objDTO = $objProcedimentoRN->listarCompleto($objProcedimentoDto);
-
-        if( !is_null( $objDTO[0]->getNumIdUsuarioDistribuicao() ) ){
-            return false;
-        }
-
+        
         if( !is_null( $objDTO[0]->getNumIdUsuarioDistribuicao() ) ){
             return false;
         }
@@ -1821,6 +1834,45 @@ class MdUtlRegrasGeraisRN extends InfraRN
         }
         return $retorno;
     }
+
+    protected function validaPlanoTrabalhoConectado( $arrPost )
+    {
+        if( empty( $arrPost ) ) return ['msg' => 'Dados Incompletos!', 'erro' => true];
+
+        $objDocumentoDTO = new DocumentoDTO();
+        
+        $objDocumentoDTO->setStrProtocoloDocumentoFormatado( $arrPost['num_sei'] );
+        $objDocumentoDTO->setNumMaxRegistrosRetorno(1);
+
+        $objDocumentoDTO->retDblIdDocumento();
+        $objDocumentoDTO->retStrProtocoloDocumentoFormatado();
+        $objDocumentoDTO->retNumIdSerie();
+        $objDocumentoDTO->retDblIdProcedimento();
+
+        $objDocumentoRN = new DocumentoRN();
+        $objDocumentoDTO = $objDocumentoRN->consultarRN0005( $objDocumentoDTO );
+        
+        if( is_null( $objDocumentoDTO ) ) return ['msg' => MdUtlMensagemINT::$MSG_UTL_29 , 'erro' => true];
+        
+        if( $objDocumentoDTO->getNumIdSerie() != $arrPost['id_serie'] ) return ['msg' => 'Tipo de Documento Inválido.' , 'erro' => true];
+        
+        $objAssinaturaDTO = new AssinaturaDTO();
+        $objAssinaturaDTO->setDblIdDocumento( $objDocumentoDTO->getDblIdDocumento() );
+        $objAssinaturaDTO->retDthAberturaAtividade();
+        $objAssinaturaDTO->setOrdDthAberturaAtividade( InfraDTO::$TIPO_ORDENACAO_ASC );
+
+        $objAssinaturaRN = new AssinaturaRN();
+        
+        $countAss = $objAssinaturaRN->contarRN1324($objAssinaturaDTO);
+
+        $isPossuiAssinatura = $countAss > 0;
+
+        if( !$isPossuiAssinatura ) return ['msg' => 'Documento não assinado.' , 'erro' => true];
+
+        $msg = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&id_documento=' . $objDocumentoDTO->getDblIdDocumento());
+
+        return ['erro' => false , 'msg' => $msg];
+    }    
 }
 
 ?>

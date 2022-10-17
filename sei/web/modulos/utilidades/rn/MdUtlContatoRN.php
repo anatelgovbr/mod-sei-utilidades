@@ -34,30 +34,6 @@ class MdUtlContatoRN extends InfraRN {
         }
     }
 
-    private function _setCamposNullsContato(&$objContatoDTO){
-
-        $objContatoDTO->setStrStaGenero(null);
-        $objContatoDTO->setDblCpf(null);
-        $objContatoDTO->setDblRg(null);
-        $objContatoDTO->setDblCnpj(null);
-        $objContatoDTO->setNumIdCargo(null);
-        $objContatoDTO->setStrOrgaoExpedidor(null);
-        $objContatoDTO->setStrMatricula(null);
-        $objContatoDTO->setStrMatriculaOab(null);
-        $objContatoDTO->setDtaNascimento(null);
-        $objContatoDTO->setStrTelefoneFixo(null);
-        $objContatoDTO->setStrTelefoneCelular(null);
-        $objContatoDTO->setStrEmail(null);
-        $objContatoDTO->setStrSitioInternet(null);
-        $objContatoDTO->setStrEndereco(null);
-        $objContatoDTO->setStrComplemento(null);
-        $objContatoDTO->setStrBairro(null);
-        $objContatoDTO->setStrCep(null);
-        $objContatoDTO->setStrObservacao(null);
-        $objContatoDTO->setNumIdUf(null);
-        $objContatoDTO->setNumIdCidade(null);
-    }
-
     public function getIdxContatoUsuario(){
         $strIndexacao = '';
         $strIndexacao .= ' '.MdUtlContatoRN::$STR_SIGLA_CONTATO_MODULO;
@@ -115,7 +91,6 @@ class MdUtlContatoRN extends InfraRN {
                 $objContatoDTO->setStrSinEnderecoAssociado(MdUtlContatoRN::$NAO);
                 $objContatoDTO->setStrSinAtivo(MdUtlContatoRN::$SIM);
                 $objContatoDTO->setStrIdxContato($idxContato);
-                $this->_setCamposNullsContato($objContatoDTO);
 
                 $objContatoDTO = $this->cadastrarControlado($objContatoDTO);
             }

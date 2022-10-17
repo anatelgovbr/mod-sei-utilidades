@@ -171,7 +171,10 @@ class MdUtlAdmRelPrmDsProcRN extends InfraRN
             $arrTipoProcesso[] = $tipoProcesso;
         }
 
-        return array('itensTabela' => $arrTipoProcesso, 'qtdTipoProcesso' => count($arrTipoProcesso));
+        return array(
+            'itensTabela' => empty( $arrTipoProcesso ) ? array() : $arrTipoProcesso , 
+            'qtdTipoProcesso' => empty( $arrTipoProcesso ) ? 0 : count($arrTipoProcesso)
+        );
     }
 
     protected function montarArrTipoProcessoPrioridadeControlado($idMdUtlAdmPrmDs)

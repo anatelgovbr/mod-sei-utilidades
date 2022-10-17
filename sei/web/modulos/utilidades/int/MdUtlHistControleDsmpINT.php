@@ -47,6 +47,12 @@ class MdUtlHistControleDsmpINT extends InfraINT {
 
         $arrSituacao = MdUtlControleDsmpINT::retornaArrSituacoesControleDsmpCompleto();
 
+        $arrTpAcoes = [
+            MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM,
+            MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE,
+            MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO
+        ];
+
         //Tabela histórico
         $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
         $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
@@ -58,8 +64,13 @@ class MdUtlHistControleDsmpINT extends InfraINT {
 
         $objMdUtlHistControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
         $objMdUtlHistControleDsmpDTO->retStrNomeUsuario();
+        $objMdUtlHistControleDsmpDTO->retNumIdUsuarioAtual();
         $objMdUtlHistControleDsmpDTO->retStrSiglaUsuario();
         $objMdUtlHistControleDsmpDTO->retStrNomeTpControle();
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlTriagem();
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlAnalise();
+        $objMdUtlHistControleDsmpDTO->retNumIdMdUtlRevisao();
+        $objMdUtlHistControleDsmpDTO->retNumTempoExecucaoAtribuido();
         $objMdUtlHistControleDsmpDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_DESC);
         $objMdUtlHistControleDsmpDTO->retTodos();
 
@@ -89,19 +100,44 @@ class MdUtlHistControleDsmpINT extends InfraINT {
 
 
             $strResultado .= '<tr>';
-            $strResultado .= '<th class="infraTh" width="13%" style="text-align: center">    Data/Hora</th>';
-            $strResultado .= '<th class="infraTh" width="13%" style="text-align: center">    Usuário Ação </th>';
-            $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">    Tipo de Controle </th>';
-            $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">    Tipo de Ação </th>';
-            $strResultado .= '<th class="infraTh" width="22%" style="text-align: center">    Detalhe</th>';
-            $strResultado .= '<th class="infraTh" width="22%" style="text-align: center">    Situação </th>';
+            $strResultado .= '<th class="infraTh" width="13%" style="text-align: center">Data/Hora</th>';
+            $strResultado .= '<th class="infraTh" width="13%" style="text-align: center">Usuário Ação</th>';
+            $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">Tipo de Controle</th>';
+            $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">Tipo de Ação</th>';
+            $strResultado .= '<th class="infraTh" width="15%" style="text-align: center">Tempo Executado</th>';
+            $strResultado .= '<th class="infraTh" width="22%" style="text-align: center">Detalhe</th>';
+            $strResultado .= '<th class="infraTh" width="22%" style="text-align: center">Situação</th>';
             $strResultado .= '</tr>';
 
             $strCssTr = '<tr class="infraTrClara">';
 
 
             for ($i = 0; $i < $numRegistros; $i++) {
+                $tmpExec = null;
+                if ( in_array( $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao() , $arrTpAcoes ) ) {
+                    $id_user_dist = $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdUsuarioAtual();
+                    switch ($arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao()) {
+                        case MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM:
+                            $tmpExec = $objMdUtlHistControleDsmpRN->getTempoExecucaoTriagem(
+                                $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdMdUtlTriagem() , $id_user_dist
+                            );
+                            break;
 
+                        case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE:
+                            $tmpExec = $objMdUtlHistControleDsmpRN->getTempoExecucaoAnalise(
+                                $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdMdUtlAnalise() , $id_user_dist
+                            );
+                            break;
+
+                        case MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO:
+                            $tmpExec = $objMdUtlHistControleDsmpRN->getTempoExecucaoRevisao(
+                                $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdMdUtlRevisao() , $id_user_dist
+                            );
+                            break;
+                    }
+                } else if( $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO ) {
+                    $tmpExec = $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumTempoExecucaoAtribuido();
+                }
 
                 $strNomeUsu          = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeUsuario();
                 $strStatus           = trim($arrObjsMdUtlHistControleDsmpDTO[$i]->getStrStaAtendimentoDsmp());
@@ -142,6 +178,11 @@ class MdUtlHistControleDsmpINT extends InfraINT {
                 $strResultado .= PaginaSEI::tratarHTML($strTipoAcao);
                 $strResultado .= '</td>';
 
+                //Tempo Executado
+                $strResultado .= '<td class="tdTmpExec" style="text-align: center">';
+                $strResultado .= !is_null( $tmpExec ) ? MdUtlAdmPrmGrINT::convertToHoursMins( $tmpExec ) : '-';
+                $strResultado .= '</td>';
+
                 //Linha Detalhe
                 $strResultado .= '<td class="tdDetalhe" style="text-align: center">';
                 $strResultado .= $strDetalhe;
@@ -177,7 +218,7 @@ class MdUtlHistControleDsmpINT extends InfraINT {
         $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
         $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
         $objMdUtlHistControleDsmpDTO->setDblIdProcedimento($idProcedimento);
-        $objMdUtlHistControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO), InfraDTO::$OPER_IN);
+        $objMdUtlHistControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM,MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO), InfraDTO::$OPER_IN);
         $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
         $objMdUtlHistControleDsmpDTO->setOrdNumIdMdUtlHistControleDsmp(InfraDTO::$TIPO_ORDENACAO_DESC);
         $objMdUtlHistControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
@@ -201,8 +242,8 @@ class MdUtlHistControleDsmpINT extends InfraINT {
                 $objMdUtlTriagemDTO->retNumIdMdUtlAdmFila();
 
                 $objMdUtlTriagem = $objMdUtlTriagemRN->consultar($objMdUtlTriagemDTO);
-                $encaminhamento['sta_encaminhamento'] = $objMdUtlTriagem->getStrStaEncaminhamentoTriagem();
-                $encaminhamento['id_fila'] = $objMdUtlTriagem->getNumIdMdUtlAdmFila() ? $objMdUtlTriagem->getNumIdMdUtlAdmFila() : null;
+                $encaminhamento['sta_encaminhamento'] = !is_null($objMdUtlTriagem)?$objMdUtlTriagem->getStrStaEncaminhamentoTriagem():null;
+                $encaminhamento['id_fila'] = !is_null($objMdUtlTriagem)?$objMdUtlTriagem->getNumIdMdUtlAdmFila():null;
                 break;
             case MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM:
                 $objMdUtlTriagemRN = new MdUtlTriagemRN();

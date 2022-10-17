@@ -379,11 +379,12 @@ class MdUtlAdmFilaRN extends InfraRN {
 
     if ($count > 0) {
       $idTipoControle =  $arrDados[0]->getNumIdMdUtlAdmTpCtrlDesemp();
-      $idFila         = $this->getIdFilaPadraoPorTipoControle($idTipoControle);
+      #$idFila         = $this->getIdFilaPadraoPorTipoControle($idTipoControle);
 
        foreach ($arrDados as $key=> $objDTO) {
-            $vlFila = $objDTO->getNumIdMdUtlAdmFila() == $idFila ? 'Sim' : 'Não';
-            $arrDados[$key]->setStrFilaPadrao($vlFila);
+          #$objDTO->getNumIdMdUtlAdmFila() == $idFila ? 'Sim' : 'Não';
+          $vlFila = 'Não';
+          $arrDados[$key]->setStrFilaPadrao($vlFila);
        }
     }
 
@@ -555,27 +556,8 @@ class MdUtlAdmFilaRN extends InfraRN {
     if( !is_null( $arrObjsFilas ) ){
       $arrObjsFilaUsuDTO = InfraArray::converterArrInfraDTO( $arrObjsFilas , 'IdMdUtlAdmFila');
     }
-
-    // Busca usuarios da mesma unidade do usuario logado
-    $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
-    $idsUsuarioUnid = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
-
-    // Retorna as filas que os usuarios da mesma unidade do usuario logado estao vinculados
-    $objDTO = new MdUtlAdmFilaPrmGrUsuDTO();
-    $objDTO->setNumIdUsuario($idsUsuarioUnid , InfraDTO::$OPER_IN);
-    $objDTO->setNumIdMdUtlAdmFila($arrObjsFilaDTO, InfraDTO::$OPER_IN);
-    $objDTO->retTodos();
-
-    $arrObjsFilaUsuUnidDTO = array();
-
-    $count = $objMdUtlAdmFilaPrmGrUsuRN->contar($objDTO);
-
-    if ($count > 0) {
-      // 2 regra do retorno das filas
-      $arrObjsFilaUsuUnidDTO = array_unique( InfraArray::converterArrInfraDTO( $objMdUtlAdmFilaPrmGrUsuRN->listar($objDTO) , 'IdMdUtlAdmFila') );
-    }
-
-    $arrIdsFila = array_unique(array_merge($arrObjsFilaUsuDTO,$arrObjsFilaUsuUnidDTO));
+    
+    $arrIdsFila = $arrObjsFilaUsuDTO;
 
     if( count($arrIdsFila) > 0 ){
       $objFilaDTO = new MdUtlAdmFilaDTO();
@@ -621,6 +603,7 @@ class MdUtlAdmFilaRN extends InfraRN {
         $idFila   = $arrParams[0];
         $idStatus = $arrParams[1];
         $bolFiltraPorPapel = array_key_exists(2,$arrParams) ? true : false;
+        $idUsuario         = array_key_exists(3,$arrParams) ? $arrParams[3] : SessaoSEI::getInstance()->getNumIdUsuario();
 
         $idsStatusTriador = array(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
         $idsStatusAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
@@ -633,7 +616,7 @@ class MdUtlAdmFilaRN extends InfraRN {
         $objMdRelFilaUsuarioRN  = new MdUtlAdmFilaPrmGrUsuRN();
         $objMdRelFilaUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
         $objMdRelFilaUsuarioDTO->setNumIdMdUtlAdmFila($idFila);
-        $objMdRelFilaUsuarioDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+        $objMdRelFilaUsuarioDTO->setNumIdUsuario( $idUsuario );
 
         if( $bolFiltraPorPapel ) {
             if (in_array($idStatus, $idsStatusTriador)) {
@@ -650,6 +633,63 @@ class MdUtlAdmFilaRN extends InfraRN {
         }
 
         return ($objMdRelFilaUsuarioRN->contar($objMdRelFilaUsuarioDTO) > 0);
+    }
+
+    public function verificaUsuarioLogadoAvaliador( $idsTpCtrl ){
+      // busca as filas relacionadas aos tipos de controles enviados no parametro
+      $objFilaDTO = new MdUtlAdmFilaDTO();
+      $objFilaDTO->setDistinct(true);
+      $objFilaDTO->setNumIdMdUtlAdmTpCtrlDesemp( $idsTpCtrl , InfraDTO::$OPER_IN );
+      $objFilaDTO->retNumIdMdUtlAdmFila();
+
+      if( $this->contar( $objFilaDTO ) === 0 ) return [ 'qtdUserAvaliador' => 0 , 'idsTpCtrlUsuarioAvaliador' => [] ];
+
+      $arrFilas = InfraArray::converterArrInfraDTO( $this->listar( $objFilaDTO ) , 'IdMdUtlAdmFila' );
+
+      $objFilaDTO = null;
+
+      // busca as filas onde o usuario eh avaliador
+      $objMdRelFilaUsuarioRN  = new MdUtlAdmFilaPrmGrUsuRN();
+      $objMdRelFilaUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+      $objMdRelFilaUsuarioDTO->setDistinct(true);
+      $objMdRelFilaUsuarioDTO->setNumIdMdUtlAdmFila( $arrFilas , InfraDTO::$OPER_IN );
+      $objMdRelFilaUsuarioDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+      $objMdRelFilaUsuarioDTO->setStrSinRevisor('S');
+      $objMdRelFilaUsuarioDTO->retNumIdMdUtlAdmFila();      
+      
+      // qtd de filas onde o usuario eh avaliador
+      $qtdUserAvaliador = $objMdRelFilaUsuarioRN->contar( $objMdRelFilaUsuarioDTO );
+
+      if( $qtdUserAvaliador === 0 ) return [ 'qtdUserAvaliador' => 0 , 'idsTpCtrlUsuarioAvaliador' => [] ];
+
+      // retorna as filas filtradas, de acordo com a consulta anterior, para recuperar os tipos de controles 
+      $arrIdsFila = InfraArray::converterArrInfraDTO( $objMdRelFilaUsuarioRN->listar( $objMdRelFilaUsuarioDTO ) , 'IdMdUtlAdmFila' );
+
+      $objFilaDTO = new MdUtlAdmFilaDTO();
+      $objFilaDTO->setNumIdMdUtlAdmFila( $arrIdsFila , InfraDTO::$OPER_IN );
+      $objFilaDTO->setDistinct( true );
+      $objFilaDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+
+      return [
+        'qtdUserAvaliador'          => $qtdUserAvaliador , 
+        'idsTpCtrlUsuarioAvaliador' => InfraArray::converterArrInfraDTO( $this->listar( $objFilaDTO ) , 'IdMdUtlAdmTpCtrlDesemp' )
+      ];
+    }
+
+    public function buscaFilasUsuarioAvaliador( $arrIdsPrmGr ){
+        $objMdRelFilaUsuarioRN  = new MdUtlAdmFilaPrmGrUsuRN();
+        $objMdRelFilaUsuarioDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+
+        #$objMdRelFilaUsuarioDTO->setNumIdMdUtlAdmFila($idFila);
+        $objMdRelFilaUsuarioDTO->setNumIdUsuario( SessaoSEI::getInstance()->getNumIdUsuario() );
+        $objMdRelFilaUsuarioDTO->setStrSinRevisor('S');
+        $objMdRelFilaUsuarioDTO->adicionarCriterio(['IdMdUtlPrmGr'],[InfraDTO::$OPER_IN],[$arrIdsPrmGr]);
+
+        $objMdRelFilaUsuarioDTO->retNumIdMdUtlAdmFila();
+        $objMdRelFilaUsuarioDTO->retStrSinRevisor();
+        $objMdRelFilaUsuarioDTO->retNumIdMdUtlPrmGr();
+
+        return $objMdRelFilaUsuarioRN->listar( $objMdRelFilaUsuarioDTO );
     }
 
     protected function pesquisarConectado(MdUtlAdmFilaDTO $objMdUtlAdmFilaDTO) {

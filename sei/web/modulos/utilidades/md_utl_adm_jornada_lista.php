@@ -6,12 +6,11 @@
  */
 
 require_once dirname(__FILE__) . '/../../SEI.php';
+require_once('md_utl_adm_jornada_lista_acoes.php');
 
 session_start();
 SessaoSEI::getInstance()->validarLink();
-// ======================= INICIO JS
-require_once('md_utl_adm_jornada_lista_acoes.php');
-// ======================= FIM JS
+
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
@@ -21,197 +20,134 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 //Include de estilos CSS
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if (0) { ?>
-    <style><?php } ?>
-
-.bloco {
-    position: relative;
-    float: left;
-    margin-top: 1%;
-    width: 90%;
-}
-
-.clear {
-    clear: both;
-}
-
-inputFila {
-    width: 45% !important;
-}
-
-textarea {
-    resize: none;
-    width: 60%;
-}
-
-select[multiple] {
-    width: 61%;
-    margin-top: 0.5%;
-}
-
-img[id^="imgExcluir"] {
-    margin-left: -2px;
-}
-
-div[id^="divOpcoes"] {
-    position: absolute;
-    width: 1%;
-    left: 62%;
-    top: 44%;
-}
-
-img[id^="imgAjuda"] {
-    margin-bottom: -4px;
-}
-
-#divInicioFim {
-    position: absolute;
-    margin-top: 60px;
-}
-
-#lblDtFim {
-    margin-left: 37.5%;
-}
-
-#txtDtFim {
-    margin-left: 10%;
-    width: 30%;
-}
-
-#divTpAjuste {
-    position: absolute;
-    margin-left: 34%;
-    margin-top: 60px;
-
-}
-
-#divMembro {
-    width: 50%;
-    position: absolute;
-    margin-left: 58%;
-    margin-top: 60px;
-}
-
-
-<?
-if (0) { ?></style><?
-} ?>
-<?php
-
 PaginaSEI::getInstance()->fecharStyle();
 
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
+PaginaSEI::getInstance()->fecharJavaScript();
 
-// ======================= INICIO JS
-require_once('md_utl_adm_jornada_lista_js.php');
-// ======================= FIM JS
+require_once 'md_utl_geral_css.php';
 
-PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-
-<?php
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
+
 ?>
-    <form id="frmTpControleLista" method="post"
-          action="<?= PaginaSEI::getInstance()->formatarXHTML(
-              SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
-          ) ?>">
 
-        <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('13em; overflow: hidden');
-        ?>
-        <div id="divNome" style="width: 49%;position: absolute" class="bloco">
-            <label id="lblNomeTpControle" for="txtNomeTpControle" accesskey="S" class="infraLabelOpcional">
-                Nome:
-            </label>
+    <div>
+        <div class="row">
+            <div class="col-md-12">
+                <form id="frmTpControleLista" method="post" action="<?= PaginaSEI::getInstance()->formatarXHTML( SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao']) ) ?>">
 
-            <div class="clear"></div>
+                    <?php 
+                        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+                        PaginaSEI::getInstance()->abrirAreaDados('');
+                    ?>
 
-            <input type="text" id="txtNomeTpControle" style="width:60%" name="txtNomeTpControle"
-                   class="inputFila infraText" size="30"
-                   value="<?= $strNome ?>" maxlength="100"
-                   tabindex="502"/>
+                    <div class="row">
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                            <div class="form-group">
+                                <label id="lblNomeTpControle" for="txtNomeTpControle" accesskey="S" class="infraLabelOpcional">Nome:</label>
+                                <input type="text" id="txtNomeTpControle" class="inputFila infraText form-control" name="txtNomeTpControle" value="<?= $strNome ?>" maxlength="100" tabindex="502">
+                            </div>
+                        </div>
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                            <div class="form-group">
+                                <label id="lblDescricaoTpControle" for="txtDescricaoTpControle" accesskey="S" class="infraLabelOpcional">
+                                    Descrição:
+                                </label>
+                                <input type="text" id="txtDescricaoTpControle" name="txtDescricaoTpControle"
+                                class="form-control inputFila infraText" size="30" value="<?= $strDescricao ?>" maxlength="100" tabindex="502"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-3 col-6">
+                            <div class="form-group">
+                                <label id="lblDtInicio" for="txtDtInicio" class="infraLabelOpcional">Início:</label>
+
+                                <div class="input-group">
+
+                                    <input type="text" name="txtDtInicio" id="txtDtInicio"
+                                    onchange="validarDataJornada(this);"
+                                    value="<?= $strDtInicio ?>"
+                                    onkeypress="return infraMascara(this, event, '##/##/####');" 
+                                    class="form-control rounded infraText"/>
+
+                                    <div class="input-group-append">
+                                        <span class="input-group-text bg-white border-0 px-0 pl-1" id="inputGroupPrepend">
+                                            <img style="margin-bottom: -3px;"
+                                            src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/calendario.svg" id="imgDtInicio"
+                                            title="Selecionar Data/Hora Inicial"
+                                            alt="Selecionar Data/Hora Inicial" class="infraImg"
+                                            onclick="infraCalendario('txtDtInicio',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-3 col-6">
+                            <div class="form-group">
+                                <label id="lblDtFim" for="txtDtFim" class="infraLabelOpcional">Fim:</label>
+
+                                <div class="input-group">
+
+                                    <input type="text" name="txtDtFim" id="txtDtFim"
+                                    value="<?= $strDtFim ?>"
+                                    onchange="validarDataJornada(this);" onkeypress="return infraMascara(this, event, '##/##/####');"
+                                    maxlength="16"  
+                                    class="form-control rounded infraText"/>
+
+                                    <div class="input-group-append">
+                                        <span class="input-group-text bg-white border-0 px-0 pl-1" id="inputGroupPrepend">
+                                        <img style="margin-bottom: -3px;"
+                                        src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/calendario.svg" id="imgDtFim"
+                                        title="Selecionar Data/Hora Final"
+                                        alt="Selecionar Data/Hora Final"
+                                        class="infraImg"
+                                        onclick="infraCalendario('txtDtFim',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-6">
+                            <div class="form-group">
+                                <label id="lblTpAjuste" for="selTpAjuste" accesskey="" class="infraLabelOpcional">Ajuste:</label>
+                                <select id="selTpAjuste" name="selTpAjuste" class="form-control infraSelect"
+                                        onchange="pesquisar();"
+                                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                                    <?= $strTpAjuste ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-5 col-lg-3 col-md-3 col-sm-3 col-6">
+                            <div class="form-group">
+                                <label id="lblMembro" for="selMembro" accesskey="" class="infraLabelOpcional">Membro:</label>
+                                <select id="selMembro" name="selMembro" class="form-control infraSelect" onchange="pesquisar();"
+                                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                                    <?= $selMembros ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php 
+                        PaginaSEI::getInstance()->fecharAreaDados();
+                        PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
+                        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+                    ?>
+
+                </form>
+            </div>
         </div>
-
-        <div id="divInicioFim" style="width:36%">
-
-            <!--  Data Inicio  -->
-            <label id="lblDtInicio" for="txtDtInicio" class="infraLabelOpcional">Início:</label>
-
-            <!--  Data Fim  -->
-            <label id="lblDtFim" for="txtDtFim" class="infraLabelOpcional">Fim:</label>
-
-            <div class="clear"></div>
-
-            <input style="width: 30%;" type="text" name="txtDtInicio" id="txtDtInicio"
-                   onchange="validarDataJornada(this);"
-                   value="<?= $strDtInicio ?>"
-                   onkeypress="return infraMascara(this, event, '##/##/####');" class="infraText"/>
-            <img style="margin-bottom: -3px;"
-                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/calendario.gif" id="imgDtInicio"
-                 title="Selecionar Data/Hora Inicial"
-                 alt="Selecionar Data/Hora Inicial" class="infraImg"
-                 onclick="infraCalendario('txtDtInicio',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
-
-
-            <input type="text" name="txtDtFim" id="txtDtFim"
-                   value="<?= $strDtFim ?>"
-                   onchange="validarDataJornada(this);" onkeypress="return infraMascara(this, event, '##/##/####');"
-                   maxlength="16" class="infraText"/>
-            <img style="margin-bottom: -3px;"
-                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/calendario.gif" id="imgDtFim"
-                 title="Selecionar Data/Hora Final"
-                 alt="Selecionar Data/Hora Final"
-                 class="infraImg"
-                 onclick="infraCalendario('txtDtFim',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
-
-        </div>
-
-        <div id="divDescricao" style="width: 50%;position: absolute; margin-left: 34%" class="bloco">
-            <label id="lblDescricaoTpControle" for="txtDescricaoTpControle" accesskey="S"
-                   class="infraLabelOpcional">
-                Descrição:
-            </label>
-
-            <div class="clear"></div>
-
-            <input style="width: 87%" type="text" id="txtDescricaoTpControle" name="txtDescricaoTpControle"
-                   class="inputFila infraText"
-                   size="30"
-                   value="<?= $strDescricao ?>" maxlength="100"
-                   tabindex="502"/>
-        </div>
-
-        <div id="divTpAjuste" style="width:50%">
-            <label id="lblTpAjuste" for="selTpAjuste" accesskey="" class="infraLabelOpcional">Tipo de
-                Ajuste:</label>
-            <select style="width:39%" id="selTpAjuste" name="selTpAjuste" class="infraSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?= $strTpAjuste ?>
-            </select>
-        </div>
-
-        <div id="divMembro">
-            <label id="lblMembro" for="selMembro" accesskey="" class="infraLabelOpcional">Membro:</label>
-            <select style="width:39%" id="selMembro" name="selMembro" class="infraSelect" onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?= $selMembros ?>
-            </select>
-        </div>
-
-
-        <?php
-        PaginaSEI::getInstance()->fecharAreaDados();
-        PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
-
-    </form>
+    </div>
 
 <?php
+
+require_once('md_utl_adm_jornada_lista_js.php');
+
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
-

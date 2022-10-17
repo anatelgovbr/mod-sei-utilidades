@@ -375,6 +375,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
       $mdUtlAdmAtividadeDTO->setNumComplexidade($_POST['selComplexidade']);
       $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
       $mdUtlAdmAtividadeDTO->setStrSinAtvRevAmostragem('N');
+      $mdUtlAdmAtividadeDTO->setStrSinNaoAplicarPercDsmp(isset($_POST['chkNaoAplicarPercDsmp']) ? 'S' : 'N');
 
       if($_POST['rdnTpAtivdade']=='S'){
 
@@ -450,7 +451,7 @@ class MdUtlAdmAtividadeRN extends InfraRN {
           $mdUtlAdmAtividadeDTO->setStrDescricao($_POST['txaDescricao']);
           $mdUtlAdmAtividadeDTO->setNumComplexidade($_POST['selComplexidade']);
           $mdUtlAdmAtividadeDTO->setStrSinAnalise($_POST['rdnTpAtivdade']);
-
+          $mdUtlAdmAtividadeDTO->setStrSinNaoAplicarPercDsmp(isset($_POST['chkNaoAplicarPercDsmp']) ? 'S' : 'N');
 
           //Remove todos os vinculos anteriores caso haja uma troca no tipo de analises
           if ($rdnTpAtividade != $_POST['rdnTpAtivdade']) {
@@ -539,33 +540,30 @@ class MdUtlAdmAtividadeRN extends InfraRN {
     }
     
     public function getAtividadesParaRetriagem($idsAtividades){
-      $arrIds      = strpos($idsAtividades,',') > 0 ? explode(',',$idsAtividades) : array($idsAtividades);
-      $arrGrid     = array();
-      $contador    = 0;        
+      $objMdUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
+      $arrIds = strpos($idsAtividades,',') > 0 ? explode(',',$idsAtividades) : array($idsAtividades);
+
+      $objMdUtlAtividadeDTO->setNumIdMdUtlAdmAtividade( $arrIds , InfraDTO::$OPER_IN );
+
+      $objMdUtlAtividadeDTO->retNumIdMdUtlAdmAtividade();
+      $objMdUtlAtividadeDTO->retStrNome();
+      $objMdUtlAtividadeDTO->retStrSinAnalise();
+      $objMdUtlAtividadeDTO->retNumTmpExecucaoAtv();
+      $objMdUtlAtividadeDTO->retNumComplexidade();
+      
+      $arrMdUtlAtividadeDTO = $this->listar( $objMdUtlAtividadeDTO );
+      $contador = 0;
+      $arrGrid  = array();
       $tmpExecucao = 0;
 
-      foreach ( $arrIds as $k => $v ) {
-        $objMdUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
-
-        $objMdUtlAtividadeDTO->setNumIdMdUtlAdmAtividade( $v );
-
-        $objMdUtlAtividadeDTO->retNumIdMdUtlAdmAtividade();
-        $objMdUtlAtividadeDTO->retStrNome();
-        $objMdUtlAtividadeDTO->retStrSinAnalise();
-        $objMdUtlAtividadeDTO->retNumTmpExecucaoAtv();
-        $objMdUtlAtividadeDTO->retNumComplexidade();
-        
-        $arrMdUtlAtividadeDTO = $this->listar( $objMdUtlAtividadeDTO );        
-
-        foreach ( $arrMdUtlAtividadeDTO as $objDTO ) {
-          $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
-          $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
-          $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv()) : '0min';
-          $strVlAnalise = $objDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
-          $tmpExecucao += $objDTO->getNumTmpExecucaoAtv();
-          $contador++;
-          $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNome() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $objDTO->getNumTmpExecucaoAtv());
-        }
+      foreach ( $arrMdUtlAtividadeDTO as $objDTO ) {
+        $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
+        $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
+        $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv()) : '0min';
+        $strVlAnalise = $objDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
+        $tmpExecucao += $objDTO->getNumTmpExecucaoAtv();
+        $contador++;
+        $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNome() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $objDTO->getNumTmpExecucaoAtv());
       }
       return array( 'itensTable' => PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrGrid) , 'tmpExecucao' => $tmpExecucao );
     }

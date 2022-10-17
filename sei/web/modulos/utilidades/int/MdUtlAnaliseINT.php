@@ -40,4 +40,14 @@ class MdUtlAnaliseINT extends InfraINT {
     return $xml;
   }
 
+  public static function validaPostAnalise( $p , &$objInfraException ){
+    $arrMsg = array(
+      'Não foi capturado o parâmetro: hdnItensSelecionados. Por favor, atualize sua página e tente novamente.',
+    );
+    
+    if( !isset( $p['hdnItensSelecionados'] ) || strlen( $p['hdnItensSelecionados'] ) == 0 ){
+      $objInfraException->adicionarValidacao( $arrMsg[0] );
+    }
+  }
+
 }

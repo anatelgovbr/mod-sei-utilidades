@@ -220,27 +220,20 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
         $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
         $objMdUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
 
-        $objMdUtlTpCtrlDTO->adicionarCriterio(array('IdMdUtlAdmFila'), array(InfraDTO::$OPER_DIFERENTE), array(null), array(), 'CriterioFilaPadrao');
-        $objMdUtlTpCtrlDTO->adicionarCriterio(array('IdMdUtlAdmFila', 'SinUltimaFila'), array(InfraDTO::$OPER_IGUAL, InfraDTO::$OPER_IGUAL), array(null, 'S'), InfraDTO::$OPER_LOGICO_AND, 'CriterioUltimaFila');
-        $objMdUtlTpCtrlDTO->agruparCriterios(array('CriterioFilaPadrao', 'CriterioUltimaFila'), InfraDTO::$OPER_LOGICO_OR);
+        $objMdUtlTpCtrlDTO->adicionarCriterio(array('SinUltimaFila'), array(InfraDTO::$OPER_IGUAL), array('S'));
 
         $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmTpCtrlDesemp();
-        $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmFila();
         $objMdUtlTpCtrlDTO->setParametroFiltroFk(InfraDTO::$FILTRO_FK_WHERE);
         $objMdUtlTpCtrlDTO->setParametroFk(InfraDTO::$TIPO_FK_OBRIGATORIA);
         $arrObjsTpCtrlDTO = $objMdUtlTpCtrlRN->listar($objMdUtlTpCtrlDTO);
-
+        
         $arrTiposControleCondicional = array();
         $arrTiposControleUtilizados = array();
 
         foreach ($arrObjsTpCtrlDTO as $objDTO) {
-            if (is_null($objDTO->getNumIdMdUtlAdmFila())) {
-                $arrTiposControleCondicional[] = $objDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-            } else {
-                $arrTiposControleUtilizados[] = $objDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-            }
+            $arrTiposControleCondicional[] = $objDTO->getNumIdMdUtlAdmTpCtrlDesemp();
         }
-
+        
         if (count($arrTiposControleUtilizados) > 0 || count($arrTiposControleCondicional) > 0) {
             $idsTiposProcessoParametrizados = $objMdUtlTpCtrlRN->getTiposProcessoTodosTipoControle();
 
@@ -261,7 +254,6 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                 $objMdUtlAtvPrincipalDTO->setStrStaUtlNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
                 $objMdUtlAtvPrincipalDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
 
-
                 if (count($arrTiposControleCondicional) > 0) {
                     $objMdUtlAtvPrincipalDTO->adicionarCriterio(array('IdMdUtlAdmTpCtrlDesemp', 'IdMdUtlHistControleDsmp'),
                         array(InfraDTO::$OPER_IN, InfraDTO::$OPER_DIFERENTE),
@@ -269,20 +261,6 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                         array(InfraDTO::$OPER_LOGICO_AND),
                         'CriterioUltimasFilas');
                     $arrGrupos[] = 'CriterioUltimasFilas';
-                }
-
-                if (count($arrTiposControleUtilizados) > 0) {
-                    $objMdUtlAtvPrincipalDTO->adicionarCriterio(array('IdMdUtlAdmTpCtrlDesemp', 'IdMdUtlControleDsmp'),
-                        array(InfraDTO::$OPER_IN, InfraDTO::$OPER_IGUAL),
-                        array($arrTiposControleUtilizados, null),
-                        array(InfraDTO::$OPER_LOGICO_AND),
-                        'CriterioFilaPadrao');
-
-                    $arrGrupos[] = 'CriterioFilaPadrao';
-                }
-
-                if (count($arrGrupos) == 2) {
-                    $objMdUtlAtvPrincipalDTO->agruparCriterios($arrGrupos, array(InfraDTO::$OPER_LOGICO_OR));
                 }
 
                 $objMdUtlAtvPrincipalDTO->setDistinct(true);
@@ -319,13 +297,12 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
                             if (array_key_exists($idTipoProcedimento, $arrTiposProcedimento)) {
 
-
                                 SessaoSEI::getInstance()->simularLogin(null, null, $objUsuarioDTO->getNumIdUsuario(), $idUnidade);
 
                                 $objMdUtlTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
                                 $objMdUtlTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
                                 $objMdUtlTpCtrlDTO->retStrSinUltimaFila();
-                                $objMdUtlTpCtrlDTO->retNumIdMdUtlAdmFila();
+                                #$objMdUtlTpCtrlDTO->retNumIdMdUtlAdmFila();
                                 $objMdUtlTpCtrlDTO->setNumMaxRegistrosRetorno(1);
 
                                 $numRegistrosTpCtrl = $objMdUtlTpCtrlRN->contar($objMdUtlTpCtrlDTO);
@@ -334,23 +311,7 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                                 if ($numRegistrosTpCtrl > 0) {
                                     $nomeFila = '';
                                     $sinUltimaFila = $objMdUtlTpCtrlDTO->getStrSinUltimaFila();
-                                    $idFilaPadrao = $objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila();
-                                    $TmpExecucao = 0;
-
-                                    //Busca os dados da Fila Padrão
-                                    if (!is_null($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila())) {
-                                        $objFilaRN = new MdUtlAdmFilaRN();
-                                        $objFilaDTO = new MdUtlAdmFilaDTO();
-                                        $objFilaDTO->setNumIdMdUtlAdmFila($objMdUtlTpCtrlDTO->getNumIdMdUtlAdmFila());
-                                        $objFilaDTO->retTodos();
-                                        $numRegistrosFila = $objFilaRN->contar($objFilaDTO);
-                                        $objFilaDTO = $objFilaRN->consultar($objFilaDTO);
-
-                                        if ($numRegistrosFila > 0) {
-                                            $nomeFila = $objFilaDTO->getStrNome();
-                                            $TmpExecucao = $objFilaDTO->getNumTmpExecucaoTriagem();
-                                        }
-                                    }
+                                    $TmpExecucao = 0;                                 
 
                                     /*Se possuir ultima fila - buscar em historico e atribuir*/
                                     if ($sinUltimaFila == 'S') {
@@ -383,8 +344,6 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
                                         $idAtendimentoAntigo = null;
                                         $idAtendimentoAntigo = !is_null($arrProcessosAtend) && array_key_exists($idUnidade, $arrProcessosAtend) ? $arrProcessosAtend[$idUnidade] : null;
-
-
                                         $idAtendimentoNovo   =  (is_null($idAtendimentoAntigo)) ? 1 : $idAtendimentoAntigo + 1;
 
                                         if ($idProcedimento != '' && $idUnidade != '') {
@@ -393,6 +352,19 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                                             $isFilasPreenchidas = !is_null($idFilaCompleto);
 
                                             if (!$isExiste && $isFilasPreenchidas) {
+
+                                                //busca o tempo de execucao da triagem
+                                                $objFilaRN = new MdUtlAdmFilaRN();
+                                                $objFilaDTO = new MdUtlAdmFilaDTO();
+                                                $objFilaDTO->setNumIdMdUtlAdmFila($objHistoricoDTO->getNumIdMdUtlAdmFila());
+                                                $objFilaDTO->retTodos();
+                                                $numRegistrosFila = $objFilaRN->contar( $objFilaDTO );
+                                                if ( $numRegistrosFila > 0 ) {
+                                                    $objFilaDTO  = $objFilaRN->consultar( $objFilaDTO );                                                    
+                                                    $TmpExecucao = $objFilaDTO->getNumTmpExecucaoTriagem();
+                                                }
+
+                                                //monta o parametro para associar o processo a fila configurada
                                                 $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $TmpExecucao, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimentoNovo, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
                                                 $objControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
                                             }

@@ -1,8 +1,4 @@
-<?php
-
-if (0){
-    ?><script type="text/javascript"><?
-}?>
+<script type="text/javascript">
 
     //vars
     var msgPadrao10  = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10); ?>';
@@ -43,6 +39,7 @@ if (0){
     }
 
     function sinPriorizar() {
+
         //select priorizar sim, não
         var selfila         = document.getElementById('selFila').value == 'S';
         var selStatus       = document.getElementById('selStatus').value == 'S';
@@ -79,10 +76,31 @@ if (0){
         selTipoProcesso ? document.getElementById('tbTipoProcesso').style.display = 'block' : document.getElementById('tbTipoProcesso').style.display = 'none';
         selTipoProcesso ? contador ++ : contador;
 
-        selDiasUteis ? document.getElementById('divPrioridadeDiasUteis').style.display = 'block' : document.getElementById('divPrioridadeDiasUteis').style.display = 'none';
+        if( selDiasUteis ){
+            document.getElementsByClassName('divPrioridadeDiasUteis')[0].style.display = 'inline';
+            document.getElementsByClassName('divPrioridadeDiasUteis')[1].style.display = 'inline';
+        }else{
+            document.getElementsByClassName('divPrioridadeDiasUteis')[0].style.display = 'none';
+            document.getElementsByClassName('divPrioridadeDiasUteis')[1].style.display = 'none';
+        }
+            
         selDiasUteis ? contador ++ : contador;
 
         this.popularSelectPrioridadeGeral(contador);
+       
+        let elem = document.getElementById('selDistribuicao');
+        
+        if( selDistribuicao ){
+            $( elem )
+            .parent()
+            .removeClass('col-lg-6')
+            .addClass('col-lg-8');
+        }else{
+            $( elem )
+            .parent()
+            .removeClass('col-lg-8')
+            .addClass('col-lg-6');
+        }
     }
 
     function popularSelectPrioridadeGeral(contador) {
@@ -879,8 +897,8 @@ if (0){
         var htmlRetorno = '';
         var nomeTabela = 'tb' + nomeFieldset;
         var tabelaStatus = document.getElementById(nomeTabela);
-        var corpoHtml = tabelaStatus.children[1].children;
-        for (var i = 1; i < corpoHtml.length; i++) {
+        var corpoHtml = tabelaStatus.children[2].children;
+        for (var i = 0; i < corpoHtml.length; i++) {
 
             if(htmlRetorno != ''){
                 htmlRetorno+= '¥';
@@ -1296,8 +1314,4 @@ if (0){
 
         return false;
     }
-
-
-<? if (0){
-    ?></script><?
-} ?>
+</script>

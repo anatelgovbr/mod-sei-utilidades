@@ -1,4 +1,4 @@
-<?
+<?php
 /**
 * TRIBUNAL REGIONAL FEDERAL DA 4ª REGIÃO
 *
@@ -8,13 +8,14 @@
 */
 
 try {
-    require_once dirname(__FILE__).'/../../SEI.php';
+  require_once dirname(__FILE__).'/../../SEI.php';
+  
   session_start();
 
   //////////////////////////////////////////////////////////////////////////////
-  //InfraDebug::getInstance()->setBolLigado(false);
-  //InfraDebug::getInstance()->setBolDebugInfra(true);
-  //InfraDebug::getInstance()->limpar();
+  // InfraDebug::getInstance()->setBolLigado(false);
+  // InfraDebug::getInstance()->setBolDebugInfra(true);
+  // InfraDebug::getInstance()->limpar();  
   //////////////////////////////////////////////////////////////////////////////
 
   SessaoSEI::getInstance()->validarLink();
@@ -105,7 +106,6 @@ try {
       throw new InfraException("Ação '".$_GET['acao']."' não reconhecida.");
   }
 
-
 }catch(Exception $e){
   PaginaSEI::getInstance()->processarExcecao($e);
 }
@@ -117,100 +117,57 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-#lblNome {position:absolute;left:0%;top:6%;width:40%;}
-#ancAjudaNome{position: absolute;
-  left: 120px;
-  top: 5%;}
-#txtNome {position:absolute;left:0%;top:45%;width:40%;}
-
-#lblDescricao {position:absolute;left:0%;top:10%;width:60%;}
-#ancAjudaDesc {position:absolute;left:63px;top:10%;}
-#txaDescricao {position:absolute;left:0%;top:25%;width:60%;}
-
-.tamanhoBtnAjuda{
-    width: 16px;
-    height: 16px;
-}
-
-<?if(0){?></style><?}?>
-<?
 PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_adm_tp_ausencia_cadastro_css.php";
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-?>
-<?if(0){?><script type="text/javascript"><?}?>
-
-
-  var msg11Padrao = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11) ?>';
-  
-function inicializar(){
-  if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_cadastrar'){
-    document.getElementById('txtNome').focus();
-  } else if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_ausencia_consultar'){
-    infraDesabilitarCamposAreaDados();
-  }else{
-    document.getElementById('btnCancelar').focus();
-  }
-  infraEfeitoTabelas(true);
-}
-
-function validarCadastro() {
-  if (infraTrim(document.getElementById('txtNome').value)=='') {
-    var msg = setMensagemPersonalizada(msg11Padrao, ['Motivo de Ausência']);
-    alert(msg);
-    document.getElementById('txtNome').focus();
-    return false;
-  }
-
-  if (infraTrim(document.getElementById('txaDescricao').value)=='') {
-    var msg = setMensagemPersonalizada(msg11Padrao, ['Descrição']);
-    alert(msg);
-    document.getElementById('txaDescricao').focus();
-    return false;
-  }
-
-  return true;
-}
-
-function OnSubmitForm() {
-  return validarCadastro();
-}
-
-<?if(0){?></script><?}?>
-<?
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar()"');
 ?>
 <form id="frmMdUtlAdmTpAusenciaCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-<?
-PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-//PaginaSEI::getInstance()->montarAreaValidacao();
-PaginaSEI::getInstance()->abrirAreaDados('4.5em');
-?>
-  <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Motivo de Ausência: &nbsp;</label>
-    <a href="javascript:void(0);" id="ancAjudaNome" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome do Motivo de Ausência que irá aparecer para os servidores escolherem quando necessitarem se ausentar.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
-
-    <input type="text" id="txtNome" name="txtNome" maxlength="100" class="infraText"  value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpAusenciaDTO->getStrNome());?>" onkeypress="return infraMascaraTexto(this,event,100);" maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-<?
-PaginaSEI::getInstance()->fecharAreaDados();
-PaginaSEI::getInstance()->abrirAreaDados('12em');
-?>
-  <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:</label>
-    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que define o Motivo de ausência.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
-    <textarea type="text" id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,250);" maxlength="250" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?=PaginaSEI::tratarHTML($objMdUtlAdmTpAusenciaDTO->getStrDescricao());?></textarea>
-<?
-PaginaSEI::getInstance()->fecharAreaDados();
-?>
-  <input type="hidden" id="hdnIdMdUtlAdmTpAusencia" name="hdnIdMdUtlAdmTpAusencia" value="<?=$objMdUtlAdmTpAusenciaDTO->getNumIdMdUtlAdmTpAusencia();?>" />
-  <?
-  //PaginaSEI::getInstance()->montarAreaDebug();
-  //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+  
+  <?php
+    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos); 
+    PaginaSEI::getInstance()->abrirAreaDados('98%');
   ?>
+  
+    <div class="row mb-3">
+      <div class="col-xs-6 col-sm-10 col-md-10 col-lg-10">
+        <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio"> Motivo de Ausência:        
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg"
+                name="ajuda" <?= PaginaSEI::montarTitleTooltip('Nome do Motivo de Ausência que irá aparecer para os servidores escolherem quando necessitarem se ausentar.','Ajuda') ?>
+                class="infraImg"/>
+        </label>        
+        <input type="text" id="txtNome" name="txtNome" class="infraText form-control" maxlength="100" 
+                value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpAusenciaDTO->getStrNome());?>" 
+                onkeypress="return infraMascaraTexto(this,event,100);"  
+                tabindex="<?=PaginaSEI::getInstance()->getProxTabDados(); ?>"/>        
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-6 col-sm-10 col-md-10 col-lg-10">
+        <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg"
+                name="ajuda" <?= PaginaSEI::montarTitleTooltip('Texto que define o Motivo de ausência.','Ajuda') ?>
+                class="infraImg"/>
+        </label>
+        <textarea type="text" id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea form-control" maxlength="250"
+                  onkeypress="return infraMascaraTexto(this,event,250);" 
+                  tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= PaginaSEI::tratarHTML($objMdUtlAdmTpAusenciaDTO->getStrDescricao()) ?></textarea>
+      </div>
+    </div>
+    
+    <input type="hidden" id="hdnIdMdUtlAdmTpAusencia" name="hdnIdMdUtlAdmTpAusencia" value="<?= $objMdUtlAdmTpAusenciaDTO->getNumIdMdUtlAdmTpAusencia() ?>"/>
+
+<?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+
 </form>
-<?
+
+<?php
+require_once("md_utl_geral_js.php");
+require_once("md_utl_adm_tp_ausencia_cadastro_js.php");
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
+?>

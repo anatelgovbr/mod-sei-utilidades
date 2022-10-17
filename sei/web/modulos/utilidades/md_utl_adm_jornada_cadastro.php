@@ -25,7 +25,7 @@ try {
   // ======================= FIM ACOES PHP DA PAGINA
 
 } catch(Exception $e){
-  PaginaSEI::getInstance()->processarExcecao($e);
+    PaginaSEI::getInstance()->processarExcecao($e);
 }
 
 PaginaSEI::getInstance()->montarDocType();
@@ -41,203 +41,176 @@ require_once('md_utl_adm_jornada_cadastro_css.php');
 // ======================= FIM CSS
 
 PaginaSEI::getInstance()->fecharStyle();
-PaginaSEI::getInstance()->montarJavaScript();
-PaginaSEI::getInstance()->abrirJavaScript();
-
-
-
-// ======================= INICIO JS
-require_once('md_utl_adm_jornada_cadastro_js.php');
-require_once('md_utl_geral_js.php');
-// ======================= FIM JS
-
-PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-  <form id="frmTipoControleUtilidadesCadastro" method="post" onsubmit="return onSubmitForm();" action="<?=PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao']))?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    PaginaSEI::getInstance()->abrirAreaDados('auto');
-    ?>
-    
-    <!--  Tipo de Controle de Desempenho -->
-    <div id="divTpControleDesempenho" class="bloco">
-
-      <label id="lblTpControleDesempenho" accesskey="" class="infraLabelObrigatorio">Tipo de Controle de Desempenho:</label>
-
-      <a style="" id="btAjudaTpControleDesempenho" <?=PaginaSEI::montarTitleTooltip('Tipo de Controle de Desempenho da Unidade Logada.')?>
-         tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-        <img id="imgAjudaTpControleDesempenho" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-      </a>
-
-      <div class="clear"></div>
-      <label id="lblTpControleLogado" class="infraLabelOpcional"><?php echo $nomeTpControle; ?></label>
-
-    </div>
-
-    <div class="bloco">
-      <label id="lblNome" for="txtNome" class="infraLabelObrigatorio">Nome:</label>
-      <a style="" id="btAjudaNome" <?=PaginaSEI::montarTitleTooltip('Indicar o Nome do Ajuste.')?>
-         tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-        <img id="imgAjudaNome" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-      </a>
-      <div class="clear"></div>
-      <?php
-      $txtNome = $isAlterar ? (array_key_exists('txtNome', $_POST) ? $_POST['txtNome'] :  $objJornadaDTO->getStrNome()) : $_POST['txtNome'];
-      ?>
-      <input type="text" id="txtNome" name="txtNome" class="infraText" value="<?= PaginaSEI::tratarHTML($txtNome); ?>" onkeypress="return infraMascaraTexto(this,event,100);"
-             maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-    </div>
-
-
-    <div class="bloco">
-      <label id="lblDescricao" for="txaDescricao" accesskey="q" class="infraLabelObrigatorio">Descrição:</label>
-      <a style="" id="btAjudaDescricao" <?=PaginaSEI::montarTitleTooltip('Indicar a Descrição do Ajuste.')?>
-         tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-        <img id="imgAjudaDescricao" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-      </a>
-      <?php
-      $txtDescricao = $isAlterar ? (array_key_exists('txaDescricao', $_POST) ? $_POST['txaDescricao'] :  $objJornadaDTO->getStrDescricao()) : $_POST['txaDescricao'];
-      ?>
-      <div class="clear"></div>
-    <textarea id="txaDescricao" name="txaDescricao" rows="4" class="infraTextarea" onkeypress="return infraLimitarTexto(this,event,250);" maxlength="250"
-              tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $txtDescricao;?></textarea>
-    </div>
-
-
-    <div id="divPercentualAjuste" class="bloco">
-      <label class="infraLabelCheckbox infraLabelObrigatorio" for="txtPercentualAjuste" id="lblPercentualAjuste">Percentual de Ajuste:
-        <img align="top" style="height:16px; width:16px;" id="imgAjuda" src="/infra_css/imagens/ajuda.gif" name="ajuda"
-             onmouseover="return infraTooltipMostrar('Indique o Percentual de Ajuste de Jornada.');"
-             onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
-      </label>
-
-
-
-      <?php
-      $txtPercentualAjuste = $isAlterar ? (array_key_exists('txtPercentualAjuste', $_POST) ? $_POST['txtPercentualAjuste'] :  $objJornadaDTO->getNumPercentualAjuste()) : $_POST['txtPercentualAjuste'];
-      ?>
-
-      <div class="clear"></div>
-      <input onchange="validarValorPercentual(this)" style="margin-top: 3px;" type="text" maxlength="3" utlSomenteNumeroPaste="true" onkeypress="return infraMascaraNumero(this,event, 3);" name="txtPercentualAjuste" id="txtPercentualAjuste" value="<?= $txtPercentualAjuste;?>">
-
-      <div class="clear"></div>
-
-    </div>
-
-    <div class="clear" style="height: 11px"></div>
-
-    <div id="divInicioFim">
-
-      <!--  Data Inicio  -->
-      <label id="lblDtInicio" for="txtDtInicio" class="infraLabelObrigatorio">Início:</label>
-      <!--  Data Fim  -->
-      <label id="lblDtFim" for="txtDtFim" class="infraLabelObrigatorio">Fim:</label>
-
-      <div class="clear"></div>
-      <?php
-      $dtInicio = $isAlterar ? (array_key_exists('txtDtInicio', $_POST) ? $_POST['txtDtInicio'] :  $objJornadaDTO->getDthInicio()) : $_POST['txtDtInicio'];
-      $dtFim    = $isAlterar ? (array_key_exists('txtDtFim', $_POST) ? $_POST['txtDtFim'] :  $objJornadaDTO->getDthFim()) : $_POST['txtDtFim'];
-      ?>
-      <input style="width: 7%;" type="text" name="txtDtInicio" id="txtDtInicio" onchange="validarDataJornada(this);"
-             value="<?= $dtInicio ?>"
-             onkeypress="return infraMascara(this, event, '##/##/####');" class="infraText" />
-      <img style="margin-bottom: -3px;" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/calendario.gif" id="imgDtInicio"
-           title="Selecionar Data/Hora Inicial"
-           alt="Selecionar Data/Hora Inicial" class="infraImg"
-           onclick="infraCalendario('txtDtInicio',this,false,'<?=InfraData::getStrDataAtual()?>');" />
-
-      <input type="text" name="txtDtFim" id="txtDtFim"
-             value="<?= $dtFim  ?>"
-             onchange="validarDataJornada(this);" onkeypress="return infraMascara(this, event, '##/##/####');" maxlength="16" class="infraText"/>
-      <img style="margin-bottom: -3px;" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/calendario.gif" id="imgDtFim"
-           title="Selecionar Data/Hora Final"
-           alt="Selecionar Data/Hora Final"
-           class="infraImg" onclick="infraCalendario('txtDtFim',this,false,'<?=InfraData::getStrDataAtual()?>');" />
-        <a style="" id="btAjudaPeriodo" <?= PaginaSEI::montarTitleTooltip('Data de Início/Fim do Ajuste') ?>
-           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <img id="imgAjudaPeriodo" border="0"
-                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-        </a>
-    </div>
-
-    <!-- Tipo de Ajuste -->
-    <div id="divTpAjuste">
-
-      <label name="lblTpAjuste" id="lblTpAjuste" for="selTpAjuste" class="infraLabelObrigatorio">Tipo de Ajuste:</label>
-        <a style="" id="btAjudaTpAjuste" <?= PaginaSEI::montarTitleTooltip('Indicar se o ajuste é para todos os servidores ou se é para algum servidor específico.') ?>
-           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <img id="imgAjudaTpAjuste" border="0"
-                 src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-        </a>
-      <div class="clear"></div>
-
-      <div id="divRadiosTpAjuste">
-      <div id="divOptGeral" class="infraDivRadio">
-        <input <?php echo $idTpAjuste == MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL ? 'checked=checked' : '' ?> type="radio" name="rdoTipoAjuste" onchange="controlarHdnTipoAjuste();" id="rdoGeral"	value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL ?>" class="infraRadio" />
-        <label id="lblGeral"  for="rdoGeral"  class="infraLabelRadio" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">Geral</label>
-      </div>
-
-
-      <div id="divOptEspecifico" class="infraDivRadio">
-        <input <?php echo $idTpAjuste == MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ? 'checked=checked' : '' ?> type="radio" name="rdoTipoAjuste" onchange="controlarHdnTipoAjuste();" id="rdoEspecifico"	value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ?>" class="infraRadio" />
-        <label id="lblEspecifico"  for="rdoEspecifico"	class="infraLabelRadio" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">Específico</label>
-      </div>
-      </div>
-
-    </div>
-
-    <!--  Usuários Participantes -->
-    <div class="bloco" style="margin-top: 0%">
-<?php $esconderComponente =  is_null($objJornadaDTO) || !is_null($objJornadaDTO) && $objJornadaDTO->getStrStaTipoAjuste() == MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL;
 
 ?>
-
-      <!-- Componente de Membros -->
-      <div id="divMembros"  <?php echo $esconderComponente ? 'style="display:none"' : '' ?>>
-        <label id="lblMembros" for="selMembros" accesskey="" class="infraLabelObrigatorio">Membros:</label>
-        <a style="" id="btAjudaMembros" <?= PaginaSEI::montarTitleTooltip('Indicar os membros relacionados ao Ajuste de Jornada.') ?>
-           tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-          <img id="imgAjudaMembros" border="0"
-               src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="tamanhoBtnAjuda"/>
-        </a>
-        <div class="clear"></div>
-        <input <?php echo !$isAlterar ? 'readonly="readonly' : '' ?> type="text" onfocus="controlarTxtMembros();" onclick="controlarTxtMembros();" id="txtMembros" name="txtMembros" class="infraText attrDivMembros"
-               tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-
-        <select id="selMembros" name="selMembros" size="4" multiple="multiple"
-                class="infraSelect attrDivMembros">
-          <?= $strItensSelUsuarios ?>
-        </select>
-        <div id="divOpcoesMembros">
-          <img id="imgLupaMembros" onclick="selecionarMembro();"
-               src="/infra_css/imagens/lupa.gif" alt="Selecionar Membro" title="Selecionar Membro" class="infraImg attrDivMembros"/>
-          <br>
-          <img id="imgExcluirMembros" onclick="removerMembros();"
-               src="/infra_css/imagens/remover.gif" alt="Remover Membro Selecionado"
-               title="Remover Unidade Selecionada" class="infraImg attrDivMembros"/>
-        </div>
-
-      </div>
-    </div>
-
-    <?php $hdnMembrosLupa = array_key_exists('hdnMembrosLupa', $_POST) ? $_POST['hdnMembrosLupa']  : $strGridUsuariosParticipantes ?>
-    <input type="hidden" id="hdnMembrosLupa" name="hdnMembrosLupa" value="<?=$_POST['hdnMembrosLupa'] ?>" />
-    <input type="hidden" id="hdnMembros" name="hdnMembros" value="<?=$strGridUsuariosParticipantes?>" />
-    <input type="hidden" id="hdnIdMembrosLupa" name="hdnIdMembrosLupa" value=""/>
-    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
-    <input type="hidden" id="hdnIdJornada" name="hdnIdJornada" value="<?php echo $idJornada; ?>"/>
-    <input type="hidden" id="hdnTpAjusteEspecifico" name="hdnTpAjusteEspecifico" value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ?>"/>
-    <input type="hidden" id="hdnIdTpCtrlInicialAlteracao" name="hdnIdTpCtrlInicialAlteracao" value="<?php echo !is_null($objJornadaDTO) ? $objJornadaDTO->getNumIdMdUtlAdmTpCtrlDesemp() : '' ?>"/>
-    <input type="hidden" id="hdnTpAjuste" name="hdnTpAjuste" value="<?php echo $idTpAjuste ?>"/>
   
-    <?php
-    PaginaSEI::getInstance()->fecharAreaDados();
-    //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-    ?>
-  </form>
+  	<div class="row">
+		<div class="col">
+
+			<form id="frmTipoControleUtilidadesCadastro" method="post" onsubmit="return onSubmitForm();" action="<?=PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao']))?>">
+				
+				<?
+					PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+					PaginaSEI::getInstance()->abrirAreaDados('auto');
+				?>
+				
+				<div class="row">
+					<div class="col-12">
+						<label id="lblTpControleDesempenho" class="infraLabelObrigatorio">
+							Tipo de Controle de Desempenhos:
+							<img align="bottom" src="/infra_css/svg/ajuda.svg" class="infraImg d-inline-block mb-n1" name="ajuda" onmouseover="return infraTooltipMostrar('Tipo de Controle de Desempenho da Unidade Logada.', 'Ajuda');" onmouseout="return infraTooltipOcultar();">
+						</label>
+						<label id="lblTpControleLogado" class="d-block infraLabelOpcional"><?php echo $nomeTpControle; ?></label>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xl-7 col-lg-9 col-md-10 col-sm-11 col-12">
+						<div class="form-group">
+							<label id="lblNome" for="txtNome" class="infraLabelObrigatorio">
+								Nome:
+								<img align="top" src="/infra_css/svg/ajuda.svg" class="infraImg d-inline-block mb-n1" name="ajuda" onmouseover="return infraTooltipMostrar('Indicar o Nome do Ajuste', 'Ajuda');" onmouseout="return infraTooltipOcultar();">
+							</label>
+							<?php $txtNome = $isAlterar ? (array_key_exists('txtNome', $_POST) ? $_POST['txtNome'] : $objJornadaDTO->getStrNome()) : $_POST['txtNome']; ?>
+							<input type="text" id="txtNome" name="txtNome" class="form-control infraText" value="<?= PaginaSEI::tratarHTML($txtNome); ?>" onkeypress="return infraMascaraTexto(this,event,100);"
+								maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?>/>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xl-7 col-lg-9 col-md-10 col-sm-11 col-12">
+						<div class="form-group">
+							<label id="lblDescricao" for="txaDescricao" class="infraLabelObrigatorio">
+								Descrição:
+								<img align="top" src="/infra_css/svg/ajuda.svg" class="infraImg d-inline-block mb-n1" name="ajuda" onmouseover="return infraTooltipMostrar('Indicar a Descrição do Ajuste', 'Ajuda');" onmouseout="return infraTooltipOcultar();">
+							</label>
+							<?php $txtDescricao = $isAlterar ? (array_key_exists('txaDescricao', $_POST) ? $_POST['txaDescricao'] : $objJornadaDTO->getStrDescricao()) : $_POST['txaDescricao']; ?>
+							<textarea id="txaDescricao" name="txaDescricao" rows="4" class="form-control infraTextarea" onkeypress="return infraLimitarTexto(this,event,250);" maxlength="250"
+								tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?>><?= $txtDescricao;?></textarea>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-12 pr-0">
+						<div class="form-group mb-1">
+							<label class="infraLabelCheckbox infraLabelObrigatorio" for="txtPercentualAjuste" id="lblPercentualAjuste">
+								Percentual de Ajuste:
+								<img align="top" src="/infra_css/svg/ajuda.svg" class="infraImg d-inline-block mb-n1" name="ajuda" onmouseover="return infraTooltipMostrar('Indique o Percentual de Ajuste de Jornada', 'Ajuda');" onmouseout="return infraTooltipOcultar();">
+							</label>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xl-2 col-lg-3 col-md-3 col-sm-3 col-3">
+						<div class="form-group">
+							<?php $txtPercentualAjuste = $isAlterar ? (array_key_exists('txtPercentualAjuste', $_POST) ? $_POST['txtPercentualAjuste'] : $objJornadaDTO->getNumPercentualAjuste()) : $_POST['txtPercentualAjuste']; ?>
+							<input onchange="validarValorPercentual(this)" class="form-control infraText" type="text" maxlength="3" utlSomenteNumeroPaste="true" onkeypress="return infraMascaraNumero(this,event, 3);" name="txtPercentualAjuste" id="txtPercentualAjuste" value="<?= $txtPercentualAjuste;?>" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?>>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-4">
+						<div class="form-group">
+							<label id="lblDtInicio" for="txtDtInicio" class="infraLabelObrigatorio">Início:</label>
+							<?php
+								$dtInicio = $isAlterar ? (array_key_exists('txtDtInicio', $_POST) ? $_POST['txtDtInicio'] :  $objJornadaDTO->getDthInicio()) : $_POST['txtDtInicio'];
+								$dtFim    = $isAlterar ? (array_key_exists('txtDtFim', $_POST) ? $_POST['txtDtFim'] :  $objJornadaDTO->getDthFim()) : $_POST['txtDtFim'];
+							?>
+							<div class="input-group">
+								<input type="text" name="txtDtInicio" id="txtDtInicio"
+								onchange="validarDataJornada(this);"
+								value="<?= $dtInicio ?>"
+								onkeypress="return infraMascara(this, event, '##/##/####');" 
+								class="form-control rounded infraText" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?>/>
+
+								<div class="input-group-append">
+									<span class="input-group-text bg-white border-0 px-0 pl-1" id="inputGroupPrepend">
+										<img style="margin-bottom: -3px;"
+										src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/calendario.svg" id="imgDtInicio"
+										title="Selecionar Data/Hora Inicial"
+										alt="Selecionar Data/Hora Inicial" class="infraImg"
+										onclick="infraCalendario('txtDtInicio',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-4">
+						<div class="form-group">
+							<label id="lblDtFim" for="txtDtFim" class="infraLabelOpcional">Fim:</label>
+
+							<div class="input-group">
+								<input type="text" name="txtDtFim" id="txtDtFim"
+								value="<?= $dtFim ?>"
+								onchange="validarDataJornada(this);" onkeypress="return infraMascara(this, event, '##/##/####');"
+								maxlength="16"  
+								class="form-control rounded infraText" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?>/>
+
+								<div class="input-group-append">
+									<span class="input-group-text bg-white border-0 px-0 pl-1" id="inputGroupPrepend">
+									<img style="margin-bottom: -3px;"
+									src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/calendario.svg" id="imgDtFim"
+									title="Selecionar Data/Hora Final"
+									alt="Selecionar Data/Hora Final"
+									class="infraImg"
+									onclick="infraCalendario('txtDtFim',this,false,'<?= InfraData::getStrDataAtual() ?>');"/>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<label name="lblTpAjuste" id="lblTpAjuste" for="selTpAjuste" class="d-block infraLabelObrigatorio"	>
+							Tipo de Ajuste:
+							<img align="top" src="/infra_css/svg/ajuda.svg" class="infraImg d-inline-block mb-n1" name="ajuda" onmouseover="return infraTooltipMostrar('Indicar se o ajuste é para todos os servidores ou se é para algum servidor específico.', 'Ajuda');" onmouseout="return infraTooltipOcultar();">
+						</label>
+
+						<div id="divRadiosTpAjuste">
+							<div id="divOptGeral" class="infraDivRadio">
+								<input <?php echo $idTpAjuste == MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL ? 'checked=checked' : '' ?> type="radio" name="rdoTipoAjuste" onchange="controlarHdnTipoAjuste();" id="rdoGeral" value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL ?>" class="form-check-input infraRadio d-inline" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?> />
+								<label id="lblGeral" for="rdoGeral" class="form-check-label infraLabelRadio" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">Geral</label>
+							</div>
+							<div id="divOptEspecifico" class="infraDivRadio">
+								<input <?php echo $idTpAjuste == MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ? 'checked=checked' : '' ?> type="radio" name="rdoTipoAjuste" onchange="controlarHdnTipoAjuste();" id="rdoEspecifico" value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ?>" class="form-check-input infraRadio d-inline" <?= $_GET['acao'] == 'md_utl_adm_jornada_consultar' ? 'readonly disabled' : '' ?> />
+								<label id="lblEspecifico" for="rdoEspecifico" class="form-check-label infraLabelRadio" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">Específico</label>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<?php $hdnMembrosLupa = array_key_exists('hdnMembrosLupa', $_POST) ? $_POST['hdnMembrosLupa']  : $strGridUsuariosParticipantes ?>
+				<input type="hidden" id="hdnMembrosLupa" name="hdnMembrosLupa" value="<?=$_POST['hdnMembrosLupa'] ?>" />
+				<input type="hidden" id="hdnMembros" name="hdnMembros" value="<?=$strGridUsuariosParticipantes?>" />
+				<input type="hidden" id="hdnIdMembrosLupa" name="hdnIdMembrosLupa" value=""/>
+				<input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
+				<input type="hidden" id="hdnIdJornada" name="hdnIdJornada" value="<?php echo $idJornada; ?>"/>
+				<input type="hidden" id="hdnTpAjusteEspecifico" name="hdnTpAjusteEspecifico" value="<?php echo MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO ?>"/>
+				<input type="hidden" id="hdnIdTpCtrlInicialAlteracao" name="hdnIdTpCtrlInicialAlteracao" value="<?php echo !is_null($objJornadaDTO) ? $objJornadaDTO->getNumIdMdUtlAdmTpCtrlDesemp() : '' ?>"/>
+				<input type="hidden" id="hdnTpAjuste" name="hdnTpAjuste" value="<?php echo $idTpAjuste ?>"/>
+			
+				<?php
+					PaginaSEI::getInstance()->fecharAreaDados();
+					//PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+				?>
+			</form>	
+
+		
+		</div>
+	</div>
+
 <?
+
+PaginaSEI::getInstance()->montarJavaScript();
+PaginaSEI::getInstance()->abrirJavaScript();
+PaginaSEI::getInstance()->fecharJavaScript();
+require_once('md_utl_adm_jornada_cadastro_js.php');
+require_once('md_utl_geral_js.php');
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
-?>

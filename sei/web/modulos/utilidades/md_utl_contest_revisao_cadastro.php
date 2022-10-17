@@ -18,7 +18,7 @@ try {
     $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
 
     $objControleDesempenhoDTO = $objControleDesempenhoRN->getObjControleDsmpPorId($idControleDesempenho);
-
+    #HelperRN::debug($objControleDesempenhoDTO,false,true);
     $idProcedimento = $objControleDesempenhoDTO->getDblIdProcedimento();
 
     $objMdUtlRevisaoDTO        = new MdUtlRevisaoDTO();
@@ -55,7 +55,17 @@ try {
         $objMdUtlRelAnaliseProdutoRN  = new MdUtlRelAnaliseProdutoRN();
 
         $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlAnalise($objControleDesempenhoDTO->getNumIdMdUtlAnalise());
-        $objMdUtlRelAnaliseProdutoDTO->retTodos(true);
+        //$objMdUtlRelAnaliseProdutoDTO->retTodos(true);
+        
+        
+        $objMdUtlRelAnaliseProdutoDTO->retStrNomeAtividade();
+        $objMdUtlRelAnaliseProdutoDTO->retNumComplexidadeAtividade();
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlRelAnaliseProduto();
+        $objMdUtlRelAnaliseProdutoDTO->retStrNomeSerie();
+        $objMdUtlRelAnaliseProdutoDTO->retStrNomeProduto();
+        #$objMdUtlRelAnaliseProdutoDTO->retDblIdDocumento();
+        $objMdUtlRelAnaliseProdutoDTO->retStrProtocoloFormatado();
+
         $arrObjMdUtlRelAnaliseProdutoDTO = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
         
         $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
@@ -90,9 +100,15 @@ try {
 
             //Documento
             $strDocumento = "";
+            $protocoloRN = new ProtocoloRN();
             if ($bolDocSei) {
-                $dblIdDocumento = $objRelAnaliseProdutoDTO->getDblIdDocumento();
-                $strDocumento = $strProduto . " (" . $objRelAnaliseProdutoDTO->getStrDocumentoFormatado() . ")";
+                $protocoloDTO = new ProtocoloDTO();                
+                $protocoloDTO->setStrProtocoloFormatado($objRelAnaliseProdutoDTO->getStrProtocoloFormatado());
+                $protocoloDTO->retDblIdProtocolo();
+                $objProt        = $protocoloRN->consultarRN0186($protocoloDTO);
+                $dblIdDocumento = $objProt->getDblIdProtocolo();
+                #$dblIdDocumento = $objRelAnaliseProdutoDTO->getDblIdDocumento();
+                $strDocumento = $strProduto . " (" . $objRelAnaliseProdutoDTO->getStrProtocoloFormatado() . ")";
                 $strAcoesDocumento = '<a href="#" onclick="infraAbrirJanela(\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=documento_visualizar&acao_origem=arvore_visualizar&acao_retorno=arvore_visualizar&id_procedimento=' . $idProcedimento . '&id_documento=' . $dblIdDocumento . '&arvore=1') . '\',\'janelaCancelarAssinaturaExterna\',850,600,\'location=0,status=1,resizable=1,scrollbars=1\')" tabindex="' . $numTabBotao . '" class="botaoSEI">' . $strDocumento . '</a>';
             }
             $strResultado .= '<td>'.$strAcoesDocumento.'</td>';
@@ -142,15 +158,15 @@ try {
             //Atividade
             $strResultado .= $strCssTr;
             $strResultado .= '<td>'.$objDTOTriagem->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTOTriagem->getNumComplexidadeAtividade()].'</td>';
-
+            
             //Resultado
-            $strResultado .= '<td>'.$objDTORevisao->getStrNomeTipoRevisao().'</td>';
+            $strResultado .= '<td>'. !is_null($objDTORevisao) && is_object($objDTORevisao) ? $objDTORevisao->getStrNomeTipoRevisao() : '' .'</td>';
 
             //Justificativa
-            $strResultado .= '<td>'.$objDTORevisao->getStrNomeJustificativaRevisao().'</td>';
+            $strResultado .= '<td>'.!is_null($objDTORevisao) && is_object($objDTORevisao) ? $objDTORevisao->getStrNomeJustificativaRevisao() : '' .'</td>';
 
             //Observação
-            $strResultado .= '<td>'.$objDTORevisao->getStrObservacao().'</td>';
+            $strResultado .= '<td>'. !is_null($objDTORevisao) && is_object($objDTORevisao) ? $objDTORevisao->getStrObservacao() : '' .'</td>';
             $strResultado .= '</tr>';
 
         }
@@ -291,29 +307,148 @@ PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-
-<?if(0){?><style><?}?>
-    #txaInformacoes {position:relative;left:0%;top:29%;width:95%;resize: none}
-    #txaInformacoesRevisao {position:relative;left:0%;width:95%;resize: none}
-    #selTipoJustificativa { width: 182px;}
-
-    .colunaPrincipal{
-        width: 127px;
-    }
-
-    <?if(0){?></style><?}?>
-
-<?
 PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_geral_css.php";
+
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
 
-<?if(0){?><script type="text/javascript"><?}?>
+    <form id="frmMdUtlContestacaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+        <?php
+            PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+            PaginaSEI::getInstance()->abrirAreaDados('auto');
+            $col_def_1 = "col-3 col-sm-3 col-md-2 col-lg-2";
+            $col_def_2 = "col-6 col-sm-5 col-md-5 col-lg-5";
+        ?>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <table>
+                    <tr>
+                        <td>
+                            <label id="lblProcessoDesc" name="lblProcessoDesc" class="infraLabelObrigatorio">Processo:</label>
+                        </td>
+                        <td class="pl-4">
+                            <?= $objControleDesempenhoDTO->getStrProtocoloProcedimentoFormatado() ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label id="lblStatusAtualDesc" name="lblStatusAtualDesc" class="infraLabelObrigatorio">Status:</label>
+                        </td>
+                        <td class="pl-4">
+                            <?= $strStatus ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label id="lblPrazoAtualDesc" name="lblPrazoAtualDesc" class="infraLabelObrigatorio">Prazo Atual:</label>
+                        </td>
+                        <td class="pl-4">
+                            <?= $dthFormatada ?>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="rowFieldSet mb-3">            
+            <fieldset class="infraFieldset fieldset-comum form-control">
+                <legend class="infraLegend">Resultado da Avaliação</legend>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div id="divInfraAreaTabela" class="table-responsive">
+                            <table class="infraTable table" summary="Resultado Revisão" id="tbResultadoRevisão">
+                                <caption class="infraCaption">&nbsp;</caption>
+                                <tr>
+                                    <th width="0" style="display: none;">Id</th>
+                                    <th class="infraTh" width="17%">Atividade</th>
+                                    <?php if($strStatus == MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE){ ?>
+                                        <th class="infraTh" width="15%">Produto</th>
+                                        <th class="infraTh" width="15%">Documento</th>
+                                    <?php } ?>
+                                    <th class="infraTh" width="15%">Resultado</th>
+                                    <th class="infraTh" width="15%">Justificativa</th>
+                                    <th class="infraTh" width="23%">Observação  sobre a Avaliação</th>
+                                </tr>                               
+                                <?php echo $strResultado ?>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelOpcional">
+                            Informações Complementares da Avaliação:
+                        </label> 
+                
+                        <textarea type="text" id="txaInformacoesRevisao" rows="4" maxlength="500" name="txaInformacoesRevisao" disabled="disabled"
+                                class="infraTextArea form-control" onkeypress="return infraMascaraTexto(this,event,500);"
+                                maxlength="500" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $strInformCompRevisao ?></textarea>
+                    </div>
+                </div>
+            </fieldset>            
+        </div>        
+
+        <div class="rowFieldSet mb-3">
+            <fieldset class="infraFieldset fieldset-comum form-control">
+                <legend class="infraLegend">Contestação da Avaliação</legend>
+                <div id="divContestacaoRevisao">
+                    <div class="row mb-3">
+                        <div class="col-xs col-sm-8 col-md-6 col-lg-5">
+                            <label for="selTipoJustificativa" id="lblJustificativa" for="Tipo" accesskey="" class="infraLabelObrigatorio">
+                                Justificativa: 
+                            </label>
+
+                            <select utlCampoObrigatorio="o" id="selTipoJustificativa" name="selTipoJustificativa" class="infraSelect form-control"
+                                    onclick="validarJustificativas()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                                <?= $selTipoJustificativa ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- TextArea Informações complementares da Contestação -->
+                    <div class="row">
+                        <div class="col-12">
+                            <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelObrigatorio">
+                                Informações Complementares da Contestação:
+                            </label>
+                        
+                            <textarea type="text" id="txaInformacoes" rows="4" maxlength="500" name="txaInformacoes" utlCampoObrigatorio="a"
+                                class="infraTextArea form-control" onkeypress="return infraMascaraTexto(this,event,500);"
+                                maxlength="500" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $strInformComp ?></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+
+        <input type="hidden" id="hdnIdControleDesempenho" name="hdnIdControleDesempenho" value="<?=$idControleDesempenho?>" />
+        <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value="<?=$idContestRevisao?>" />
+        <input type="hidden" id="hdnIdContestRevisao" name="hdnIdContestRevisao" value="<?=$idContestRevisao?>" />
+        <input type="hidden" id="hdnDetalheFluxoAtend" name="hdnDetalheFluxoAtend" value=""/>
+        <input type="hidden" id="hdnTeste" name="hdnTeste" value="<?php echo $strDetalheFluxoAtend?>" />
+        <input type="hidden" id="hdnIsTelaGerir" name="hdnIsTelaGerir" value="<?php echo $isTelaGerir; ?>">
+
+        <?php
+            //PaginaSEI::getInstance()->montarAreaDebug();
+            PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+        ?>
+    </form>
+
+<?php require_once 'md_utl_geral_js.php'; ?>
+
+<script type="text/javascript">
 
     var msgPadrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
     var msg95 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_95); ?>';
@@ -353,7 +488,8 @@ require_once 'md_utl_geral_js.php';
     function deletaContestacao() {
         var ok = confirm('Confirma o Cancelamento da Contestação de Avaliação?');
         if (ok) {
-            document.getElementById('sbmCancelarContestacao').type = 'submit';
+            //document.getElementById('sbmCancelarContestacao').type = 'submit';
+            $('[name="sbmCancelarContestacao"').prop('type','submit');
         } else {
             document.getElementById('sbmCancelarContestacao').type = 'button';
         }
@@ -361,134 +497,11 @@ require_once 'md_utl_geral_js.php';
 
     function OnSubmitForm() {
         var valido = utlValidarObrigatoriedade();
-         return valido;
-
+        return valido;
     }
 
+</script>
 
-    <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-
-    <form id="frmMdUtlContestacaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-        <?
-        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('auto');
-        ?>
-        <div>
-            <table style="font-size: 1.0em;">
-                <tr>
-                    <td class="colunaPrincipal"><label id="lblProcessoDesc" name="lblProcessoDesc" class="infraLabelObrigatorio">Processo: </label>
-                    </td>
-                    <td><label id="lblProcessoValor" name="lblProcessoValor"
-                               class="infraLabelOpcional"> <?php echo $objControleDesempenhoDTO->getStrProtocoloProcedimentoFormatado() ?> </label>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td class="colunaPrincipal"><label id="lblStatusAtualDesc" name="lblStatusAtualDesc" class="infraLabelObrigatorio">Status: </label>
-                    </td>
-                    <td><label id="lblStatusAtualValor" name="lblStatusAtualValor"
-                               class="infraLabelOpcional"> <?php echo $strStatus ?> </label>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td class="colunaPrincipal"><label id="lblPrazoAtualDesc" name="lblPrazoAtualDesc" class="infraLabelObrigatorio">Prazo Atual: </label>
-                    </td>
-                    <td><label id="lblPrazoAtualValor" name="lblPrazoAtualValor"  class="infraLabelOpcional"> <?php echo $dthFormatada; ?> </label>
-                    </td>
-                </tr>
-
-            </table>
-        </div>
-
-
-        <div id="resultadoRevisao" >
-            <fieldset class="infraFieldset" style="padding-bottom: 3%; margin-top: 25px;" >
-                <legend class="infraLegend" >Resultado da Avaliação</legend>
-                </br>
-                <div id="divInfraAreaTabela" class="infraAreaTabela">
-                    <table width="99%" class="infraTable" summary="ResultadoRevisão" id="tbResultadoRevisão">
-                        <caption class="infraCaption">&nbsp;</caption>
-                        <tr>
-                            <th style="display: none">Id</th>
-                            <th class="infraTh"  align="center">Atividade</th>
-                            <?php if($strStatus == MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE){ ?>
-                                <th class="infraTh"  align="center">Produto</th>
-                                <th class="infraTh" align="center">Documento</th>
-                            <?php } ?>
-                            <th class="infraTh"  align="center">Resultado</th>
-                            <th class="infraTh" align="center">Justificativa</th>
-                            <th class="infraTh" align="center">Observação  sobre a Avaliação</th>
-                        </tr>
-                        <?php echo $strResultado ?>
-                    </table>
-                </div>
-
-                <!-- TextArea Informações complementares da Avaliação -->
-                <div style="margin-top: 19px;">
-                    <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelOpcional">Informações Complementares da Avaliação:</label>
-                </div>
-                <div>
-                    <textarea type="text" id="txaInformacoesRevisao" rows="4" maxlength="500" name="txaInformacoesRevisao" disabled="disabled"
-                              class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,500);"
-                              maxlength="500" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $strInformCompRevisao ?></textarea>
-                </div>
-
-            </fieldset>
-        </div>
-
-        <div id="contestacaoRevisao"  >
-            <fieldset class="infraFieldset" style="padding-bottom: 4%; margin-top: 2%;" >
-                <legend class="infraLegend" >Contestação da Avaliação</legend>
-                </br>
-
-                <div id="divContestacaoRevisao" >
-                    <!-- Select Justificativa -->
-                    <div style="margin-bottom: 1%">
-                        <label for="selTipoJustificativa" id="lblJustificativa" for="Tipo" accesskey="" class="infraLabelObrigatorio">Justificativa: </label>
-                        <select utlCampoObrigatorio="o"
-                                id="selTipoJustificativa"
-                                name="selTipoJustificativa"
-                                class="infraSelect"
-                                onclick="validarJustificativas()"
-                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                            <?= $selTipoJustificativa ?>
-                        </select>
-                    </div>
-
-                    <!-- TextArea Informações complementares da Contestação -->
-                    <div>
-                        <label id="lblInformacoes" for="txaInformacoes" accesskey="" class="infraLabelObrigatorio">Informações Complementares da Contestação:</label>
-                    </div>
-                    <div>
-                    <textarea type="text" id="txaInformacoes" rows="4" maxlength="500" name="txaInformacoes"  utlCampoObrigatorio="a"
-                              class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,500);"
-                              maxlength="500" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $strInformComp ?></textarea>
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <?
-        PaginaSEI::getInstance()->fecharAreaDados();
-        ?>
-
-        <input type="hidden" id="hdnIdControleDesempenho" name="hdnIdControleDesempenho" value="<?=$idControleDesempenho?>" />
-        <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value="<?=$idContestRevisao?>" />
-        <input type="hidden" id="hdnIdContestRevisao" name="hdnIdContestRevisao" value="<?=$idContestRevisao?>" />
-        <input type="hidden" id="hdnDetalheFluxoAtend" name="hdnDetalheFluxoAtend" value=""/>
-        <input type="hidden" id="hdnTeste" name="hdnTeste" value="<?php echo $strDetalheFluxoAtend?>" />
-        <input type="hidden" id="hdnIsTelaGerir" name="hdnIsTelaGerir" value="<?php echo $isTelaGerir; ?>">
-        <?
-        //PaginaSEI::getInstance()->montarAreaDebug();
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
-    </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

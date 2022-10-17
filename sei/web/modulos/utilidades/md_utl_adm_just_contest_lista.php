@@ -17,11 +17,11 @@ try {
 
     switch ($_GET['acao']) {
         case 'md_utl_adm_just_contest_excluir':
-            try{
+            try {
                 $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
                 $objMdUtlAdmJustContestRN = new MdUtlAdmJustContestRN();
                 $arrObjMdUtlAdmJustContestDTO = array();
-                for ($i=0;$i<count($arrStrIds);$i++){
+                for ($i = 0; $i < count($arrStrIds); $i++) {
                     $objMdUtlAdmJustContestDTO = new MdUtlAdmJustContestDTO();
                     $objMdUtlAdmJustContestDTO->setNumIdMdUtlAdmJustContest($arrStrIds[$i]);
                     $objMdUtlAdmJustContestRN->validarExclusaoJustContest($arrStrIds[$i]);
@@ -30,18 +30,18 @@ try {
                 $objMdUtlAdmJustContestRN = new MdUtlAdmJustContestRN();
                 $objMdUtlAdmJustContestRN->excluir($arrObjMdUtlAdmJustContestDTO);
                 PaginaSEI::getInstance()->adicionarMensagem('Operação realizada com sucesso.');
-            }catch(Exception $e){
+            } catch (Exception $e) {
                 PaginaSEI::getInstance()->processarExcecao($e);
             }
-            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao_origem'].'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl));
+            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao_origem'] . '&acao_origem=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl));
             die;
 
 
         case 'md_utl_adm_just_contest_desativar':
-            try{
+            try {
                 $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
                 $arrObjMdUtlAdmJustContestDTO = array();
-                for ($i=0;$i<count($arrStrIds);$i++){
+                for ($i = 0; $i < count($arrStrIds); $i++) {
                     $objMdUtlAdmJustContestDTO = new MdUtlAdmJustContestDTO();
                     $objMdUtlAdmJustContestDTO->setNumIdMdUtlAdmJustContest($arrStrIds[$i]);
                     $arrObjMdUtlAdmJustContestDTO[] = $objMdUtlAdmJustContestDTO;
@@ -49,19 +49,19 @@ try {
                 $objMdUtlAdmJustContestRN = new MdUtlAdmJustContestRN();
                 $objMdUtlAdmJustContestRN->desativar($arrObjMdUtlAdmJustContestDTO);
                 PaginaSEI::getInstance()->adicionarMensagem('Operação realizada com sucesso.');
-            }catch(Exception $e){
+            } catch (Exception $e) {
                 PaginaSEI::getInstance()->processarExcecao($e);
             }
-            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao_origem'].'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl));
+            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao_origem'] . '&acao_origem=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl));
             die;
 
         case 'md_utl_adm_just_contest_reativar':
             $strTitulo = 'Reativar Justificativa de Contestação';
-            if ($_GET['acao_confirmada']=='sim'){
-                try{
+            if ($_GET['acao_confirmada'] == 'sim') {
+                try {
                     $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
                     $arrObjMdUtlAdmJustContestDTO = array();
-                    for ($i=0;$i<count($arrStrIds);$i++){
+                    for ($i = 0; $i < count($arrStrIds); $i++) {
                         $objMdUtlAdmJustContestDTO = new MdUtlAdmJustContestDTO();
                         $idJustContest = $arrStrIds[$i];
                         $objMdUtlAdmJustContestDTO->setNumIdMdUtlAdmJustContest($arrStrIds[$i]);
@@ -70,10 +70,10 @@ try {
                     $objMdUtlAdmJustContestRN = new MdUtlAdmJustContestRN();
                     $objMdUtlAdmJustContestRN->reativar($arrObjMdUtlAdmJustContestDTO);
                     PaginaSEI::getInstance()->adicionarMensagem('Operação realizada com sucesso.');
-                }catch(Exception $e){
+                } catch (Exception $e) {
                     PaginaSEI::getInstance()->processarExcecao($e);
                 }
-                header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao_origem'].'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.PaginaSEI::getInstance()->montarAncora($idJustContest)));
+                header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao_origem'] . '&acao_origem=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . PaginaSEI::getInstance()->montarAncora($idJustContest)));
                 die;
             }
             break;
@@ -192,11 +192,11 @@ try {
             $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i, $arrObjMdUtlAdmJustContestDTO[$i]->getNumIdMdUtlAdmJustContest());
 
             if ($bolAcaoConsultar) {
-                $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_contest_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_just_contest=' . $arrObjMdUtlAdmJustContestDTO[$i]->getNumIdMdUtlAdmJustContest()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Justificativa de Contestação" alt="Consultar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_contest_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_just_contest=' . $arrObjMdUtlAdmJustContestDTO[$i]->getNumIdMdUtlAdmJustContest()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Justificativa de Contestação" alt="Consultar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
             }
 
             if ($bolAcaoAlterar) {
-                $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_contest_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_just_contest=' . $arrObjMdUtlAdmJustContestDTO[$i]->getNumIdMdUtlAdmJustContest()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/alterar.gif" title="Alterar Justificativa de Contestação" alt="Alterar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_just_contest_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_just_contest=' . $arrObjMdUtlAdmJustContestDTO[$i]->getNumIdMdUtlAdmJustContest()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar Justificativa de Contestação" alt="Alterar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
             }
 
             if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir) {
@@ -204,16 +204,16 @@ try {
                 $strDescricao = PaginaSEI::getInstance()->formatarParametrosJavaScript($arrObjMdUtlAdmJustContestDTO[$i]->getStrNome());
             }
             if ($bolAcaoDesativar && $arrObjMdUtlAdmJustContestDTO[$i]->getStrSinAtivo() == 'S') {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoDesativar(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Justificativa de Contestação" alt="Desativar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoDesativar(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar Justificativa de Contestação" alt="Desativar Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
             }
 
             if ($bolAcaoReativar && $arrObjMdUtlAdmJustContestDTO[$i]->getStrSinAtivo() == 'N') {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoReativar(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Justificativa de Contestação" alt="Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoReativar(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar Justificativa de Contestação" alt="Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
             }
 
 
             if ($bolAcaoExcluir) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoExcluir(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Justificativa de Contestação" alt="Excluir Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoExcluir(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Justificativa de Contestação" alt="Excluir Justificativa de Contestação" class="infraImg" /></a>&nbsp;';
             }
 
             $strResultado .= '</td></tr>' . "\n";
@@ -232,116 +232,51 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema() . ' - ' . $strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-
-<?if(0){?><style><?} ?>
-
-.bloco {
-    position: relative;
-    float: left;
-}
-
-.clear {
-    clear: both;
-}
-<?if(0){?></style><?}?>
-
-<?
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-?>
-<?if(0){?><script type="text/javascript"><?}?>
-    var msg70 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_70); ?>';
-    var msg72 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_72); ?>';
-    var msg74 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_74); ?>';
-
-    function inicializar(){
-            document.getElementById('btnFechar').focus();
-            infraEfeitoTabelas(true);
-    }
-
-    <? if ($bolAcaoDesativar){ ?>
-    function acaoDesativar(id,desc){
-        var msg = setMensagemPersonalizada(msg70, ['Justificativa de Contestação', desc]);
-        if (confirm(msg)){
-            document.getElementById('hdnInfraItemId').value=id;
-            document.getElementById('frmMdUtlAdmJustContestLista').action='<?=$strLinkDesativar?>';
-            document.getElementById('frmMdUtlAdmJustContestLista').submit();
-        }
-    }
-
-    <? } ?>
-
-    <? if ($bolAcaoReativar){ ?>
-    function acaoReativar(id,desc){
-        var msg = setMensagemPersonalizada(msg72, ['Justificativa de Contestação', desc]);
-        if (confirm(msg)){
-            document.getElementById('hdnInfraItemId').value=id;
-            document.getElementById('frmMdUtlAdmJustContestLista').action='<?=$strLinkReativar?>';
-            document.getElementById('frmMdUtlAdmJustContestLista').submit();
-        }
-    }
-    <? } ?>
-
-    <? if ($bolAcaoExcluir){ ?>
-    function acaoExcluir(id,desc){
-        var msg = setMensagemPersonalizada(msg74, ['Justificativa de Contestação', desc]);
-        if (confirm(msg)){
-            document.getElementById('hdnInfraItemId').value=id;
-            document.getElementById('frmMdUtlAdmJustContestLista').action='<?=$strLinkExcluir?>';
-            document.getElementById('frmMdUtlAdmJustContestLista').submit();
-        }
-    }
-
-    <? } ?>
-
-    <?if(0){?></script><?}?>
-<?
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 ?>
-    <form id="frmMdUtlAdmJustContestLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+    <form id="frmMdUtlAdmJustContestLista" method="post"
+          action="<?= SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao']) ?>">
         <?
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
         ?>
-
-        <div id="divInfraAreaDados" class="infraAreaDados">
-
-            <div style="width: 27%;" class="bloco">
-                <label id="lblJustificativa" for="txtJustificativa" accesskey="S" class="infraLabelOpcional">
-                    Justificativa:
-                </label>
-
-                <div class="clear"></div>
-
-                <input type="text" id="txtJustificativa" name="txtJustificativa" class="infraText" size="30"
-                       value="<?=$justificativa?>" maxlength="100"
-                       tabindex="502"/>
-            </div>
-            <div style="width: 68%;" class="bloco">
-                <label id="lblDescricao" for="txtDescricao" accesskey="S"
-                       class="infraLabelOpcional">
-                    Descrição:
-                </label>
-
-                <div class="clear"></div>
-
-                <input style="width: 45%" type="text" id="txtDescricao" name="txtDescricao" class="infraText"
-                       size="30"
-                       value="<?=$descricao?>" maxlength="100"
-                       tabindex="502"/>
+        <div class="row linha">
+            <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <div class="row">
+                    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-4 mb-2">
+                        <label id="lblJustificativa" for="lblJustificativa" accesskey="t"
+                               class="infraLabelOpcional">Justificativa:</label><br>
+                        <input type="text"
+                               id="txtJustificativa"
+                               name="txtJustificativa"
+                               class="infraText form-control"
+                               value="<?= $_POST['txtNome'] ?>"
+                               tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
+                    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-4">
+                        <label id="lblDescricao" for="txtCodigoRastreio" accesskey="r" class="infraLabelOpcional">Descrição:</label><br>
+                        <input type="text"
+                               id="txtDescricao"
+                               name="txtDescricao"
+                               class="infraText form-control"
+                               value="<?= $_POST['txtDescricao'] ?>"
+                               tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
+                </div>
             </div>
         </div>
-
         <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
         <?
-        PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
+        PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
         PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
         ?>
     </form>
 <?
+require_once 'md_utl_geral_js.php';
+require_once 'md_utl_adm_just_contest_lista_js.php';
 PaginaSEI::getInstance()->fecharHtml();
 PaginaSEI::getInstance()->fecharBody();

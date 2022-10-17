@@ -7,7 +7,6 @@
  */
 
 
-
 $arrComandos = array();
 //Id tipo de controle
 $idTipoControle        = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTipoControleUtl'];
@@ -21,6 +20,7 @@ $strItensTabela        = '';
 $strDesabilitar        = '';
 $mdUtlAdmAtividadeRN   = new MdUtlAdmAtividadeRN();
 $bolConsultar          = false;
+$isClonar              = array_key_exists('isClonar',$_GET) ? true : false;
 
 $strUtlValidarVinculoAnalise = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_exclusao_prod_atv');
 
@@ -43,13 +43,16 @@ if($idAtividade>0){
 
     $rdnTpAtividade     = $_POST['rdnTpAtivdade'] ? $_POST['rdnTpAtivdade'] : $mdUtlAdmAtividade->getStrSinAnalise() ;
     
-    $chkAmostragem  = $_POST['chkAtvRevAmost'] ? $_POST['chkAtvRevAmost'] : $mdUtlAdmAtividade->getStrSinAtvRevAmostragem() =='S'?'checked="checked"': null ;
+    $chkAmostragem  = $_POST['chkAtvRevAmost'] ? $_POST['chkAtvRevAmost'] : $mdUtlAdmAtividade->getStrSinAtvRevAmostragem() =='S'?'checked="checked"': null;
+
+    $chkNaoAplicarPerc = ( $_POST['chkAtvRevAmost'] && $_POST['chkAtvRevAmost'] != '' ) ? 'checked="checked"' : ( $mdUtlAdmAtividade->getStrSinNaoAplicarPercDsmp() == 'S' ? 'checked="checked"' : null );
 
     if($rdnTpAtividade == 'S'){
 
         $rdnComAnalise  = 'checked="checked"';
 
-        $strItensTabela = $mdUtlAdmAtvSerieProdRN->retornarItensTabelasDinamica($idAtividade);
+        $strItensTabela = $mdUtlAdmAtvSerieProdRN->retornarItensTabelasDinamica([$idAtividade,$isClonar]);
+
         $strItensTabela = $_POST['hdnTbProdutoEsperado'] ? $_POST['hdnTbProdutoEsperado']:PaginaSEI::getInstance()->gerarItensTabelaDinamica($strItensTabela);
 
     }else{
@@ -81,8 +84,7 @@ if($idAtividade>0){
 }
 // Carregar combos selects
 $strItensSelTpProduto          = MdUtlAdmTpProdutoINT::montarSelectTpProduto($idTipoControle);
-$strItensSelTpDocumentoExterno = MdUtlAdmAtividadeINT::montarSelectTipoDocumentoExterno();
-$strItensSelTpDocumentoInterno = MdUtlAdmAtividadeINT::montarSelectTipoDocumentoInterno();
+$strItensSelTpDocIntAndExt = MdUtlAdmAtividadeINT::montarSelectTipoDocumentoIntAndExt();
 
 $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
 $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
@@ -112,7 +114,6 @@ $nomeTpControle        = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlD
 switch($_GET['acao']){
 
     case 'md_utl_adm_atividade_cadastrar':
-
         $strTitulo = 'Nova Atividade - '.$nomeTpControle;
         $arrComandos[] = '<button type="submit" accesskey="S" name="sbmCadastrarAtividade" value="Salvar" class="infraButton"><span class="infraTeclaAtalho">S</span>alvar</button>';
         $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTipoControle)).'\';" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';

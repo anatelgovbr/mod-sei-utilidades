@@ -1,6 +1,5 @@
-<?php if(0){ ?>
-<script type="javascript">
-    <?php } ?>
+<script type="text/javascript">
+    
     var isConsultar = '<?=$_GET['acao']?>'=='md_utl_analise_consultar' ? true : false;
     var encAssociarFila            = '';
     var isParametrizadoProcesso    = '<?=$isJsTpProcParametrizado?>';
@@ -40,6 +39,7 @@
             document.getElementById('divFila').style.display = valorDisplay;
             document.getElementById('hdnFila').value = '';
             document.getElementById('selFila').value = '';
+            desmarcarCkbDistAutoParaMim();
         }
     }
 
@@ -49,6 +49,10 @@
 
     function carregarHiddenFila(obj){
         document.getElementById('hdnFila').value = obj.value;
+        
+        // md_utl_geral_js.php
+        distribuicaoAutoParaMim(this , 1 , <?= SessaoSEI::getInstance()->getNumIdUsuario() ?>);
+
     }
 
     function inicializar(){
@@ -119,6 +123,13 @@
         var campoNumeroSei  = document.getElementById(idAlterar);
         var campoObservacao = document.getElementById(idObsAlterar);
 
+        var campoRelTriagem  = document.getElementsByName( 'idRelTriagem_' + idReferencia );
+        var campoSerieProd   = document.getElementsByName( 'idSerieProd_' + idReferencia );
+        var campoTmpExecucao = document.getElementsByName( 'TmpExecucao_' + idReferencia );
+        var campoProduto     = document.getElementsByName( 'idProduto_' + idReferencia );
+        var campoAtividade   = document.getElementsByName( 'idAtividade_' + idReferencia );
+        var campoNomeProduto = document.getElementsByName( 'nomeProduto_' + idReferencia );
+
         //Controle de Check para o Campo Numero SEI
         if(campoObservacao && !isConsultar){
             if(checked) {
@@ -130,17 +141,43 @@
                 }
 
                 campoObservacao.removeAttribute('disabled');
+
+                //ajustado para os campos que nao estejam selecionados, não sejam enviados pelo post
+                campoRelTriagem[0].removeAttribute('disabled');
+                campoSerieProd[0].removeAttribute('disabled');
+                campoTmpExecucao[0].removeAttribute('disabled');
+                campoProduto[0].removeAttribute('disabled');
+                campoAtividade[0].removeAttribute('disabled');
+                campoNomeProduto[0].removeAttribute('disabled');
             }else{
+                <?php if ( !is_null( $idUsuarioFezAnalise ) && $idUsuarioFezAnalise == $idUsuarioDistrAnalise ): ?>
+                    var it_checado = $( obj ).attr('checkado');
+                    if( it_checado !== undefined && it_checado == 'S' ){
+                        alert('Não é possível remover esta Atividade analisada que está em Correção de Análise pelo mesmo Membro Responsável pela Análise');
+                        //Como o checked e a class "infraTrMarcada" são desfeitas, após a msg, essas configuracoes voltam
+                        $( obj ).prop('checked',true);
+                        $( obj ).closest('tr').addClass('infraTrMarcada');
+                        return false;
+                    }
+                <?php endif; ?>
 
                 if(campoNumeroSei) {
                     campoNumeroSei.setAttribute('disabled', 'disabled');
                     campoNumeroSei.classList.remove("campoNumeroSeiObrigatorio");
-                    campoNumeroSei.value = '';
+                    // campoNumeroSei.value = '';
                 }
 
                 campoObservacao.setAttribute('disabled','disabled');
                 campoObservacao.classList.remove("campoObservacaoObrigatorio");
-                campoObservacao.value = '';
+                // campoObservacao.value = '';
+
+                //ajustado para os campos que nao estejam selecionados, não sejam enviados pelo post
+                campoRelTriagem[0].setAttribute('disabled','disabled');
+                campoSerieProd[0].setAttribute('disabled','disabled');
+                campoTmpExecucao[0].setAttribute('disabled','disabled');
+                campoProduto[0].setAttribute('disabled','disabled');
+                campoAtividade[0].setAttribute('disabled','disabled');
+                campoNomeProduto[0].setAttribute('disabled','disabled');
             }
         }
     }
@@ -166,7 +203,7 @@
                 var erro = $(r).find('Erro').text();
                 var msg = $(r).find('Msg').text();
                 if(erro == '1'){                    
-                    $('#'+id).focus();
+                    $('#'+id).val('').focus();
                     alert(msg);
                     isValidadoNumSei = false;
                 }else{
@@ -201,7 +238,7 @@
     }
 
     function abrirModalRevisao() {
-        infraAbrirJanela('<?=$strLinkIniciarRevisao?>','janelaAjudaVariaveisModelo',800,600,'location=0,status=1,resizable=1,scrollbars=1',false);
+        infraAbrirJanela('<?=$strLinkIniciarRevisao?>','janelaAjudaVariaveisModelo',1200,600,'location=0,status=1,resizable=1,scrollbars=1',false);
     }
 
     function validarSeriesObrigatorias(){
@@ -248,18 +285,16 @@
 
         for(var i=0; i < camposObrigatorios.length; i++){
             if(todosPreenchidos){
-                /*
-                var valor = camposObrigatorios[i].value;                
-                if( $.trim(valor) == '' ){
-                    todosPreenchidos = false;                    
-                    alert(setMensagemPersonalizada(msg11Padrao, ['Observações']));
-                    camposObrigatorios[i].focus();
-                }
-                */
-
+                // var valor = camposObrigatorios[i].value;
+                // if( $.trim(valor) == '' ){
+                //     todosPreenchidos = false;
+                //     alert(setMensagemPersonalizada(msg11Padrao, ['Observações']));
+                //     camposObrigatorios[i].focus();
+                // }
+                               
                 if( !validaQtdCaracteres(camposObrigatorios[i],500) ){
                     todosPreenchidos = false;
-                    alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Observações', '500'))?>");
+                    alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Observaes', '500'))?>");
                     camposObrigatorios[i].focus();
                 }
             }
@@ -269,7 +304,7 @@
     }
 
     function validarUmPreenchido() {
-        var checks       = document.getElementsByClassName('infraCheckbox');
+        var checks       = document.getElementsByClassName('infraCheckboxInput');
         var contCheckBox = checks.length;
 
         if(contCheckBox > 0){
@@ -308,6 +343,7 @@
         }
         return true;
     }
+
 
     function verificaSeRetriagem(){
         var qtdAtividadesSelecionadas = new Array();
@@ -387,13 +423,11 @@
         }        
 
         verificaSeRetriagem();
-
+        
         var nomeFila   = isParametrizadoProcesso == 1 ? document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText : '';
         document.getElementById('hdnSelFila').value = isParametrizadoProcesso == 1 ? nomeFila.trim() : '';
         bloquearBotaoSalvar();
         return true;
     }
-
-    <?php if(0){ ?>
+    
 </script>
-<?php } ?>

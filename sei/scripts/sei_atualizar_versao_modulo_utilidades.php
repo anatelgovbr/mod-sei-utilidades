@@ -3,11 +3,12 @@ require_once dirname(__FILE__) . '/../web/SEI.php';
 
 class MdUtlAtualizadorSeiRN extends InfraRN
 {
-    private $numSeg = 0;
-    private $versaoAtualDesteModulo = '1.5.0';
+
+	private $numSeg = 0;
+    private $versaoAtualDesteModulo = '2.0.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0');
 
     public function __construct()
     {
@@ -83,14 +84,13 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.532.3';
+            $numVersaoInfraRequerida = '1.603.5';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
             if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
                 $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
-
 
             //checando permissoes na base de dados
             $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
@@ -104,7 +104,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
 
             $strVersaoModuloUtilidades = $objInfraParametro->getValor($this->nomeParametroModulo, false);
-			
+
             switch ($strVersaoModuloUtilidades) {
                 case '':
                     $this->instalarv100();
@@ -118,12 +118,15 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                     $this->instalarv140();
                 case '1.4.0':
                     $this->instalarv150();
+                case '1.5.0':
+                    $this->instalarv200();
                     break;
-                default:
+
+				default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
-					$this->finalizar('FIM', false);
                     break;
-            }
+
+			}
 
             $this->finalizar('FIM');
             InfraDebug::getInstance()->setBolDebugInfra(true);
@@ -137,7 +140,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv100()
     {
-        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+		$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $this->logar('CRIANDO A TABELA md_utl_adm_tp_ctrl_desemp');
@@ -1141,16 +1145,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $strPeriodicidadeComplemento = '1';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
 
-        $arrTabelas = array('md_utl_adm_atividade', 'md_utl_adm_atv_serie_prod', 'md_utl_adm_fila', 'md_utl_adm_fila_prm_gr_usu',
-            'md_utl_adm_grp', 'md_utl_adm_grp_fila', 'md_utl_adm_grp_fila_proc', 'md_utl_adm_grp_fl_proc_atv',
-            'md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_jornada', 'md_utl_adm_just_contest', 'md_utl_adm_just_prazo',
-            'md_utl_adm_prm_contest', 'md_utl_adm_prm_ds', 'md_utl_adm_prm_gr', 'md_utl_adm_prm_gr_usu',
-            'md_utl_adm_rel_jornada_usu', 'md_utl_adm_rel_prm_ds_aten', 'md_utl_adm_rel_prm_ds_ativ',
-            'md_utl_adm_rel_prm_ds_fila', 'md_utl_adm_rel_prm_gr_proc', 'md_utl_adm_rel_tp_ctrl_und', 'md_utl_adm_rel_tp_ctrl_usu',
-            'md_utl_adm_tp_ausencia', 'md_utl_adm_tp_ctrl_desemp', 'md_utl_adm_tp_just_revisao', 'md_utl_adm_tp_produto', 'md_utl_adm_tp_revisao',
-            'md_utl_ajuste_prazo', 'md_utl_analise', 'md_utl_contest_revisao', 'md_utl_controle_dsmp', 'md_utl_hist_controle_dsmp',
-            'md_utl_rel_analise_produto', 'md_utl_rel_revis_trg_anls', 'md_utl_rel_triagem_atv', 'md_utl_revisao',
-            'md_utl_triagem');
+        $arrTabelas = array('md_utl_adm_atividade', 'md_utl_adm_atv_serie_prod', 'md_utl_adm_fila', 'md_utl_adm_fila_prm_gr_usu', 'md_utl_adm_grp', 'md_utl_adm_grp_fila', 'md_utl_adm_grp_fila_proc', 'md_utl_adm_grp_fl_proc_atv', 'md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_jornada', 'md_utl_adm_just_contest', 'md_utl_adm_just_prazo', 'md_utl_adm_prm_contest', 'md_utl_adm_prm_ds', 'md_utl_adm_prm_gr', 'md_utl_adm_prm_gr_usu', 'md_utl_adm_rel_jornada_usu', 'md_utl_adm_rel_prm_ds_aten', 'md_utl_adm_rel_prm_ds_ativ', 'md_utl_adm_rel_prm_ds_fila', 'md_utl_adm_rel_prm_gr_proc', 'md_utl_adm_rel_tp_ctrl_und', 'md_utl_adm_rel_tp_ctrl_usu', 'md_utl_adm_tp_ausencia', 'md_utl_adm_tp_ctrl_desemp', 'md_utl_adm_tp_just_revisao', 'md_utl_adm_tp_produto', 'md_utl_adm_tp_revisao', 'md_utl_ajuste_prazo', 'md_utl_analise', 'md_utl_contest_revisao', 'md_utl_controle_dsmp', 'md_utl_hist_controle_dsmp', 'md_utl_rel_analise_produto', 'md_utl_rel_revis_trg_anls', 'md_utl_rel_triagem_atv', 'md_utl_revisao', 'md_utl_triagem');
 
         $this->fixIndices($objInfraMetaBD, $arrTabelas);
 
@@ -1377,6 +1372,170 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
+
+    protected function instalarv200()
+    {
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+
+        $this->logar('Cria a coluna sin_nao_aplicar_perc_dsmp na tabela md_utl_adm_atividade');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_atividade', 'sin_nao_aplicar_perc_dsmp', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        BancoSEI::getInstance()->executarSql("UPDATE md_utl_adm_atividade set sin_nao_aplicar_perc_dsmp='N'");
+        $this->logar('FIM da Criação da coluna sin_nao_aplicar_perc_dsmp na tabela md_utl_adm_atividade');
+
+        $this->logar('Cria a coluna tempo_execucao_atribuido na tabela md_utl_rel_triagem_atv');
+        $objInfraMetaBD->adicionarColuna('md_utl_rel_triagem_atv', 'tempo_execucao_atribuido', $objInfraMetaBD->tipoNumero(), 'null');
+        $this->logar('FIM da Criação da coluna tempo_execucao_atribuido na tabela md_utl_rel_triagem_atv');
+
+        $this->logar('Inserindo a coluna');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_tp_ctrl_desemp', 'id_serie', $objInfraMetaBD->tipoNumero(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk2_md_utl_adm_tp_ctrl_desemp', 'md_utl_adm_tp_ctrl_desemp', array('id_serie'), 'serie', array('id_serie'));
+        $this->logar('FIM da inserção da coluna');
+
+        $this->logar('Cria a coluna data de corte na tabela md_utl_adm_prm_gr');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr', 'dta_corte', $objInfraMetaBD->tipoDataHora(), 'null');
+        $this->logar('FIM da criação a coluna data de corte na tabela md_utl_adm_prm_gr');
+
+        $this->logar('Inserindo a coluna id_documento na Tabela md_utl_adm_prm_gr_usu');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu', 'id_documento', $objInfraMetaBD->tipoNumeroGrande(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk3_md_utl_adm_prm_gr_usu', 'md_utl_adm_prm_gr_usu', array('id_documento'), 'documento', array('id_documento'));
+        $this->logar('FIM da inserção da coluna');
+
+        $this->logar('Inserindo a coluna id_documento na Tabela md_utl_adm_hist_prm_gr_usu');
+        $objInfraMetaBD->adicionarColuna('md_utl_adm_hist_prm_gr_usu', 'id_documento', $objInfraMetaBD->tipoNumeroGrande(), 'null');
+        $objInfraMetaBD->adicionarChaveEstrangeira('fk4_md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_hist_prm_gr_usu', array('id_documento'), 'documento', array('id_documento'));
+        $this->logar('FIM da inserção da coluna');
+
+        $this->logar('Popular tempo atribuido na tabela md_utl_rel_triagem_atv');
+        $this->atualizarTempoAtribuidoAtv();
+        $this->logar('FIM popular tempo atribuido na tabela md_utl_rel_triagem_atv');
+
+        $this->logar('Cria a coluna protocolo_formatado na tabela md_utl_rel_analise_produto.');
+        $objInfraMetaBD->adicionarColuna('md_utl_rel_analise_produto', 'protocolo_formatado', $objInfraMetaBD->tipoTextoVariavel(50), 'null');
+        $this->logar('Criado coluna protocolo_formatado na tabela md_utl_rel_analise_produto.');
+
+        $this->logar('Popula dados legados na nova coluna protocolo_formatado.');
+        $this->populaDadosLegadoDocumento();
+        $this->logar('Populado os registros legados.');
+
+        $this->logar('Excluir coluna id_documento da tabela md_utl_rel_analise_produto.');
+        $objInfraMetaBD->excluirColuna('md_utl_rel_analise_produto', 'id_documento');
+        $this->logar('Coluna id_documento da tabela md_utl_rel_analise_produto excluída.');
+
+        $this->logar('Excluir coluna valor da tabela md_utl_rel_analise_produto, pois não existe utilidade para esta versão.');
+        $objInfraMetaBD->excluirColuna('md_utl_rel_analise_produto', 'valor');
+        $this->logar('Coluna valor da tabela md_utl_rel_analise_produto excluída.');
+
+        $this->logar('Excluir coluna sta_aplicabilidade_serie da tabela md_utl_adm_atv_serie_prod.');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_atv_serie_prod', 'sta_aplicabilidade_serie');
+        $this->logar('Coluna sta_aplicabilidade_serie da tabela md_utl_adm_atv_serie_prod excluída.');
+
+        $this->logar('Excluir coluna id_md_utl_adm_fila da tabela md_utl_adm_prm_gr.');
+        $objInfraMetaBD->excluirChaveEstrangeira('md_utl_adm_prm_gr', 'fk1_md_utl_adm_prm_gr');
+        $objInfraMetaBD->excluirColuna('md_utl_adm_prm_gr', 'id_md_utl_adm_fila');
+        $this->logar('Coluna id_md_utl_adm_fila da tabela md_utl_adm_prm_gr excluída.');
+
+        # ------------------------
+
+        $this->logar('Cria a coluna sin_dist_auto_para_mim na tabela md_utl_triagem');
+        $objInfraMetaBD->adicionarColuna('md_utl_triagem', 'sin_dist_auto_para_mim', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $this->logar('Cria a coluna sin_dist_auto_para_mim na tabela md_utl_analise');
+        $objInfraMetaBD->adicionarColuna('md_utl_analise', 'sin_dist_auto_para_mim', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        $this->logar('Cria a coluna sin_dist_auto_triag_analista na tabela md_utl_revisao');
+        $objInfraMetaBD->adicionarColuna('md_utl_revisao', 'sin_dist_auto_triag_analista', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+        # ------------------------
+
+        //$this->logar('INSERINDO PARÂMETROS DE BLOQUEIO DO MÓDULO ');
+        //BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_BLOQUEAR_PROCESSO_COM_DOCUMENTO_RESTRITO_USANDO_HIPOTESE_LEGAL\' )');
+
+        $arrTabelas= array('md_utl_adm_atividade', 'md_utl_adm_atv_serie_prod', 'md_utl_adm_fila', 'md_utl_adm_fila_prm_gr_usu', 'md_utl_adm_grp', 'md_utl_adm_grp_fila', 'md_utl_adm_grp_fila_proc', 'md_utl_adm_grp_fl_proc_atv', 'md_utl_adm_hist_prm_gr_usu', 'md_utl_adm_jornada', 'md_utl_adm_just_contest', 'md_utl_adm_just_prazo', 'md_utl_adm_prm_contest', 'md_utl_adm_prm_ds', 'md_utl_adm_prm_gr', 'md_utl_adm_prm_gr_usu', 'md_utl_adm_rel_jornada_usu', 'md_utl_adm_rel_prm_ds_aten', 'md_utl_adm_rel_prm_ds_ativ', 'md_utl_adm_rel_prm_ds_fila', 'md_utl_adm_rel_prm_ds_proc', 'md_utl_adm_rel_prm_gr_proc', 'md_utl_adm_rel_tp_ctrl_und', 'md_utl_adm_rel_tp_ctrl_usu', 'md_utl_adm_tp_ausencia', 'md_utl_adm_tp_ctrl_desemp', 'md_utl_adm_tp_just_revisao', 'md_utl_adm_tp_produto', 'md_utl_adm_tp_revisao', 'md_utl_ajuste_prazo', 'md_utl_analise', 'md_utl_contest_revisao', 'md_utl_controle_dsmp', 'md_utl_hist_controle_dsmp', 'md_utl_rel_analise_produto', 'md_utl_rel_revis_trg_anls', 'md_utl_rel_triagem_atv', 'md_utl_revisao', 'md_utl_triagem');
+
+        $this->fixIndices($objInfraMetaBD, $arrTabelas);
+
+        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.0.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
+
+    public function populaDadosLegadoDocumento(){
+        InfraDebug::getInstance()->setBolDebugInfra(true);
+
+        $numRegistrosPorPag = 2000;
+        $numPaginaAtual     = 0;
+        $qtd_atualizados    = 0;
+
+        $objAnaliseProdutoBD  = new MdUtlRelAnaliseProdutoBD(BancoSEI::getInstance());
+        $objDocumentoBD       = new DocumentoBD(BancoSEI::getInstance());
+
+        //RETORNA QTD TOTAL DE REGISTROS POSSIVEIS DE ATUALIZAÇÃO
+        $objAnProdDTO = new MdUtlRelAnaliseProdutoDTO();
+        $objAnProdDTO->setDblIdDocumentoScript( '' , InfraDTO::$OPER_DIFERENTE );
+        $objAnProdDTO->retNumIdMdUtlRelAnaliseProduto();
+        $objAnProdDTO->retDblIdDocumentoScript();
+        $objAnProdDTO->retStrProtocoloFormatado();
+
+        $tt_rows = $objAnaliseProdutoBD->contar( $objAnProdDTO );
+        $this->logar("QUANTIDADE DE REGISTROS COM ID_DOCUMENTO PREENCHIDO: $tt_rows");
+        
+        while( true )
+        {
+            $objAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
+
+            //retorna os dados que contem o numero do id_documento
+            $objAnaliseProdutoDTO->setDblIdDocumentoScript( '' , InfraDTO::$OPER_DIFERENTE );            
+            $objAnaliseProdutoDTO->setNumPaginaAtual( $numPaginaAtual );            
+            $objAnaliseProdutoDTO->setNumMaxRegistrosRetorno( $numRegistrosPorPag );
+            $objAnaliseProdutoDTO->setOrdNumIdMdUtlRelAnaliseProduto( InfraDTO::$TIPO_ORDENACAO_ASC );
+
+            $objAnaliseProdutoDTO->retNumIdMdUtlRelAnaliseProduto();
+            $objAnaliseProdutoDTO->retDblIdDocumentoScript();
+            $objAnaliseProdutoDTO->retStrProtocoloFormatado();
+
+            $arrAnaliseProdutoObj = $objAnaliseProdutoBD->listar( $objAnaliseProdutoDTO );
+            
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+
+            if ( !empty( $arrAnaliseProdutoObj ) )
+            {
+                $arrIdsDocumento = array_unique( 
+                    InfraArray::converterArrInfraDTO( $arrAnaliseProdutoObj , 'IdDocumentoScript' ) 
+                );
+
+                //retorna o Numero SEI filtrado pelo id_documento    da consulta anterior
+                $objDocumentoDTO = new DocumentoDTO();
+
+                $objDocumentoDTO->setDblIdDocumento( $arrIdsDocumento , InfraDTO::$OPER_IN );
+                $objDocumentoDTO->retDblIdDocumento();
+                $objDocumentoDTO->retStrProtocoloDocumentoFormatado();
+
+                $arrDocumento = InfraArray::converterArrInfraDTO(
+                    $objDocumentoBD->listar( $objDocumentoDTO ) , 'ProtocoloDocumentoFormatado' , 'IdDocumento'
+                );
+
+                //atualiza a nova coluna[protocolo_formatado] com o Numero SEI consultado anteriormente
+                foreach ( $arrAnaliseProdutoObj as $k => $v ) {
+                    if ( array_key_exists( $v->getDblIdDocumentoScript() , $arrDocumento ) ){
+                        $arrAnaliseProdutoObj[$k]->setStrProtocoloFormatado( $arrDocumento[$v->getDblIdDocumentoScript()] );
+                        $objAnaliseProdutoBD->alterar( $arrAnaliseProdutoObj[$k] );
+                        $qtd_atualizados++;
+                    }
+                }
+                InfraDebug::getInstance()->setBolDebugInfra(true);
+                $numPaginaAtual++;
+            }
+            else 
+            {
+                break;
+            }
+        };
+        
+        $this->logar("QUANTIDADE DE REGISTROS ATUALIZADOS COM ID_DOCUMENTO PREENCHIDO: $qtd_atualizados");
     }
 
     protected function atualizarSinRealizarAvalProdProd()
@@ -2485,6 +2644,73 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         }
     }
 
+    private function atualizarTempoAtribuidoAtv()
+    {
+        $qtdRegistrosPorVez = 1000;
+        $qtdRegistros       = 0;
+
+        $ojbMdUtlRelTriagemAtvBD = new MdUtlRelTriagemAtvBD(BancoSEI::getInstance());
+        $objMdUtlControleDsmpBD  = new MdUtlControleDsmpBD(BancoSEI::getInstance());
+
+        $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+        $objMdUtlRelTriagemAtvDTO->setNumTempoExecucaoAtribuido(null);
+        $objMdUtlRelTriagemAtvDTO->setBolExclusaoLogica(false);
+
+        $totalRegistos = $ojbMdUtlRelTriagemAtvBD->contar($objMdUtlRelTriagemAtvDTO);
+
+        while($qtdRegistros < $totalRegistos) {
+
+            $objMdUtlRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+            $objMdUtlRelTriagemAtvDTO->setNumTempoExecucaoAtribuido(null);
+            $objMdUtlRelTriagemAtvDTO->setBolExclusaoLogica(false);
+            $objMdUtlRelTriagemAtvDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
+            $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlRelTriagemAtv();
+            $objMdUtlRelTriagemAtvDTO->retNumTempoExecucao();
+            $objMdUtlRelTriagemAtvDTO->retNumIdMdUtlTriagem();
+            #$totalRegistosPorConsulta = $ojbMdUtlRelTriagemAtvBD->contar($objMdUtlRelTriagemAtvDTO);
+
+            $arrMdUtlRelTriagemAtv    = $ojbMdUtlRelTriagemAtvBD->listar($objMdUtlRelTriagemAtvDTO);
+            $totalRegistosPorConsulta = !empty( $arrMdUtlRelTriagemAtv ) ? count( $arrMdUtlRelTriagemAtv ) : 0;
+
+            InfraDebug::getInstance()->setBolDebugInfra(false);
+
+            foreach ($arrMdUtlRelTriagemAtv as $objMdUtlRelTriagemAtv){
+
+                $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
+                $objMdUtlHistControleDsmpDTO->setNumIdMdUtlTriagem($objMdUtlRelTriagemAtv->getNumIdMdUtlTriagem());
+                $objMdUtlHistControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO), InfraDTO::$OPER_IN);
+                $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_DESC);
+                $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno(1);
+                $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+                $objMdUtlHistControleDsmpDTO->retNumPercentualDesempenho();
+                $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlHistControleDsmpDTO);
+
+                if (!$objControleDsmp) {
+                    $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+                    $objMdUtlControleDsmpDTO->setNumIdMdUtlTriagem($objMdUtlRelTriagemAtv->getNumIdMdUtlTriagem());
+                    $objMdUtlControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO), InfraDTO::$OPER_IN);
+                    $objMdUtlControleDsmpDTO->setBolExclusaoLogica(false);
+                    $objMdUtlControleDsmpDTO->retNumPercentualDesempenho();
+                    $objControleDsmp = $objMdUtlControleDsmpBD->consultar($objMdUtlControleDsmpDTO);
+                }
+
+                $tempoExecucao = $objMdUtlRelTriagemAtv->getNumTempoExecucao();
+                $objMdUtlRelTriagemAtv->setNumTempoExecucaoAtribuido($tempoExecucao);
+
+                // faz o cálculo e popula registro caso tenha sido distribuido para análise
+                if ($objControleDsmp) {
+                    $percentualDesenpenho = $objControleDsmp->getNumPercentualDesempenho();
+                    $tempoAtribuido = intval($tempoExecucao / (1 + ($percentualDesenpenho / 100)));
+                    $objMdUtlRelTriagemAtv->setNumTempoExecucaoAtribuido($tempoAtribuido);
+                }
+                
+                $ojbMdUtlRelTriagemAtvBD->alterar($objMdUtlRelTriagemAtv);
+            }
+            InfraDebug::getInstance()->setBolDebugInfra(true);
+            $qtdRegistros += $totalRegistosPorConsulta;
+        }
+    }
+
     private function _cadastrarNovoAgendamento($strDescricao = null, $strComando = null, $strPeriodicidadeComplemento = 0, $strEmailErro = null, $strPeriodicidade = null)
     {
         $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
@@ -2555,45 +2781,30 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         InfraDebug::getInstance()->setBolDebugInfra(false);
     }
 
-
 }
 
 try {
-    SessaoSEI::getInstance(false);
+
+	SessaoSEI::getInstance(false);
     BancoSEI::getInstance()->setBolScript(true);
-
-    if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI', 'UsuarioScript')) {
-        throw new InfraException('Chave BancoSEI/UsuarioScript não encontrada.');
-    }
-
-    if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI', 'UsuarioScript'))) {
-        throw new InfraException('Chave BancoSEI/UsuarioScript não possui valor.');
-    }
-
-    if (!ConfiguracaoSEI::getInstance()->isSetValor('BancoSEI', 'SenhaScript')) {
-        throw new InfraException('Chave BancoSEI/SenhaScript não encontrada.');
-    }
-
-    if (InfraString::isBolVazia(ConfiguracaoSEI::getInstance()->getValor('BancoSEI', 'SenhaScript'))) {
-        throw new InfraException('Chave BancoSEI/SenhaScript não possui valor.');
-    }
 
     $configuracaoSEI = new ConfiguracaoSEI();
     $arrConfig = $configuracaoSEI->getInstance()->getArrConfiguracoes();
 
     if (!isset($arrConfig['SEI']['Modulos'])) {
-        throw new InfraException('PARÂMETROS DE MÓDULOS NO CONFIGURAÇÃO DO SEI NÃO DECLARADO');
+        throw new InfraException('PARÂMETRO DE MÓDULOS NO CONFIGURAÇÃO DO SEI NÃO DECLARADO');
     } else {
         $arrModulos = $arrConfig['SEI']['Modulos'];
         if (!key_exists('UtilidadesIntegracao', $arrModulos)) {
-            throw new InfraException('MÓDULO DO UTILIDADES NÃO DECLARADO NA CONFIGURAÇÃO DO SEI');
+            throw new InfraException('MÓDULO UTILIDADES NÃO DECLARADO NO CONFIGURAÇÃO DO SEI');
         }
     }
 
     if (!class_exists('UtilidadesIntegracao')) {
-        throw new InfraException('A CLASSE PRINCIPAL "UTILIDADESINTEGRACAO" DO MÓDULO DO UTILIDADES NÃO FOI ENCONTRADA');
+        throw new InfraException('A CLASSE PRINCIPAL "UtilidadesIntegracao" DO MÓDULO NÃO FOI ENCONTRADA');
     }
 
+    InfraScriptVersao::solicitarAutenticacao(BancoSei::getInstance());
     $objVersaoSeiRN = new MdUtlAtualizadorSeiRN();
     $objVersaoSeiRN->atualizarVersao();
     exit;

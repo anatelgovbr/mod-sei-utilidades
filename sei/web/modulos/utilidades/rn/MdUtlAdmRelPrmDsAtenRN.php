@@ -173,7 +173,10 @@ class MdUtlAdmRelPrmDsAtenRN extends InfraRN{
 
         }
 
-        return array('itensTabela'=>$arrStatus,'qtdStatus'=>count($arrStatus));
+        return array(
+            'itensTabela' => empty($arrStatus) ? array() : $arrStatus ,
+            'qtdStatus'   => empty($arrStatus) ? 0 : count($arrStatus)
+        );
     }
 
     protected function montarArrStatusPrioridadeControlado($idMdUtlAdmPrmDs)

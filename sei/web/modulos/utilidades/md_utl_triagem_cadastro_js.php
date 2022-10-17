@@ -1,6 +1,4 @@
-<?php if(0){ ?>
-    <script type="javascript">
-<?php } ?>
+<script type="text/javascript">
 
 var objTabelaDinamicaAtividade = null;
 var encAssociarFila            = '';
@@ -10,14 +8,18 @@ var msg47 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_47); ?
 var msg10Padrao = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10)?>';
 var msg48 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_48); ?>';
 var msg49 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_49, 'Atividade'); ?>';
-
-function salvar(){
-
-
+var strAtvAnalisadas = document.getElementById('hdnAtividadesAnalisadas').value;
+var arrAtvAnalisadas = new Array();
+if( strAtvAnalisadas.length > 0 ){
+    strAtvAnalisadas.split(',').forEach( it => arrAtvAnalisadas.push( it ) );
 }
 
+//Quando retriagem, recupera tipo de presenca e percentual desempenho do usuario para o qual o processo está distribuido
+var tpPresencaRef = document.getElementById('hndTpPresencaRef').value;
+var percDsmpRef   = document.getElementById('hndPercDsmpRef').value;
+
 function abrirModalRevisao() {
-    infraAbrirJanela('<?=$strLinkIniciarRevisao?>','janelaAjudaVariaveisModelo',800,600,'location=0,status=1,resizable=1,scrollbars=1',false);
+    infraAbrirJanelaModal('<?=$strLinkIniciarRevisao?>',1000,800);
 }
 
 function validarFormatoDataTriagem(obj){
@@ -79,7 +81,7 @@ function inicializarTabelaDinamicaAtividade(consultar){
                 for (i = 0; i < arrhdnLista.length; i++) {
                     var hdnListaTela = arrhdnLista[i].split('±');
                     for (j = 0; j < hdnListaTela.length; j++) {
-                        var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" +hdnListaTela[j]+ "')\"" + " title='Remover Item' alt='Remover Item' src='/infra_css/imagens/remover.gif' class='infraImg'/> ";
+                        var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" +hdnListaTela[j]+ "')\"" + " title='Remover Item' alt='Remover Item' src='<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . "/remover.svg" ?>' class='infraImg'/> ";
                         objTabelaDinamicaAtividade.adicionarAcoes(hdnListaTela[j], btnRemoverAtividade);
                     }
                 }
@@ -90,6 +92,19 @@ function inicializarTabelaDinamicaAtividade(consultar){
     objTabelaDinamicaAtividade.gerarEfeitoTabela = true;
 
     objTabelaDinamicaAtividade.removerAtividade = function(id){
+        var idAtv      = id.split('_'); // quebra em array o parametro => [indice , id da atividade]
+        var bolRemover = true;
+
+        // atividade clicada para excluir, se for uma que já foi analisada, não permitir a remoção, seguindo a regra após o loop abaixo
+        arrAtvAnalisadas.forEach( v => { if( v == idAtv[1] ) bolRemover = false; });
+
+        <?php if ( !is_null( $idUsuarioFezAnalise ) && $idUsuarioFezAnalise == $idUsuarioDistrAnalise ): ?>
+            if( !bolRemover ){
+                alert('Não é possível remover Atividade analisada que está em Correção de Análise pelo mesmo Membro Responsável pela Análise');
+                return false;
+            }
+        <?php endif; ?>
+
         var row = objTabelaDinamicaAtividade.procuraLinha(id);
 
         if(row != null) {
@@ -219,7 +234,7 @@ function inicializarTabelaDinamicaAtividade(consultar){
 function controlarExibicaoEncaminhamento(){
     var isExibeEnc = isParametrizadoProcesso == 1 ? objTabelaDinamicaAtividade.verificaExibicaoEncaminhamento() : false;
     var displayEnc = isExibeEnc ? '' : 'none';
-    document.getElementById('divEncaminhamentoTriagem').style.display = displayEnc;
+    document.getElementById('divPrincipalEncaminhamento').style.display = displayEnc;    
 
     if(isExibeEnc) {
         document.getElementById('selEncaminhamentoTriagem').setAttribute('utlCampoObrigatorio', 'o');
@@ -242,7 +257,8 @@ function fechar() {
 }
 
 function selecionarAtividade(){
-    objLupaAtividade.selecionar(850,500);
+    //objLupaAtividade.selecionar(850,500);
+    infraAbrirJanelaModal('<?=$strLinkAtividadeSelecao?>',1000,650);
 }
 
 
@@ -387,7 +403,6 @@ function limparSelectedComponentes(select) {
 
 function adicionarRegistroTabelaAtividade(){
     var arrAtividades = document.getElementById('selAtividade');
-    var percentualDesempenho = '<?=$percentualDesempenho['numPercentualDesempenho']?>'
 
     if(arrAtividades.length == 0){
         alert(msg49);
@@ -399,7 +414,7 @@ function adicionarRegistroTabelaAtividade(){
     var atvSemAnalise = false;
 
     for (var i = 0; i < arrAtividades.length; i++) {       
-        var idsAtividade       = arrAtividades[i].value;       
+        var idsAtividade       = arrAtividades[i].value;        
         var nomeAtividadeTexto = arrAtividades[i].text;
         nomeAtividadeAux       = nomeAtividadeTexto.split('');
         var qtdCaracter        = nomeAtividadeAux.length;
@@ -415,10 +430,29 @@ function adicionarRegistroTabelaAtividade(){
         var idMain          = hdnContador +'_'+ arrIdsAtv[0];
         hdnContador++;
         document.getElementById('hdnContadorTableAtv').value = hdnContador;
+       
+        var sinTipoAnalise  = arrIdsAtv[1] == 'S';
+        var strTipoAnalise  = sinTipoAnalise ? 'Sim' : 'Não';
+        var vlAtvComAnalise = null;
 
-          var sinTipoAnalise  = arrIdsAtv[1] == 'S';
-          var strTipoAnalise  = sinTipoAnalise ? 'Sim' : 'Não';
-          var vlAtvComAnalise = sinTipoAnalise ? arrIdsAtv[2] : '';
+        // Caso esteja Em Analise > Retriagem, verifica se a atividade eh ou nao para aplicar o percentual de desempenho
+        <?php if( $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 4  || 
+                  $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 10 || 
+                  $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 8 ){ 
+        ?>
+                if( sinTipoAnalise === true ){
+                    if( tpPresencaRef != 'P' && arrIdsAtv[4] == 'N' ){                        
+                        vlAtvComAnalise = retornaCalculoPercentual( arrIdsAtv[2] , percDsmpRef );
+                    }else{
+                        vlAtvComAnalise = arrIdsAtv[2];
+                    }
+                }
+
+        <?php } else { ?>
+            // Cadastro da Triagem
+            vlAtvComAnalise = sinTipoAnalise ? arrIdsAtv[2] : '';
+
+        <?php } ?>
 
         if(sinTipoAnalise){
             atvComAnalise = true;
@@ -432,15 +466,16 @@ function adicionarRegistroTabelaAtividade(){
         var arrLinha = [ idMain,
             arrIdsAtv[0],
             nomeAtividade + complexidade,
-            convertToHoursMins(parseInt(vlAtvComAnalise / (1 + (percentualDesempenho / 100)))),
+            convertToHoursMins(vlAtvComAnalise),
             arrIdsAtv[1],
             strTipoAnalise,
             arrIdsAtv[2],
+            vlAtvComAnalise
         ]
 
         objTabelaDinamicaAtividade.adicionar(arrLinha);
 
-        var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" + idMain + "')\"" + " title='Remover Item' alt='Remover Item' src='/infra_css/imagens/remover.gif' class='infraImg'/> ";
+        var btnRemoverAtividade = "<img onclick=\"objTabelaDinamicaAtividade.removerAtividade('" + idMain + "')\"" + " title='Remover Item' alt='Remover Item' src='<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . "/remover.svg" ?>' class='infraImg'/> ";
         objTabelaDinamicaAtividade.adicionarAcoes(idMain, btnRemoverAtividade, false, false);
 
     }
@@ -479,12 +514,15 @@ function convertToHoursMins(time) {
 function controlarExibicaoFila(obj){
     var isAssociacao = obj.value == encAssociarFila;
     var valorDisplay = isAssociacao ? '' : 'none';
-    document.getElementById('divFila').style.display = valorDisplay;
+    var elem = document.getElementById('selFila');
 
+    document.getElementById('divFila').style.display = valorDisplay;
+    
     if(isAssociacao) {
-        document.getElementById('selFila').setAttribute('utlCampoObrigatorio', 'a');
-    }else{
-        document.getElementById('selFila').removeAttribute('utlCampoObrigatorio');
+        $( elem ).attr('utlCampoObrigatorio', 'a');
+    }else{        
+        $( elem ).removeAttr('utlCampoObrigatorio').val('');
+        desmarcarCkbDistAutoParaMim();
     }
 }
 
@@ -596,30 +634,26 @@ function onSubmitForm(){
 
    if(valido){
        if(!validarTipoAnaliseAtividade()){
-            valido = false;
             alert(msg48);
+            return false;
        }
 
        var txtInfoComplementar = document.getElementById('txaInformacaoComplementar');
        if( !validaQtdCaracteres(txtInfoComplementar,500) ){
-            alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Informação Complementar', '500'))?>");
-            txtInfoComplementar.focus();
-            return false;
-        }
-   }
+           alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Informao Complementar', '500'))?>");
+           txtInfoComplementar.focus();
+           return false;
+       }
 
-    if(valido){
-        if(isRetriagem){
+       if(isRetriagem){
             var isAnalise = document.getElementById('tbAtividade').rows[1].cells[4].innerText;
             if(isAnalise == 'N'){
                 if(!confirm('As atividade selecionadas na Retriagem são do Tipo sem Análise, portanto o processo não está mais em Análise. Confirma a Retriagem?')){
-                    valido = false;
+                    return false;
                 }
             }
         }
-    }
 
-    if(valido){
         bloquearBotaoSalvar();
 
         document.getElementById('hdnIsPossuiAnalise').value = document.getElementById('tbAtividade').rows[1].cells[4].innerText;
@@ -644,9 +678,8 @@ function validarAtividade(){
 
 function abrirGrupoAtividade(){
     validarAtividade();
-    objLupaGrupoAtividade.selecionar(700, 500);
+    //objLupaGrupoAtividade.selecionar(700, 500);
+    infraAbrirJanela('<?=$strLinkGrupoAtividadeSelecao?>','Selecionar Grupo de Atividade',900,650);
 }
 
-<?php if(0){ ?>
-    </script>
-<?php } ?>
+</script>

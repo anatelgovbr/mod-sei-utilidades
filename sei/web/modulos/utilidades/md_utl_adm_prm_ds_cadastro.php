@@ -77,10 +77,10 @@ try {
 
         //montar Fila
         $objMdUtlAdmRelPrmDsFilaRN     = new MdUtlAdmRelPrmDsFilaRN();
-        $strFila = $objMdUtlAdmRelPrmDsFilaRN->montarArrFila($idMdUtlAdmPrmDs); //monta os dados do array
-        $arrFila = $strFila['itensTabela'];
+        $arrFila = $objMdUtlAdmRelPrmDsFilaRN->montarArrFila($idMdUtlAdmPrmDs); //monta os dados do array
+        $strFila = is_null($arrFila['itensTabela']) ? array() : $arrFila['itensTabela'];
 
-        $strGridFila = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrFila); //preenche os dados na grid
+        $strGridFila = PaginaSEI::getInstance()->gerarItensTabelaDinamica($strFila); //preenche os dados na grid
 
         //montar Status
         $objMdUtlAdmRelPrmDsAtenRN     = new MdUtlAdmRelPrmDsAtenRN();
@@ -163,359 +163,393 @@ PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(':: '.PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo.' ::');
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-require_once('md_utl_adm_prm_ds_cadastro_css.php');
-
-?>
-
-<?
 PaginaSEI::getInstance()->fecharStyle();
+require_once('md_utl_geral_css.php');
+
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-
-require_once 'md_utl_geral_js.php';
-require_once 'md_utl_adm_prm_ds_cadastro_js.php';
-?>
-
-<?
 PaginaSEI::getInstance()->fecharJavaScript();
+
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
+
 <form id="frmPrmDistribCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    PaginaSEI::getInstance()->abrirAreaDados('auto');
+    <?php
+        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+        PaginaSEI::getInstance()->abrirAreaDados();
+        $col_def_01 = 'col-sm-6 col-md-6 col-lg-4';
+        $col_def_02 = 'col-sm-4 col-md-4 col-lg-3';
     ?>
 
     <!--  Prazo para Resposta -->
-    <div id="blocoPrazoRespostat" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
+    <div id="blocoPrazoRespostat" class="rowFieldSet mb-3">        
+        <fieldset class="infraFieldset fieldset-comum form-control">
             <legend class="infraLegend">Prazo para Resposta</legend>
             <!-- Componente de Priorização Distribuição por Prazo para resposta indicado na Triagem -->
-            <div id="divSelectPriorizar">
-                <div style="float: left; width: 50%;">
+            <div id="divSelectPriorizar" class="row">
+                <div class="col-sm-8 col-md-8 col-lg-8 mb-2">
                     <label id="lblSelDistribuicao" for="selDistribuicao" accesskey="" class="infraLabelObrigatorio">Priorizar Distribuição por Prazo para Resposta indicado na Triagem:</label>
-                    <select utlCampoObrigatorio="o" id="selDistribuicao" name="selDistribuicao" class="infraSelect" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <select utlCampoObrigatorio="o" id="selDistribuicao" name="selDistribuicao" class="infraSelect form-control" 
+                            onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                         <?= $strItensSelSinRetono ?>
                     </select>
                 </div>
                 <!-- Componente de Prioridade geral por Distribuição -->
-                <div id="divPrioridadeDistribuicao" style="margin-left: 52%;">
+                <div id="divPrioridadeDistribuicao" class="col-sm-2 col-md-2 col-lg-3">
                     <label id="lblPrioridadeDistribuicao" for="lblPrioridadeDistribuicao" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                    <select utlCampoObrigatorio="o" id="selPrioridadeDistribuicao" name="selPrioridadeDistribuicao" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"></select>
+                    <select utlCampoObrigatorio="o" id="selPrioridadeDistribuicao" name="selPrioridadeDistribuicao" class="infraSelect prioridadeGeral form-control" 
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    </select>
                 </div>
             </div>
-
-        </fieldset>
-
+        </fieldset>       
     </div>
 
     <!-- Bloco Fila -->
-    <div id="blocoFila" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
+    <div id="blocoFila" class="rowFieldSet mb-3">        
+        <fieldset class="infraFieldset fieldset-comum form-control">
             <legend class="infraLegend">Fila</legend>
-
             <!-- Componente de Priorização por Fila -->
             <div id="divSelectPriorizar">
-                <div style="float: left; width: 50%;">
-                    <label id="lblSelFila" for="selFila" accesskey="" class="infraLabelObrigatorio">Priorizar por Fila:</label>
-                    <select utlCampoObrigatorio="o" id="selFila" name="selFila" class="infraSelect"
-                            onchange="sinPriorizar()"
-                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $strItensSelSinRetonoFila ?>
-                    </select>
-                </div>
-                <!-- Componente de Prioridade geral por Fila -->
-                <div id="divPrioridadeFila" style="margin-left: 52%;">
-                    <label id="lblPrioridadeFila" for="lblPrioridadeFila" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                    <select utlCampoObrigatorio="o" id="selPrioridadeFila" name="selPrioridadeFila" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $prioridadeFila ?>
-                    </select>
+                <div class="row mb-3">
+                    <div class="<?= $col_def_01 ?> mb-2">
+                        <label id="lblSelFila" for="selFila" accesskey="" class="infraLabelObrigatorio">Priorizar por Fila:</label>
+                        <select utlCampoObrigatorio="o" id="selFila" name="selFila" class="infraSelect form-control"
+                                onchange="sinPriorizar()"
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $strItensSelSinRetonoFila ?>
+                        </select>
+                    </div>
+                    <!-- Componente de Prioridade geral por Fila -->
+                    <div class="<?= $col_def_02 ?>" id="divPrioridadeFila">
+                        <label id="lblPrioridadeFila" for="lblPrioridadeFila" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>                        
+                        <select utlCampoObrigatorio="o" id="selPrioridadeFila" name="selPrioridadeFila" 
+                                class="infraSelect prioridadeGeral form-control" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $prioridadeFila ?>
+                        </select>                        
+                    </div>
                 </div>
             </div>
 
             <!-- Componente de Filas -->
             <div id="divFila">
-
-                <label id="lblFila" for="selItensFila" accesskey="" class="infraLabelObrigatorio">Filas:</label>
-                <div class="clear"></div>
-                <input type="text" id="txtFila" name="txtFila" class="infraText" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-                <select id="selItensFila" name="selItensFila" size="4" multiple="multiple" class="infraSelect">
-<!--                    --><?//= $strLinkFila ?>
-                </select>
-                <div id="divOpcoesFila">
-                    <img id="imgLupaFila" onclick="objLupaFila.selecionar(700,500);"
-                         src="/infra_css/imagens/lupa.gif" alt="Selecionar Fila Selecionada" title="Selecionar Fila" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirFila" onclick="objLupaFila.remover();"
-                         src="/infra_css/imagens/remover.gif" alt="Remover Fila Selecionada"
-                         title="Remover Unidade Selecionada" class="infraImg"/>
+                <div class="row mb-1">
+                    <div class="col-xs-4 col-sm-7 col-md-7 col-lg-7">
+                        <label id="lblFila" for="selItensFila" accesskey="" class="infraLabelObrigatorio">Filas:</label>
+                        <input type="text" id="txtFila" name="txtFila" class="infraText form-control" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
                 </div>
-
+                <div class="row mb-2">
+                    <div class="col-sm-12 col-md-12 col-lg-10">
+                        <div class="input-group">
+                            <select id="selItensFila" name="selItensFila" multiple="multiple" class="infraSelect form-control"></select>
+                            <div id="divOpcoesFila" class="ml-1">
+                                <img id="imgLupaFila" onclick="objLupaFila.selecionar(700,500);"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Fila Selecionada" title="Selecionar Fila" class="infraImg"/>
+                                <br>
+                                <img id="imgExcluirFila" onclick="objLupaFila.remover();"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Fila Selecionada"
+                                    title="Remover Unidade Selecionada" class="infraImg"/>
+                                <br>
+                                <span id="divBtnAdicionarFila">
+                                    <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
+                                            onclick="adicionarTabelaFila()" name="btnAdicionarFila" id="btnAdicionarFila" class="infraButton ml-3">Adicionar
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div id="divTabelaFila" style="<?= $strGridFila == '' ? 'display: none' : ''?>">
+                            <table class="infraTable mgnTop" summary="Fila" id="tbFila">
+                                <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Filas', 0) ?> </caption>
+                                <tr>
+                                    <th class="infraTh" width="0" style="display: none;">Id</th>
+                                    <th class="infraTh" align="center"  width="80%">Fila</th>
+                                    <th class="infraTh" align="center" width="20%">Prioridade</th>
+                                    <th class="infraTh" align="center" width="15%"> Ações </th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <!-- Btn Adicionar Fila -->
-            <div id="divBtnAdicionarFila">
-                <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
-                        onclick="adicionarTabelaFila()" name="btnAdicionarFila" id="btnAdicionarFila" class="infraButton">Adicionar
-                </button>
-            </div>
-
-            <div style="width: 100%"></div>
-
-            <div id="divTabelaFila" style="<?php echo $strGridFila == '' ? 'display: none' : ''?>">
-                <table width="99%" class="infraTable mgnTop" summary="Fila" id="tbFila">
-                <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Filas', 0) ?> </caption>
-                    <tr>
-                        <th class="infraTh" width="0" style="display: none;">Id</th>
-                        <th class="infraTh" align="center"  width="80%">Fila</th>
-                        <th class="infraTh" align="center" width="20%">Prioridade</th>
-                        <th class="infraTh" align="center" width="15%"> Ações </th>
-                    </tr>
-                </table>
-
-            </div>
-
         </fieldset>
-    </div> <!-- Fim Bloco Fila -->
+    </div>
+    <!-- Fim Bloco Fila -->
 
     <!-- Bloco Status -->
-    <div id="blocoStatus" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
+    <div id="blocoStatus" class="rowFieldSet mb-3">
+        <fieldset class="infraFieldset fieldset-comum form-control">
             <legend class="infraLegend">Situação</legend>
 
             <!-- Componente de Priorização por Status -->
             <div id="divSelectPriorizar">
-                <div style="float: left; width: 50%;">
-                    <label id="lblSelStatus" for="selStatus" accesskey="" class="infraLabelObrigatorio">Priorizar por Situação:</label>
-                    <div class="clear"></div>
-                    <select utlCampoObrigatorio="o" id="selStatus" name="selStatus" class="infraSelect" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $strItensSelSinRetonoStatus ?>
-                    </select>
-                </div>
-                <!-- Componente de Prioridade geral por Status -->
-                <div id="divPrioridadeStatus" style="margin-left: 52%;">
-                    <label id="lblPrioridadeStatus" for="lblPrioridadeStatus" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                    <select utlCampoObrigatorio="o" id="selPrioridadeStatus" name="selPrioridadeStatus" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $prioridadeStatus ?>
-                    </select>
+                <div class="row mb-3">
+                    <div class="<?= $col_def_01 ?> mb-2">
+                        <label id="lblSelStatus" for="selStatus" accesskey="" class="infraLabelObrigatorio">Priorizar por Situação:</label>
+                        <select utlCampoObrigatorio="o" id="selStatus" name="selStatus" class="infraSelect form-control" onchange="sinPriorizar()" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $strItensSelSinRetonoStatus ?>
+                        </select>
+                    </div>
+                    <!-- Componente de Prioridade geral por Status -->
+                    <div class="<?= $col_def_02 ?>" id="divPrioridadeStatus">
+                        <label id="lblPrioridadeStatus" for="lblPrioridadeStatus" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
+                        <select utlCampoObrigatorio="o" id="selPrioridadeStatus" name="selPrioridadeStatus" class="infraSelect prioridadeGeral form-control" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $prioridadeStatus ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Componente de Status -->
             <div id="divStatus">
-
-                <label id="lblStatus" for="selItensStatus" accesskey="" class="infraLabelObrigatorio">Situação:</label>
-                <div class="clear"></div>
-                <input type="text" id="txtStatus" name="txtStatus" class="infraText" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-                <select id="selItensStatus" name="selItensStatus" size="4" multiple="multiple" class="infraSelect">
-                    <?= $strLinkStatus ?>
-                </select>
-                <div id="divOpcoesStatus">
-                    <img id="imgLupaStatus" onclick="objLupaStatus.selecionar(700,500);"
-                         src="/infra_css/imagens/lupa.gif" alt="Selecionar Situação Selecionado" title="Selecionar Situação" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirStatus" onclick="objLupaStatus.remover();"
-                         src="/infra_css/imagens/remover.gif" alt="Remover Status Selecionado"
-                         title="Remover Unidade Selecionada" class="infraImg"/>
+                <div class="row mb-1">
+                    <div class="col-xs-4 col-sm-7 col-md-7 col-lg-7">
+                        <label id="lblStatus" for="selItensStatus" accesskey="" class="infraLabelObrigatorio">Situação:</label>
+                        <input type="text" id="txtStatus" name="txtStatus" class="infraText form-control" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
                 </div>
-
+                <div class="row mb-2">
+                    <div class="col-sm-12 col-md-12 col-lg-10">
+                        <div class="input-group">
+                            <select id="selItensStatus" name="selItensStatus" multiple="multiple" class="infraSelect form-control">
+                                <?= $strLinkStatus ?>
+                            </select>
+                            <div id="divOpcoesStatus" class="ml-1">
+                                <img id="imgLupaStatus" onclick="objLupaStatus.selecionar(700,500);"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Situação Selecionado" title="Selecionar Situação" class="infraImg"/>
+                                <br>
+                                <img id="imgExcluirStatus" onclick="objLupaStatus.remover();"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Status Selecionado"
+                                    title="Remover Unidade Selecionada" class="infraImg"/>
+                                <br>
+                                <span id="divBtnAdicionarStatus">
+                                    <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
+                                            onclick="adicionarTabelaStatus();" name="btnAdicionarStatus" id="btnAdicionarStatus" class="infraButton ml-3">Adicionar
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div id="divTabelaStatus" style="<?= $strGridStatus == '' ? 'display: none' : ''?>">
+                            <table class="infraTable mgnTop" summary="Status" id="tbStatus">
+                                <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Situação', 0) ?> </caption>
+                                <tr>
+                                    <th class="infraTh" width="0" style="display: none;">Id</th>
+                                    <th class="infraTh" align="center" width="80%">Situação</th>
+                                    <th class="infraTh" align="center" width="20%">Prioridade</th>
+                                    <th class="infraTh" align="center" width="15%"> Ações </th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <!-- Btn Adicionar Status -->
-            <div id="divBtnAdicionarStatus">
-                <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
-                        onclick="adicionarTabelaStatus();" name="btnAdicionarStatus" id="btnAdicionarStatus" class="infraButton">Adicionar
-                </button>
-            </div>
-
-            <div style="width: 100%"></div>
-
-            <div id="divTabelaStatus" style="<?php echo $strGridStatus == '' ? 'display: none' : ''?>">
-                <table width="99%" class="infraTable mgnTop" summary="Status" id="tbStatus">
-                    <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Situação', 0) ?> </caption>
-                    <tr>
-                        <th class="infraTh" width="0" style="display: none;">Id</th>
-                        <th class="infraTh" align="center" width="80%">Situação</th>
-                        <th class="infraTh" align="center" width="20%">Prioridade</th>
-                        <th class="infraTh" align="center" width="15%"> Ações </th>
-                    </tr>
-
-                </table>
-
-            </div>
-
         </fieldset>
-    </div> <!-- Fim Bloco Status -->
-
+    </div> 
+    <!-- Fim Bloco Status -->
 
     <!-- Bloco Atividade -->
-    <div id="blocoAtividade" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
+    <div id="blocoAtividade" class="rowFieldSet mb-3">
+        <fieldset class="infraFieldset fieldset-comum form-control">
             <legend class="infraLegend">Atividade</legend>
-
             <!-- Componente de Priorização por Atividade -->
             <div id="divSelectPriorizar">
-                <div style="float: left; width: 50%;">
-                    <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">Priorizar por Atividade:</label>
-                    <div class="clear"></div>
-                    <select utlCampoObrigatorio="o" id="selAtividade" name="selAtividade" class="infraSelect" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $strItensSelSinRetonoAtividade ?>
-                    </select>
-                </div>
-            </div>
+                <div class="row mb-3">
+                    <div class="<?= $col_def_01 ?> mb-2">
+                        <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">Priorizar por Atividade:</label>
+                        <select utlCampoObrigatorio="o" id="selAtividade" name="selAtividade" class="infraSelect form-control" onchange="sinPriorizar()" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $strItensSelSinRetonoAtividade ?>
+                        </select>
+                    </div>
 
-            <!-- Componente de Prioridade geral por Atividade -->
-            <div id="divPrioridadeAtividade" style="margin-left: 52%;">
-                <label id="lblPrioridadeAtividade" for="lblPrioridadeAtividade" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                <select utlCampoObrigatorio="o" id="selPrioridadeAtividade" name="selPrioridadeAtividade" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    <?= $prioridadeAtividade ?>
-                </select>
+                     <!-- Componente de Prioridade geral por Atividade -->
+                    <div class="<?= $col_def_02 ?>" id="divPrioridadeAtividade">
+                        <label id="lblPrioridadeAtividade" for="lblPrioridadeAtividade" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
+                        <select utlCampoObrigatorio="o" id="selPrioridadeAtividade" name="selPrioridadeAtividade" class="infraSelect prioridadeGeral form-control" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $prioridadeAtividade ?>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- Componente de Atividade -->
             <div id="divAtividade">
-
-                <label id="lblAtividade" for="selItensAtividade" accesskey="" class="infraLabelObrigatorio">Atividade:</label>
-                <div class="clear"></div>
-                <input type="text" id="txtAtividade" name="txtAtividade" class="infraText" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-                <select id="selItensAtividade" name="selItensAtividade" size="4" multiple="multiple" class="infraSelect">
-                    <?= $strLinkAtividade ?>
-                </select>
-                <div id="divOpcoesAtividade">
-                    <img id="imgLupaAtividade" onclick="objLupaAtividade.selecionar(700,500);"
-                         src="/infra_css/imagens/lupa.gif" alt="Selecionar Atividade Selecionada" title="Selecionar Atividade" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();"
-                         src="/infra_css/imagens/remover.gif" alt="Remover Atividade Selecionada"
-                         title="Remover Unidade Selecionada" class="infraImg"/>
+                <div class="row mb-1">
+                    <div class="col-xs-4 col-sm-7 col-md-7 col-lg-7">
+                        <label id="lblAtividade" for="selItensAtividade" accesskey="" class="infraLabelObrigatorio">Atividade:</label>
+                        <input type="text" id="txtAtividade" name="txtAtividade" class="infraText form-control" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
                 </div>
-
+                <div class="row mb-2">
+                    <div class="col-sm-12 col-md-12 col-lg-10">
+                        <div class="input-group">
+                            <select id="selItensAtividade" name="selItensAtividade" multiple="multiple" class="infraSelect form-control">
+                                <?= $strLinkAtividade ?>
+                            </select>
+                            <div id="divOpcoesAtividade" class="ml-1">
+                                <img id="imgLupaAtividade" onclick="objLupaAtividade.selecionar(700,500);"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Atividade Selecionada" title="Selecionar Atividade" class="infraImg"/>
+                                <br>
+                                <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Atividade Selecionada"
+                                    title="Remover Unidade Selecionada" class="infraImg"/>
+                                <br>
+                                <span id="divBtnAdicionarAtividade">
+                                    <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
+                                            onclick="adicionarTabelaAtividade();" name="btnAdicionarAtividade" id="btnAdicionarAtividade" 
+                                            class="infraButton ml-3"> Adicionar
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
+                <div class="row">
+                    <div class="col-12">
+                        <div id="divTabelaAtividade" style="<?= $strGridAtividade == '' ? 'display: none' : ''?>">
+                            <table class="infraTable mgnTop" summary="Atividade" id="tbAtividade">
+                                <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Atividade', 0) ?> </caption>
+                                <tr>
+                                    <th class="infraTh" width="0" style="display: none;">Id</th>
+                                    <th class="infraTh" align="center" width="80%">Atividade</th>
+                                    <th class="infraTh" align="center" width="20%">Prioridade</th>
+                                    <th class="infraTh" align="center" width="15%"> Ações </th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <!-- Btn Adicionar Atividade -->
-            <div id="divBtnAdicionarAtividade">
-                <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
-                        onclick="adicionarTabelaAtividade();" name="btnAdicionarAtividade" id="btnAdicionarAtividade" class="infraButton">Adicionar
-                </button>
-            </div>
-
-            <div style="width: 100%"></div>
-
-            <div id="divTabelaAtividade" style="<?php echo $strGridAtividade == '' ? 'display: none' : ''?>">
-
-                <table width="99%" class="infraTable mgnTop" summary="Atividade" id="tbAtividade">
-                    <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Atividade', 0) ?> </caption>
-                    <tr>
-                        <th class="infraTh" width="0" style="display: none;">Id</th>
-                        <th class="infraTh" align="center" width="80%">Atividade</th>
-                        <th class="infraTh" align="center" width="20%">Prioridade</th>
-                        <th class="infraTh" align="center" width="15%"> Ações </th>
-                    </tr>
-                </table>
-
-            </div>
-
         </fieldset>
-    </div> <!-- Fim Bloco Atividade -->
+    </div> 
+    <!-- Fim Bloco Atividade -->
 
     <!-- Bloco Tipo de Processo -->
-    <div id="blocoTipoProcesso" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
-            <legend class="infraLegend">Tipo de Processo</legend>
+    <div id="blocoTipoProcesso" class="rowFieldSet mb-3">
+        <fieldset class="infraFieldset fieldset-comum form-control">
+            <legend class="infraLegend">Tipo de Processo</legend>        
 
             <!-- Componente de Priorização por Tipo Processo -->
             <div id="divSelectPriorizar">
-                <div style="float: left; width: 50%;">
-                    <label id="lblTipoProcesso" for="selTipoProcesso" accesskey="" class="infraLabelObrigatorio">Priorizar por Tipo de Processo:</label>
-                    <select utlCampoObrigatorio="o" id="selTipoProcesso" name="selTipoProcesso" class="infraSelect" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $strItensSelSinRetonoTipoProcesso ?>
-                    </select>
-                </div>
+                <div class="row mb-3">
+                    <div class="<?= $col_def_01 ?> mb-2">
+                        <label id="lblTipoProcesso" for="selTipoProcesso" accesskey="" class="infraLabelObrigatorio">Priorizar por Tipo de Processo:</label>
+                        <select utlCampoObrigatorio="o" id="selTipoProcesso" name="selTipoProcesso" class="infraSelect form-control" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $strItensSelSinRetonoTipoProcesso ?>
+                        </select>
+                    </div>
 
-                <!-- Componente de Prioridade geral por Tipo Processo -->
-                <div id="divPrioridadeTipoProcesso" style="margin-left: 52%;">
+                    <!-- Componente de Prioridade geral por Atividade -->
+                    <div class="<?= $col_def_02 ?>" id="divPrioridadeTipoProcesso">
                     <label id="lblPrioridadeTipoProcesso" for="lblPrioridadeTipoProcesso" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                    <select utlCampoObrigatorio="o" id="selPrioridadeTipoProcesso" name="selPrioridadeTipoProcesso" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $prioridadeTipoProcesso ?>
-                    </select>
+                        <select utlCampoObrigatorio="o" id="selPrioridadeTipoProcesso" name="selPrioridadeTipoProcesso" class="infraSelect prioridadeGeral form-control" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                            <?= $prioridadeTipoProcesso ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Componente de Tipo Processo -->
-            <div id="divTipoProcesso">
-                <label id="lblTipoProcesso" for="selItensTipoProcesso" accesskey="" class="infraLabelObrigatorio">Tipos de Processos:</label>
-                <div class="clear"></div>
-                <input type="text" id="txtTipoProcesso" name="txtTipoProcesso" class="infraText" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-                <select id="selItensTipoProcesso" name="selItensTipoProcesso" size="4" multiple="multiple" class="infraSelect">
-                    <?= $strLinkTipoProcesso ?>
-                </select>
-                <div id="divOpcoesTipoProcesso">
-                    <img id="imgLupaTipoProcesso" onclick="objLupaTipoProcesso.selecionar(700,500);"
-                         src="/infra_css/imagens/lupa.gif" alt="Selecionar Tipo Processo Selecionado" title="Selecionar Tipo Processo" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirTipoProcesso" onclick="objLupaTipoProcesso.remover();"
-                         src="/infra_css/imagens/remover.gif" alt="Remover Tipo Processo Selecionada"
-                         title="Remover Unidade Selecionada" class="infraImg"/>
+            <div id="divTipoProcesso"> 
+                <div class="row mb-1">
+                    <div class="col-xs-4 col-sm-7 col-md-7 col-lg-7">
+                        <label id="lblTipoProcesso" for="selItensTipoProcesso" accesskey="" class="infraLabelObrigatorio">Tipos de Processos:</label>
+                        <input type="text" id="txtTipoProcesso" name="txtTipoProcesso" class="infraText form-control" 
+                                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                    </div>
                 </div>
-
+                <div class="row mb-2">
+                    <div class="col-sm-12 col-md-12 col-lg-10">
+                        <div class="input-group">
+                            <select id="selItensTipoProcesso" name="selItensTipoProcesso" multiple="multiple" class="infraSelect form-control">
+                                <?= $strLinkTipoProcesso ?>
+                            </select>
+                            <div id="divOpcoesTipoProcesso" class="ml-1">
+                                <img id="imgLupaTipoProcesso" onclick="objLupaTipoProcesso.selecionar(700,500);"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Tipo Processo Selecionado" title="Selecionar Tipo Processo" class="infraImg"/>
+                                <br>
+                                <img id="imgExcluirTipoProcesso" onclick="objLupaTipoProcesso.remover();"
+                                    src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Tipo Processo Selecionada"
+                                    title="Remover Unidade Selecionada" class="infraImg"/>
+                                <br>
+                                <span id="divBtnAdicionarTipoProcesso">
+                                    <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
+                                        onclick="adicionarTabelaTipoProcesso();" name="btnAdicionarTipoProcesso" id="btnAdicionarTipoProcesso" class="infraButton ml-3">Adicionar
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12"> 
+                        <div id="divTabelaTipoProcesso" style="<?= $strGridTipoProcesso == '' ? 'display: none' : ''?>">
+                            <table class="infraTable mgnTop" summary="Tipo de Processo" id="tbTipoProcesso">
+                                <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Tipo de Processo', 0) ?> </caption>
+                                <tr>
+                                    <th class="infraTh" width="0" style="display: none;">Id</th>
+                                    <th class="infraTh" align="center" width="80%">Tipo de Processo</th>
+                                    <th class="infraTh" align="center" width="20%">Prioridade</th>
+                                    <th class="infraTh" align="center" width="15%"> Ações </th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <!-- Btn Adicionar Tipo Processo -->
-            <div id="divBtnAdicionarTipoProcesso">
-                <button type="button" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
-                        onclick="adicionarTabelaTipoProcesso();" name="btnAdicionarTipoProcesso" id="btnAdicionarTipoProcesso" class="infraButton">Adicionar
-                </button>
-            </div>
-
-            <div style="width: 100%"></div>
-
-            <div id="divTabelaTipoProcesso" style="<?php echo $strGridTipoProcesso == '' ? 'display: none' : ''?>">
-
-                <table width="99%" class="infraTable mgnTop" summary="Tipo de Processo" id="tbTipoProcesso">
-                    <caption class="infraCaption caption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Tipo de Processo', 0) ?> </caption>
-                    <tr>
-                        <th class="infraTh" width="0" style="display: none;">Id</th>
-                        <th class="infraTh" align="center" width="80%">Tipo de Processo</th>
-                        <th class="infraTh" align="center" width="20%">Prioridade</th>
-                        <th class="infraTh" align="center" width="15%"> Ações </th>
-                    </tr>
-                </table>
-
-            </div>
-
         </fieldset>
-    </div> <!-- Fim Bloco Tipo Processo -->
+    </div>
+    <!-- Fim Bloco Tipo Processo -->
 
     <!-- Bloco Dias Úteis -->
-    <div id="blocoTipoProcesso" class="bloco">
-        <fieldset style="width: 86%;" class="infraFieldset">
+    <div id="blocoTipoProcesso" class="rowFieldSet mb-3">
+        <fieldset class="infraFieldset fieldset-comum form-control">
             <legend class="infraLegend">Dias Úteis na Situação</legend>
+            
+            <div class="row">
+                <div class="col-sm-6 col-md-6 col-lg-4 mb-2" id="divSelectPriorizar">
+                    <label id="lblDiasUteis" for="selDiasUteis" accesskey="" class="infraLabelObrigatorio">Priorizar por Dias Úteis:</label>
+                    <select utlCampoObrigatorio="o" id="selDiasUteis" name="selDiasUteis" class="infraSelect form-control" 
+                            onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        <?= $strItensSelSinRetonoDiasUteis ?>
+                    </select>
+                </div>
+            
+                <!-- Componente quantitativo de Dias Úteis -->
+                <div class="col-sm-6 col-md-6 col-lg-4 mb-2 divPrioridadeDiasUteis" style="display: none;">
+                    <label id="lblQtdDiasUteis" for="lblQtdDiasUteis" accesskey="" class="infraLabelObrigatorio">Quantidade Dias Úteis:</label>
+                    <input type="text" maxlength="3" utlSomenteNumeroPaste="true" value="<?=$qtdDiasUteis?>" class="infraText form-control"
+                            onkeypress="return infraMascaraNumero(this,event, 3);" name="qtdDiasUteis" id="qtdDiasUteis">
+                </div>
 
-            <!-- Componente de Priorização por Dias Úteis -->
-            <div id="divSelectPriorizar">
-                <label id="lblDiasUteis" for="selDiasUteis" accesskey="" class="infraLabelObrigatorio">Priorizar por Dias Úteis:</label>
-                <div class="clear"></div>
-                <select utlCampoObrigatorio="o" id="selDiasUteis" name="selDiasUteis" class="infraSelect" onchange="sinPriorizar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    <?= $strItensSelSinRetonoDiasUteis ?>
-                </select>
-            </div>
-
-            <!-- Componente quantitativo de Dias Úteis -->
-            <div id="divPrioridadeDiasUteis">
-                <label id="lblQtdDiasUteis" for="lblQtdDiasUteis" accesskey="" class="infraLabelObrigatorio">Quantidade Dias Úteis:</label>
-                <input type="text" maxlength="3" utlSomenteNumeroPaste="true" value="<?=$qtdDiasUteis?>" onkeypress="return infraMascaraNumero(this,event, 3);" name="qtdDiasUteis" id="qtdDiasUteis">
-
-            <!-- Componente de Prioridade geral por Dias Úteis -->
-                <label id="lblPrioridadeDiasUteis" for="lblPrioridadeDiasUteis" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
-                <select utlCampoObrigatorio="o" id="selPrioridadeDiasUteis" name="selPrioridadeDiasUteis" class="infraSelect prioridadeGeral" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"></select>
-
-            </div>
-
+                <!-- Componente de Prioridade geral por Dias Úteis -->
+                <div class="col-sm-6 col-md-6 col-lg-4 divPrioridadeDiasUteis" style="display: none;">
+                    <label id="lblPrioridadeDiasUteis" for="lblPrioridadeDiasUteis" accesskey="" class="infraLabelObrigatorio">Prioridade Geral:</label>
+                    <select utlCampoObrigatorio="o" id="selPrioridadeDiasUteis" name="selPrioridadeDiasUteis" class="infraSelect prioridadeGeral form-control" 
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    </select>
+                </div>
+            </div> 
         </fieldset>
-    </div> <!-- Fim Bloco Tipo Processo -->
+    </div>
+    <!-- Fim Bloco Tipo Processo -->
 
     <input type="hidden" id="hdnFilaLupa" name="hdnFilaLupa" value="<?=$_POST['hdnFilaLupa']?>" />
     <input type="hidden" id="hdnIdFila" name="hdnIdFila" value="<?php echo $idFila;?>"/>
@@ -547,12 +581,15 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     <input type="hidden" id="hdnPrioridadeDiasUteis" name="hdnPrioridadeDiasUteis" value="<?=$prioridadeDiasUteis?>"/>
     <input type="hidden" id="hdnQtdDiasUteis" name="hdnQtdDiasUteis" value="<?=$qtdDiasUteis?>"/>
 
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+    <?php
+        PaginaSEI::getInstance()->fecharAreaDados();
+        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
     ?>
 </form>
-<?
-PaginaSEI::getInstance()->fecharBody();
-PaginaSEI::getInstance()->fecharHtml();
+
+<?php
+    require_once 'md_utl_geral_js.php';
+    require_once 'md_utl_adm_prm_ds_cadastro_js.php';
+    PaginaSEI::getInstance()->fecharBody();
+    PaginaSEI::getInstance()->fecharHtml();
 ?>

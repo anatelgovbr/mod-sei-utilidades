@@ -178,7 +178,7 @@ class MdUtlControleDsmpINT extends InfraINT
                 $arrVisualizacao['TRIAGEM'] = true;
                 $arrVisualizacao['ANALISE'] = false;
                 $arrVisualizacao['REVISAO'] = false;
-                $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
                 $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
@@ -196,7 +196,7 @@ class MdUtlControleDsmpINT extends InfraINT
                 $arrVisualizacao['TRIAGEM'] = true;
                 $arrVisualizacao['ANALISE'] = true;
                 $arrVisualizacao['REVISAO'] = false;
-                $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
                 $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
@@ -226,7 +226,7 @@ class MdUtlControleDsmpINT extends InfraINT
                 $arrVisualizacao['TRIAGEM'] = true;
                 $arrVisualizacao['ANALISE'] = $isPossuiAnalise;
                 $arrVisualizacao['REVISAO'] = true;
-                $arrVisualizacao['DISTRIBUICAO'] = $isGestor;
+                $arrVisualizacao['DISTRIBUICAO'] = $isGestor || $isUsuarioPertenceFila;
                 $arrVisualizacao['ATRIBUICAO'] = false;
                 break;
 
@@ -458,10 +458,12 @@ class MdUtlControleDsmpINT extends InfraINT
         return $arr;
     }
 
-    public static function getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $idPrazoExistente, $staSolicitacao, $numIdControleDsmp, $isDadosParametrizados, $strIdProcedimento, $statusAnterior)
+    public static function getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $idPrazoExistente, $staSolicitacao, $numIdControleDsmp, $isDadosParametrizados, $strIdProcedimento, $statusAnterior, $prazoResposta, $bolHabAjustePrazoAtv)
 
     {
         $strResultado = '';
+
+        if ( $prazoResposta == '' && $bolHabAjustePrazoAtv === false ) return $strResultado;
 
         $arrStatusNaoPermitidos = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
 
@@ -470,37 +472,37 @@ class MdUtlControleDsmpINT extends InfraINT
             if ($isDadosParametrizados) {
                 if (is_null($idPrazoExistente)) {
                     if ($isDataPermitida) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                     }
                 } else {
 
                     if ($staSolicitacao == MdUtlAjustePrazoRN::$PENDENTE_RESPOSTA && $isDataPermitida) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_alteracao.png" title="Alterar Ajuste de Prazo" alt="Alterar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_alteracao.svg?11" width="24" height="24" title="Alterar Ajuste de Prazo" alt="Alterar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                     }
 
                     if ($strStatus == MdUtlControleDsmpRN::$SUSPENSO || $strStatus == MdUtlControleDsmpRN::$INTERROMPIDO && !is_null($statusAnterior)) {
 
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_consulta.png" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_consulta.svg?11" width="24" height="24" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
 
                         if ($statusAnterior == MdUtlControleDsmpRN::$EM_REVISAO) {
-                            $strResultado .= '<a id="retornarRevisao" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/retornar_processo.png" title="Retornar para Avaliação" alt="Retornar para Avaliação" class="infraImg" /></a>&nbsp;';
+                            $strResultado .= '<a id="retornarRevisao" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/retornar_processo.svg?11" width="24" height="24" title="Retornar para Avaliação" alt="Retornar para Avaliação" class="infraImg" /></a>&nbsp;';
                         } else if ($statusAnterior == MdUtlControleDsmpRN::$EM_ANALISE || MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE) {
-                            $strResultado .= '<a id="retornarAnalise" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/retornar_processo.png" title="Retornar para Análise" alt="Retornar para Análise" class="infraImg" /></a>&nbsp;';
+                            $strResultado .= '<a id="retornarAnalise" onclick="confirmarRetorno(\'' . $strStatus . '\',\'' . $strUrl . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/retornar_processo.svg?11" width="24" height="24" title="Retornar para Análise" alt="Retornar para Análise" class="infraImg" /></a>&nbsp;';
                         }
 
 
                     } else {
                         if ($staSolicitacao == MdUtlAjustePrazoRN::$APROVADA || $staSolicitacao == MdUtlAjustePrazoRN::$REPROVADA) {
                             if ($isDataPermitida) {
-                                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24"" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                             }
-                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_consulta.png" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_consulta.svg?11" width="24" height="24"" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                         }
                     }
                 }
             } else {
                 if ($isDataPermitida) {
-                    $strResultado .= '<a href="#" onclick="alert(\'' . MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_87) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/ajuste_prazo_cadastro.png" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                    $strResultado .= '<a href="#" onclick="alert(\'' . MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_87) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24"" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                 }
             }
         }
@@ -517,11 +519,11 @@ class MdUtlControleDsmpINT extends InfraINT
         if (in_array($strStatus, $arrContestacaoPermitidos)) {
             if ($isDadosParametrizados) {
                 if (is_null($idContestRevisaoExistente) || $strSituacao == MdUtlContestacaoRN::$CANCELADA) {
-                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/cadastrar_contestacao.png" title="Contestar Avaliação" alt="Contestar Avaliação" class="infraImg" /></a>&nbsp;';
+                    $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/contestacao_cadastro.svg?11" width="24" height="24" title="Contestar Avaliação" alt="Contestar Avaliação" class="infraImg" /></a>&nbsp;';
                 } else {
                     if ($strSituacao == MdUtlContestacaoRN::$PENDENTE_RESPOSTA) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/editar_contestacao.png" title="Alterar Contestação de Avaliação" alt="Alterar Contestação de Avaliação" class="infraImg" /></a>&nbsp;';
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/visualizar_contestacao.png" title="Consultar Contestação de Avaliação" alt="Consultar Contestação de Avaliação" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/contestacao_editar.svg?11" width="24" height="24"" title="Alterar Contestação de Avaliação" alt="Alterar Contestação de Avaliação" class="infraImg" /></a>&nbsp;';
+                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0' . '&id_triagem=' . $numIdTriagem . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/contestacao_visualizar.svg?11" width="24" height="24"" title="Consultar Contestação de Avaliação" alt="Consultar Contestação de Avaliação" class="infraImg" /></a>&nbsp;';
                     }
                 }
             }
@@ -850,5 +852,129 @@ class MdUtlControleDsmpINT extends InfraINT
             }
         }
         return $nmBtn;
+    }
+
+    public static function getNomeUsuarioRespTriagAnaliseAval( $numId , $strSitAtendimento, $strTela , $strOrigem = null ){
+        /* RELACAO TABELA
+            C = CONTROLE DSMP, T = TRIAGEM , A = ANALISE , V = REVISAO(AVALIACAO)
+        */
+        $arrLetraIni = ['C' => 'C' , 'T' => 'T' , 'A' => 'A' , 'V' => 'V'];
+
+        $objInfo = null;
+        switch ( $strTela ) {
+            case MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM: //Triagem
+                if ( in_array( $strSitAtendimento , [ MdUtlControleDsmpRN::$EM_TRIAGEM,MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM ] ) ) {
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['C'] );
+                }
+                else{
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['T'] );
+                }   
+                break;
+            
+            case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE: //Analise
+                if ( in_array( $strSitAtendimento , [MdUtlControleDsmpRN::$EM_ANALISE , MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] ) ) {
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['C'] );
+                }                
+                else{
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['A'] );
+                }   
+                break;
+            
+            case MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO: //Revisao (Avaliacao)
+                if ( $strSitAtendimento == MdUtlControleDsmpRN::$EM_REVISAO ) {
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['C'] );
+                }
+                else{
+                    $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['V'] );
+                }
+                   
+                break;
+            
+            default:  break;
+        }
+
+        return !is_null( $objInfo ) ? $objInfo->getStrNome() : null;        
+    }
+
+    public static function getUsuarioTriagemAnaliseAvaliacao( $id , $table ){
+        $id_usuario = null;
+        switch ( $table ) {
+            case 'T': // md_utl_triagem               
+                $objComumDTO = new MdUtlTriagemDTO();
+                $objComumRN  = new MdUtlTriagemRN();
+    
+                $objComumDTO->setNumIdMdUtlTriagem( $id );
+                $objComumDTO->retNumIdUsuario();
+                $objComumDTO = $objComumRN->consultar( $objComumDTO );
+    
+                $id_usuario = $objComumDTO->getNumIdUsuario();
+               
+                break;
+            
+            case 'A': // md_utl_analise
+                $objComumDTO = new MdUtlAnaliseDTO();
+                $objComumRN  = new MdUtlAnaliseRN();
+    
+                $objComumDTO->setNumIdMdUtlAnalise( $id );
+                $objComumDTO->retNumIdUsuario();
+                $objComumDTO = $objComumRN->consultar( $objComumDTO );
+    
+                $id_usuario = $objComumDTO->getNumIdUsuario();
+                
+                break;
+
+            case 'V': // md_utl_revisao(avaliacao)
+                $objComumDTO = new MdUtlRevisaoDTO();
+                $objComumRN  = new MdUtlRevisaoRN();
+    
+                $objComumDTO->setNumIdMdUtlRevisao( $id );
+                $objComumDTO->retNumIdUsuario();
+                $objComumDTO = $objComumRN->consultar( $objComumDTO );
+    
+                $id_usuario = $objComumDTO->getNumIdUsuario();
+                
+                break;
+            
+            default: // Controle Desempenho                
+                $objComumDTO = new MdUtlControleDsmpDTO();
+                $objComumRN  = new MdUtlControleDsmpRN();
+
+                $objComumDTO->setNumIdMdUtlControleDsmp( $id );
+                $objComumDTO->retNumIdUsuarioDistribuicao();
+                $objComumDTO = $objComumRN->consultar( $objComumDTO );
+
+                $id_usuario = $objComumDTO->getNumIdUsuarioDistribuicao();
+            break;
+        }
+        
+        $objUsuarioDTO = new UsuarioDTO();
+        $objUsuarioRN  = new UsuarioRN();
+
+        $objUsuarioDTO->setNumIdUsuario( $id_usuario );
+        $objUsuarioDTO->retStrNome();
+        $objUsuarioDTO = $objUsuarioRN->consultarRN0489( $objUsuarioDTO );
+    
+        return $objUsuarioDTO;
+    }
+
+    public static function habAjustePrazoAtv( $arrIdsTriagem ){
+        $arrRetorno = [];
+        foreach ( $arrIdsTriagem as $k => $v ) {
+            $arrRetorno[$v] = false;
+            $objMdUtlTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+            $objMdUtlTriagemAtvRN  = new MdUtlRelTriagemAtvRN();
+
+            $objMdUtlTriagemAtvDTO->setNumIdMdUtlTriagem( $v );
+            $objMdUtlTriagemAtvDTO->retNumPrazoExecucaoAtividade();
+
+            $listTriagAtv = $objMdUtlTriagemAtvRN->listar( $objMdUtlTriagemAtvDTO );
+            foreach ( $listTriagAtv as $k1 => $v1 ) {
+                if ( ! empty( $v1->getNumPrazoExecucaoAtividade() ) ) {
+                    $arrRetorno[$v] = true;
+                    break;
+                }
+            }
+        }
+        return $arrRetorno;
     }
 }

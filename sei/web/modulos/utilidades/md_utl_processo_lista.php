@@ -4,6 +4,7 @@
  * @author Jaqueline Mendes
  * @since  11/09/2018
  */
+try{
 
 require_once dirname(__FILE__) . '/../../SEI.php';
 
@@ -27,8 +28,7 @@ $urlInicial = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl
 $strLinkAjaxListarHistoricoTipoControle = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_hist_controle_dsmp_tp_controle&acao_origem=' . $_GET['acao']);
 $strLinkAjaxVerificarSePodeDistribuirParaMim = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_verificar_pode_distrib_para_mim&id_procedimento=' . $idProcedimento);
 
-
-
+/*
 if ($isProcessoAutorizadoConcluir == 1) {
     $_POST['hdnIsConcluirProcesso'] = 0;
     $isProcessoAutorizadoConcluir = 0;
@@ -40,6 +40,7 @@ if ($isProcessoAutorizadoConcluir == 1) {
     $objSEIRN->concluirProcesso($objEntradaConcluirProcessoAPI);
 
 }
+*/
 
 if (!is_null($idProcedimento) && $idProcedimento != ''){
     $strParametros .= '&id_procedimento='.$idProcedimento;
@@ -68,10 +69,11 @@ $objAnaliseRN              = new MdUtlAnaliseRN();
 $objMdUtlAdmTpCtrlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objMdUtlAdmTpCtrlUsuRN    = new MdUtlAdmRelTpCtrlDesempUsuRN();
 $objMdUtlAdmPrmGrRN        = new MdUtlAdmPrmGrRN();
+$objMdUtlAdmFilaRN         = new MdUtlAdmFilaRN();
 $objProcedimentoDTO        = $objRegrasGerais->getObjProcedimentoPorId($idProcedimento);
 
 $objDTO            = new MdUtlProcedimentoDTO();
-$objProcedimentoRN = new ProcedimentoRN(); 
+$objProcedimentoRN = new ProcedimentoRN();
 
 $idTipoControle = null;
 
@@ -82,7 +84,7 @@ $objDTO->retNumIdMdUtlAdmTpCtrlDesemp();
 $res = $objProcedimentoRN->contarRN0279($objDTO);
 
 if ( !is_null($res) ) {
-    $res = $objProcedimentoRN->listarRN0278($objDTO);    
+    $res = $objProcedimentoRN->listarRN0278($objDTO);
     if( !is_null($res[0]->getNumIdMdUtlAdmTpCtrlDesemp() ) ){
         $idTipoControle = $res[0]->getNumIdMdUtlAdmTpCtrlDesemp();
     }
@@ -126,7 +128,6 @@ $strDetalheAtual      = '';
 $strStatusAtual       = 0;
 $strTipoAcaoAtual     = '';
 $idControleDsmp       = 0;
-
 
 if(!is_null($objControleDsmpDTO)){
     $idStatus                 = trim($objControleDsmpDTO->getStrStaAtendimentoDsmp());
@@ -172,22 +173,35 @@ $strLinkConcluirProcesso =  $isProcessoConcluido == 1  ? SessaoSEI::getInstance(
 //Controle de Visualização
 $idTipoProcedimento = $objProcedimentoDTO->getNumIdTipoProcedimento();
 
-$isTipoProcessoParametrizado = is_null($idTipoControle) ? true : $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($idTipoProcedimento, $idTipoControle));
-$arrCtrlVisualizacao = MdUtlControleDsmpINT::retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila, $idRevisaoAjustePrz);
-
+// Todos os tipos de controles onde o usuario eh gestor
 $idsTpCtrlUsuarioGestor = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
 
-$isGestorTpControle = true;
-if(!is_null($idTipoControle)){
-    if ($idsTpCtrlUsuarioGestor) {
-        $isGestorTpControle = in_array($idTipoControle, $idsTpCtrlUsuarioGestor);
-    } else {
-        $isGestorTpControle = false;
-    }
-}
+#Primeira condicao para habilitar acesso ao botao: "Associar a Fila", o Tipo de Processo estar parametrizado com o Tipo de Ctrl atual do processo
+$isTipoProcessoParametrizado = is_null($idTipoControle) ? false : $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizado(array($idTipoProcedimento, $idTipoControle));
+$arrCtrlVisualizacao = MdUtlControleDsmpINT::retornaArrVisualizacaoBotao($idStatus, $isPossuiAnalise, $isTipoProcessoParametrizado, $idFila, $idRevisaoAjustePrz);
 
-if (count($arrCtrlVisualizacao) > 0 && $isPermiteAcoes) {
-    if($arrCtrlVisualizacao['ASSOCIACAO'] || $isGestorTpControle) {
+#Segunda condição para habilitar acesso ao botao: "Associar a Fila", sendo gestor de um Tipo de Ctrl na Unidade logada
+$isGestorTpControle = false;
+if( $idsTpCtrlUsuarioGestor )
+    $isGestorTpControle = !empty( $objMdUtlControleDsmpRN->buscaIdsTpCtrlUndComParametro($idsTpCtrlUsuarioGestor) );
+
+#Terceira condição para habilitar acesso ao botao: "Associar a Fila", sendo avaliador de alguma Fila do Tipo de Ctrl atual do processo
+$isAvaliadorFila = false;
+if( !is_null($objControleDsmpDTO) )
+    $isAvaliadorFila = !empty( $objMdUtlAdmFilaRN->buscaFilasUsuarioAvaliador( [$objControleDsmpDTO->getNumIdMdUtlAdmPrmGr()] ) );
+
+#Quarta condicao para habilitar acesso ao botao: "Associar a Fila", retorna os tipos de controles onde o usuario eh membro participante na Unidade
+$isMembroParticipanteUnidade = !empty( $objMdUtlControleDsmpRN->retornaTpCtrlsUsuarioMembroParticipante() );
+
+$isShowBtnAssociarFila = false;
+if( (!$isGestorTpControle && !$isAvaliadorFila ) && $idStatus == MdUtlControleDsmpRN::$AGUARDANDO_FILA && $isMembroParticipanteUnidade ):
+    $isShowBtnAssociarFila = true;
+elseif( $isGestorTpControle || $isAvaliadorFila ):
+    $isShowBtnAssociarFila = true;
+endif;
+
+if (!is_null($arrCtrlVisualizacao) && $isPermiteAcoes) {
+    if( $isShowBtnAssociarFila ){
         $arrComandos[] = '<button type="button" accesskey="a" id="btnAssoFila" onclick="associarFila()" class="infraButton">
                                     <span class="infraTeclaAtalho">A</span>ssociar à Fila</button>';
     }
@@ -204,7 +218,7 @@ if (count($arrCtrlVisualizacao) > 0 && $isPermiteAcoes) {
         }
     }
 
-    if($arrCtrlVisualizacao['DISTRIBUICAO']) {        
+    if( ( $arrCtrlVisualizacao['DISTRIBUICAO'] || $isGestorTpControle ) && $idStatus != MdUtlControleDsmpRN::$AGUARDANDO_FILA ) {
         $arrComandos[] = '<button type="button" accesskey="i" id="btnDistribuicao" onclick="iniciarDistribuicao()" class="infraButton">'
                             . MdUtlControleDsmpINT::getLabelBtn(1, $idStatus) .
                         '</button>';
@@ -239,8 +253,7 @@ switch ($_GET['acao']) {
 
     case 'md_utl_atribuicao_automatica':
         $objMdUtlControleDsmpRN->atribuirDistribuicaoUsuarioLogado();
-
-            header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimento));
+        header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimento));
         die;
     break;
 
@@ -253,175 +266,29 @@ switch ($_GET['acao']) {
 $strResultado = MdUtlHistControleDsmpINT::retornarHistoricoPorTipoDeControle($idProcedimento, null, $strStatusAtual, $strTitulo);
 $numRegistros = MdUtlHistControleDsmpINT::retornarQuantidadeRegistroHistorico($idProcedimento);
 
-$arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" value="Fechar" onclick="window.top.location.href=\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=' . $_GET['acao'] . '&acao_destino=' . $_GET['acao'] . $strParametros . PaginaSEI::montarAncora($arrStrIdProtocolo)) . '\';" 
+$arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" value="Fechar" onclick="window.top.location.href=\'' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=' . $_GET['acao'] . '&acao_destino=' . $_GET['acao'] . $strParametros . PaginaSEI::montarAncora($arrStrIdProtocolo)) . '\';"
 class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
+
+}catch(Exception $e){
+    PaginaSEI::getInstance()->processarExcecao($e);
+    header('Location: '.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_procedimento='.$idProcedimento));
+    die;
+}
 
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNomeSistema() . ' - ' . $strTitulo . ' ::');
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-    #tblSituacaoAtual{
-        font-size: 0.97em;
-    }
-
-    #tblSituacaoAtual .tdCabecalho{
-        width: 100px;
-    }
-
-    #tblSituacaoAtual .tdEscopo{
-    width: 75%;
-    }
-
-    #fldSituacaoAtual{
-        width: 500px;
-    }
-<?php
 PaginaSEI::getInstance()->fecharStyle();
+
 PaginaSEI::getInstance()->montarJavaScript();
-PaginaSEI::getInstance()->abrirJavaScript(); ?>
-<?php
-if(0) {
-    ?>
-    <script type="javascript">
-<?php } ?>
+PaginaSEI::getInstance()->abrirJavaScript();
+PaginaSEI::getInstance()->fecharJavaScript();
 
-var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
-var permiteDistribuirParaMim = false;
-
-function inicializar() {
-
-    this.distribuirParaMimProcesso();
-    var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
-    var isProcessoConcl  = '<?php echo $isProcessoConcluido ?>';
-    var msgConclusao = '<?php echo $msg107 ?>';
-
-    if (idParam == 0) {
-        alert(msg25);
-    }
-
-   if(isProcessoConcl == 1){
-       if(confirm(msgConclusao)) {
-           document.getElementById('hdnIsConcluirProcesso').value = 1;
-           document.getElementById("frmUtlProcessoLista").submit();
-       }else{
-          window.location.href = '<?=$urlInicial?>';
-       }
-    }
-
-    if ('<?= $_GET['acao'] ?>' == 'md_utl_processo_listar') {
-        infraReceberSelecao();
-    } else {
-        infraEfeitoTabelas();
-    }
-}
-
-
-function associarFila(){
-      infraAbrirJanela('<?=$strLinkAssociarFila?>', 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');
-}
-
-function iniciarTriagem(){
-    window.location.href = '<?= $strLinkIniciarTriagem ?>';
-}
-
-function iniciarAnalise(){
-    window.location.href = '<?= $strLinkIniciarAnalise ?>';
-}
-
-function iniciarRevisao(){
-    window.location.href = '<?= $strLinkIniciarRevisao ?>';
-}
-
-function iniciarDistribuicao(){
-
-    var staFrequencia = '<?=$staFrequencia?>';
-    if(staFrequencia == 0){
-        alert('A Frequência de Distribuição não está parametrizada no Tipo de Controle desta Unidade. Converse com o Gestor da sua área!');
-        return false;
-    }else{
-        window.location.href = '<?= $strLinkIniciarDistrb ?>';
-    }
-}
-
-function atribuicaoAutomatica() {
-    if(permiteDistribuirParaMim){
-        if(confirm("Confirma a Distribuição do Processo em sua carga?")){
-            window.location.href = '<?= $strLinkAtribuir ?>';
-        }
-    } else {
-        alert('Não é permitido Distribuir a Avaliação cuja tarefa no fluxo a ser avaliada tenha sido realizada pelo mesmo Membro Participante.')
-    }
-}
-
-function exibirExcessaoDuplicidade(){
-    var msg92 = '<?php echo $msg92 ?>'
-    alert(msg92);
-}
-
-function fechar() {
-    window.location.href = '<?= $strLinkFechar ?>';
-}
-
-function atualizarHistorico(){
-
-    var paramsAjax = {
-        idTipoControleSelecionado : document.getElementById('filtrarTipoControle').value,
-        idProcedimento : '<?= $idProcedimento?>',
-        strStatusAtual : '<?= $strStatusAtual?>',
-        strTitulo : '<?= $strTitulo?>',
-    };
-
-    $.ajax({
-        url: '<?=$strLinkAjaxListarHistoricoTipoControle?>',
-        type: 'POST',
-        dataType: 'XML',
-        data: paramsAjax,
-        success: function (response) {
-            $('#tbHistDetalhe').replaceWith($(response).find("NovaTabela").html());
-        },
-        error: function (e) {
-            console.error('Erro ao processar o XML do SEI: ' + e.responseText);
-        }
-    });
-}
-
-function distribuirParaMimProcesso(){
-
-    var paramsAjax = {
-        idProcedimento : '<?= $idProcedimento?>',
-    };
-
-    $.ajax({
-        url: '<?=$strLinkAjaxVerificarSePodeDistribuirParaMim?>',
-        type: 'POST',
-        dataType: 'XML',
-        data: paramsAjax,
-        success: function (response) {
-            if ($(response).find("PermiteDistribuirParaMim").html() == 1) {
-                permiteDistribuirParaMim = true;
-            }
-        },
-        error: function (e) {
-            console.error('Erro ao processar o XML do SEI: ' + e.responseText);
-        }
-    });
-}
-
-<?php
-if(0) {
-?>
-
-</script>
-    <?php } ?>
-
-<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-
-<?php
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 ?>
@@ -436,137 +303,156 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         ?>
         <div class="bloco" id="divCabecalho">
             <?php if (!empty($arrObjTpControle) && count($arrObjTpControle) > 0 ){ ?>
-                <div id="divProcesso" style="font-size: 1.1em;">
-                    <label class="infraLabelObrigatorio">
-                        Tipo de Controle:
-                    </label>
-                    <br>
-                    <select id="filtrarTipoControle" style="width: 184px;" onchange="atualizarHistorico()">
-                        <?php echo $arrIdsTpCtrlAux ?>
-                    </select>
+                <div class="row">
+                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-5 col-xs-6 col-8">
+                        <div id="divProcesso" class="form-group">
+                            <label class="infraLabelObrigatorio" for="filtrarTipoControle">
+                                Tipo de Controle:
+                            </label>
+                            <br>
+                            <select id="filtrarTipoControle" class="infraSelect form-control" onchange="atualizarHistorico()">
+                                <?php echo $arrIdsTpCtrlAux ?>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             <?php } ?>
-            <br>
+
             <!--
-            <div id="divProcesso" style="font-size: 1.1em;">                
+            <div id="divProcesso" style="font-size: 1.1em;">
                 <label id="lblProcesso" for="txtProcesso" class="infraLabelObrigatorio">
                     Processo:
                 </label>
                 <label><?=$strNumeroProcedimento?></label>
-                
-                </br>
             </div>
             -->
-            <?php if(is_null($objControleDsmpDTO)) {
+
+            <?php
+
+            if(is_null($objControleDsmpDTO)) {
+
                 if($isTipoProcessoParametrizado) {
-                    ?>
-                    <div style="font-size: 1.1em;">
-                        <label id="lblStatus" for="txtStatus" class="infraLabelObrigatorio">
-                            Situação Atual:
-                        </label>
-                        <label>
-                            <?php echo MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA; ?>
-                        </label>
+
+            ?>
+
+                   <div class="row">
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-5 col-xs-6 col-8">
+                            <label id="lblStatus" for="txtStatus" class="infraLabelObrigatorio">
+                                Situação Atual:
+                            </label>
+                            <label>
+                                <?php echo MdUtlControleDsmpRN::$STR_AGUARDANDO_FILA; ?>
+                            </label>
+                        </div>
                     </div>
-                    <?
+            <?
+
                 }
-            }else{ ?>
-                </br>
-                <fieldset id="fldSituacaoAtual" class="infraFieldset">
-                    <legend class="infraLegend">Situação Atual</legend>
 
-                    <!-- Processo -->
-                    <table id="tblSituacaoAtual">
+            }else{
 
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblProcesso" for="lblProcessoText" class="infraLabelObrigatorio">
-                                    Data/Hora:
-                                </label>
-                            </td>
-                            <td class="tdEscopo">
-                                <label id="lblProcessoText"><?= MdUtlHistControleDsmpINT::formatarDataHora($dthDataHoraAtual); ?></label>
-                            </td>
-                        </tr>
+            ?>
+                <div class="row">
+                    <div class="col-sm-11 col-md-10 col-lg-10">
 
-                    <!-- Usuário Ação -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblUsuarioAtual" for="lblUsuarioAtualText" class="infraLabelObrigatorio">
-                                    Usuário Ação:
-                                </label>
-                            </td>
-                            <td class="tdEscopo">
-                                <label id="lblUsuarioAtualText"> <a class="ancoraSigla" href="javascript:void(0);" alt="<?php echo PaginaSEI::tratarHTML($strNomeUsuarioAtual); ?>" title="<?php echo PaginaSEI::tratarHTML($strNomeUsuarioAtual); ?>"><?php  echo PaginaSEI::tratarHTML($strSiglaUsuarioAtual) ?> </a></label>
-                                <br/>
-                            </td>
-                        </tr>
+                        <fieldset class="infraFieldset fieldset-comum p-3" id="fldSituacaoAtual">
+                            <legend class="infraLegend">Situação Atual</legend>
 
-                    <!-- Tipo de Controle -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblTipoControle" for="lblTipoControleText" class="infraLabelObrigatorio">
-                                    Tipo de Controle:
-                                </label></td>
+                            <!-- Processo -->
+                            <table id="tblSituacaoAtual">
 
-                            <td class="tdEscopo">
-                                <label id="lblTipoAcaoText"><?= $strNomeTipoControleAtual ?></label>
-                            </td>
-                        </tr>
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblProcesso" for="lblProcessoText" class="infraLabelObrigatorio">
+                                            Data/Hora:
+                                        </label>
+                                    </td>
+                                    <td class="tdEscopo">
+                                        <label id="lblProcessoText"><?= MdUtlHistControleDsmpINT::formatarDataHora($dthDataHoraAtual); ?></label>
+                                    </td>
+                                </tr>
 
-                    <!-- Tipo de Controle -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblFila" for="lblFilaText" class="infraLabelObrigatorio">
-                                    Fila:
-                                </label></td>
+                                <!-- Usuário Ação -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblUsuarioAtual" for="lblUsuarioAtualText" class="infraLabelObrigatorio">
+                                            Usuário Ação:
+                                        </label>
+                                    </td>
+                                    <td class="tdEscopo">
+                                        <label id="lblUsuarioAtualText"> <a class="ancoraSigla" href="javascript:void(0);" alt="<?php echo PaginaSEI::tratarHTML($strNomeUsuarioAtual); ?>" title="<?php echo PaginaSEI::tratarHTML($strNomeUsuarioAtual); ?>"><?php  echo PaginaSEI::tratarHTML($strSiglaUsuarioAtual) ?> </a></label>
+                                        <br/>
+                                    </td>
+                                </tr>
 
-                            <td class="tdEscopo">
-                                <label id="lblNomeFilaText"><?= $strNomeFila ?></label>
-                            </td>
-                        </tr>
+                                <!-- Tipo de Controle -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblTipoControle" for="lblTipoControleText" class="infraLabelObrigatorio">
+                                            Tipo de Controle:
+                                        </label></td>
 
-                    <!-- Tipo de Ação -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblTipoAcao" for="lblTipoAcaoText" class="infraLabelObrigatorio">
-                                    Tipo de Ação:
-                                </label></td>
+                                    <td class="tdEscopo">
+                                        <label id="lblTipoAcaoText"><?= $strNomeTipoControleAtual ?></label>
+                                    </td>
+                                </tr>
 
-                            <td class="tdEscopo">
-                                <label id="lblTipoAcaoText"><?= $strTipoAcaoAtual ?></label>
-                            </td>
-                        </tr>
+                                <!-- Tipo de Controle -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblFila" for="lblFilaText" class="infraLabelObrigatorio">
+                                            Fila:
+                                        </label></td>
 
-                    <!-- Detalhe -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblDetalhe" for="lblDetalheText" class="infraLabelObrigatorio">
-                                    Detalhe:
-                                </label>
-                            </td>
-                            <td class="tdEscopo">
-                                <label id="lblDetalheText"><?= $strDetalheAtual ?></label>
-                            </td>
-                        </tr>
+                                    <td class="tdEscopo">
+                                        <label id="lblNomeFilaText"><?= $strNomeFila ?></label>
+                                    </td>
+                                </tr>
 
-                    <!-- Status Atual -->
-                        <tr>
-                            <td class="tdCabecalho">
-                                <label id="lblDetalhe" for="lblDetalheText" class="infraLabelObrigatorio">
-                                    Situação Atual:
-                                </label>
-                            </td>
-                            <td class="tdEscopo">
-                                <label id="lblDetalheText"><?= $arrSituacao[$strStatusAtual] ?></label>
-                            </td>
-                        </tr>
+                                <!-- Tipo de Ação -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblTipoAcao" for="lblTipoAcaoText" class="infraLabelObrigatorio">
+                                            Tipo de Ação:
+                                        </label></td>
 
-                    </table>
+                                    <td class="tdEscopo">
+                                        <label id="lblTipoAcaoText"><?= $strTipoAcaoAtual ?></label>
+                                    </td>
+                                </tr>
 
-                </fieldset>
-           <? } ?>
+                                <!-- Detalhe -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblDetalhe" for="lblDetalheText" class="infraLabelObrigatorio">
+                                            Detalhe:
+                                        </label>
+                                    </td>
+                                    <td class="tdEscopo">
+                                        <label id="lblDetalheText"><?= $strDetalheAtual ?></label>
+                                    </td>
+                                </tr>
 
+                                <!-- Status Atual -->
+                                <tr>
+                                    <td class="tdCabecalho">
+                                        <label id="lblDetalhe" for="lblDetalheText" class="infraLabelObrigatorio">
+                                            Situação Atual:
+                                        </label>
+                                    </td>
+                                    <td class="tdEscopo">
+                                        <label id="lblDetalheText"><?= $arrSituacao[$strStatusAtual] ?></label>
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                        </fieldset>
+
+                    </div>
+                </div>
+
+            <? } ?>
 
 
         </div>
@@ -591,6 +477,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     </form>
 
 <?php
+
+require_once "md_utl_processo_lista_js.php";
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
-

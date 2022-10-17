@@ -146,9 +146,11 @@ class MdUtlAdmPrmGrRN extends InfraRN {
       if ($objMdUtlAdmPrmGrDTO->isSetDblPercentualTeletrabalho()){
         $this->validarDblPercentualTeletrabalho($objMdUtlAdmPrmGrDTO, $objInfraException);
       }
+      /*
       if ($objMdUtlAdmPrmGrDTO->isSetNumIdMdUtlAdmFila()){
         $this->validarNumIdMdUtlAdmFila($objMdUtlAdmPrmGrDTO, $objInfraException);
       }
+      */
 
       $objInfraException->lancarValidacoes();
 
@@ -338,9 +340,8 @@ class MdUtlAdmPrmGrRN extends InfraRN {
   }
 
   private function _cadastrarAlterarUsuariosParticipantes($idsUsuarios, $arrDadosUsuario ,$idMdUtlAdmPrmGr, $isAlteracao = false){
-      $objMdUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+      $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
       $arrObjs = array();
-
       if (count($idsUsuarios) > 0) {
           foreach($idsUsuarios as $idUsuario){
               $novosDados = $arrDadosUsuario[$idUsuario];
@@ -352,6 +353,7 @@ class MdUtlAdmPrmGrRN extends InfraRN {
               $objMdUtlAdmPrmGrUsuDTO->setNumFatorDesempDiferenciado($novosDados['FATOR_DESEMPENHO']);
               $objMdUtlAdmPrmGrUsuDTO->setStrStaTipoJornada($novosDados['TIPO_JORNADA']);
               $objMdUtlAdmPrmGrUsuDTO->setNumFatorReducaoJornada($novosDados['FATOR_REDUCAO']);
+              $objMdUtlAdmPrmGrUsuDTO->setDblIdDocumento($novosDados['ID_DOCUMENTO']);
 
               if($isAlteracao && $novosDados['ID_VINCULADO'] != null){
                   $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu($novosDados['ID_VINCULADO']);
@@ -381,8 +383,9 @@ class MdUtlAdmPrmGrRN extends InfraRN {
                     $isFatorDesemAlt = $this->_isDadoAlterado($objBdDTO, 'FatorDesempDiferenciado', $arrDadosUsuarioTela, 'FATOR_DESEMPENHO');
                     $isTipoJornadAlt = $this->_isDadoAlterado($objBdDTO, 'StaTipoJornada', $arrDadosUsuarioTela, 'TIPO_JORNADA');
                     $isFatorDsmAlt   = $this->_isDadoAlterado($objBdDTO, 'FatorReducaoJornada', $arrDadosUsuarioTela, 'FATOR_REDUCAO');
+                    $isPlanoTrabAlt  = $this->_isDadoAlterado($objBdDTO, 'IdDocumento', $arrDadosUsuarioTela, 'ID_DOCUMENTO');
 
-                    if($isTipoPresnAlt || $isFatorDesemAlt || $isTipoJornadAlt || $isFatorDsmAlt){
+                    if($isTipoPresnAlt || $isFatorDesemAlt || $isTipoJornadAlt || $isFatorDsmAlt || $isPlanoTrabAlt){
                         $idsUsuariosAlterados[] = $idUsuarioBd;
                     }
                 }
@@ -395,11 +398,13 @@ class MdUtlAdmPrmGrRN extends InfraRN {
     private function _isDadoAlterado($objDTO, $strAtributo, $arrDadosUsuarioTela, $strAtributoArr)
     {
         $dadoBanco = strtoupper($objDTO->get($strAtributo));
+        $dadoBanco = ( $dadoBanco == '' || is_null($dadoBanco) ) ? null : $dadoBanco;
         $idUsuarioBd = $objDTO->getNumIdUsuario();
         $dadoTela = array_key_exists($idUsuarioBd, $arrDadosUsuarioTela) ? $arrDadosUsuarioTela[$idUsuarioBd][$strAtributoArr] : null;
-
-        if ($dadoTela != null) {
-            return $dadoTela != $dadoBanco;
+        $dadoTela = ( $dadoTela == '' || is_null($dadoTela) ) ? null : $dadoTela;
+        
+        if ( $dadoTela !== $dadoBanco ) {
+            return $dadoTela !== $dadoBanco;
         }
 
         return false;
@@ -486,25 +491,35 @@ class MdUtlAdmPrmGrRN extends InfraRN {
       }
   }
 
-    private function _prepararArrDadosParametrizados($arrUsuarioPart, $arrObjsUsuariosBd, $idsVinculadosBd){
-      $arrDadosUsuario = array();
+  private function _prepararArrDadosParametrizados($arrUsuarioPart, $arrObjsUsuariosBd, $idsVinculadosBd){
+    $arrDadosUsuario = array();
 
-        if(count($arrUsuarioPart) > 0){
-            foreach($arrUsuarioPart as $arrUsuarioTela){
-                $idUsuario = $arrUsuarioTela[0];
-                $arrDadosUsuario[$idUsuario]['TIPO_PRESENCA']    = $arrUsuarioTela[3];
-                $arrDadosUsuario[$idUsuario]['FATOR_DESEMPENHO'] = $arrUsuarioTela[3] == MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO ? str_replace("%", "", $arrUsuarioTela[4]) : null;
-                $arrDadosUsuario[$idUsuario]['TIPO_JORNADA']     = $arrUsuarioTela[6];
-                $arrDadosUsuario[$idUsuario]['FATOR_REDUCAO']    = $arrUsuarioTela[6] == MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_REDUZIDO ? str_replace("%", "", $arrUsuarioTela[7]) : null;
-                $arrDadosUsuario[$idUsuario]['ID_VINCULADO']     = array_key_exists($idUsuario, $idsVinculadosBd)  ? $idsVinculadosBd[$idUsuario] : null;
-            }
+    if(!is_null($arrUsuarioPart) && count($arrUsuarioPart) > 0){
+        foreach($arrUsuarioPart as $arrUsuarioTela){
+            $idUsuario = $arrUsuarioTela[0];
+            $arrDadosUsuario[$idUsuario]['TIPO_PRESENCA']    = $arrUsuarioTela[3];
+            $arrDadosUsuario[$idUsuario]['FATOR_DESEMPENHO'] = $arrUsuarioTela[3] == MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_DIFERENCIADO ? str_replace("%", "", $arrUsuarioTela[5]) : null;
+            $arrDadosUsuario[$idUsuario]['TIPO_JORNADA']     = $arrUsuarioTela[7];
+            $arrDadosUsuario[$idUsuario]['FATOR_REDUCAO']    = $arrUsuarioTela[7] == MdUtlAdmPrmGrUsuRN::$TIPOJORNADA_REDUZIDO ? str_replace("%", "", $arrUsuarioTela[8]) : null;
+            $arrDadosUsuario[$idUsuario]['ID_VINCULADO']     = array_key_exists($idUsuario, $idsVinculadosBd)  ? $idsVinculadosBd[$idUsuario] : null;
+            $arrDadosUsuario[$idUsuario]['ID_DOCUMENTO']     = $this->getObjDocumentoNumSei( strip_tags( $arrUsuarioTela[4] ) );
         }
-
-
-        return $arrDadosUsuario;
     }
+    return $arrDadosUsuario;
+  }
 
+  private function getObjDocumentoNumSei( $numSei ){
+    $objDocumentoDTO = new DocumentoDTO();
+    $objDocumentoRN = new DocumentoRN();
 
+    $objDocumentoDTO->setStrProtocoloDocumentoFormatado( $numSei );
+    $objDocumentoDTO->setNumMaxRegistrosRetorno(1);
+    $objDocumentoDTO->retDblIdDocumento();
+
+    $objDocumentoDTO = $objDocumentoRN->consultarRN0005( $objDocumentoDTO );
+    
+    return  !empty( $objDocumentoDTO ) ? $objDocumentoDTO->getDblIdDocumento() : null;
+  }
 
   private function _getAntigosUsuariosCadastrados($idMdUtlAdmPrmGr){
       if(!is_null($idMdUtlAdmPrmGr)) {
@@ -612,8 +627,11 @@ class MdUtlAdmPrmGrRN extends InfraRN {
 
     protected function parametrizaInicioFimDoPeriodoControlado(){
         $objMdUtlPrmGrDTO = new MdUtlAdmPrmGrDTO();
-        $objMdUtlPrmGrDTO->retTodos();
+        #$objMdUtlPrmGrDTO->retTodos();
         $objMdUtlPrmGrDTO->setNumInicioPeriodo(null);
+        $objMdUtlPrmGrDTO->retNumInicioPeriodo();
+        $objMdUtlPrmGrDTO->retStrStaFrequencia();
+        $objMdUtlPrmGrDTO->retNumIdMdUtlAdmPrmGr();
 
         $arrObjDTO = $this->listar($objMdUtlPrmGrDTO);
 

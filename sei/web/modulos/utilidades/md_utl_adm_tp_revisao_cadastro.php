@@ -132,38 +132,63 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?
-if(0){?><style><?}?>
-  #lblNome {position:absolute;left:0%;top:6%;width:40%;}
-  #ancAjudaNome{position: absolute;
-    left: 131px;
-    top: 5%;}
-  #txtNome {position:absolute;left:0%;top:45%;width:40%;}
-
-  #lblDescricao {position:absolute;left:0%;top:10%;width:60%;}
-  #ancAjudaDesc {position:absolute;left:63px;top:10%;}
-  #txaDescricao {position:absolute;left:0%;top:29%;width:60%;resize: none}
-
-  .tamanhoBtnAjuda{
-    width: 16px;
-    height: 16px;
-  }
-
-  #lblJustificativa{
-    margin-top: 0.3%;
-    position: absolute;
-  }
-
-  <?if(0){?></style><?}?>
-<?
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-
+PaginaSEI::getInstance()->fecharJavaScript();
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
+  <form id="frmMdUtlAdmTpRevisaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+    <?php
+      PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+      //PaginaSEI::getInstance()->montarAreaValidacao();
+      PaginaSEI::getInstance()->abrirAreaDados('');
+    ?>
+
+      <div class="row mb-3">
+        <div class="col-sm-8 col-md-8 col-lg-8">
+          <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Resultado da Avaliação:</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+              name="ajuda" <?= PaginaSEI::montarTitleTooltip('Nome do Resultado da Avaliação.','Ajuda') ?> />
+
+          <input type="text" id="txtNome" name="txtNome" maxlength="50" class="infraText form-control" 
+                value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrNome());?>" 
+                onkeypress="return infraMascaraTexto(this,event,50);" 
+                tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-sm-8 col-md-8 col-lg-8">
+          <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+              name="ajuda" <?= PaginaSEI::montarTitleTooltip('Nome do Resultado da Avaliação.','Ajuda') ?> />
+
+            <textarea id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea form-control" 
+                    onkeypress="return infraMascaraTexto(this,event,250);" 
+                    maxlength="250" 
+                    tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrDescricao());?></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-8 col-md-8 col-lg-8">          
+            <input <?= $vlCheckJustificativa ?> type="checkbox" name="rdoJustificativa" id="rdoJustificativa" value="S" class="infraCheckbox form-check-input"/>
+            <label id="lblJustificativa" name="lblJustificativa" for="rdoJustificativa" class="infraLabelCheckbox">Precisa de Justificativa?</label>          
+        </div>
+      </div>
+    
+    <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+    
+    <input type="hidden" id="hdnIdMdUtlAdmTpRevisao" name="hdnIdMdUtlAdmTpRevisao" value="<?=$objMdUtlAdmTpRevisaoDTO->getNumIdMdUtlAdmTpRevisao();?>" />
+    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
+    
+  </form>
+
+  <?php require_once 'md_utl_geral_js.php'; ?>
+
+<script type="text/javascript">
 
   function inicializar(){
     if ('<?=$_GET['acao']?>'=='md_utl_adm_tp_revisao_cadastrar'){
@@ -198,43 +223,8 @@ require_once 'md_utl_geral_js.php';
     return validarCadastro();
   }
 
-  <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-  <form id="frmMdUtlAdmTpRevisaoCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    //PaginaSEI::getInstance()->montarAreaValidacao();
-    PaginaSEI::getInstance()->abrirAreaDados('4.5em');
-    ?>
-    <label id="lblNome" for="txtNome" accesskey="" class="infraLabelObrigatorio">Resultado da Avaliação:</label>
-    <a href="javascript:void(0);" id="ancAjudaNome" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Nome do Resultado da Avaliação.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
+</script>
 
-    <input type="text" id="txtNome" name="txtNome" maxlength="50" class="infraText"  value="<?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrNome());?>" onkeypress="return infraMascaraTexto(this,event,50);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->abrirAreaDados('9em');
-    ?>
-    <label id="lblDescricao" for="txaDescricao" accesskey="" class="infraLabelObrigatorio">Descrição:</label>
-    <a href="javascript:void(0);" id="ancAjudaDesc" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Texto que descreve o resultado da Avaliação.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
-    <textarea type="text" id="txaDescricao" rows="3" maxlength="250" name="txaDescricao" class="infraTextArea" onkeypress="return infraMascaraTexto(this,event,250);" maxlength="250" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?=PaginaSEI::tratarHTML($objMdUtlAdmTpRevisaoDTO->getStrDescricao());?></textarea>
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->abrirAreaDados('4em');
-    ?>
-    <input <?php echo $vlCheckJustificativa; ?> type="checkbox" name="rdoJustificativa" id="rdoJustificativa" value="S"/>
-    <label id="lblJustificativa" name="lblJustificativa" for="rdoJustificativa" class="infraLabelCheckbox">Precisa de Justificativa?</label>
-    <?php PaginaSEI::getInstance()->fecharAreaDados();  ?>
-    <input type="hidden" id="hdnIdMdUtlAdmTpRevisao" name="hdnIdMdUtlAdmTpRevisao" value="<?=$objMdUtlAdmTpRevisaoDTO->getNumIdMdUtlAdmTpRevisao();?>" />
-    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
-    <?
-    //PaginaSEI::getInstance()->montarAreaDebug();
-    //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-    ?>
-  </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

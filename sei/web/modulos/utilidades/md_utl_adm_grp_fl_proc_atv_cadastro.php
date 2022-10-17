@@ -145,143 +145,88 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-#lblMdUtlAdmAtividade {position:absolute;left:0%;top:0%;width:11%;}
-#selMdUtlAdmAtividade {position:absolute;left:0%;top:40%;width:11%;}
-
-#lblMdUtlAdmGrpFilaProc {position:absolute;left:0%;top:0%;width:11%;}
-#selMdUtlAdmGrpFilaProc {position:absolute;left:0%;top:40%;width:11%;}
-
-    select[multiple] {
-        width: 60%;
-        margin-top: 0.5%;
-    }
-
-    img[id^="imgExcluir"] {
-        margin-left: -1px;
-    }
-
-    div[id^="divOpUnica"] {
-        position: absolute;
-        width: 15%;
-        left: 40.5%;
-        top: 50%;
-    }
-
-    div[id^="divOpcoes"] {
-        position: absolute;
-        width: 1%;
-        left: 60.5%;
-        top: 44.5%;
-    }
-
-    #btnAdicionar{
-         margin-left:65%;
-         margin-top: 78%;
-     }
-
-    #divTpProcOrigem{
-        margin-bottom: 12px;
-    }
-
-    #divAtividade{
-        margin-top: 14px;
-    }
-
-<?if(0){?></style><?}
-
 PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_geral_css.php";
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-
-require_once 'md_utl_adm_rel_prm_gr_proc_lista_js.php';
-require_once ('md_utl_geral_js.php');
-
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
 ?>
 <form id="frmMdUtlAdmGrpFlProcAtvCadastro" method="post" onsubmit="return OnSubmitForm();" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-<?
-PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
 
-?>
+<?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos); ?>
+
     <div id="divTpProcOrigem" style="display:none">
         <label id="lblTpProcOrigem" class="infraLabelObrigatorio" > </label>
         <br>
         <label class="infraLabelOpcional" id="lblOrigem" style="margin-bottom: 15px;"></label>
     </div>
-<?php
-PaginaSEI::getInstance()->abrirAreaDados('4em');
-?>
 
-    <div id="divTpProcesso">
-        <label id="lblTpProcesso" for="selTpProcesso" accesskey="" class="infraLabelObrigatorio">
-          Tipo Processo: <img align="top" style="height:16px; width:16px;" id="imgAjuda"
-                                src="/infra_css/imagens/ajuda.gif" name="ajuda"
-                                onmouseover="return infraTooltipMostrar('Selecione o Tipo de Processo que será cadastrado no Grupo de Atividades.');"
-                                onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
-        </label>
-        <div class="clear"></div>
-        <input type="text" id="txtTpProcesso" name="txtTpProcesso" class="infraText" style="width: 40%; tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-        
-        <div id="divOpUnica" >
-            <img id="imgLupaTpProcessoUnica" onclick="objLupaTpProcesso.selecionar(700,500);"  src="/infra_css/imagens/lupa.gif" alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg" />
-            <img id="imgExcluirTpProcessoUnica" onclick="objLupaTpProcesso.remover();" src="/infra_css/imagens/remover.gif" alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg" />
+<?php PaginaSEI::getInstance()->abrirAreaDados(''); ?>
+
+    <div id="divTpProcesso" class="row mb-3">
+      <div class="col-sm-8 col-md-8 col-lg-8">
+        <label id="lblTpProcesso" for="selTpProcesso" accesskey="" class="infraLabelObrigatorio">Tipo Processo:</label>
+        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+            name="ajuda" <?= PaginaSEI::montarTitleTooltip('Selecione o Tipo de Processo que será cadastrado no Grupo de Atividades.','Ajuda') ?> />
+        <div class="input-group">          
+          <input type="text" id="txtTpProcesso" name="txtTpProcesso" class="infraText form-control" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+          <div id="divOpUnica" class="ml-1">
+            <img id="imgLupaTpProcessoUnica" onclick="objLupaTpProcesso.selecionar(700,500);"  src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg" />
+            <img id="imgExcluirTpProcessoUnica" onclick="objLupaTpProcesso.remover();" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg" />
+          </div>
         </div>
+      </div>
     </div>
-<?
-PaginaSEI::getInstance()->fecharAreaDados();
-PaginaSEI::getInstance()->abrirAreaDados('auto');
-?>
-    <div id="divAtividade">
-        <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">
-            Atividades: <img align="top" style="height:16px; width:16px;" id="imgAjuda"
-                             src="/infra_css/imagens/ajuda.gif" name="ajuda"
-                             onmouseover="return infraTooltipMostrar('Selecione uma ou múltiplas Atividades que serão cadastradas no Grupo de Atividades.');"
-                             onmouseout="return infraTooltipOcultar();" alt="Ajuda" class="infraImg">
 
-        </label>
-        <div class="clear"></div>
-        <input type="text" style="width:39.5%" id="txtAtividade" name="txtAtividade" class="infraText" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-
-        <select id="selAtividade" name="selAtividade" size="4" multiple="multiple" class="infraSelect">
-            <?=$strItensSelAtividade?>
-        </select>
-        <div id="divOpcoes">
-            <img id="imgLupaAtividade" onclick="objLupaAtividade.selecionar(700,500);" src="/infra_css/imagens/lupa.gif" alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg" />
-            <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();" src="/infra_css/imagens/remover.gif" alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg" />
-            <button type="button" class="infraButton" id="btnAdicionar" accesskey="a" onclick="adicionarRegistro();"><span class="infraTeclaAtalho">A</span>dicionar</button>
-
+    <div id="divAtividade" class="mb-3">
+      <div class="row mb-1">
+        <div class="col-xs-3 col-sm-7 col-md-7 col-lg-7">
+          <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio"> Atividades: </label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+              name="ajuda" <?= PaginaSEI::montarTitleTooltip('Selecione uma ou múltiplas Atividades que serão cadastradas no Grupo de Atividades.','Ajuda') ?> />
+          <input type="text" id="txtAtividade" name="txtAtividade" class="infraText form-control" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
         </div>
-
-
+      </div>
+      <div class="row">
+        <div class="col-sm-10 col-md-10 col-lg-10">
+          <div class="input-group">
+            <select id="selAtividade" name="selAtividade" size="4" multiple="multiple" class="infraSelect form-control">
+              <?=$strItensSelAtividade?>
+            </select>
+            <div id="divOpcoes" class="ml-1">
+              <img id="imgLupaAtividade" onclick="objLupaAtividade.selecionar(700,500);" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>" alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg" />
+              <br>
+              <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>" alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg" />
+              <br>
+              <span class="mr-3"></span>
+              <button type="button" class="infraButton" id="btnAdicionar" accesskey="a" onclick="adicionarRegistro();"><span class="infraTeclaAtalho">A</span>dicionar</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->abrirAreaDados('auto');
-    ?>
-    <table width="70.5%" class="infraTable" summary="GrupoAtividade" id="tbGrpAtv" style="<?php echo $strTbGrpAtv == '' ? 'display: none' : ''?>">
-        <caption class="infraCaption">&nbsp;</caption>
-        <tr>
-            <th style="display: none">Id_tipo_processo</th>
-            <th class="infraTh" align="center" width="50%">Tipo de Processo</th> <!--1-->
-            <th class="infraTh" align="center" width="40%">Atividades</th> <!--2-->
-            <th style="display: none">Id_atividade</th>
-            <th style="display: none">Id_vinculo</th>
-            <th class="infraTh" align="center" width="10%"  >Ações</th><!--3-->
-        </tr>
-    </table>
-<?
-PaginaSEI::getInstance()->fecharAreaDados();
-?>
-  <?
-  //PaginaSEI::getInstance()->montarAreaDebug();
-  //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
 
-  ?>
+    <div class="row">
+      <div class="col-12">
+        <table class="infraTable" summary="GrupoAtividade" id="tbGrpAtv" style="<?= $strTbGrpAtv == '' ? 'display: none' : ''?>">
+            <caption class="infraCaption">&nbsp;</caption>
+            <tr>
+                <th style="display: none">Id_tipo_processo</th>
+                <th class="infraTh" align="center" width="50%">Tipo de Processo</th> <!--1-->
+                <th class="infraTh" align="center" width="40%">Atividades</th> <!--2-->
+                <th style="display: none">Id_atividade</th>
+                <th style="display: none">Id_vinculo</th>
+                <th class="infraTh" align="center" width="10%"  >Ações</th><!--3-->
+            </tr>
+        </table>
+      </div>
+    </div>
+
+    <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+  
     <input type="hidden" id="hdnAtividade"              name="hdnAtividade"                 value="<?=$strItensAtividade?>" />
     <input type="hidden" id="hdnIdAtividade"            name="hdnIdAtividade"               value="" />
     <input type="hidden" id="hdnTpProcesso"             name="hdnTpProcesso"                value="<?=$strItensAtividade?>" />
@@ -294,6 +239,10 @@ PaginaSEI::getInstance()->fecharAreaDados();
     <input type="hidden" id="hdnIdsAtvAlterada"         name="hdnIdsAtvAlterada"            value=""/>
     <input type="hidden" id="hdnIdsAtvRemovida"         name="hdnIdsAtvRemovida"            value=""/>
 </form>
-<?
+
+<?php
+
+require_once 'md_utl_adm_rel_prm_gr_proc_lista_js.php';
+require_once ('md_utl_geral_js.php');
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

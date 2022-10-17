@@ -37,11 +37,14 @@ class MdUtlAdmHistPrmGrUsuDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdUsuarioAtual', 'id_usuario_atual');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DBL, 'IdDocumento', 'id_documento');
+
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmPrmGrMdUtlAdmPrmGr', 'id_md_utl_adm_prm_gr', 'md_utl_adm_prm_gr');
 
     $this->configurarPK('IdMdUtlAdmHistPrmGrUsu',InfraDTO::$TIPO_PK_NATIVA);
     $this->configurarFK('IdMdUtlAdmHistPrmGrUsu', 'md_utl_adm_prm_gr', 'id_md_utl_adm_prm_gr');
     $this->configurarFK('IdUsuario', 'usuario u', 'u.id_usuario');
+    $this->configurarFK('IdDocumento', 'documento doc','doc.id_documento', InfraDTO::$TIPO_FK_OPCIONAL);
 
     //Usuario
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'Nome', 'u.nome', 'usuario u');

@@ -1,4 +1,5 @@
-<?php if(0){ ?> <script>  <?php } ?>
+<script type="text/javascript">
+
     function convertToHoursMins(time) {
 
         hours = Math.trunc(time / 60);
@@ -46,4 +47,7 @@
         return (x.length + addition) <= max;
     }
 
-<?php if(0){ ?> <script> <?php } ?>
+    function retornaCalculoPercentual(tmp, perc){
+        return Math.trunc(tmp / (1 + (perc / 100)));
+    }
+</script>

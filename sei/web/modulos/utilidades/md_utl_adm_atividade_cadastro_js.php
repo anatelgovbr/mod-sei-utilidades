@@ -5,13 +5,12 @@
  * Date: 06/08/2018
  * Time: 11:29
  */
+?>
+<script type="text/javascript">
 
-if(0){ ?>
-    <script>
-<?php } ?>
 
-var objTabelaDinamicaListaProduto= null;
-var contadorTabelaDinamica       = 0;
+var objTabelaDinamicaListaProduto = null;
+var contadorTabelaDinamica  = <?php if( $isClonar ): ?> getQtdRegistros() <?php else: ?> 0 <?php endif; ?>;
 var msg009 = '<?php echo MdUtlMensagemINT::$MSG_UTL_09 ?>';
 var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11)?>';
 var msg15Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_15)?>';
@@ -45,7 +44,12 @@ function inicializar() {
         $('#txtTempoExecucaoAnaliseAtividade').val(total);
     });
 
-    <?php if ( $_GET['acao'] == 'md_utl_adm_atividade_alterar' || $_GET['acao'] == 'md_utl_adm_atividade_consultar' ) { ?>
+    <?php if ( $_GET['acao'] == 'md_utl_adm_atividade_alterar' || $_GET['acao'] == 'md_utl_adm_atividade_consultar' || $isClonar ) { ?>
+        //contorno para resolver o caso de nao validado formulario da clonagem do form
+        let radioAnalise   = $('input[name="rdnTpAtivdade"]:checked').val();
+        let nmRadioAnalise = radioAnalise == 'S' ? 'rdnTpAtivdadeComAnalise' : 'rdnTpAtivdadeSemAnalise';
+        tipoAtividade( document.querySelector(`#${nmRadioAnalise}`) );
+
         var pdmt = <?= $percentualTeletrabalho?>;
         var te = $('#txtTmpExecucao').val();
         tet = te / (1 + (pdmt/100));
@@ -54,6 +58,15 @@ function inicializar() {
 
         $('#txtTempoExecucaoAnaliseAtividade').val(total);    
     <?php } ?>
+
+    <?php if ( $_GET['acao'] == 'md_utl_adm_atividade_consultar'): ?>
+      ocultarColunaAcoes()
+    <?php endif; ?>
+}
+
+function ocultarColunaAcoes(){
+    let tbl = document.querySelector('#tbProdutoEsperado');
+    [tbl.rows].map( row => $( row ).find('th:last , td:last').css('display','none') )
 }
 
 function isNumber(n) {
@@ -110,7 +123,6 @@ function iniciarTabelaDinamicaListaProduto(){
     };
 
     objTabelaDinamicaListaProduto.alterar = function(item){
-
         isAlterarGrid = true;
 
         if(item[2] == 'P'){
@@ -146,13 +158,14 @@ function iniciarTabelaDinamicaListaProduto(){
         return 0;
     };
 }
+
  function desabilitarCamposProdutoAlteracao(item) {
     var obj = infraGetElementById('rdnProduto');
     infraGetElementById('rdnProduto').checked = 'checked';
 
-    if(infraGetElementById('divTpProduto').className != 'bloco'){
+    //if(infraGetElementById('divTpProduto').className != 'bloco'){
         exibirTipo(obj);
-    }
+    //}
     infraGetElementById('selTpProduto').value = item[9];
     infraGetElementById('selTpProduto').disabled = 'disabled';
 }
@@ -161,9 +174,11 @@ function iniciarTabelaDinamicaListaProduto(){
      var obj = infraGetElementById('rdnDocumento');
      infraGetElementById('rdnDocumento').checked = 'checked';
 
-     if(infraGetElementById('divTpDocumento').className != 'bloco'){
-         exibirTipo(obj);
-     }
+     //if(infraGetElementById('divTpDocumento').className != 'bloco'){
+        exibirTipo(obj);
+     //}
+
+    /*Em desuso
      item[3] == 'I' ?  infraGetElementById('rdnAplicSerieInterno').checked = 'checked' : infraGetElementById('rdnAplicSerieExterno').checked = 'checked';
      infraGetElementById('rdnAplicSerieInterno').disabled = 'disabled';
      infraGetElementById('rdnAplicSerieExterno').disabled = 'disabled';
@@ -172,11 +187,16 @@ function iniciarTabelaDinamicaListaProduto(){
 
      item[3] == 'I' ? infraGetElementById('selTpDocumentoInt').value = item[9] : infraGetElementById('selTpDocumentoExt').value = item[9];
      item[3] == 'I' ? infraGetElementById('selTpDocumentoInt').disabled = 'disabled' : infraGetElementById('selTpDocumentoExt').disabled = 'disabled';
+    */
+    
+    infraGetElementById('selTpDocumento').value         = item[9];
+    infraGetElementById('selTpDocumento').disabled      = true;
+    infraGetElementById('selTpDocumento').style.display = '';
 }
 
 function removerItemCadastrado(item){
 
-    var idVinculo      = parseInt(item[7]);
+    var idVinculo = parseInt(item[7]);
     if(idVinculo>0) {
 
         var hdnIdsRemovido = infraGetElementById('hdnIdsRemovido').value;
@@ -235,34 +255,21 @@ function tipoAtividade(obj){
     var divRevATividade     = infraGetElementById('divRevATividade');
     var semAnalise          = infraGetElementById('divSemAnalise');
 
-        if (obj.value == 'S') {
-
-            comAnalise.classList.toggle("blocoExibir");
-            blocoListaProduto.classList.toggle("blocoExibir");
-            divAtvRevAmost.classList.toggle("blocoExibir");
-
-            if (semAnalise.className.split(" ").length == 1) {
-                //Adiciona Campo de SEM ANALISE
-                semAnalise.classList.toggle('blocoExibir');
-                divAtvRevAmost.classList.toggle("blocoExibir");
-            }
-            document.getElementById('hdnTbProdutoEsperado').setAttribute('utlCampoObrigatorio', 'a');
-        } else {
-
-            if (comAnalise.className.split(" ").length == 1) {
-                //Remove campos de COM ANALISE
-                comAnalise.classList.toggle('blocoExibir');
-                blocoListaProduto.classList.toggle('blocoExibir');
-                divRevATividade.classList.toggle('blocoExibir');
-                divAtvRevAmost.classList.toggle("blocoExibir");
-            }
-            //Adiciona Campo de SEM ANALISE
-            semAnalise.classList.toggle('blocoExibir');
-            divAtvRevAmost.classList.toggle("blocoExibir");
-
-            document.getElementById('hdnTbProdutoEsperado').removeAttribute('utlCampoObrigatorio');
-        }
-        divRevATividade.style.display = 'inherit';
+    $( divAtvRevAmost ).show();
+    $( divRevATividade ).show();
+    
+    if (obj.value == 'S') {
+        $( comAnalise ).show();
+        $( semAnalise ).hide();
+        $( blocoListaProduto ).show();
+        document.getElementById('hdnTbProdutoEsperado').setAttribute('utlCampoObrigatorio', 'a');
+    } else {       
+        $( semAnalise ).show()
+        $( comAnalise ).hide();
+        $( blocoListaProduto ).hide();
+        document.getElementById('hdnTbProdutoEsperado').removeAttribute('utlCampoObrigatorio');
+    }
+    //divRevATividade.style.display = 'inherit';
 }
 
 function exibirTipo(obj){
@@ -271,26 +278,20 @@ function exibirTipo(obj){
     var divTpDocumento  = infraGetElementById('divTpDocumento');
     var divFinal        = infraGetElementById('divFinal');
     var toltipTipo      = infraGetElementById('btAjudaTipo');
-
+    
     if(obj.value =='P'){
-
-        if(divTpDocumento.className.split(" ").length == 1) {
-            divTpDocumento.classList.toggle('blocoExibir');
-        }
-        divTpProduto.classList.toggle('blocoExibir');
-
+        divTpProduto.style.display   = 'inherit';
+        divTpDocumento.style.display = 'none';
         utlTrocarTooltip(toltipTipo, 'Selecionar o Produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.');
     }else{
-
-        if(divTpProduto.className.split(" ").length == 1) {
-            divTpProduto.classList.toggle('blocoExibir');
-        }
-        divTpDocumento.classList.toggle('blocoExibir');
+        divTpProduto.style.display   = 'none';
+        divTpDocumento.style.display = 'inherit';
         utlTrocarTooltip(toltipTipo, 'Selecionar o Documento na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')
     }
     divFinal.style.display='inherit';
 }
 
+/* Em Desuso
 function exibirTipoDocumento(val){
 
     var selTpDocumentoExt    = infraGetElementById('selTpDocumentoExt');
@@ -305,6 +306,7 @@ function exibirTipoDocumento(val){
         selTpDocumentoInt.style.display = 'none';
     }
 }
+*/
 
 function retornaRadiosTelaPreenchidos(){
     var blocoLista = infraGetElementById('blocoListaProduto');
@@ -324,7 +326,6 @@ function retornaRadiosTelaPreenchidos(){
 }
 function definirTiposProdutosSelecionados(radio){
     if (radio[0] == 'P') {
-
         tpRadioTip = radio[0];
         indexTp = document.getElementById('selTpProduto').selectedIndex;
         valTp = document.getElementById('selTpProduto').value;
@@ -332,20 +333,10 @@ function definirTiposProdutosSelecionados(radio){
 
     } else {
         tpRadioTip = radio[0];
-
-        if (radio[1] == 'I') {
-
-            tpRadioApl = radio[1];
-            indexTp = document.getElementById('selTpDocumentoInt').selectedIndex;
-            valTp = document.getElementById('selTpDocumentoInt').value;
-            txtTp = document.getElementById('selTpDocumentoInt').options[indexTp].text;
-
-        } else {
-            tpRadioApl = radio[1];
-            indexTp = document.getElementById('selTpDocumentoExt').selectedIndex;
-            valTp = document.getElementById('selTpDocumentoExt').value;
-            txtTp = document.getElementById('selTpDocumentoExt').options[indexTp].text;
-        }
+        tpRadioApl = null;
+        indexTp = document.getElementById('selTpDocumento').selectedIndex;
+        valTp = document.getElementById('selTpDocumento').value;
+        txtTp = document.getElementById('selTpDocumento').options[indexTp].text;
     }
 }
 
@@ -386,8 +377,8 @@ function adicionarRegistroTabelaProduto() {
         var valorPkAlteracao = infraGetElementById('hdnIdAlteracao').value;
         var obrigatorio = chkobrigatorio ? 'Sim' : 'Não';
         var pkTabela = isAlterarGrid ? valorPkAlteracao : 'NOVO_REGISTRO_' + contadorTabelaDinamica;
-        var isRegistroNovo =(pkTabela.indexOf('NOVO_REGISTRO_') -1);
-        var isAlteracao = isAlterarGrid ? 'S' : 'N';
+        var isRegistroNovo = pkTabela.indexOf('NOVO_REGISTRO_');
+        var isAlteracao = ( isAlterarGrid && isRegistroNovo < 0 ) ? 'S' : 'N';
 
         var arrLinha = [
             pkTabela,
@@ -454,17 +445,13 @@ function limparCamposListaProdutos(){
         divTpProduto.classList.toggle('blocoExibir');
     }
 
-    var selTpDocumentoExt    = infraGetElementById('selTpDocumentoExt');
-    var selTpDocumentoInt    = infraGetElementById('selTpDocumentoInt');
-
-     selTpDocumentoExt.style.display = 'none';
-     selTpDocumentoInt.style.display = 'none';
     infraGetElementById('rdnProduto').disabled = false;
     infraGetElementById('rdnDocumento').disabled = false;
-    infraGetElementById('rdnAplicSerieInterno').disabled = false;
-    infraGetElementById('rdnAplicSerieExterno').disabled = false;
-    infraGetElementById('selTpDocumentoExt').disabled = false;
-    infraGetElementById('selTpDocumentoInt').disabled = false;
+    //infraGetElementById('rdnAplicSerieInterno').disabled = false;
+    //infraGetElementById('rdnAplicSerieExterno').disabled = false;
+    //infraGetElementById('selTpDocumentoExt').disabled = false;
+    //infraGetElementById('selTpDocumentoInt').disabled = false;
+    infraGetElementById('selTpDocumento').disabled = false;
     infraGetElementById('selTpProduto').disabled = false;
 
 }
@@ -563,6 +550,7 @@ function validarFieldsetListaProduto() {
         }
 
         //validar aplicabilidade do documento Interno ou Externo
+        /* Em Desuso
         if(radioDoc == null){
             var msg = setMensagemPersonalizada(msg11Padrao, ['Aplicabilidade']);
             alert(msg);
@@ -586,6 +574,14 @@ function validarFieldsetListaProduto() {
                 return false;
             }
         }
+        */
+
+        if(infraGetElementById('selTpDocumento').value == 0){
+            infraGetElementById('selTpDocumento').focus();
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Documento SEI']);
+            alert(msg);
+            return false;
+        }
 
     }
 
@@ -599,6 +595,14 @@ function validarFieldsetListaProduto() {
 
     return true;
 }
-<?php if(0){ ?>
+
+function checkNaoAplicarPerc( campo ){
+    $( campo ).is(':checked') ? $('#divTmpAnaliseTeletrabalho').hide() : $('#divTmpAnaliseTeletrabalho').show();
+}
+
+function getQtdRegistros(){
+    const ele = $('#hdnTbProdutoEsperado').val().split('¥');
+    return ele.length;
+}
+
 </script>
-<?php } ?>

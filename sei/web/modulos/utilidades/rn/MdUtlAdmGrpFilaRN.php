@@ -72,7 +72,7 @@ class MdUtlAdmGrpFilaRN extends InfraRN {
     try {
 
       //Valida Permissao
-  	   SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_grp_fila_alterar', -__METHOD__, $objMdUtlAdmGrpFilaDTO);
+  	   SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_adm_grp_fila_alterar', __METHOD__, $objMdUtlAdmGrpFilaDTO);
 
       //Regras de Negocio
       $objInfraException = new InfraException();

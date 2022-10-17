@@ -1,6 +1,4 @@
-<?php if(0){ ?>
-<script>
-    <?php } ?>
+<script type="text/javascript">
 
     var msgPadraoObrigatoriedade = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -241,10 +239,75 @@
             }
         }
     }
+
+    function removerTags( html ){
+        const data = new DOMParser().parseFromString(html, 'text/html');
+        return data.body.textContent || "";
+    }
+
+    function scrollTela(idEle , top = 80){
+        // scroll barra de rolagem automatica
+        var nivel = document.getElementById( idEle ).offsetTop + top;
+        divInfraMoverTopo = document.getElementById("divInfraAreaTelaD");
+        $( divInfraMoverTopo ).animate( { scrollTop: nivel } , 600 );
+    }
+
+    function distribuicaoAutoParaMim( vlr , statusProc , idUsuario , tipoReq = null ){
+        if( vlr.value == '' ) 
+        {
+            if( tipoReq == 'avaliacao' )
+                desmarcarCkbDistAutoTriagem();
+            else
+                desmarcarCkbDistAutoParaMim();
+        }
+        else 
+        {       
+            if( idUsuario != 0 ){
+                $.ajax({
+                    url:"<?= $strLinkValidaUsuarioPertenceAFila ?>",
+                    type: 'post',
+                    dataType: 'xml',
+                    data: { 
+                        idFila: $('#selFila').val(), status: statusProc, id_usuario: idUsuario
+                    }
+                })
+                .done( function( rs ){
+                    let res = $( rs ).find('Resultado').text() == 'S';
+
+                    if( tipoReq == 'avaliacao' ){
+                        if( res )
+                            $('#ckbDistAutoTriagAnalise').removeAttr('disabled');
+                        else 
+                            desmarcarCkbDistAutoTriagem();
+                    }else{
+                        if( res )
+                            $('#divDistAutoParaMim').show(); 
+                        else 
+                            desmarcarCkbDistAutoParaMim();
+                    }
+                })
+                .fail( function( xhr ){
+                    console.error( 'Erro: ' + xhr.responseText );
+                });
+            }            
+        }
+    }
+
+    function desmarcarCkbDistAutoParaMim(){
+        $('#divDistAutoParaMim').hide();
+        $('#ckbDistAutoParaMim').prop('checked',false);
+    }
+
+    function desmarcarCkbDistAutoTriagem(){
+        $('#ckbDistAutoTriagAnalise')
+            .attr('disabled',true)
+            .prop('checked',false);
+    }
+
+    function debugTableGeral(){
+        let tb = document.querySelector('#hdnTbUsuario').value;
+        let arrLinhas = tb.split('¥');
+        console.log(arrLinhas);
+    }
     
-
-    <?php if(0){ ?>
-    <script>
-    <?php } ?>
-
-
+</script>

@@ -41,8 +41,12 @@ class MdUtlAdmFilaPrmGrUsuDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'StaTipo', 'u.sta_tipo', 'usuario u');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'IdxUsuario', 'u.idx_usuario', 'usuario u');
     
-    
-
-
+    //Parametro Geral Usuario
+    $this->adicionarAtributoTabelaRelacionada(
+        InfraDTO::$PREFIXO_NUM,
+        'IdMdUtlPrmGr',
+        'mpa.id_md_utl_adm_prm_gr',
+        'id_md_utl_adm_prm_gr_usu mpa'
+    );
   }
 }

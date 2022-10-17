@@ -94,6 +94,11 @@ class MdUtlProcedimentoDTO extends ProcedimentoDTO
             'md_utl_controle_dsmp cpf');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
+            'TempoExecucaoAtribuido',
+            'cpf.tempo_de_execucao_atribuido',
+            'md_utl_controle_dsmp cpf');
+
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,
             'IdMdUtlRevisao',
             'cpf.id_md_utl_revisao',
             'md_utl_controle_dsmp cpf');

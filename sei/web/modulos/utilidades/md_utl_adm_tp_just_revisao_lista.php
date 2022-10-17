@@ -260,11 +260,11 @@ try {
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getNumIdMdUtlAdmTpJustRevisao());
 
       if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_consultar&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_justificativa='.$arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getNumIdMdUtlAdmTpJustRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Justificativa de Avaliação" alt="Consultar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_consultar&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_tp_justificativa='.$arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getNumIdMdUtlAdmTpJustRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Justificativa de Avaliação" alt="Consultar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_justificativa='.$arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getNumIdMdUtlAdmTpJustRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Justificativa de Avaliação" alt="Alterar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_tp_just_revisao_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_tp_justificativa='.$arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getNumIdMdUtlAdmTpJustRevisao()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar Justificativa de Avaliação" alt="Alterar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -273,16 +273,16 @@ try {
       }
 
       if ($bolAcaoDesativar && $arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Justificativa de Avaliação" alt="Desativar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar Justificativa de Avaliação" alt="Desativar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoReativar && $arrObjMdUtlAdmTpJustRevisaoDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Justificativa de Avaliação" alt="Reativar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar Justificativa de Avaliação" alt="Reativar Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
 
       if ($bolAcaoExcluir){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir Justificativa de Avaliação" alt="Excluir Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Justificativa de Avaliação" alt="Excluir Justificativa de Avaliação" class="infraImg" /></a>&nbsp;';
       }
 
       $strResultado .= '</td></tr>'."\n";
@@ -306,28 +306,48 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-
-  .bloco {
-    position: relative;
-    float: left;
-  }
-
-  .clear {
-    clear: both;
-  }
-
-
-
-  <?if(0){?></style><?}?>
-<?
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
+  <form id="frmMdUtlAdmTpJustRevisaoLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+    <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos); ?>
+
+    <div id="divInfraAreaDados" class="infraAreaDados">
+      <div class="row">
+        <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5 mb-2">
+          <label id="lblTpJustificativa" for="txtTpJustificativa" accesskey="S" class="infraLabelOpcional">
+            Justificativa:
+          </label>
+          <input type="text" id="txtTpJustificativa" name="txtTpJustificativa" class="infraText form-control" value="<?=$tpJustificativa?>" 
+                maxlength="100"
+                tabindex="502"/>
+        </div>
+
+        <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+          <label id="lblDescricao" for="txtDescricao" accesskey="S" class="infraLabelOpcional">
+            Descrição:
+          </label>
+          <input type="text" id="txtDescricao" name="txtDescricao" class="infraText form-control" value="<?=$descricao?>" maxlength="100" tabindex="502"/>
+        </div>
+      </div>
+    </div>
+
+    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
+
+    <?php
+      PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
+      //PaginaSEI::getInstance()->montarAreaDebug();
+      PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+    ?>
+  </form>
+
+<?php require_once 'md_utl_geral_js.php'; ?>
+
+<script type="text/javascript">
     var msg71 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_71); ?>';
     var msg73 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_73); ?>';
     var msg75 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_75); ?>';
@@ -377,54 +397,8 @@ require_once 'md_utl_geral_js.php';
   }
 
   <? } ?>
+</script>
 
-  <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-  <form id="frmMdUtlAdmTpJustRevisaoLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    ?>
-
-    <div id="divInfraAreaDados" class="infraAreaDados">
-
-      <div style="width: 27%;" class="bloco">
-        <label id="lblTpJustificativa" for="txtTpJustificativa" accesskey="S" class="infraLabelOpcional">
-          Justificativa:
-        </label>
-
-        <div class="clear"></div>
-
-        <input type="text" id="txtTpJustificativa" name="txtTpJustificativa" class="infraText" size="30"
-               value="<?=$tpJustificativa?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-      <div style="width: 45%;" class="bloco">
-        <label id="lblDescricao" for="txtDescricao" accesskey="S"
-               class="infraLabelOpcional">
-          Descrição:
-        </label>
-
-        <div class="clear"></div>
-
-        <input style="width: 68%" type="text" id="txtDescricao" name="txtDescricao" class="infraText"
-               size="30"
-               value="<?=$descricao?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-    </div>
-
-    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
-
-    <?
-    PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
-    //PaginaSEI::getInstance()->montarAreaDebug();
-    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-    ?>
-  </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

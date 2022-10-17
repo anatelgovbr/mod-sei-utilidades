@@ -398,7 +398,6 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
         $arrCargaDist     = $objMdUtlControleDsmpRN->buscarTempoExecucao(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
         $arrCargaDistHist = $objMdUtlHistControleDsmpRN->buscarTempoExecucaoHist(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro, $arrCargaDist['infoParaHist']));
         $totalUnidEsforco = $arrCargaDist['tmpCargaDist'] + $arrCargaDistHist;
-        #self::trataDadosCargaDist($arrCargaDist,$arrCargaDistHist);
 
         $tempoExecucaoExecutado = $objMdUtlControleDsmpRN->buscarTempoExecucaoExecutado(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
         $tempoExecucaoExecutadoHist = $objMdUtlHistControleDsmpRN->buscarTempoExecucaoExecutadoHist(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
@@ -499,6 +498,10 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 
     }
 
+    public static function retornaCalculoPercentualPresenca($arrParam){
+        return intval($arrParam['tempoExec'] / (1 + ($arrParam['percDsmp'] / 100)));
+    }
+
     public static function retornaTempoPendenteExecucao($idUsuario, $idTipoControle)
     {
         $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
@@ -506,6 +509,7 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
         $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
         $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
         $objMdUtlControleDsmpDTO->retNumTempoExecucao();
+        $objMdUtlControleDsmpDTO->retNumTempoExecucaoAtribuido();
         $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
         $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
         $objMdUtlControleDsmpDTO->retStrStaAtendimentoDsmp();
@@ -529,11 +533,14 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
                 $objMdUtlControleDsmp->getNumTempoExecucao() == 0)
             {
                 $vlrUndEsf = self::_retornaUnidEsforcoTriagem( $objMdUtlControleDsmp->getNumIdMdUtlTriagem() );
-                $totalTempoConvertido = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($vlrUndEsf, $objMdUtlControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp(), $idUsuario));
-                $totalTempoExecucao += MdUtlAdmPrmGrINT::convertToMins($totalTempoConvertido);
+                #$totalTempoConvertido = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($vlrUndEsf, $objMdUtlControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp(), $idUsuario));
+                #MdUtlAdmPrmGrINT::convertToMins($totalTempoConvertido);
+                $totalTempoExecucao += $vlrUndEsf; 
             }else{
-                $totalTempoConvertido = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($objMdUtlControleDsmp->getNumTempoExecucao(), $objMdUtlControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp(), $idUsuario));
-                $totalTempoExecucao += MdUtlAdmPrmGrINT::convertToMins($totalTempoConvertido);
+                $totalTempoConvertido = $objMdUtlControleDsmp->getNumTempoExecucaoAtribuido();
+                #MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($objMdUtlControleDsmp->getNumTempoExecucao(), $objMdUtlControleDsmp->getNumIdMdUtlAdmTpCtrlDesemp(), $idUsuario));
+                #MdUtlAdmPrmGrINT::convertToMins($totalTempoConvertido);
+                $totalTempoExecucao += $totalTempoConvertido; 
             }
         }
         return $totalTempoExecucao;
@@ -565,11 +572,11 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
         $objTriagemRN  = new MdUtlTriagemRN();
 
         $objTriagemDTO->setNumIdMdUtlTriagem( $idTriagem );
-        $objTriagemDTO->retNumTempoExecucao();
+        $objTriagemDTO->retNumTempoExecucaoAtribuido();
 
         $vlrUnidEsf = $objTriagemRN->consultar( $objTriagemDTO );
 
-        return !is_null( $vlrUnidEsf ) ? $vlrUnidEsf->getNumTempoExecucao() : 0;
+        return !is_null( $vlrUnidEsf ) ? $vlrUnidEsf->getNumTempoExecucaoAtribuido() : 0;
     }
 
     public static function buscarArrayPessoasNaoPodeDistribuir($arrProcedimentos)
@@ -694,6 +701,7 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
     public static function atualizarControleDesempenhoAoAlterarUsuario($idUsuarioDistribuido, $idTipoControle)
     {
         $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+        $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
         $objMdUtlControleDsmpDTO->setNumIdUsuarioDistribuicao($idUsuarioDistribuido);
         $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
         $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO);
@@ -710,5 +718,20 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
             $objMdUtlControleDsmp->setNumPercentualDesempenho($arrDados['numPercentualDesempenho']);
             $objMdUtlControleDsmpRN->alterar($objMdUtlControleDsmp);
         }
+    }
+
+    public static function validaPlanoTrabalho( $arrPost ){
+        //arrPost = [0 => id_serie , 1 => numero sei]
+        $xml  = '<Dados>';
+      
+        $objRnGeral = new MdUtlRegrasGeraisRN();
+        $arrDados = $objRnGeral->validaPlanoTrabalho( $arrPost );
+        $strErro  = $arrDados['erro'] ? '1' : '0';
+        $xml .= '<Erro>'.$strErro.'</Erro>';
+        $xml .= '<Msg>'.str_replace('&','&amp;',$arrDados['msg']).'</Msg>';
+    
+        $xml .= '</Dados>';
+    
+        return $xml;
     }
 }

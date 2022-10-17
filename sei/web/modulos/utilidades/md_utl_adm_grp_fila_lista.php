@@ -285,7 +285,7 @@ try {
       $strCaptionTabela = 'Atividades Inativos';
     }
 
-    $strResultado .= '<table width="99%" class="infraTable" summary="'.$strSumarioTabela.'">'."\n";
+    $strResultado .= '<table class="infraTable table" summary="'.$strSumarioTabela.'">'."\n";
     $strResultado .= '<caption class="infraCaption">'.PaginaSEI::getInstance()->gerarCaptionTabela($strCaptionTabela,$numRegistros).'</caption>';
     $strResultado .= '<tr>';
     if ($bolCheck) {
@@ -333,16 +333,16 @@ try {
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila());
 
       if($bolAcoesParametrizar) {
-        $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fl_proc_atv_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_grp_fila=' . $arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensLocal() . '/sei_servicos.gif" title="Parametrizar Grupo de Atividade" alt="Parametrizar Grupo de Atividade" class="infraImg" /></a>&nbsp;';
-        $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_grp_fila=' . $arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="/infra_css/imagens/mais.gif" title="Incluir nova Fila em  Grupo de Atividade já existente" alt="Incluir nova fila em grupo de atividade já existente" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fl_proc_atv_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_grp_fila=' . $arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="'. Icone::SISTEMA_COM_SERVICO .'" title="Parametrizar Grupo de Atividade" alt="Parametrizar Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl=' . $idTpCtrl . '&id_md_utl_adm_grp_fila=' . $arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/mais.svg" title="Incluir nova Fila em  Grupo de Atividade já existente" alt="Incluir nova fila em grupo de atividade já existente" class="infraImg" /></a>&nbsp;';
       }
 
         if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_grp_fila='.$arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Grupo de Atividade" alt="Consultar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_grp_fila='.$arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Grupo de Atividade" alt="Consultar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_grp_fila='.$arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar  Grupo de Atividade" alt="Alterar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_grp_fila='.$arrObjMdUtlAdmGrpFilaDTO[$i]->getNumIdMdUtlAdmGrpFila()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar  Grupo de Atividade" alt="Alterar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -354,16 +354,16 @@ try {
         }
 
       if ($bolAcaoDesativar && $arrObjMdUtlAdmGrpFilaDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar  Grupo de Atividade" alt="Desativar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar  Grupo de Atividade" alt="Desativar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoReativar && $arrObjMdUtlAdmGrpFilaDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar  Grupo de Atividade" alt="Reativar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar  Grupo de Atividade" alt="Reativar  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
       }
 
 
       if ($bolAcaoExcluir){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/excluir.gif" title="Excluir  Grupo de Atividade" alt="Excluir  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoExcluir(\''.$strId.'\',\''.$strDescricaoFila.'\',\''.$strNomeGrupo.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir  Grupo de Atividade" alt="Excluir  Grupo de Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       $strResultado .= '</td></tr>'."\n";
@@ -385,44 +385,69 @@ PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-
-  .bloco {
-    position: relative;
-    float: left;
-  }
-
-  .clear {
-    clear: both;
-  }
-
-    #divPesqAtividade{
-        position: absolute;
-        float: left;
-
-    }
-    #divPesqDescricao{
-        position: absolute;
-        left: 25%;
-    }
-    #divPesqFila{
-      position: absolute;
-      margin-left: 59.5%;
-      margin-top: 0%;
-      width: 30%
-    }
-
-  <?if(0){?></style><?}?>
-<?
 PaginaSEI::getInstance()->fecharStyle();
+
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
+  <form id="frmMdUtlAdmGrpFilaLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+    <?php 
+      PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+      PaginaSEI::getInstance()->abrirAreaDados('');
+    ?>
+
+    <div class="row">
+      
+      <div class="col-sm-4 col-md-4 col-lg-4 mb-2" id="divPesqAtividade">
+        <label id="lblGrupoAtividade" for="txtGrupoAtividade" accesskey="S" class="infraLabelOpcional"> Grupo de Atividade: </label>
+        <input type="text" id="txtGrupoAtividade" name="txtGrupoAtividade" class="infraText form-control"
+              value="<?=$tpRevisao?>" maxlength="100" tabindex="502"/>
+      </div>      
+
+      <?php if(!$isSelecionar){ ?>
+        
+        <div class="col-sm-4 col-md-4 col-lg-4 mb-2" id="divPesqDescricao">
+          <label id="lblDescricao" for="txtDescricao" accesskey="S" class="infraLabelOpcional"> Descrição: </label>
+          <input type="text" id="txtDescricao" name="txtDescricao" class="infraText form-control"
+                value="<?=$descricao?>" maxlength="100" tabindex="502"/>
+        </div>
+        
+        <div class="col-sm-4 col-md-4 col-lg-4" id="divPesqFila">
+          <label id="lblFila" for="txtFila" accesskey="S" class="infraLabelOpcional">Fila:</label>
+            <select onchange="pesquisar();" id="selFila" name="selFila" class="infraSelect form-control">
+              <?= $strFilaPadrao ?>
+            </select>
+        </div>
+        
+      <?php } ?>
+    
+    </div>
+
+    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
+
+    <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+    
+    <div class="row">
+      <div class="col-12">
+        <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros); ?>
+      </div>
+    </div>
+        
+    <?php
+      //PaginaSEI::getInstance()->montarAreaDebug();
+      PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+    ?>
+  </form>
+  
+<?php require_once 'md_utl_geral_js.php'; ?>
+<script type="text/javascript">
     var msg76 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_76); ?>';
     var msg77 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_77); ?>';
     var msg78 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_78); ?>';
@@ -478,66 +503,10 @@ require_once 'md_utl_geral_js.php';
 
   <? } ?>
 
-  <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-  <form id="frmMdUtlAdmGrpFilaLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    PaginaSEI::getInstance()->abrirAreaDados('6em');
-    ?>
+    $('#divInfraAreaTabela').removeClass('infraAreaTabela');
 
+</script>
 
-      <div id="divPesqAtividade" style="width: 30%">
-        <label id="lblGrupoAtividade" for="txtGrupoAtividade" accesskey="S" class="infraLabelOpcional">
-          Grupo de Atividade:
-        </label>
-
-        <div class="clear"></div>
-
-        <input type="text" id="txtGrupoAtividade" name="txtGrupoAtividade" class="infraText" style="width: 75%" size="30"
-               value="<?=$tpRevisao?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-
-    <?php if(!$isSelecionar){ ?>
-      <div id="divPesqDescricao" style="width: 40%">
-        <label id="lblDescricao" for="txtDescricao" accesskey="S"
-               class="infraLabelOpcional">
-          Descrição:
-        </label>
-
-        <div class="clear"></div>
-
-        <input  style="width: 80%" type="text" id="txtDescricao" name="txtDescricao" class="infraText"
-               size="30"
-               value="<?=$descricao?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-
-        <div id="divPesqFila">
-            <label id="lblFila" for="txtFila" accesskey="S"
-                   class="infraLabelOpcional">Fila:</label>
-
-            <div class="clear"></div>
-            <select onchange="pesquisar();" style="width: 65%;height: 20px;" id="selFila" name="selFila" class="infraSelect">
-              <?= $strFilaPadrao ?>
-            </select>
-
-        </div>
-<?php } ?>
-    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
-
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
-    //PaginaSEI::getInstance()->montarAreaDebug();
-    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-    ?>
-  </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

@@ -291,6 +291,10 @@ class MdUtlTriagemRN extends InfraRN {
             $idTipoControle = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
             $idNovaFila = $dados['selFila'];
             $objMdUtlControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idNovaFila, $idTipoControle, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO));
+
+            if ( isset( $_POST['ckbDistAutoParaMim'] ) ) {
+              $objMdUtlControleDsmpRN->distrAutoAposFinalizar();
+            }
         }else{
             return 1;
         }
@@ -362,6 +366,9 @@ class MdUtlTriagemRN extends InfraRN {
           }
       }
 
+      if (isset($dados['ckbDistAutoParaMim'])) $objMdUtlTriagemDTO->setStrDistAutoParaMim( $dados['ckbDistAutoParaMim'] );
+      else $objMdUtlTriagemDTO->setStrDistAutoParaMim( null );
+
       return $this->cadastrar($objMdUtlTriagemDTO);
   }
 
@@ -376,7 +383,7 @@ class MdUtlTriagemRN extends InfraRN {
       $objMdUtlTriagemDTO->setDthPrazo($arrParams['dataPrazo'] ? $arrParams['dataPrazo'] : '');
       $objMdUtlTriagemDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
       $objMdUtlTriagemDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
-      $objMdUtlTriagemDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+      $objMdUtlTriagemDTO->setNumTempoExecucaoAtribuido($arrParams['tempoExecucaoAtribuido']);
       $objMdUtlTriagemDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
 
       return $this->alterar($objMdUtlTriagemDTO);
@@ -479,16 +486,28 @@ class MdUtlTriagemRN extends InfraRN {
         $objRelTriagemAtvDTO->retNumIdMdUtlAdmAtvSerieProd();
         $objRelTriagemAtvDTO->retNumTempoExecucaoProduto();
         $objRelTriagemAtvDTO->retStrSinObrigatorio();
-        $objRelTriagemAtvDTO->retNumComplexidadeAtividade() ;
+        $objRelTriagemAtvDTO->retNumComplexidadeAtividade();
         $objRelTriagemAtvDTO->retStrNomeSerie();
-        $objRelTriagemAtvDTO->retStrNomeAtividade() ;
-        $objRelTriagemAtvDTO->retStrStaAplicabilidadeSerie();
+        $objRelTriagemAtvDTO->retStrNomeAtividade();
         $objRelTriagemAtvDTO->retStrNomeProduto();
         $objRelTriagemAtvDTO->retNumIdMdUtlAdmTpProduto();
         $objRelTriagemAtvDTO->retNumIdSerieRel();
+        $objRelTriagemAtvDTO->retStrSinNaoAplicarPercDsmpAtv();
+        $objRelTriagemAtvDTO->retNumTempoExecucaoAtribuido();
 
         return $objRelTriagemAtvDTO;
-}
+  }
+
+  public function getObjDTOAnaliseAtv( $idTriagem ){
+    $objRelTriagemAtvDTO = new MdUtlRelTriagemAtvDTO();
+
+    $objRelTriagemAtvDTO->setNumIdMdUtlTriagem($idTriagem);
+    $objRelTriagemAtvDTO->retTodos();    
+    $objRelTriagemAtvDTO->retStrNomeAtividade();   
+    $objRelTriagemAtvDTO->retStrSinNaoAplicarPercDsmpAtv();
+    
+    return $objRelTriagemAtvDTO;
+  }
 
   protected function getNumPrazoAtividadePorTriagemConectado($idTriagem){
       $objRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
@@ -594,5 +613,4 @@ class MdUtlTriagemRN extends InfraRN {
       $dados['isCorrecaoTriagem'] = true;
       return $this->cadastrarDadosTriagem($dados);
     }
-
 }

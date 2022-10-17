@@ -272,11 +272,13 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
                 } else {
 
                     $mdUtlAdmAtvSerieProdDTO->setNumIdSerie($registro[9]);
+                    /*
                     if ($registro[3] == 'I') {
                         $mdUtlAdmAtvSerieProdDTO->setStrStaAplicabilidadeSerie(self::$APLICABILIDADESERIE_INTERNO);
                     } else {
                         $mdUtlAdmAtvSerieProdDTO->setStrStaAplicabilidadeSerie(self::$APLICABILIDADESERIE_EXTERNO);
                     }
+                    */
                 }
                 $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmAtividade($idAtividade);
                 $mdUtlAdmAtvSerieProdDTO->setNumTempoExecucaoProduto($registro[5]);
@@ -289,7 +291,9 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
         }
     }
 
-  protected function retornarItensTabelasDinamicaControlado($idAtividade){
+  protected function retornarItensTabelasDinamicaControlado($arrParams){
+      $idAtividade = array_key_exists(0,$arrParams) ? $arrParams[0] : null;
+      $isClonar    = array_key_exists(1,$arrParams) ? $arrParams[1] : null;
 
       $mdUtlAdmAtvSerieProdDTO = new MdUtlAdmAtvSerieProdDTO();
       $mdUtlAdmAtvSerieProdDTO->setNumIdMdUtlAdmAtividade($idAtividade);
@@ -298,12 +302,12 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
       $mdUtlAdmAtvSerieProd = $this->listar($mdUtlAdmAtvSerieProdDTO);
 
       $arrIten = array();
-
+      $idx = 0;
       foreach ($mdUtlAdmAtvSerieProd as $item){
         $linha= array();
         if($item->getStrStaTipo() == self::$TIPO_PRODUTO) {
 
-            $linha[]  = $item->getNumIdMdUtlAdmAtvSerieProd();
+            $linha[]  = $isClonar ? 'NOVO_REGISTRO_'.$idx : $item->getNumIdMdUtlAdmAtvSerieProd();
             $linha[]  = $item->getNumIdMdUtlAdmTpProduto().'P';
             $linha[]  = $item->getStrStaTipo();
             $linha[]  = null;
@@ -311,10 +315,10 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
 
         }elseif ($item->getStrStaTipo() == self::$TIPO_DOCUMENTO){
 
-            $linha[]  = $item->getNumIdMdUtlAdmAtvSerieProd();
+            $linha[] = $isClonar ? 'NOVO_REGISTRO_'.$idx : $item->getNumIdMdUtlAdmAtvSerieProd();
             $linha[] = $item->getNumIdSerie().'D';
             $linha[] = $item->getStrStaTipo();
-            $linha[] = $item->getStrStaAplicabilidadeSerie();
+            $linha[] = null;
             $linha[] = $item->getStrNomeSerie();
         }
 
@@ -336,6 +340,7 @@ class MdUtlAdmAtvSerieProdRN extends InfraRN {
           $linha[]   = 'N';
 
           $arrIten[] = $linha;
+          $idx++;
       }
       return $arrIten;
   }

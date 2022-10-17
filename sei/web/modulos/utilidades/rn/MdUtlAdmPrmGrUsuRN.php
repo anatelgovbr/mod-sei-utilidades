@@ -290,6 +290,15 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
           //Tipo presenca
           $UsuarioParticipante[]= $arrPresenca[$dadosUsuParticipante->getStrStaTipoPresenca()];
           $UsuarioParticipante[]= $dadosUsuParticipante->getStrStaTipoPresenca();
+          
+          // Id Dcomento
+          $linkAux   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&id_documento='. $dadosUsuParticipante->getDblIdDocumento());
+          $numSei    = $this->getNumeroSeiPlanoTrabalho( $dadosUsuParticipante->getDblIdDocumento() );
+          $montaLink = !empty( $numSei )
+                          ? '<a alt="'.$numSei.'" href="'.$linkAux.'" target="_blank" style="text-decoration: underline;">'.$numSei.'</a>'
+                          : '';
+                          
+          $UsuarioParticipante[]= $montaLink;
 
           if($dadosUsuParticipante->getStrStaTipoPresenca() == self::$TP_PRESENCA_DIFERENCIADO) {
               $UsuarioParticipante[] = $dadosUsuParticipante->getNumFatorDesempDiferenciado().'%';
@@ -311,12 +320,24 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
           $UsuarioParticipante[]= $dadosUsuParticipante->getStrNome().'('.$dadosUsuParticipante->getStrSigla().')';
 
           $arrUsuarioParticipante[]= $UsuarioParticipante;
-
       }
 
       $arrTbUsuarioParticipante = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrUsuarioParticipante);
+      
+      return array('itensTabela'=>$arrUsuarioParticipante,'qtdUsuario'=> $arrUsuarioParticipante ? count($arrUsuarioParticipante) : 0);
+  }
 
-      return array('itensTabela'=>$arrUsuarioParticipante,'qtdUsuario'=>count($arrUsuarioParticipante));
+  private function getNumeroSeiPlanoTrabalho( $idDoc ){
+    $objDocumentoDTO = new DocumentoDTO();
+    $objDocumentoRN = new DocumentoRN();
+
+    $objDocumentoDTO->setDblIdDocumento( $idDoc );    
+    $objDocumentoDTO->setNumMaxRegistrosRetorno(1);
+    $objDocumentoDTO->retStrProtocoloDocumentoFormatado();    
+
+    $objDocumentoDTO = $objDocumentoRN->consultarRN0005( $objDocumentoDTO );
+    
+    return $objDocumentoDTO ? $objDocumentoDTO->getStrProtocoloDocumentoFormatado() : null;
   }
 
   public function excluirUsuarioParticipante($idsUsuariosExcl, $idsVinculadosBd){
@@ -419,7 +440,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
             case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
                 $numDias = InfraData::obterUltimoDiaMes($mesAtual, $anoAtual);
-                $dtInicial = '01' . '/' . $mesAtual . '/' . $anoAtual;
+                $dtInicial = '01/' . $mesAtual . '/' . $anoAtual;
                 $dtFinal   = $numDias . '/' . $mesAtual . '/' . $anoAtual;
 
                 $diasUteis = $MdUtlPrazoRN->retornaQtdDiaUtil($dtInicial, $dtFinal, false);

@@ -13,6 +13,7 @@ $objMdUtlGestaoAjustPrazoRN = new MdUtlGestaoAjustPrazoRN();
 $objMdUtlAjustePrazoRN      = new MdUtlAjustePrazoRN();
 $objMdUtlControleDsmpRN     = new MdUtlControleDsmpRN();
 $objMdUtlAdmUtlTpCtrlRN     = new MdUtlAdmTpCtrlDesempRN();
+$objMdUtlFilaRN             = new MdUtlAdmFilaRN();
 $objMdUtlAjustePrazoDTO     = new MdUtlAjustePrazoDTO();
 $objRegrasGerais            = new MdUtlRegrasGeraisRN();
 $msg102                     = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_102);
@@ -50,6 +51,7 @@ $strUrl        = 'controlador.php?acao=md_utl_gestao_ajust_prazo_';
 $strUrlContest = 'controlador.php?acao=md_utl_gestao_contestacao_';
 
 $strUrlFechar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']);
+$linkCtrlProcesso = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acaoorigem=' . $_GET['acao']);
 
 $arrPostDados = array('txtProcessoMdGestao' => $txtProcessoCampo, 'selStatusProcMdGestao'=> $selStatusProcCampo, 'selServidorMdGestao' => $selServidorCampo, 'selTpControle' => $selTpControleCampo);
 
@@ -63,20 +65,49 @@ $arrIdsTpControle = array();
 $arrGestorSipSei  = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
 
 //Retorna os tipos de controles da unidade
-$arrObjTpControle    = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
-$existeTpCtrlUnidade = !is_null( $arrObjTpControle );
+$arrObjTpControleUnid = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
+
+$existeTpCtrlUnidade = !is_null( $arrObjTpControleUnid );
+$userIsAvaliador     = 0;
+if ( $existeTpCtrlUnidade ) {
+    $arrIsAvaliador = $objMdUtlFilaRN->verificaUsuarioLogadoAvaliador(
+        InfraArray::converterArrInfraDTO( $arrObjTpControleUnid , 'IdMdUtlAdmTpCtrlDesemp' )
+    );
+}
+
+$userIsAvaliador = $arrIsAvaliador['qtdUserAvaliador'];
 
 //Relaciona os tipos de controle da unidade onde o usuario é gestor
-if ( count($arrObjTpControle) > 0 && ($arrGestorSipSeicount || ( $arrGestorSipSei ) > 0 ) ){
-    foreach ($arrObjTpControle as $k => $v) {
+if ( count($arrObjTpControleUnid) > 0 && ($arrGestorSipSeicount || ( $arrGestorSipSei ) > 0 ) ){
+    foreach ($arrObjTpControleUnid as $k => $v) {
         if ( in_array( $v->getNumIdMdUtlAdmTpCtrlDesemp() , $arrGestorSipSei ) ) array_push( $arrIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
-        else unset( $arrObjTpControle[$k] );
     }
+}
+
+//Unifica os tipos de controle onde: o usuario é gestor e/ou avaliador
+$arrIdsTpControle = array_unique(array_merge($arrIdsTpControle,$arrIsAvaliador['idsTpCtrlUsuarioAvaliador']));
+
+//Ocorre um limpa para retornar somente os tipos de controles que tem relação como gestor ou avaliador
+foreach ($arrObjTpControleUnid as $k => $v) {
+    if ( !in_array( $v->getNumIdMdUtlAdmTpCtrlDesemp() , $arrIdsTpControle ) ) unset( $arrObjTpControleUnid[$k] );
 }
 
 $existeTpCtrlGestorUnid = !empty( $arrIdsTpControle );
 
-$selTpControle = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',$_POST['selTpControle']);
+// Exibe msg de aviso para o usuario que nao poderá acessar esta pagina e, posteriormente, será redirecionado para a tela
+// de controle de processos
+try {
+    if ( !$existeTpCtrlGestorUnid and !( $userIsAvaliador > 0 ) ) {
+        $ex = new InfraException();
+        $ex->lancarValidacao( MdUtlMensagemINT::getMensagem( MdUtlMensagemINT::$MSG_UTL_123 ) );
+    }
+} catch ( Exception $e ) {
+    PaginaSEI::getInstance()->adicionarMensagem( $e->__toString() , InfraPagina::$TIPO_MSG_AVISO );
+    header('Location: ' . $linkCtrlProcesso );
+    die;
+}
+
+$selTpControle = is_null($arrObjTpControleUnid) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControleUnid,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNomeTipoControle',$_POST['selTpControle']);
 
 $objSeridores = $objMdUtlGestaoAjustPrazoRN->recuperarServidoresSolicitacoes($idTipoControle);
 
@@ -196,7 +227,7 @@ switch ($_GET['acao']) {
         $objControleDsmpDTO->retStrEmail();
         $objControleDsmpDTO->setNumMaxRegistrosRetorno(1);
         $objControleDsmpDTO = $objMdUtlControleDsmpRN->consultar($objControleDsmpDTO);
-        
+
         $idProcedimento = $objControleDsmpDTO->getDblIdProcedimento();
         $staAtendimento = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
 
@@ -214,7 +245,7 @@ switch ($_GET['acao']) {
         break;
 
     case 'md_utl_gestao_contestacao_reprovar':
-   
+
         $idControleDsmp = array_key_exists('id_controle_desempenho', $_GET) ? $_GET['id_controle_desempenho'] : null;
         $numIdAContest  = array_key_exists('id_contest', $_GET) ? $_GET['id_contest'] : null;
 
@@ -259,8 +290,6 @@ $arrComandos[] = '<button type="button" accesskey="P" id="btnPesquisar" onclick=
 $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fechar()" class="infraButton">
                                         Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
-
-
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
@@ -270,135 +299,144 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 //Include de estilos CSS
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if (0) { ?>
-<style><? }
-    ?>
-    .bloco {
-        position: relative;
-        float: left;
-        margin-top: 1%;
-        width: 90%;
-    }
-
-    .clear {
-        clear: both;
-    }
-
-    .padraoSelect {
-        margin-top: 1px;
-        height: 21px;
-        width: 78%;
-    }
-
-    .padraoInput {
-        width: 78%;
-    }
-
-    .spnCaptionRegistros{
-        font-size: 1.1em;
-        float: right;
-        margin-right: 5px;
-        text-align: right;
-        margin-top: 4px;
-    }
-
-    .divAjustePrazoGeral{
-        border-radius: 6px;
-        background-color: #d7d7d7;
-        font-weight: 500;
-        border-bottom: 1px #c3c3c3 solid;
-        padding-top: 7px;
-        padding-bottom:5px;
-        width: 98%;
-        float: left;
-    }
-
-    .divContestacaoGeral{
-        border-radius: 6px;
-        background-color: #d7d7d7;
-        font-weight: 500;
-        border-bottom: 1px #c3c3c3 solid;
-        padding-top: 7px;
-        padding-bottom:5px;
-        width: 98%;
-        float: left;
-        margin-top: 5px;
-    }
-
-    .spnAjustePrazoGeral{
-        font-size: 10pt;
-        margin-left: 6px;
-        font-weight: bold;
-    }
-    .spnContestacaoGeral{
-        font-size: 10pt;
-        margin-left: 6px;
-        font-weight: bold;
-    }
-
-    textarea {
-        resize: none;
-        width: 60%;
-    }
-
-    select[multiple] {
-        width: 61%;
-        margin-top: 0.5%;
-    }
-
-    img[id^="imgExcluir"] {
-        margin-left: -2px;
-    }
-
-    div[id^="divOpcoes"] {
-        position: absolute;
-        width: 1%;
-        left: 62%;
-        top: 44%;
-    }
-
-    img[id^="imgAjuda"] {
-        margin-bottom: -4px;
-    }
-    
-    .div_comun{
-        position: relative;
-        margin-top: 9px;
-        width: 20%;
-    }
-
-    a.ancoraPadraoAzul{
-        padding: 0;
-    }
-
-    <?
-    if (0) { ?></style><?
-} ?>
-
-<?php PaginaSEI::getInstance()->fecharStyle();
+PaginaSEI::getInstance()->fecharStyle();
 
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
-    var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
-    var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
-    var msg104 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_104)?>';
-    var msg102  = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_102) ?>';
+<form id="frmGestaoLista" method="post" onsubmit="return OnSubmitForm();"
+      action="<?= PaginaSEI::getInstance()->formatarXHTML(
+          SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
+      ) ?>">
+
+    <?php
+        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+        PaginaSEI::getInstance()->abrirAreaDados('auto');
+        $col_def = "col-sm-6 col-md-6 col-lg-3";
+    ?>
+
+    <div class="row mb-3">
+        <div id="divTpCtrl" class="<?= $col_def ?> bloco">
+            <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
+            <select id="selTpControle" name="selTpControle" class="infraSelect form-control"
+                    onchange="pesquisar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                <?= $selTpControle ?>
+            </select>
+        </div>
+
+        <div id="divProcesso" class="<?= $col_def ?> bloco">
+            <label id="lblProcesso" for="txtProcessoMdGestao" class="infraLabelOpcional">Processo:</label>
+            <input type="text" id="txtProcessoMdGestao" name="txtProcessoMdGestao" class="inputFila infraText form-control"
+                value="<?= $txtProcessoCampo ?>"
+                maxlength="100" tabindex="502"/>
+        </div>
+
+        <div id="divStatusProc" class="<?= $col_def ?> bloco">
+            <label id="lblStatusProc" for="selStatusProcMdGestao" accesskey="" class="infraLabelOpcional">
+                Status do Processo:
+            </label>
+            <select id="selStatusProcMdGestao" name="selStatusProcMdGestao" class="infraSelect form-control"
+                    onchange="pesquisar();"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                <?= $arrStatusProcesso ?>
+            </select>
+        </div>
+
+        <div id="divServidor" class="<?= $col_def ?> bloco">
+            <label id="lblServidor" for="selServidorMdGestao" accesskey="" class="infraLabelOpcional">
+                Servidor:
+            </label>
+            <select id="selServidorMdGestao" name="selServidorMdGestao" class="infraSelect form-control"
+                    onchange="pesquisar();"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                <?= $arrSelServidor ?>
+            </select>
+        </div>
+    </div>
+
+    <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
+
+    <?php if( $numRegistros > 0 ){ ?>
+        <?php $cServico = 0; ?>
+        <div class="row">
+            <div class="divAjustePrazoGeral col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <div style="background-color: #999999; font-weight: 500; border-bottom: 1px #bfb7b7 solid; padding-top: 5px; padding-bottom:5px;">
+                    <span class="spnExpandirTodos">
+                        <img id="imgExpandir" style="margin-bottom: -7px;"
+                                onclick="expandirTodos('div<?= $cServico; ?>', this)"
+                                src=" <?php echo PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/exibir.svg' ?>"/>
+                        <label class="infraLabelObrigatorio">Ajuste de Prazo</label> - <?= $strCaption ?>
+                    </span>
+                    <div id="div<?= $cServico; ?>" style="display: none;" class="table-responsive">
+                        <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);?>
+                    </div>
+                    <?php $cServico++; ?>
+                </div>
+            </div>
+        </div>
+    <?php }?>
+
+
+
+    <?php if( $numRegistrosCont > 0 ){ ?>
+        <?php $cServicoCont = 1; ?>
+        <div class="row">
+            <div class="divContestacaoGeral col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <div style="background-color: #999999; font-weight: 500; border-bottom: 1px #bfb7b7 solid; padding-top: 5px; padding-bottom:5px;">
+                    <span class="spnExpandirTodos">
+                        <img id="imgExpandir" style="margin-bottom: -7px;"
+                                onclick="expandirTodos('div<?= $cServicoCont; ?>', this)"
+                                src=" <?php echo PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/exibir.svg' ?>"/>
+                        <label class="infraLabelObrigatorio">Contestação</label> - <?= $strCaptionCont ?>
+                    </span>
+                    <div id="div<?= $cServicoCont; ?>" style="display: none;" class="table-responsive">
+                        <?php PaginaSEI::getInstance()->montarAreaTabela($strResultadoContest, $numRegistrosCont);?>
+                    </div>
+                    <?php $cServicoCont++; ?>
+                </div>
+            </div>
+        </div>
+    <?php }?>
+
+    <input type="hidden" id="hdnIsContatoVazio" name="hdnIsContatoVazio" value="<?= $isContatoVazioRev;?>"/>
+    <input type="hidden" id="hdnUrlControleProcessos" name="hdnUrlControleProcessos"
+           value="<?= $linkCtrlProcesso ?>"/>
+    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
+           value="<?= is_null($idTipoControle) ? '0' : $idTipoControle; ?>"/>
+    <input type="hidden" id="hdnValidaTpCtrl" name="hdnValidaTpCtrl" value="<?= $existeTpCtrlUnidade ? '1' : '0' ?>">
+    <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
+           value="<?= $isParametrizado ? '1' : '0'; ?>"/>
+    <input type="hidden" id="hdnIsGestor" name="hdnIsGestor" value="<?= $existeTpCtrlGestorUnid ? '1' : '0';?>"/>
+    <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value=""/>
+    <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?= $isProcessoAutorizadoConcluir ?>"/>
+    <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?= $idProcedimentoAprovacao ?>"/>
+    <input type="hidden" id="hdnUserIsAvaliador" value="<?= $userIsAvaliador > 0 ? 'S' : 'N'?>">
+</form>
+
+<?php require_once 'md_utl_geral_js.php'; ?>
+
+<script type="text/javascript">
+    var msg24 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
+    var msg25 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
+    var msg104 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_104)?>';
+    var msg102  = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_102) ?>';
+    var msg123  = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_123) ?>';
 
     function inicializar() {
         var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
         var idParam  = document.getElementById('hdnIdParametroCtrlUtl').value;
         var tpCtrl   = document.getElementById('hdnValidaTpCtrl').value;
-        var isGestor = document.getElementById('hdnIsGestor').value;
         var isPesquisar = '<?=$isPesquisar?>';
         var numRegistros = '<?=$numRegistros?>';
         var numRegistrosCont = '<?=$numRegistrosCont?>';
-        var isProcessoConcl  = '<?php echo $isProcessoConcluido ?>';
-        var msgConclusao = '<?php echo $msg107 ?>';
-        var msgEmail = '<?php echo $msg102 ?>';
-        var isContatoVazio = '<?php echo $isContatoVazioRev ?>';
+        var isProcessoConcl  = '<?= $isProcessoConcluido ?>';
+        var msgConclusao = '<?= $msg107 ?>';
+        var msgEmail = '<?= $msg102 ?>';
+        var isContatoVazio = '<?= $isContatoVazioRev ?>';
         var isValorGet = false;
 
         if(isPesquisar == 1 && numRegistros > 0){
@@ -416,12 +454,6 @@ require_once 'md_utl_geral_js.php';
 
         if (idParam == 0) {
             alert(msg25);
-            window.location.href = urlCtrlProcessos;
-            return false;
-        }
-
-        if (isGestor == 0){
-            alert(msg104);
             window.location.href = urlCtrlProcessos;
             return false;
         }
@@ -471,16 +503,15 @@ require_once 'md_utl_geral_js.php';
         }
     }
 
-    function expandirTodos(idDiv,img) {
+    function expandirTodos(idDiv, img) {
         var divFilha = document.getElementById(idDiv);
 
-        if(divFilha.style.visibility == "hidden") {
-            document.getElementById(idDiv).setAttribute("style", "overflow:hidden; max-height: 100em; transition: max-height 1s ease-in-out;");
-            img.setAttribute('src', '/infra_css/imagens/ver_resumo.gif');//menos
-
+        if (divFilha.style.display == "none") {
+            document.getElementById(idDiv).removeAttribute('style');
+            img.setAttribute('src', '/infra_css/svg/ocultar.svg');//menos
         } else {
-            document.getElementById(idDiv).setAttribute("style", "max-height: 0em; visibility: hidden");
-            img.setAttribute('src', '/infra_css/imagens/ver_tudo.gif');//mais
+            document.getElementById(idDiv).setAttribute("style", "display: none");
+            img.setAttribute('src', '/infra_css/svg/exibir.svg');//mais
         }
     }
 
@@ -511,129 +542,7 @@ require_once 'md_utl_geral_js.php';
             }
         }
     }
-
-
-    <?if(0){?></script><?}?>
-<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-
-<?php
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
-?>
-<form id="frmGestaoLista" method="post" onsubmit="return OnSubmitForm();"
-      action="<?= PaginaSEI::getInstance()->formatarXHTML(
-          SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
-      ) ?>">
-
-    <?php
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    PaginaSEI::getInstance()->abrirAreaDados('7em');
-    ?>
-    <div id="divTpCtrl" class="bloco div_comun">
-        <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
-        <select id="selTpControle" name="selTpControle" class="infraSelect padraoSelect"
-                onchange="pesquisar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <?= $selTpControle ?>
-        </select>
-    </div>
-
-    <div class="bloco div_comun" id="divProcesso">
-        <label id="lblProcesso" for="txtProcessoMdGestao" class="infraLabelOpcional">
-            Processo:
-        </label>
-
-        <div class="clear"></div>
-
-        <input type="text" id="txtProcessoMdGestao" name="txtProcessoMdGestao" class="inputFila infraText padraoInput"
-               size="30"
-               value="<?php echo $txtProcessoCampo ?>"
-               maxlength="100" tabindex="502"/>
-    </div>
-
-
-    <div id="divStatusProc" class="bloco div_comun">
-        <label id="lblStatusProc" for="selStatusProcMdGestao" accesskey="" class="infraLabelOpcional">Status do Processo:</label>
-        <select id="selStatusProcMdGestao" name="selStatusProcMdGestao" class="infraSelect padraoSelect"
-                onchange="pesquisar();"
-                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <?= $arrStatusProcesso ?>
-        </select>
-    </div>
-
-
-    <div id="divServidor" class="bloco div_comun">
-        <label id="lblServidor" for="selServidorMdGestao" accesskey="" class="infraLabelOpcional">Servidor:</label>
-        <select id="selServidorMdGestao" name="selServidorMdGestao" class="infraSelect padraoSelect"
-                onchange="pesquisar();"
-                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            <?= $arrSelServidor ?>
-        </select>
-    </div>
-
-    <?php
-    PaginaSEI::getInstance()->fecharAreaDados();
-    ?>
-
-    <br/>
-    <br/>
-
-    <?php if($numRegistros > 0){?>
-        <?php $cServico = 0; ?>
-        <div>
-            <div class="divAjustePrazoGeral">
-                <span class="spnAjustePrazoGeral">
-                    <img id="imgExpandir" style="margin-bottom: -2px;" onclick="expandirTodos('div<?php echo $cServico; ?>', this)"
-                         src=" <?php echo PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/ver_tudo.gif' ?>"/>
-                    Ajuste de Prazo
-                </span>
-                <?php echo $strCaption ?>
-            <br/>
-                <div id="div<?php echo $cServico; ?>"
-                    <?php if($_GET['acao_origem'] == 'md_utl_gestao_ajust_prazo_aprovar' || $_GET['acao_origem'] == 'md_utl_gestao_ajust_prazo_reprovar'){?>
-                    style="" <?php } else {?> style="max-height: 0px; visibility: hidden" <?php }?>>
-                    <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);?>
-                </div>
-                <?php $cServico++; ?>
-            </div>
-        </div>
-    <?php }?>
-
-    <?php if($numRegistrosCont > 0){?>
-        <?php $cServicoCont = 1; ?>
-        <div>
-            <div class="divContestacaoGeral">
-                <span class="spnContestacaoGeral">
-                    <img id="imgExpandirCont" style="margin-bottom: -2px;" onclick="expandirTodos('div<?php echo $cServicoCont; ?>', this)"
-                         src=" <?php echo PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/ver_tudo.gif' ?>"/>
-                    Contestação
-                </span>
-                <?php echo $strCaptionCont ?>
-                <br/>
-                <div id="div<?php echo $cServicoCont; ?>"
-                    <?php if($_GET['acao_origem'] == 'md_utl_gestao_contestacao_aprovar' || $_GET['acao_origem'] == 'md_utl_gestao_contestacao_reprovar'){?>
-                        style="" <?php } else {?> style="max-height: 0px; visibility: hidden" <?php }?>>
-                    <?php PaginaSEI::getInstance()->montarAreaTabela($strResultadoContest, $numRegistrosCont);?>
-                </div>
-                <?php $numRegistrosCont++; ?>
-            </div>
-        </div>
-    <?php }?>
-
-    <input type="hidden" id="hdnIsContatoVazio" name="hdnIsContatoVazio" value="<?php echo $isContatoVazioRev;?>"/>
-    <input type="hidden" id="hdnUrlControleProcessos" name="hdnUrlControleProcessos"
-           value="<?php echo SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acaoorigem=' . $_GET['acao']); ?>"/>
-    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
-           value="<?php echo is_null($idTipoControle) ? '0' : $idTipoControle; ?>"/>
-    <input type="hidden" id="hdnValidaTpCtrl" name="hdnValidaTpCtrl" value="<?= $existeTpCtrlUnidade ? '1' : '0' ?>">
-    <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
-           value="<?php echo $isParametrizado ? '1' : '0'; ?>"/>
-    <input type="hidden" id="hdnIsGestor" name="hdnIsGestor" value="<?= $existeTpCtrlGestorUnid ? '1' : '0';?>"/>
-    <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value=""/>
-    <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso" value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
-    <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento" value="<?php echo $idProcedimentoAprovacao ?>"/>
-
-</form>
+</script>
 
 <?php
 PaginaSEI::getInstance()->fecharBody();

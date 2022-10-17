@@ -10,7 +10,8 @@
 //$idTipoControle = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTipoControleUtl'];
 
 //URL Base
-$strUrl = 'controlador.php?acao=md_utl_adm_jornada_';
+$strUrl               = 'controlador.php?acao=md_utl_adm_jornada_';
+
 //URL das Actions
 $objTpCtrlUtlUndRN    = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objTpCtrlUtlRN       = new MdUtlAdmRelTpCtrlDesempUsuRN();
@@ -24,16 +25,11 @@ $strUrlDesativar      = SessaoSEI::getInstance()->assinarLink($strUrl . 'desativ
 $strUrlReativar       = SessaoSEI::getInstance()->assinarLink($strUrl . 'reativar&acao_origem=' . $_GET['acao']);
 $strUrlExcluir        = SessaoSEI::getInstance()->assinarLink($strUrl . 'excluir&acao_origem=' . $_GET['acao']);
 $strUrlPesquisar      = SessaoSEI::getInstance()->assinarLink($strUrl . 'listar&acao_origem=' . $_GET['acao']);
+$strUrlFechar         = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']);
 
-if(is_array($isGestor)) {
-    $strUrlNovo = SessaoSEI::getInstance()->assinarLink($strUrl . 'cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao']);
-}else{
-    $strUrlNovo = '';
-}
+$strUrlNovo           = !is_array($isGestor) ? '' : SessaoSEI::getInstance()->assinarLink($strUrl . 'cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao']);
 
-$strUrlFechar    = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']);
-
-$strTitulo      = 'Ajuste de Jornada';
+$strTitulo            = 'Ajuste de Jornada';
 
 switch ($_GET['acao']) {
 
@@ -43,9 +39,12 @@ switch ($_GET['acao']) {
 
             $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
             for ($i = 0; $i < count($arrStrIds); $i++) {
+
                 $objMdUtlAdmJornadaDTO = new MdUtlAdmJornadaDTO();
                 $objMdUtlAdmJornadaDTO->setNumIdMdUtlAdmJornada($arrStrIds[$i]);
+                $objMdUtlAdmJornadaDTO->setStrSinAtivo('N');
                 $arrObjMdUtlAdmFila[] = $objMdUtlAdmJornadaDTO;
+
             }
             $objMdUtlAdmJornadaRN = new MdUtlAdmJornadaRN();
             $objMdUtlAdmJornadaRN->desativar($arrObjMdUtlAdmFila);
@@ -68,6 +67,7 @@ switch ($_GET['acao']) {
             for ($i = 0; $i < count($arrStrIds); $i++) {
                 $objMdUtlAdmJornadaDTO = new MdUtlAdmJornadaDTO();
                 $objMdUtlAdmJornadaDTO->setNumIdMdUtlAdmJornada($arrStrIds[$i]);
+                $objMdUtlAdmJornadaDTO->setStrSinAtivo('S');
                 $arrObjMdUtlAdmJornada[] = $objMdUtlAdmJornadaDTO;
             }
 
@@ -88,7 +88,6 @@ switch ($_GET['acao']) {
     case 'md_utl_adm_jornada_excluir':
         try {
 
-
             $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
             $objMdUtlAdmJornadaRN = new MdUtlAdmJornadaRN();
 
@@ -99,9 +98,7 @@ switch ($_GET['acao']) {
                 $objMdUtlAdmJornadaRN->excluirRelacionamentos($arrStrIds[$i]);
             }
 
-
             $objMdUtlAdmJornadaRN->excluir($arrObjMdUtlAdmJornada);
-
 
         } catch (Exception $e) {
             PaginaSEI::getInstance()->processarExcecao($e);
@@ -128,59 +125,48 @@ switch ($_GET['acao']) {
 
     //region Erro
     default:
-        throw new InfraException("Ação '" . $_GET['acao'] . "' não reconhecida.A");
+        throw new InfraException("Ação '" . $_GET['acao'] . "' não reconhecida.");
     //endregion
 }
 
 //Verifica se é ação Selecionar
 $bolSelecionar = $_GET['acao'] == 'md_utl_adm_jornada_selecionar';
 
-
 //Botões de ação do topo
-$arrComandos[] = '<button type="button" accesskey="P" id="btnPesquisar" onclick="pesquisar()" class="infraButton"><span class="infraTeclaAtalho">P</span>esquisar
-                              </button>';
+$arrComandos[] = '<button type="button" accesskey="P" id="btnPesquisar" onclick="pesquisar()" class="infraButton"><span class="infraTeclaAtalho">P</span>esquisar</button>';
+
 if (!$bolSelecionar) {
-    $arrComandos[] = '<button type="button" accesskey="N" id="btnNovo" onclick="novo()" class="infraButton"><span class="infraTeclaAtalho">N</span>ovo
-                              </button>';
-
-    //  $arrComandos[] = '<button type="button" accesskey="I" id="btnImprimir" onclick="imprimir()" class="infraButton">
-    //                                <span class="infraTeclaAtalho">I</span>mprimir
-    //                        </button>';
-    $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fechar()" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har
-                              </button>';
+    $arrComandos[] = '<button type="button" accesskey="N" id="btnNovo" onclick="novo()" class="infraButton"><span class="infraTeclaAtalho">N</span>ovo</button>';
+    // $arrComandos[] = '<button type="button" accesskey="I" id="btnImprimir" onclick="imprimir()" class="infraButton"><span class="infraTeclaAtalho">I</span>mprimir</button>';
+    $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fechar()" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 } else {
-    $arrComandos[] = '<button type="button" accesskey="T" id="btnTransportarSelecao" value="Transportar" onclick="infraTransportarSelecao();" class="infraButton"><span class="infraTeclaAtalho">T</span>ransportar
-                            </button>';
-
-    $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Fechar" onclick="window.close();" class="infraButton"><span class="infraTeclaAtalho">F</span>echar
-                            </button>';
+    $arrComandos[] = '<button type="button" accesskey="T" id="btnTransportarSelecao" value="Transportar" onclick="infraTransportarSelecao();" class="infraButton"><span class="infraTeclaAtalho">T</span>ransportar</button>';
+    $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Fechar" onclick="window.close();" class="infraButton"><span class="infraTeclaAtalho">F</span>echar</button>';
 }
 
-
-
-//Consulta
+// Consulta
 $objMdUtlAdmJornadaDTO = new MdUtlAdmJornadaDTO();
 $objMdUtlAdmJornadaDTO->retTodos();
 
-if (isset ($_POST ['txtNomeTpControle']) && trim($_POST ['txtNomeTpControle']) != '') {
+if (isset($_POST ['txtNomeTpControle']) && trim($_POST ['txtNomeTpControle']) != '') {
     $strNome = $_POST ['txtNomeTpControle'];
     $objMdUtlAdmJornadaDTO->setStrNome('%' . $_POST ['txtNomeTpControle'] . '%', InfraDTO::$OPER_LIKE);
 }
 
-if (isset ($_POST ['txtDescricaoTpControle']) && trim($_POST ['txtDescricaoTpControle']) != '') {
+if (isset($_POST ['txtDescricaoTpControle']) && trim($_POST ['txtDescricaoTpControle']) != '') {
     $strDescricao = $_POST ['txtDescricaoTpControle'];
     $objMdUtlAdmJornadaDTO->setStrDescricao('%' . $_POST ['txtDescricaoTpControle'] . '%', InfraDTO::$OPER_LIKE);
 }
 
-if (isset ($_POST ['txtDtInicio']) && trim($_POST ['txtDtInicio']) != '') {
+if (isset($_POST ['txtDtInicio']) && trim($_POST ['txtDtInicio']) != '') {
     $strDtInicio = $_POST ['txtDtInicio'];
 }
 
-if (isset ($_POST ['txtDtFim']) && trim($_POST ['txtDtFim']) != '') {
+if (isset($_POST ['txtDtFim']) && trim($_POST ['txtDtFim']) != '') {
     $strDtFim = $_POST['txtDtFim'];
 }
 
-if (isset ($_POST ['selTpAjuste']) && trim($_POST ['selTpAjuste']) != '') {
+if (isset($_POST ['selTpAjuste']) && trim($_POST ['selTpAjuste']) != '') {
     $selTpAjuste = $_POST ['selTpAjuste'];
     $objMdUtlAdmJornadaDTO->setStrStaTipoAjuste('%' . $_POST ['selTpAjuste'] . '%', InfraDTO::$OPER_LIKE);
 }
@@ -196,7 +182,7 @@ if($isMembroPreenchido) {
 
     $idsJornadaUsuEspecifico = $objMdUtlAdmJornadaRN->getAjusteJornadaUsuario($_POST['selMembro']);
 
-//Se o Tipo de Ajuste for Selecionado e for Geral
+    //Se o Tipo de Ajuste for Selecionado e for Geral
     if ($isTpAjusteGeral) {
         $tpsCtrlUsuario = $objMdUtlAdmJornadaRN->getTiposControleParametrizadoUsuario($_POST['selMembro']);
         $objMdUtlAdmJornadaDTO->retNumIdMdUtlAdmJornada();
@@ -207,7 +193,7 @@ if($isMembroPreenchido) {
             array(InfraDTO::$OPER_LOGICO_AND));
     }
 
-//Se o Tipo de Ajuste for Selecionado e for Especifico
+    //Se o Tipo de Ajuste for Selecionado e for Especifico
     if ($isTpAjusteEspecifico) {
         if(!is_null($idsJornadaUsuEspecifico)) {
             $objMdUtlAdmJornadaDTO->setNumIdMdUtlAdmJornada($idsJornadaUsuEspecifico, InfraDTO::$OPER_IN);
@@ -216,9 +202,7 @@ if($isMembroPreenchido) {
         }
     }
 
-
-
-//Se o tipo ajuste NÃO for selecionado
+    //Se o tipo ajuste NÃO for selecionado
     if ($isTpAjusteNulo) {
         $tpsCtrlUsuario = $objMdUtlAdmJornadaRN->getTiposControleParametrizadoUsuario($_POST['selMembro']);
 
@@ -231,10 +215,11 @@ if($isMembroPreenchido) {
                 array(InfraDTO::$OPER_IGUAL, InfraDTO::$OPER_IN, InfraDTO::$OPER_IGUAL, InfraDTO::$OPER_IN),
                 array(MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL, $tpsCtrlUsuario, MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO, $idsJornadaUsuEspecifico),
                 array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_OR, InfraDTO::$OPER_LOGICO_AND));
+
         } else {
 
-            //Se o usuário possuir apenas Ajustes Gerais
-//                $objMdUtlAdmJornadaDTO->setNumIdMdUtlAdmTpCtrlDesemp($tpsCtrlUsuario, InfraDTO::$OPER_IN);
+            // Se o usuário possuir apenas Ajustes Gerais
+            // $objMdUtlAdmJornadaDTO->setNumIdMdUtlAdmTpCtrlDesemp($tpsCtrlUsuario, InfraDTO::$OPER_IN);
 
             $objMdUtlAdmJornadaDTO->retNumIdMdUtlAdmJornada();
             $objMdUtlAdmJornadaDTO->setJornadaTIPOFK(InfraDTO::$TIPO_FK_OPCIONAL);
@@ -247,9 +232,10 @@ if($isMembroPreenchido) {
     }
 
 }
+
 $objMdUtlAdmJornadaRN = new MdUtlAdmJornadaRN();
 if($strDtFim != '' && $strDtInicio != ''){
-    //$objMdUtlAdmJornadaRN->verificarPeriodo(array($strDtInicio,$strDtFim));
+    // $objMdUtlAdmJornadaRN->verificarPeriodo(array($strDtInicio,$strDtFim));
 
     $objMdUtlAdmJornadaDTO->adicionarCriterio(array('Fim', 'Inicio'),
         array(InfraDTO::$OPER_MAIOR_IGUAL, InfraDTO::$OPER_MENOR_IGUAL),
@@ -259,7 +245,7 @@ if($strDtFim != '' && $strDtInicio != ''){
 
 
 if($strDtFim != '' && $strDtInicio == ''){
-    //$objMdUtlAdmJornadaDTO->setDthFim($strDtFim, InfraDTO::$OPER_MENOR_IGUAL);
+    // $objMdUtlAdmJornadaDTO->setDthFim($strDtFim, InfraDTO::$OPER_MENOR_IGUAL);
 
     $objMdUtlAdmJornadaDTO->adicionarCriterio(array('Inicio'),
         array(InfraDTO::$OPER_MENOR_IGUAL),
@@ -268,7 +254,7 @@ if($strDtFim != '' && $strDtInicio == ''){
 
 if($strDtFim == '' && $strDtInicio != ''){
 
-    //$objMdUtlAdmJornadaDTO->setDthInicio($strDtInicio, InfraDTO::$OPER_MAIOR_IGUAL);
+    // $objMdUtlAdmJornadaDTO->setDthInicio($strDtInicio, InfraDTO::$OPER_MAIOR_IGUAL);
 
     $objMdUtlAdmJornadaDTO->adicionarCriterio(array('Fim'),
         array(InfraDTO::$OPER_MAIOR_IGUAL),
@@ -289,48 +275,45 @@ if( is_array($isGestor)) {
 PaginaSEI::getInstance()->prepararOrdenacao($objMdUtlAdmJornadaDTO, 'Nome', InfraDTO::$TIPO_ORDENACAO_ASC, true);
 PaginaSEI::getInstance()->prepararPaginacao($objMdUtlAdmJornadaDTO, 200);
 
-if(!is_null($idTipoControle)) {
-    $arrObjMdUtlAdmJornada = $objMdUtlAdmJornadaRN->listar(($objMdUtlAdmJornadaDTO));
-}else{
-    $arrObjMdUtlAdmJornada = null;
-}
-//}
+$arrObjMdUtlAdmJornada = !is_null($idTipoControle) ? $objMdUtlAdmJornadaRN->listar(($objMdUtlAdmJornadaDTO)) : null;
 
-//if(!is_array($isGestor)){
-//  $arrObjMdUtlAdmJornada = null;
-//}
+// if(!is_array($isGestor)){
+//   $arrObjMdUtlAdmJornada = null;
+// }
 
 PaginaSEI::getInstance()->processarPaginacao($objMdUtlAdmJornadaDTO);
 $numRegistros = count($arrObjMdUtlAdmJornada);
 
 //Tabela de resultado.
-if ($numRegistros > 0) {
-
+if (!is_null($arrObjMdUtlAdmJornada) && $numRegistros > 0) {
+    
     $strResultado .= '<table width="99%" class="infraTable" summary="Ajuste de Jornada">';
     $strResultado .= '<caption class="infraCaption">';
     $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Ajuste de Jornada', $numRegistros);
     $strResultado .= '</caption>';
-    //Cabeçalho da Tabela
+    
+    // Cabeçalho da Tabela
     $strResultado .= '<tr>';
     $strResultado .= '<th class="infraTh" align="center" style="display: none" width="1%">' . PaginaSEI::getInstance()->getThCheck() . '</th>';
-    $strResultado .= '<th class="infraTh"  width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Nome', 'Nome', $arrObjMdUtlAdmJornada) . '</th>';
-    $strResultado .= '<th class="infraTh"  width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Descrição', 'Descricao', $arrObjMdUtlAdmJornada) . '</th>';
+    $strResultado .= '<th class="infraTh" width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Nome', 'Nome', $arrObjMdUtlAdmJornada) . '</th>';
+    $strResultado .= '<th class="infraTh" width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Descrição', 'Descricao', $arrObjMdUtlAdmJornada) . '</th>';
     $strResultado .= '<th class="infraTh" align="center" width="10%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Tipo', 'StaTipoAjuste', $arrObjMdUtlAdmJornada) . '</th>';
-    $strResultado .= '<th class="infraTh"  width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Período', 'Inicio', $arrObjMdUtlAdmJornada) . '</th>';
+    $strResultado .= '<th class="infraTh" width="20%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmJornadaDTO, 'Período', 'Inicio', $arrObjMdUtlAdmJornada) . '</th>';
     $strResultado .= '<th class="infraTh" align="center" width="15%">Ações</th>';
     $strResultado .= '</tr>';
 
-    //Linhas
+    // Linhas
+    $strCssTr   = '<tr class="infraTrEscura">';
+    $arrTipo    = [
+        MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL => MdUtlAdmJornadaRN::$STR_TIPO_JORNADA_GERAL, 
+        MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO => MdUtlAdmJornadaRN::$STR_TIPO_JORNADA_ESPECIFICO
+    ];
 
-    $strCssTr = '<tr class="infraTrEscura">';
-    $arrTipo= array(MdUtlAdmJornadaRN::$TIPO_JORNADA_GERAL => MdUtlAdmJornadaRN::$STR_TIPO_JORNADA_GERAL,
-        MdUtlAdmJornadaRN::$TIPO_JORNADA_ESPECIFICO => MdUtlAdmJornadaRN::$STR_TIPO_JORNADA_ESPECIFICO );
-
-    $arrIds = array();
+    $arrIds     = [];
 
     for ($i = 0; $i < $numRegistros; $i++) {
 
-        //vars
+        // vars
         $strId                      = $arrObjMdUtlAdmJornada[$i]->getNumIdMdUtlAdmJornada();
         $arrIds[]                   = $strId;
         $strNomeTpControle          = $arrObjMdUtlAdmJornada[$i]->getStrNome();
@@ -341,7 +324,6 @@ if ($numRegistros > 0) {
 
         $strPeriodo                 = $strDtaInicio.' a '.$strDtaFim;
         $bolRegistroAtivo           = $arrObjMdUtlAdmJornada[$i]->getStrSinAtivo() == 'S';
-
 
         $strCssTr = !$bolRegistroAtivo ? '<tr class="trVermelha">' : ($strCssTr == '<tr class="infraTrClara">' ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">');
         $strResultado .= $strCssTr;
@@ -376,25 +358,24 @@ if ($numRegistros > 0) {
         //Ação Consulta
         if (!$bolSelecionar) {
 
-
             //Ação Consultar
-            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_jornada='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Jornada" alt="Consultar Jornada" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_jornada='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Jornada" alt="Consultar Jornada" class="infraImg" /></a>&nbsp;';
 
             //Ação Alterar
-            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_jornada='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/alterar.gif" title="Alterar Jornada" alt="Alterar Jornada" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_jornada='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar Jornada" alt="Alterar Jornada" class="infraImg" /></a>&nbsp;';
 
             //Ação Desativar
             if ($bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Jornada" alt="Desativar Jornada" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar Jornada" alt="Desativar Jornada" class="infraImg" /></a>&nbsp;';
             }
 
             //Ação Reativar
             if (!$bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Jornada" alt="Reativar Jornada" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar Jornada" alt="Reativar Jornada" class="infraImg" /></a>&nbsp;';
             }
 
             //Ação Excluir
-            $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Jornada" alt="Excluir Jornada" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeTpControle) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Jornada" alt="Excluir Jornada" class="infraImg" /></a>&nbsp;';
 
         } else {
             $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i, $strId);
@@ -406,5 +387,5 @@ if ($numRegistros > 0) {
     $strResultado .= '</table>';
 }
 
-$selMembros = MdUtlAdmTpCtrlDesempINT::montarSelectMembros($isGestor,$selMembro);
-$strTpAjuste = MdUtlAdmJornadaINT::montarSelectTipoAjusteJornada($selTpAjuste);
+$selMembros     = MdUtlAdmTpCtrlDesempINT::montarSelectMembros($isGestor,$selMembro);
+$strTpAjuste    = MdUtlAdmJornadaINT::montarSelectTipoAjusteJornada($selTpAjuste);

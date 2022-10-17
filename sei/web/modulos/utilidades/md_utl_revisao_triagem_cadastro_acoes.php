@@ -18,6 +18,8 @@ $objMdUtlRelTriagemAtvDTO->retStrNomeAtividade();
 
 $exibirCol = " display:none; ";
 
+$chkDistAutoTriagem = $objTriagemDTO->getStrDistAutoParaMim() ?: null;
+
 if ($isConsultar) {
 
     $disabled = 'disabled="disabled"';
@@ -33,9 +35,9 @@ if ($isConsultar) {
 
     $objMdUtlRevisaoDTO = $MdUtlRevisaoRN->consultar($objMdUtlRevisaoDTO);
 
-    $strInformCompRevisao = $objMdUtlRevisaoDTO ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
-
-    $strEncaminhamento = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrStaEncaminhamentoRevisao() : '';
+    $vlrAvaliacaoQualitativa = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getNumAvaliacaoQualitativa() : '';
+    $strInformCompRevisao    = $objMdUtlRevisaoDTO ? $objMdUtlRevisaoDTO->getStrInformacoesComplementares() : '';
+    $strEncaminhamento       = !is_null($objMdUtlRevisaoDTO) ? $objMdUtlRevisaoDTO->getStrStaEncaminhamentoRevisao() : '';
 
     if(is_null($strEncaminhamento) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao())){
         $strEncaminhamento = $objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao();
@@ -51,6 +53,9 @@ if ($isConsultar) {
         $objMdUtlRelRevisTrgAnlsDTO->retTodos();
         $arrMdUtlRelRevisTrgAnls = $MdUtlRelRevisTrgAnlsRN->listar($objMdUtlRelRevisTrgAnlsDTO);
     }
+
+    // Deixa oculto o campo que sinaliza a a marcacao da distribuicao automatica para triagem
+    $chkDistAutoTriagem = false;
 }
 
 if ($isEdicao) {
@@ -86,8 +91,9 @@ if ($isEdicao) {
     $idsRelAtividadesAntigas = InfraArray::converterArrInfraDTO($arrMdUtlRelRevisTrgAnls, 'IdMdUtlRelTriagemAtv');
     if(count($idsRelAtividadesAntigas) > 0) {
         $arrObjRelAtividadesDTOAntigos = $objUltimoRelTriagemAtvRN->getObjsRelTriagemAtividade($idsRelAtividadesAntigas);
-
     }
+
+    $MdUtlRelRevisTrgAnlsRN->validaDistAutoTriagAnalise( $objTriagemDTO , $objMdUtlFilaRN , $validaDistAutoTriagem, $strNomeUsuarioDistrAuto, $idUsuarioDistrAuto );
 }
 
 if ($MdUtlRevisao) {

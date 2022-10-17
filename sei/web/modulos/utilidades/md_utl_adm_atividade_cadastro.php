@@ -18,6 +18,18 @@ try{
     require_once 'md_utl_adm_atividade_cadastro_acoes.php';
     // ======================= FIM ACOES PHP DA PAGINA
 
+    $habDivComAnalise = false;
+    $habDivSemAnalise = false;
+    if( $isAlterar == 1 || $bolConsultar || $isClonar ){
+        if( $rdnTpAtividade == 'S' ){
+          $habDivComAnalise = true;
+          $habDivSemAnalise = false;
+        }else{
+          $habDivComAnalise = false;
+          $habDivSemAnalise = true;
+        }
+    }
+   
 }catch (Exception $e){
     PaginaSEI::getInstance()->processarExcecao($e);
 }
@@ -27,23 +39,17 @@ PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(':: '.PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo.' ::');
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-
-// ========== INICIO CSS
-require_once('md_utl_adm_atividade_cadastro_css.php');
-// ========== FIM CSS
-
 PaginaSEI::getInstance()->fecharStyle();
+require_once('md_utl_adm_atividade_cadastro_css.php');
+require_once 'md_utl_geral_css.php';
+
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-
-// ======================= INICIO JS
-require_once('md_utl_adm_atividade_cadastro_js.php');
-require_once('md_utl_geral_js.php');
-// ======================= FIM JS
-
 PaginaSEI::getInstance()->fecharJavaScript();
+
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
@@ -51,259 +57,291 @@ if(!is_null($strValorTmpExecucao) && !is_null($idUsuario)){
     $tempoExecucaoTeletrabalho = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($strValorTmpExecucao, $idTipoControle, $idUsuario);
 }
 
+$strAction = $isClonar 
+            ? SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'].'&id_md_utl_adm_atividade='.$idAtividade.'&id_tipo_controle_utl='.$idTipoControle.'&isClonar=S')
+            : SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])          
+
 ?>
-<form id="frmTipoControleUtilidadesCadastro" method="post" onsubmit="return onSubmitForm();" action="<?=PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao']))?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    PaginaSEI::getInstance()->abrirAreaDados('auto');
+<form id="frmTipoControleUtilidadesCadastro" method="post" onsubmit="return onSubmitForm();" action="<?=PaginaSEI::getInstance()->formatarXHTML($strAction)?>">
+    <?php
+      PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+      PaginaSEI::getInstance()->abrirAreaDados();
     ?>
-    <div class="bloco">
+
+    <div class="row mb-3">
+      <div class="col-sm-8 col-md-10 col-lg-10">
         <label id="lblAtividade" for="txtAtividade" class="infraLabelObrigatorio">Atividade:</label>
-        <a style="" id="btAjudaAtividade" <?=PaginaSEI::montarTitleTooltip('Nome indicativo da Atividade.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <div class="clear"></div>
+        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                                  <?= PaginaSEI::montarTitleTooltip('Nome indicativo da Atividade.','Ajuda') ?>/>
 
-        <input utlCampoObrigatorio="a" type="text" id="txtAtividade" name="txtAtividade" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strAtividade) ? PaginaSEI::tratarHTML($strAtividade) : $_POST['txtAtividade'];?>"
-               onkeypress="return infraLimitarTexto(this,event,100);"  maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        <input utlCampoObrigatorio="a" type="text" id="txtAtividade" name="txtAtividade" class="infraText form-control" <?=$strDesabilitar?> value="<?= !is_null($strAtividade) ? PaginaSEI::tratarHTML($strAtividade) : $_POST['txtAtividade'];?>"
+              onkeypress="return infraLimitarTexto(this,event,100);"  maxlength="100" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+      </div>
     </div>
-    </br>
-    <div class="bloco">
+
+    <div class="row mb-3">
+      <div class="col-sm-8 col-md-10 col-lg-10">
         <label id="lblDescricao" for="txaDescricao"  class="infraLabelObrigatorio">Descrição:</label>
-        <a style="" id="btAjudaDescricao" <?=PaginaSEI::montarTitleTooltip('Breve descrição da Atividade.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaDescricao" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <div class="clear"></div>
-        <textarea id="txaDescricao" utlCampoObrigatorio="a" name="txaDescricao" rows="4" class="infraTextarea" <?=$strDesabilitar?> onkeypress="return infraLimitarTexto(this,event,250);" maxlength="250"
+        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                                  <?= PaginaSEI::montarTitleTooltip('Breve descrição da Atividade.','Ajuda') ?>/>
+
+        <textarea id="txaDescricao" utlCampoObrigatorio="a" name="txaDescricao" rows="4" class="infraTextarea form-control" <?=$strDesabilitar?> onkeypress="return infraLimitarTexto(this,event,250);" maxlength="250"
                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= !is_null($strDescricao) ? PaginaSEI::tratarHTML($strDescricao) :  $_POST['txaDescricao'] ;?></textarea>
+      </div>
     </div>
-    </br>
-    <div class="bloco" id="divAnalise">
+
+    <div class="row mb-3" id="divAnalise">
+      <div class="col-sm-8 col-md-10 col-lg-10">
         <label id="lblTipoAtividade" for="rdnTpAtivdade"  class="infraLabelObrigatorio">Tipo de Atividade:</label>
-        <a style="" id="btAjudaTipoAtividade" <?=PaginaSEI::montarTitleTooltip('Definir se a atividade que está sendo cadastrada precisa ser distribuída para a análise ou já teve encaminhamento na própria triagem.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaTipoAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <br>
-        <div id="divRadiosAnalise">
-            <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeComAnalise" value="S" <?=$rdnComAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
-            <label id="lblComAnalise"  class="infraLabelOpicional">Com Análise</label>
-            <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeSemAnalise" value="N" <?=$rdnSemAnalise?> <?=$strDesabilitar?> onchange="trocarTipoAtividade(this)" class="infraRadio">
-            <label id="lblSemAnalise" class="infraLabelOpicional">Sem Análise</label>
-        </div>
-    </div>
-    <br>
-    <div class="bloco">
-        <label id="lblAtividade" for="txtAtividade" class="infraLabelObrigatorio">Complexidade: </label>
-        <a style="" id="btAjudaAtividade" <?=PaginaSEI::montarTitleTooltip('Complexidade da Atividade.') ?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" >
-            <img id="imgAjudaAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg" />
-        </a>
-        <div class="clear"></div>
+        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+          <?= PaginaSEI::montarTitleTooltip('Definir se a atividade que está sendo cadastrada precisa ser distribuída para a análise ou já teve encaminhamento na própria triagem.','Ajuda') ?>/>         
+          <div id="divRadiosAnalise">
+            <div class="form-check-inline">
+              <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeComAnalise" value="S" class="infraRadio" <?=$rdnComAnalise?> <?=$strDesabilitar?> 
+                    onchange="trocarTipoAtividade(this)">
+              <label id="lblComAnalise" name="lblComAnalise" for="rdnTpAtivdadeComAnalise"
+                    class="infraLabelOpcional infraLabelRadio">Com Análise</label>
+            </div>
 
-        <select style="width: 215px" id="selComplexidade" name="selComplexidade" class="infraSelect"	tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=$strDesabilitar?> >
-            <?
-            if( $mdUtlAdmAtividade )
-                echo MdUtlAdmAtividadeINT::montarSelectComplexidade( $mdUtlAdmAtividade->getNumComplexidade() );
-            else
-                echo  MdUtlAdmAtividadeINT::montarSelectComplexidade(null);
-            ?>
+            <div class="form-check-inline">
+              <input type="radio" utlCampoObrigatorio="o" name="rdnTpAtivdade" id="rdnTpAtivdadeSemAnalise" value="N" class="infraRadio" <?=$rdnSemAnalise?> <?=$strDesabilitar?> 
+                    onchange="trocarTipoAtividade(this)">
+              <label id="lblSemAnalise" name="lblSemAnalise" for="rdnTpAtivdadeSemAnalise"
+                    class="infraLabelOpcional infraLabelRadio">Sem Análise</label>
+            </div>
+          </div>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-sm-6 col-md-6 col-lg-6">
+        <label id="lblAtividade" for="txtAtividade" class="infraLabelObrigatorio">Complexidade:</label>
+        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+          <?= PaginaSEI::montarTitleTooltip('Complexidade da Atividade.','Ajuda') ?>/>
+        <select id="selComplexidade" name="selComplexidade" class="infraSelect form-control" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=$strDesabilitar?>>
+          <?php
+          if( $mdUtlAdmAtividade )
+            echo MdUtlAdmAtividadeINT::montarSelectComplexidade( $mdUtlAdmAtividade->getNumComplexidade() );
+          else
+            echo  MdUtlAdmAtividadeINT::montarSelectComplexidade(null);
+          ?>
         </select>
+      </div>
     </div>
-    <br>
-    <div class="bloco blocoExibir" id="divAtvRevAmost" >
-        <input type="checkbox" <?=$chkAmostragem?> <?=$strDesabilitar?> name="chkAtvRevAmost" id="chkAtvRevAmost">
-        <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Avaliação</label>
-        <a style="" id="btAjudaAtvRevAmost" <?=PaginaSEI::montarTitleTooltip('A Atividade passará por Avaliação.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaAtvRevAmost" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <br><br>
+
+    <div id="divAtvRevAmost" <?= $habDivComAnalise || $habDivSemAnalise ? '' : 'style="display: none;"' ?> >
+      <div class="row mb-3">
+        <div class="col-sm-8 col-md-10 col-lg-10">          
+          <input type="checkbox" <?=$chkAmostragem?> <?=$strDesabilitar?> name="chkAtvRevAmost" id="chkAtvRevAmost" class="infraCheckbox form-check-input">
+          <label id="lblAtvRevAmost" for="chkAtvRevAmost"  class="infraLabelOpcional">Habilitar Atividade para Avaliação</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+            <?= PaginaSEI::montarTitleTooltip('A Atividade passará por Avaliação.','Ajuda') ?>/>          
+        </div>
+      </div>
     </div>
-    <div class="bloco blocoExibir" id="divComAnalise" >
+    
+    <div id="divComAnalise" <?= $habDivComAnalise === true ? '' : 'style="display: none;"' ?>>
+      <div class="row mb-3">
+        <div class="col-sm-10 col-md-10 col-lg-8">
+          <label  id="lblTmpExecucao" for="txtTmpExecucao" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade (em minutos):</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+              <?= PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Análise da Atividade (em minutos) atribuído a essa atividade. Esse valor será levado em consideração na distribuição do processo.','Ajuda') ?>/>
 
-        <label  id="lblTmpExecucao" for="txtTmpExecucao" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade (em minutos):</label>
-        <a style="" id="btAjudaTmpExecucao" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Análise da Atividade (em minutos) atribuído a essa atividade. Esse valor será levado em consideração na distribuição do processo.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaTmpExecucao" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
+          <input utlSomenteNumeroPaste="true" utlCampoObrigatorio="o" type="text" id="txtTmpExecucao" name="txtTmpExecucao" class="infraText form-control" <?=$strDesabilitar?> value="<?= !is_null($strValorTmpExecucao) ? PaginaSEI::tratarHTML($strValorTmpExecucao) : $_POST['txtTmpExecucao'];?>" onkeypress="return infraMascaraNumero(this, event,6);"
+                  maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        </div>
+      </div>
 
-        <div class="clear"></div>
+      <div id="divNaoAplicarPercDsmp">
+        <div class="row mb-3">
+          <div class="col-sm-11 col-md-11 col-lg-10">
+            <input type="checkbox" <?= $chkNaoAplicarPerc ?> <?= $strDesabilitar ?> name="chkNaoAplicarPercDsmp" id="chkNaoAplicarPercDsmp" 
+                  class="infraCheckbox form-check-input" onchange="checkNaoAplicarPerc(this);">
+            <label id="lblNaoAplicarPercDsmp" for="chkNaoAplicarPercDsmp"  class="infraLabelOpcional">
+              Não aplicar Percentual de Desempenho a Maior para Teletrabalho
+            </label>
+            <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+              <?= PaginaSEI::montarTitleTooltip('A Definir.','Ajuda') ?>/>          
+          </div>
+        </div>
+      </div>
 
-        <input utlSomenteNumeroPaste="true" utlCampoObrigatorio="o" type="text" id="txtTmpExecucao" name="txtTmpExecucao" style="width: 35%" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strValorTmpExecucao) ? PaginaSEI::tratarHTML($strValorTmpExecucao) : $_POST['txtTmpExecucao'];?>" onkeypress="return infraMascaraNumero(this, event,6);"
-               maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+      <div id="divTmpAnaliseTeletrabalho" class="row mb-3" <?= is_null($chkNaoAplicarPerc) ? '' : 'style="display:none;"' ?>>        
+        <div class="col-sm-10 col-md-10 col-lg-8">
+          <label id="lblTempoExecucaoAnaliseAtividade" for="txtTempoExecucaoAnaliseAtividade" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade em Teletrabalho (em minutos):</label>
+          <input type="text" id="txtTempoExecucaoAnaliseAtividade" name="txtTempoExecucaoAnaliseAtividade" class="infraText form-control" value="<?= !is_null($strValorTmpExecucao) ? $tempoExecucaoTeletrabalho : '0.00';?>"
+                maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" readonly <?=$strDesabilitar?> />
+        </div>
+      </div> 
 
-        <div class="clear">&nbsp;</div>
+      <div class="row mb-3">        
+        <div class="col-sm-10 col-md-10 col-lg-8">
+          <label id="lblExecucaoAtividade" for="txtExecucaoAtividade">Prazo em Dias para Análise:</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+              <?= PaginaSEI::montarTitleTooltip('Indicar o prazo em dias úteis em que a análise da atividade deve ser concluída.','Ajuda') ?>/>
 
-        <label id="lblTempoExecucaoAnaliseAtividade" for="txtTempoExecucaoAnaliseAtividade" class="infraLabelObrigatorio">Tempo de Execução da Análise da Atividade em Teletrabalho (em minutos):</label>
-        </br></br>
-        <input type="text" id="txtTempoExecucaoAnaliseAtividade" name="txtTempoExecucaoAnaliseAtividade" style="width: 35%" class="infraText" value="<?= !is_null($strValorTmpExecucao) ? $tempoExecucaoTeletrabalho : '0.00';?>"
-               maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" readonly <?=$strDesabilitar?> />
-
-        <div class="clear">&nbsp;</div>
-
-        <label id="lblExecucaoAtividade" for="txtExecucaoAtividade">Prazo em Dias para Análise:</label>
-        <a style="" id="btAjudaExecucaoAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em dias úteis em que a análise da atividade deve ser concluída.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaExecucaoAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <div class="clear"></div>
-
-        <input utlSomenteNumeroPaste="true"  type="text" id="txtExecucaoAtividade" style="width: 35%" name="txtExecucaoAtividade" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrazoExeAtv) ? PaginaSEI::tratarHTML($strPrazoExeAtv) : $_POST['txtExecucaoAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
+          <input utlSomenteNumeroPaste="true"  type="text" id="txtExecucaoAtividade" name="txtExecucaoAtividade" <?=$strDesabilitar?> class="infraText form-control" value="<?= !is_null($strPrazoExeAtv) ? PaginaSEI::tratarHTML($strPrazoExeAtv) : $_POST['txtExecucaoAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
                maxlength="3" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        </div>
+      </div>
+    </div>
+    
+    <div id="divSemAnalise" <?= $habDivSemAnalise ? '' : 'style="display: none;"' ?>>
+      <div class="row mb-3">
+        <div class="col-sm-10 col-md-10 col-lg-8">
+          <label id="lblRevUnidEsf" for="txtRevUnidEsf" class="infraLabelObrigatorio">Tempo de Execução da Avaliação da Atividade (em minutos):</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+              <?= PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação da Atividade (em minutos) atribuído a avaliação dessa atividade. Esse tempo será levado em consideração na distribuição do processo para a avaliação.','Ajuda') ?>/>
 
+          <input utlSomenteNumeroPaste=true  type="text" utlCampoObrigatorio="o" id="txtRevUnidEsf" name="txtRevUnidEsf" class="infraText form-control" <?=$strDesabilitar?> value="<?= !is_null($strTmpExecucaoRev) ? PaginaSEI::tratarHTML($strTmpExecucaoRev) : $_POST['txtRevUnidEsf'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
+                maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        </div>
+      </div>
     </div>
 
-    <div class="bloco blocoExibir" id="divSemAnalise">
-        <label id="lblRevUnidEsf" for="txtRevUnidEsf" class="infraLabelObrigatorio">Tempo de Execução da Avaliação da Atividade (em minutos):</label>
-        <a style="" id="btAjudaRevUnidEsf" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação da Atividade (em minutos) atribuído a avaliação dessa atividade. Esse tempo será levado em consideração na distribuição do processo para a avaliação.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaRevUnidEsf" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-        <div class="clear"></div>
-
-        <input utlSomenteNumeroPaste=true  type="text" utlCampoObrigatorio="o" id="txtRevUnidEsf" style="width: 35%" name="txtRevUnidEsf" class="infraText" <?=$strDesabilitar?> value="<?= !is_null($strTmpExecucaoRev) ? PaginaSEI::tratarHTML($strTmpExecucaoRev) : $_POST['txtRevUnidEsf'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
-               maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-
+    <div id="divRevATividade" style="display:none;">
+      <div class="row mb-3">
+        <div class="col-sm-10 col-md-10 col-lg-8">
+          <label id="lblRevAtividade" for="txtRevAtividade" class="infraLabelObrigatorio">Prazo para Avaliação da Atividade:</label>
+          <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                <?= PaginaSEI::montarTitleTooltip('Indicar o prazo em que a avaliação da atividade deve ser concluída.','Ajuda') ?>/>
+              
+          <input utlSomenteNumeroPaste=true type="text" id="txtRevAtividade" name="txtRevAtividade" <?=$strDesabilitar?> class="infraText form-control" value="<?= !is_null($strPrzRevisaoAtv) ? PaginaSEI::tratarHTML($strPrzRevisaoAtv) : $_POST['txtRevAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
+                maxlength="50" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
+        </div>
+      </div>
     </div>
 
-    <div class="bloco" id="divRevATividade" style="display: none">
-        </br>
-        <label id="lblRevAtividade" for="txtRevAtividade" class="infraLabelObrigatorio">Prazo para Avaliação da Atividade:</label>
-        <a style="" id="btAjudaRevAtividade" <?=PaginaSEI::montarTitleTooltip('Indicar o prazo em que a avaliação da atividade deve ser concluída.')?>
-           tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img id="imgAjudaRevAtividade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-        </a>
-
-        <div class="clear"></div>
-
-        <input utlSomenteNumeroPaste=true type="text" id="txtRevAtividade" name="txtRevAtividade" style="width: 35%" <?=$strDesabilitar?> class="infraText" value="<?= !is_null($strPrzRevisaoAtv) ? PaginaSEI::tratarHTML($strPrzRevisaoAtv) : $_POST['txtRevAtividade'];?>" onkeypress="return infraMascaraNumero(this, event,3)"
-               maxlength="50" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-        <div class="clear">&nbsp</div>
-    </div>
-    <div class="bloco blocoExibir" id="blocoListaProduto" >
-        <fieldset class="infraFieldset" id="fieldListaProduto">
+    <div <?= $habDivComAnalise ? '' : 'style="display: none;"' ?> id="blocoListaProduto">
+      <div class="row rowFieldSet">
+        <div class="col-sm-12 col-md-12 col-lg-12">
+          <fieldset class="infraFieldset fieldset-comum form-control" id="fieldListaProduto">
             <legend class="infraLegend">Lista de Produtos Esperados</legend>
-            <br>
 
-            <div id="divTpAtividade">
-                <!-- Tipo  -->
-                <label id="lblTipo" for="rdnTipo"  class="infraLabelObrigatorio">Tipo:</label>
-                <a style="" id="btAjudaTipo" <?=PaginaSEI::montarTitleTooltip('Selecionar o Tipo de Produto, posteriormente escolher o documento/produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img id="imgAjudaTipo" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-                </a>
-                <br>
-                <div id="divRadiosAtividade">
-                <input type="radio"  name="rdnTipo" value="D" id="rdnDocumento" <?=$strDesabilitar?> class="infraRadio" onchange="exibirTipo(this)">
-                <label id="lblDocumentoSEI"  class="infraLabelOpicional">Documento SEI</label>
-                 <input type="radio" name="rdnTipo" value="P" id="rdnProduto" <?=$strDesabilitar?> class="infraRadio" onchange="exibirTipo(this)">
-                <label id="lblProduto"  class="infraLabelOpicional">Produto</label>
+            <!-- DIV TIPO DE ATIVIDADE: DOCUMENTO OU PRODUTO -->
+            <div id="divTpAtividade" <?php if( $bolConsultar ) echo 'style="display:none;"'?>>
+              <div class="row mb-3">
+                <div class="col-sm-10 col-md-10 col-lg-8">
+                  <label id="lblTipo" class="infraLabelObrigatorio">Tipo:</label>
+                  <img align="top" id="btAjudaTipo" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                    <?= PaginaSEI::montarTitleTooltip('Selecionar o Tipo de Produto, posteriormente escolher o documento/produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.','Ajuda') ?>/>
+                  
+                  <div id="divRadiosAtividade">                
+                    <div class="form-check-inline">
+                      <input type="radio" name="rdnTipo" id="rdnDocumento" value="D" class="infraRadio" <?=$strDesabilitar?> onchange="exibirTipo(this)">
+                      <label id="lblDocumento" name="lblDocumento" for="rdnDocumento"
+                            class="infraLabelOpcional infraLabelRadio">Documento SEI</label>
+                    </div>
+
+                    <div class="form-check-inline">
+                      <input type="radio" name="rdnTipo" id="rdnProduto" value="P" class="infraRadio" <?=$strDesabilitar?> onchange="exibirTipo(this)">
+                      <label id="lblProduto" name="lblProduto" for="rdnProduto"
+                            class="infraLabelOpcional infraLabelRadio">Produto</label>
+                    </div>
+                  </div>            
                 </div>
-
+              </div>
             </div>
 
-            <div class="bloco blocoExibir" id="divTpProduto">
-                <br>
-                <label id="lblTpProduto" for="selTpProduto" accesskey="" class="infraLabelObrigatorio">Tipo de Produto:</label>
-                <a style="" id="btnAjudaTpProduto" <?=PaginaSEI::montarTitleTooltip('Selecionar o produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img id="imgAjudaTpProduto" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-                </a>
-                <select id="selTpProduto" name="selTpProduto" style="width:25%" <?=$strDesabilitar?> class="infraSelect" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+            <!-- DIV PRODUTO -->
+            <div class="bloco" id="divTpProduto" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-sm-10 col-md-10 col-lg-8">              
+                  <label id="lblTpProduto" for="selTpProduto" accesskey="" class="infraLabelObrigatorio">Tipo de Produto:</label>
+                  <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                    <?= PaginaSEI::montarTitleTooltip('Selecionar o produto na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.','Ajuda') ?>/>
+
+                  <select id="selTpProduto" name="selTpProduto" <?=$strDesabilitar?> class="infraSelect form-control" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
                     <?=$strItensSelTpProduto?>
-                </select>
-
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="bloco blocoExibir" id="divTpDocumento">
-                <br>
-                <label id="selTpDocumento" for="selTpDocumento" accesskey="" class="infraLabelObrigatorio">Tipo de Documento SEI:</label>
-                <a style="" id="btnAjudaTpDocumento" <?=PaginaSEI::montarTitleTooltip('Selecionar o documento na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.')?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img id="imgAjudaTpDocumento" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-                </a>
-                <br>
-                <div id="divRadiosAplicacaoDoc">
-                <input type="radio"  id="rdnAplicSerieInterno" name="rdnAplicSerie" value="I" class="infraRadio" <?=$strDesabilitar?> onchange="exibirTipoDocumento(this.value)">
-                <label id="lblInterno"  class="infraLabelOpicional" <?=$strDesabilitar?> >Interno</label>
-                <input type="radio" id="rdnAplicSerieExterno" name="rdnAplicSerie" value="E" class="infraRadio" <?=$strDesabilitar?> onchange="exibirTipoDocumento(this.value)">
-                <label id="lblExterno"  class="infraLabelOpicional">Externo</label>
-                </div>
-                <div id="divSelectAplicacaoDoc">
-                <select id="selTpDocumentoExt" name="selTpDocumento" <?=$strDesabilitar?> style="width: 25%; display: none" class="infraSelect" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <?=$strItensSelTpDocumentoExterno?>
-                </select>
 
-                <select id="selTpDocumentoInt" name="selTpDocumento" <?=$strDesabilitar?> style="width: 25%; display: none" class="infraSelect" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <?=$strItensSelTpDocumentoInterno?>
-                </select>
+            <!-- DIV DOCUMENTO -->
+            <div class="bloco" id="divTpDocumento" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-sm-10 col-md-10 col-lg-8">              
+                  <label id="_selTpDocumento" for="selTpDocumento" accesskey="" class="infraLabelObrigatorio">Tipo de Documento SEI:</label>
+                  <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                    <?= PaginaSEI::montarTitleTooltip('Selecionar o documento na lista abaixo e após o preenchimento de todos os campos clicar no botão Adicionar.','Ajuda') ?>/>
+                  <div id="divSelectAplicacaoDoc">
+                    <select id="selTpDocumento" name="selTpDocumento" <?=$strDesabilitar?> class="infraSelect form-control" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
+                      <?=$strItensSelTpDocIntAndExt?>
+                    </select>
+                  </div>
                 </div>
+              </div>
             </div>
-            <br>
-            <div class="bloco" id="divFinal" style="display: none">
-                <input type="checkbox" name="chkObrigatorio" <?=$strDesabilitar?> id="chkObrigatorio">
-                <label id="lblObrigatorio" for="chkObrigatorio" class="infraLabelOpcional">Obrigatório</label>
-                <a style="" id="btAjudaObrigatorio" <?=PaginaSEI::montarTitleTooltip('Informa se o preenchimento do Tipos de Documento SEI/ Tipo de Produto será ou não obrigatório.')?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img id="imgAjudaObrigatorio" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-                </a>
 
-                <div class="clear"></div>
-                <div id="divVlRevisaoProdEsforco">
-                <label id="lblRevUnidade" for="txtRevUnidade" class="infraLabelObrigatorio">Tempo de Execução da Avaliação do Produto (em minutos):</label>
-                <a style="" id="btAjudaRevUnidade" <?=PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação do Produto (em minutos) atribuído a avaliação desse produto quando essa atividade for para avaliação. Esse valor será levado em consideração na distribuição do processo para a avaliação. Após o preenchimento de todos os campos clicar no botão Adicionar.')?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img id="imgAjudaRevUnidade" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="tamImg"/>
-                </a>
+            <!-- DIV FINAL - COMUM -->
+            <div class="bloco" id="divFinal" style="display:none;">
+              <div class="row">
+                <div class="col-sm-8 col-md-10 col-lg-10 mb-3">                  
+                    <input type="checkbox" name="chkObrigatorio" <?=$strDesabilitar?> id="chkObrigatorio" class="form-check-input infraCheckbox">
+                    <label id="lblObrigatorio" for="chkObrigatorio" class="infraLabelOpcional infraCheckboxLabel">Obrigatório</label>
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                    <?= PaginaSEI::montarTitleTooltip('Informa se o preenchimento do Tipos de Documento SEI/ Tipo de Produto será ou não obrigatório.','Ajuda') ?>/>                                
+                </div>
+               
+                <div class="col-sm-12 col-md-10 col-lg-8" id="divVlRevisaoProdEsforco">             
+                  <label id="lblRevUnidade" for="txtRevUnidade" class="infraLabelObrigatorio">Tempo de Execução da Avaliação do Produto (em minutos):</label>
+                  <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg" name="ajuda"
+                      <?= PaginaSEI::montarTitleTooltip('Indicar o Tempo de Execução da Avaliação do Produto (em minutos) atribuído a avaliação desse produto quando essa atividade for para avaliação. Esse valor será levado em consideração na distribuição do processo para a avaliação. Após o preenchimento de todos os campos clicar no botão Adicionar.','Ajuda') ?>/>
+                  
+                  <input utlSomenteNumeroPaste="true"  type="text" id="txtRevUnidade" name="txtRevUnidade" <?=$strDesabilitar?> class="infraText form-control" value="<?= !is_null($objFilaDTO) ? PaginaSEI::tratarHTML($objFilaDTO->getStrNome()) : $_POST['txtNome'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
+                        maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />                           
                 </div>
 
-                <div class="clear"></div>
-
-                <input utlSomenteNumeroPaste="true"  type="text" id="txtRevUnidade" name="txtRevUnidade" <?=$strDesabilitar?> style="width: 40%" class="infraText" value="<?= !is_null($objFilaDTO) ? PaginaSEI::tratarHTML($objFilaDTO->getStrNome()) : $_POST['txtNome'];?>" onkeypress="return infraMascaraNumero(this, event,6)"
-                       maxlength="6" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-
-                <div id="divBtnAdicionar">
-                <button type="button" class="infraButton" id="adicionar" accesskey="a" onclick="adicionarRegistroTabelaProduto()"><span class="infraTeclaAtalho">A</span>dicionar</button>
+                <div class="col-sm-8 col-md-8 col-lg-8" style="padding: 10px 0px 15px 15px;">
+                  <button type="button" class="infraButton" id="adicionar" accesskey="a" onclick="adicionarRegistroTabelaProduto()"><span class="infraTeclaAtalho">A</span>dicionar</button>
                 </div>
+
+              </div>
             </div>
-            <br>
 
-            <table width="99%" class="infraTable" summary="Produto Esperado" id="tbProdutoEsperado"  style="<?php echo $strItensTabela == '' ? 'display: none' : ''?>">
-                <caption style="background-color: white;" class="infraCaption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Produtos', 0) ?> </caption>
-                <tr>
-                    <th style="display: none">id_pk_tabela</th>
-                    <th style="display: none">id_documernto_tipo</th>
-                    <th style="display: none">tipo</th>
-                    <th style="display: none">aplicabilidade</th>
-                    <th class="infraTh"  align="center" width="30%" >Tipo de Documento SEI/Tipo de Produto</th> <!--1-->
-                    <th class="infraTh"  align="center" width="30%" >Tempo de Execução da Avaliação do Produto (em minutos)</th> <!--2-->
-                    <th class="infraTh"  align="center" width="25%" >Obrigatório</th>
-                    <th style="display: none">chk_obrigatorio</th>
-                    <th style="display: none">id_vinculo</th><!--0-->
-                    <th style="display: none">id_doc</th>
-                    <th style="display: none">vinculo_analise</th>
-                    <th style="display: none">is</th>
-                    <th class="infraTh"  align="center" width="15%" >Ações</th> <!--5-->
-                </tr>
-            </table>
-        </fieldset>
+            <div class="row">
+              <div class="col-12">
+                <table class="infraTable" summary="Produto Esperado" id="tbProdutoEsperado"  style="<?php echo $strItensTabela == '' ? 'display: none' : ''?>">
+                  <caption style="background-color: white;" class="infraCaption"> <?= PaginaSEI::getInstance()->gerarCaptionTabela('Produtos', 0) ?> </caption>
+                    <tr>
+                      <th style="display: none">id_pk_tabela</th>
+                      <th style="display: none">id_documernto_tipo</th>
+                      <th style="display: none">tipo</th>
+                      <th style="display: none">aplicabilidade</th>
+                      <th class="infraTh"  align="center" width="30%" >Tipo de Documento SEI/Tipo de Produto</th> <!--1-->
+                      <th class="infraTh"  align="center" width="30%" >Tempo de Execução da Avaliação do Produto (em minutos)</th> <!--2-->
+                      <th class="infraTh"  align="center" width="25%" >Obrigatório</th>
+                      <th style="display: none">chk_obrigatorio</th>
+                      <th style="display: none">id_vinculo</th><!--0-->
+                      <th style="display: none">id_doc</th>
+                      <th style="display: none">vinculo_analise</th>
+                      <th style="display: none">is</th>
+                      <th class="infraTh"  align="center" width="15%" >Ações</th> <!--5-->
+                    </tr>
+                </table>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+      </div>
     </div>
     <input <?php echo $strItensTabela != '' ? 'utlCampoObrigatorio="o"' : ''; ?> type="hidden" id="hdnTbProdutoEsperado" name="hdnTbProdutoEsperado" value="<?=$strItensTabela?>" />
-    <pre>
-    </pre>
-    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?=$idTipoControle?>" />
-    <input type="hidden" id="hdnIdAtividade"       name="hdnIdAtividade"       value="<?=$idAtividade?>" />
+    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?= $idTipoControle?>" />
+    <input type="hidden" id="hdnIdAtividade"       name="hdnIdAtividade"       value="<?= $isClonar ? null : $idAtividade?>" />
     <input type="hidden" id="hdnIdsRemovido"       name="hdnIdsRemovido"       value="" />
-    <input type="hidden" id="hdnIsAlterar"       name="hdnIsAlterar"       value="<?php echo $isAlterar ?>" />
+    <input type="hidden" id="hdnIsAlterar"         name="hdnIsAlterar"         value="<?= $isAlterar ?>" />
     <input type="hidden" id="hdnIdAlteracao"       name="hdnIdAlteracao"       value="" />
-    <?
-    PaginaSEI::getInstance()->fecharAreaDados();
-    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+
+    <?php
+      PaginaSEI::getInstance()->fecharAreaDados();
+      PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
     ?>
 </form>
-<?
-PaginaSEI::getInstance()->fecharBody();
-PaginaSEI::getInstance()->fecharHtml();
+
+<?php
+    require_once('md_utl_adm_atividade_cadastro_js.php');
+    require_once('md_utl_geral_js.php');
+    PaginaSEI::getInstance()->fecharBody();
+    PaginaSEI::getInstance()->fecharHtml();
 ?>

@@ -149,7 +149,13 @@ class MdUtlRelAnaliseProdutoRN extends InfraRN{
     protected function getArrObjPorIdsConectado($arrIds){
         $objMdUtlRelAnaliseProdutoDTO = new MdUtlRelAnaliseProdutoDTO();
         $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlRelAnaliseProduto($arrIds, InfraDTO::$OPER_IN);
-        $objMdUtlRelAnaliseProdutoDTO->retTodos(true);
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlRelAnaliseProduto();
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlAnalise();
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlAdmAtividade();
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlAdmTpProduto();
+        $objMdUtlRelAnaliseProdutoDTO->retNumIdMdUtlRelTriagemAtv();
+        $objMdUtlRelAnaliseProdutoDTO->retStrProtocoloFormatado();
+        #$objMdUtlRelAnaliseProdutoDTO->retTodos(true);
 
         return $this->listar($objMdUtlRelAnaliseProdutoDTO);
     }

@@ -133,7 +133,10 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_118 = 'Não é possível ainda acessar a tela de "Atividades", pois antes é necessário preencher os campos na tela "Parametrizar Tipo de Controle".';
     public static $MSG_UTL_119 = 'Não é possível ainda acessar a tela de "Filas", pois antes é necessário preencher os campos na tela "Parametrizar Tipo de Controle".';
     public static $MSG_UTL_120 = 'Não é possível associar Processos de Tipos de Controle de Desempenho distintos em uma Fila. Selecione Processos de apenas um Tipo de Controle para realizar a Associação a Fila.';
-
+    public static $MSG_UTL_121 = 'Nome do Membro Participante não está preenchido. Por favor, tente novamente preencher este campo.';
+    public static $MSG_UTL_122 = 'Não foi possível recuperar o nome do Usuário Participante. Por favor, tente mais tarde ou feche o sistema e entre novamente.';
+    public static $MSG_UTL_123 = 'Para acessar a Gestão de Solicitações é necessário que o Usuário Logado esteja definido como Gestor do Controle de Desempenho na Administração > Controle de Desempenho > Tipo de Controle de Desempenho > Editar ou Avaliador em uma das Filas dos Tipos de Controle de Desempenho parametrizado para esta Unidade.';
+    public static $MSG_UTL_124 = 'Usuário não vinculado à Fila ou está Desativado, com isso, o campo que sinaliza a Distribuição automática para o Novo Fluxo do processo foi desmarcado.';
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;

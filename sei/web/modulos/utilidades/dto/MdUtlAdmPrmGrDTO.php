@@ -28,7 +28,7 @@ class MdUtlAdmPrmGrDTO extends InfraDTO
 
         $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DBL, 'PercentualTeletrabalho', 'percentual_teletrabalho');
 
-        $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFila', 'id_md_utl_adm_fila');
+        #$this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFila', 'id_md_utl_adm_fila');
 
         $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRetornoUltFila', 'sin_retorno_ult_fila');
 
@@ -41,6 +41,7 @@ class MdUtlAdmPrmGrDTO extends InfraDTO
         $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PrazoMaxInterrupcao', 'prazo_max_interrupcao');
 
         $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'InicioPeriodo', 'inicio_periodo');
+        $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTA, 'DataCorte', 'dta_corte');
 
         $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr_usu muprusu', 'muprusu.id_md_utl_adm_prm_gr');
 

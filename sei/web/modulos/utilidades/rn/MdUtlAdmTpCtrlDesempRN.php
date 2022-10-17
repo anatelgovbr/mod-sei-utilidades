@@ -593,7 +593,7 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     return $arrRetorno;
   }
 
-  private function _getIdsParamsTpControle($idsTpControle)
+  public function _getIdsParamsTpControle($idsTpControle)
   {
     $objMdUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
     $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idsTpControle, InfraDTO::$OPER_IN);

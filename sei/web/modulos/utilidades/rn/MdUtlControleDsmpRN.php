@@ -345,10 +345,10 @@ class MdUtlControleDsmpRN extends InfraRN
 
             }
 
-            $idsTpCtrlUsuarioGestor = count($idsTpCtrlUsuarioGestor) > 0 && !$isGestorSip ? array() : $idsTpCtrlUsuarioGestor;
+            $idsTpCtrlUsuarioGestor = !is_null($idsTpCtrlUsuarioGestor) && !$isGestorSip ? array() : $idsTpCtrlUsuarioGestor;
             $isUsuarioParticipante = $objMdUtlAdmPrmGrUsuRN->usuarioLogadoIsUsuarioParticipante($idPrmTpCtrl);
 
-            $isUsuarioGestor = count($idsTpCtrlUsuarioGestor) > 0 && (is_array($idsTpCtrlUsuarioGestor) && in_array($idTpCtrl, $idsTpCtrlUsuarioGestor));
+            $isUsuarioGestor = !is_null($idsTpCtrlUsuarioGestor) && (is_array($idsTpCtrlUsuarioGestor) && in_array($idTpCtrl, $idsTpCtrlUsuarioGestor));
 
             if ($isUsuarioGestor || $isUsuarioParticipante) {
                 return true;
@@ -469,7 +469,7 @@ class MdUtlControleDsmpRN extends InfraRN
         return $arrIdstpCtrl;        
     }
 
-    private function buscaIdsTpCtrlUndComParametro( $arrIds ){
+    public function buscaIdsTpCtrlUndComParametro( $arrIds ){
         $ret = array();
 
         $objRelTpCtrlDesempUsuRN = new MdUtlAdmRelTpCtrlDesempUndRN();        
@@ -536,7 +536,7 @@ class MdUtlControleDsmpRN extends InfraRN
             $idTpCtrl = $_POST['hdnIdTipoControleUtl'];
             $nomeSelFilaDetalhe = $_POST['hdnSelFila'];
 
-            $arrDados = $this->controlarHistorico($arrDados, 'S', 'N', true, false);
+            $arrDados = $this->controlarHistorico($arrDados, 'S', 'N', true, false, 'associar_fila');
 
             $arrIdProcedimento = $arrDados[0];;
             $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
@@ -639,6 +639,13 @@ class MdUtlControleDsmpRN extends InfraRN
             $dtPrazo = $this->_getPrazoTarefa($strStatus, $dtHora, $intIdFila, $idTriagem, $idAnalise);
         }
 
+        $intTempoExecucaoAtrib = 0;
+        if ( in_array( $strStatus , [MdUtlControleDsmpRN::$EM_ANALISE , MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] ) ){
+            $arrAux = explode( '#' , $intTempoExecucao );
+            $intTempoExecucao      = $arrAux[0];
+            $intTempoExecucaoAtrib = $arrAux[1];
+        }
+
         $idUsuario = SessaoSEI::getInstance()->getNumIdUsuario();
 
         $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
@@ -690,7 +697,10 @@ class MdUtlControleDsmpRN extends InfraRN
                 $objMdUtlControleDsmpDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
             }
 
-            if (!is_null($arrDadosPercentualDesempenho['numTempoExecucao'])) {
+            if ( $intTempoExecucaoAtrib > 0 ){
+                $objMdUtlControleDsmpDTO->setNumTempoExecucaoAtribuido( $intTempoExecucaoAtrib );
+            }
+            else if (!is_null($arrDadosPercentualDesempenho['numTempoExecucao'])) {
                 $objMdUtlControleDsmpDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
             }
 
@@ -756,22 +766,30 @@ class MdUtlControleDsmpRN extends InfraRN
         $isStrStatus = array_key_exists('selStatus', $arrPost) && $arrPost['selStatus'] != '';
         $isStrDocumento = array_key_exists('txtDocumento', $arrPost) && trim($arrPost['txtDocumento']) != '';
         $isStrResponsavel = array_key_exists('selResponsavel', $arrPost) && trim($arrPost['selResponsavel']) != '';
+        $isTelaDistribuicao = array_key_exists('telaDistrib', $arrPost);
+        $isAvalAlgumCtrl    = array_key_exists('isAvalAlgumCtrl', $arrPost) ? $arrPost['isAvalAlgumCtrl'] : false;
 
         //Inicializa Vars
         $objDTO = new MdUtlProcedimentoDTO();
 
         //Set Campos definidos por Regras
         $objDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
-        $objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
+        $objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO, ProtocoloRN::$NA_SIGILOSO), InfraDTO::$OPER_IN);
         $objDTO->setControleDsmpTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
+        $objDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
 
         if (!$isGestorSipSei && is_null($arrObjsFilaUsuDTO)) {
             return null;
         }
 
-        // Refina a pesquisa para Usuários que não são gestores.
-        if (!$isGestorSipSei) {
-            $this->setCriteriosDistribuicao($arrObjsFilaUsuDTO, $objDTO);
+        if ( $isTelaDistribuicao ) {
+            if ( !$isGestorSipSei && !$isAvalAlgumCtrl ) {
+                $this->setCriteriosDistribuicao($arrObjsFilaUsuDTO, $objDTO);
+            }
+        } else {
+            if ( !$isGestorSipSei ) {
+                $this->setCriteriosDistribuicao($arrObjsFilaUsuDTO, $objDTO);
+            }
         }
 
         if ($isTipoProcesso) {
@@ -786,17 +804,11 @@ class MdUtlControleDsmpRN extends InfraRN
             $objDTO->setNumIdUsuarioDistribuicao($arrPost['selResponsavel']);
         }
 
-        $objDTO->setControleDsmpTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
-        
         if( is_array($idTipoControle) ) $objDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle,InfraDTO::$OPER_IN);
-        else $objDTO->setNumIdMdUtlAdmTpCtrlDesemp( $idTipoControle );
+        else if( $idTipoControle ) $objDTO->setNumIdMdUtlAdmTpCtrlDesemp( $idTipoControle );
 
         if ($isStrStatus) {
-            $objDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());            
             $objDTO->setStrStaAtendimentoDsmp(trim($arrPost['selStatus']));
-        } else {
-//            $objDTO->setStrStaAtendimentoDsmp(array(MdUtlControleDsmpRN::$INTERROMPIDO, MdUtlControleDsmpRN::$SUSPENSO), InfraDTO::$OPER_NOT_IN);
-            $objDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
         }
 
         if ($txtProcesso) {
@@ -877,7 +889,7 @@ class MdUtlControleDsmpRN extends InfraRN
         $isDistrib = !$isGestor && !$isMeusProcessos;
 
         if ($isDistrib || $isMeusProcessos) {
-            if (count($arrObjFilaUsuDTO) > 0) {
+            if (!is_null($arrObjFilaUsuDTO)) {
                 foreach ($arrObjFilaUsuDTO as $objDTO) {
                     if ($objDTO->getStrSinTriador() == 'S') {
                         if ($isMeusProcessos) {
@@ -915,7 +927,7 @@ class MdUtlControleDsmpRN extends InfraRN
                     }
 
 
-                    if (count($arrRetorno) == 7) {
+                    if ( !is_null( $arrRetorno ) && count( $arrRetorno ) == 7 ) {
                         return $arrRetorno;
                     }
                 }
@@ -932,8 +944,11 @@ class MdUtlControleDsmpRN extends InfraRN
         try {
             $isProcessos = $_POST['hdnTbProcesso'] != '';
             $nomeUsuPart = $_POST['hdnSelParticipante'];
+            $objInfraException = new InfraException();
 
             if ($isProcessos) {
+                if( empty( $nomeUsuPart ) ) $objInfraException->adicionarValidacao(MdUtlMensagemINT::$MSG_UTL_121);
+
                 $itensGridDinamica = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbProcesso']);
 
                 $funcFirstElement = function ($value) {
@@ -943,11 +958,13 @@ class MdUtlControleDsmpRN extends InfraRN
 
                 $arrIdProcedimento = array_map($funcFirstElement, $itensGridDinamica);
 
-                $objInfraException = new InfraException();
                 $this->verificarDuplicidadeUsuario($arrIdProcedimento, $objInfraException, true);
                 $objInfraException->lancarValidacoes();
 
                 $idNovoStatus = MdUtlControleDsmpINT::getProximoStatusDistribuicao($idStatus);
+                $this->validarAtribuicaoSituacao($idStatus,$idNovoStatus,$objInfraException);
+                $objInfraException->lancarValidacoes();
+                
                 $this->controlarContestacao(array($arrIdProcedimento, $idNovoStatus));
 
                 $arrAjustePrazo = array($arrIdProcedimento, $idStatus);
@@ -960,6 +977,16 @@ class MdUtlControleDsmpRN extends InfraRN
                 $objAtribuirDTO = new AtribuirDTO();
                 $arrObjProtocoloDTO = array();
 
+                // Será usado para a atualização do tempo de execução atribuido na relação atividades x triagem
+                $arrDadosPercentualDesempenho = null;
+                $arrStatusPercDsmp = [ MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE , MdUtlControleDsmpRN::$EM_ANALISE ];
+                if( in_array( $idNovoStatus , $arrStatusPercDsmp ) )
+                    // Primeiro parametro esta 10, mas não tem diferença, pois será usado somente os valores: tipo de presenca e fator de dsmp
+                    $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho(             
+                        10, $_POST['hdnIdTipoControleUtl'], $_POST['hdnIdUsuarioParticipanteLupa']
+                    );
+                
+                $objProtocoloRN = new ProtocoloRN();
 
                 for ($i = 0; $i < count($arrIdProcedimento); $i++) {
                     $idUsuarioDistribuicao = $_POST['hdnIdUsuarioParticipanteLupa'];
@@ -969,6 +996,12 @@ class MdUtlControleDsmpRN extends InfraRN
                     $idAnalise = $dadosHistorico['ID_ANALISE'];
                     $idRevisao = $dadosHistorico['ID_REVISAO'];
                     $idAtendimento = $dadosHistorico['ID_ATENDIMENTO'];
+
+                    // Ajuste na atribuição do tempo de execução para salvar na md_utl_rel_triagem_atv quando for analise,
+                    // levando em conta o tipo de presenca do usuario e a flag da atividade para aplicar ou não o fator de dsmp
+                    if( in_array( $idNovoStatus , $arrStatusPercDsmp ) ){                       
+                        $tempoExecucao .= '#' . $this->atualizaTempoAtribAtividades( ['idTriagem' => $idTriagem , 'PercDsmp' => $arrDadosPercentualDesempenho]);
+                    }
 
                     $arrParams = array(
                         $arrIdProcedimento[$i],
@@ -988,15 +1021,22 @@ class MdUtlControleDsmpRN extends InfraRN
                     $this->cadastrarNovaSituacaoProcesso($arrParams);
 
                     //Atribuição no Core
-                    $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioDistribuicao);
                     $objProtocoloDTO = new ProtocoloDTO();
                     $objProtocoloDTO->setDblIdProtocolo($arrIdProcedimento[$i]);
-                    $arrObjProtocoloDTO[] = $objProtocoloDTO;
+                    $objProtocoloDTO->retStrStaNivelAcessoGlobal();
+                    $arrObjValidaProtocoloDTO = $objProtocoloRN->listarRN0668($objProtocoloDTO);
+
+                    if( $arrObjValidaProtocoloDTO[0]->getStrStaNivelAcessoGlobal() != ProtocoloRN::$NA_SIGILOSO ){
+                        $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioDistribuicao);
+                        $arrObjProtocoloDTO[] = $objProtocoloDTO;
+                    }
                 }
 
-                $objAtividadeRN = new AtividadeRN();
-                $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
-                $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+                if( InfraArray::contar( $arrObjProtocoloDTO ) > 0 ){
+                    $objAtividadeRN = new AtividadeRN();
+                    $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
+                    $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+                }
 
                 $isTelaProcesso = $_POST['hdnIsTelaProcesso'] == 1;
 
@@ -1010,7 +1050,7 @@ class MdUtlControleDsmpRN extends InfraRN
     }
 
 
-    public function controlarHistorico($arrDados, $sinFila = 'S', $sinResponsavel = 'S', $isAssociarFila, $isRemoverFila = false)
+    public function controlarHistorico($arrDados, $sinFila = 'S', $sinResponsavel = 'S', $isAssociarFila, $isRemoverFila = false, $strFlag = null)
     {
 
         $objHistoricoRN = new MdUtlHistControleDsmpRN();
@@ -1024,7 +1064,12 @@ class MdUtlControleDsmpRN extends InfraRN
         $arrObjsAtuais = $this->getObjsAtivosPorProcedimento($arrIdProcedimento);
 
         if (!is_null($arrObjsAtuais)) {
-            $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdProcedimento, $sinFila, $sinResponsavel));
+            $arrRetorno = null;
+            if( !is_null( $strFlag ) && $strFlag == 'associar_fila' && $arrObjsAtuais[0]->getStrTipoAcao() == MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM ){
+                $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdProcedimento, $sinFila, $sinResponsavel,'S'));
+            }else{
+                $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdProcedimento, $sinFila, $sinResponsavel));
+            }
 
             if ($isAssociarFila) {
                 $strStatus = $isRemoverFila ? MdUtlControleDsmpRN::$REMOCAO_FILA : MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM;
@@ -1034,7 +1079,7 @@ class MdUtlControleDsmpRN extends InfraRN
             $this->excluir($arrObjsAtuais);
         }
 
-        if ($isAssociarFila) {
+        if ($isAssociarFila && !is_null($arrRetorno)) {
             $this->desativarIdsAtivosControleDsmp($arrRetorno);
         }
 
@@ -1076,6 +1121,7 @@ class MdUtlControleDsmpRN extends InfraRN
         $objMdUtlControleDsmpDTO->retStrNomeTpControle();
         $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
         $objMdUtlControleDsmpDTO->retNumIdTpProcedimento();
+        $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmPrmGr();
 
         return $this->consultar($objMdUtlControleDsmpDTO);
     }
@@ -1135,7 +1181,7 @@ class MdUtlControleDsmpRN extends InfraRN
         $objAnaliseRN = new MdUtlAnaliseRN();
         $objRevisaoRN = new MdUtlRevisaoRN();
 
-        if (count($arrRetorno) > 0) {
+        if (!is_null($arrRetorno)) {
             foreach ($arrRetorno as $idProcedimento => $arrDados) {
                 if (!is_null($arrDados['ID_TRIAGEM'])) {
                     array_push($idsTriagem, $arrDados['ID_TRIAGEM']);
@@ -1372,7 +1418,7 @@ class MdUtlControleDsmpRN extends InfraRN
 
         //Set Campos definidos por Regras
         $objDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
-        $objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
+        $objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO, ProtocoloRN::$NA_SIGILOSO), InfraDTO::$OPER_IN);
         $objDTO->setControleDsmpTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
         $objDTO->setNumIdUsuarioDistribuicao(SessaoSEI::getInstance()->getNumIdUsuario());
         $objDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
@@ -1512,7 +1558,8 @@ class MdUtlControleDsmpRN extends InfraRN
                 array(null, $dtInicio, $dtFim),
                 array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
 
-            $objMdUtlControleDsmpDTO->retNumTempoExecucao();
+            #$objMdUtlControleDsmpDTO->retNumTempoExecucao();
+            $objMdUtlControleDsmpDTO->retNumTempoExecucaoAtribuido();
             $objMdUtlControleDsmpDTO->retStrTipoAcao();
             $objMdUtlControleDsmpDTO->retStrStaAtendimentoDsmp();
             $objMdUtlControleDsmpDTO->retDblIdProcedimento();
@@ -1528,21 +1575,24 @@ class MdUtlControleDsmpRN extends InfraRN
                 $arrDadosCtrl = array();
                 foreach( $arrObjsDados as $obj ){
                     if( $obj->getStrStaAtendimentoDsmp() == self::$EM_CORRECAO_ANALISE ){
-                        if( $obj->getStrTipoAcao() != self::$STR_TIPO_ACAO_RETRIAGEM ){                           
+                        if( $obj->getStrTipoAcao() != self::$STR_TIPO_ACAO_RETRIAGEM ){
                             if( $this->getTempoExecucaoAnalise( $obj->getNumIdMdUtlAnalise() , $idUsuarioParticipante ) > 0 ){
                                 $numUnidEsforco += 0;
                             }else{
-                                $numUnidEsforco += $this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
+                                $numUnidEsforco += $obj->getNumTempoExecucaoAtribuido();
+                                #$this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
                             }
                         }else{
                             $arrDadosCtrl[$obj->getDblIdProcedimento()] = array(
                                 'id_atend' => $obj->getNumIdAtendimento(),
-                                'id_triag' => $obj->getNumIdMdUtlTriagem(),                            
+                                'id_triag' => $obj->getNumIdMdUtlTriagem(),
                             );
-                            $numUnidEsforco += $this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
+                            $numUnidEsforco += $obj->getNumTempoExecucaoAtribuido();
+                            #$this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
                         }
                     }else{
-                        $numUnidEsforco += $this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
+                        $numUnidEsforco += $obj->getNumTempoExecucaoAtribuido();
+                        #$this->getValorTempExecucao($obj, $idTipoControle, $idUsuarioParticipante);
                     }
                 }
             }
@@ -1550,11 +1600,13 @@ class MdUtlControleDsmpRN extends InfraRN
         }
     }
 
+    /*
     private function getValorTempExecucao($objs,$idTipoControle, $idUsuarioParticipante){
         $numTempo = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($objs->getNumTempoExecucao(), $idTipoControle, $idUsuarioParticipante));
         $numTempo = MdUtlAdmPrmGrINT::convertToMins($numTempo);
         return $numTempo;
     }
+    */
 
     public function buscarTempoExecucaoExecutadoConectado($arrParams)
     {
@@ -1571,10 +1623,6 @@ class MdUtlControleDsmpRN extends InfraRN
         if (!is_null($idUsuarioParticipante) && !is_null($idTipoControle)) {
             $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
             $objMdUtlControleDsmpDTO->setStrTipoAcao(array(MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO, MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM), InfraDTO::$OPER_IN);
-            $objMdUtlControleDsmpDTO->retStrTipoAcao();
-            $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
-            $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
-            $objMdUtlControleDsmpDTO->retNumIdMdUtlRevisao();
             $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
             $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
             $objMdUtlControleDsmpDTO->adicionarCriterio(array('Atual', 'Atual', 'Atual'),
@@ -1582,6 +1630,10 @@ class MdUtlControleDsmpRN extends InfraRN
                 array(null, $dtInicio, $dtFim),
                 array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
 
+            $objMdUtlControleDsmpDTO->retStrTipoAcao();
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlTriagem();
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlRevisao();
 
             $count = $this->contar($objMdUtlControleDsmpDTO);
 
@@ -1593,17 +1645,14 @@ class MdUtlControleDsmpRN extends InfraRN
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM:
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM:
                             $tempoExecucao = $this->getTempoExecucaoTriagem($objMdUtlControleDsmp->getNumIdMdUtlTriagem(),$idUsuarioParticipante);
-                            $tempoExecucao = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($tempoExecucao, $idTipoControle, $idUsuarioParticipante);
                             $numUnidEsforco += $tempoExecucao;
                             break;
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE:
                             $tempoExecucao = $this->getTempoExecucaoAnalise($objMdUtlControleDsmp->getNumIdMdUtlAnalise(),$idUsuarioParticipante);
-                            $tempoExecucao = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($tempoExecucao, $idTipoControle, $idUsuarioParticipante);
                             $numUnidEsforco += $tempoExecucao;
                             break;
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO:
                             $tempoExecucao = $this->getTempoExecucaoRevisao($objMdUtlControleDsmp->getNumIdMdUtlRevisao(),$idUsuarioParticipante);
-                            $tempoExecucao = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($tempoExecucao, $idTipoControle, $idUsuarioParticipante);
                             $numUnidEsforco += $tempoExecucao;
                             break;
                     }
@@ -1621,25 +1670,24 @@ class MdUtlControleDsmpRN extends InfraRN
         $dtInicio              = $arrDatas['DT_INICIAL'];
         $dtFim                 = $arrDatas['DT_FINAL'];
 
-        $numTempoExecucaoNaoRealizado    = 0;
+        $numTempoExecucaoNaoRealizado = 0;
         $dtInicio = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtInicio);
         $dtFim = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtFim);
 
         if(!is_null($idUsuarioParticipante) && !is_null($idTipoControle)) {
             $arrFiltroDetalhe = array(MdUtlRevisaoRN::$STR_VOLTAR_PARA_O_MESMO_PARTICIPANTE , MdUtlRevisaoRN::$STR_VOLTAR_OUTRO_PARTICIPANTE, MdUtlRevisaoRN::$STR_VOLTAR_OUTRO_PARTICIPANTE_OLD);
             $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
-            #$objMdUtlControleDsmpDTO->setNumIdUsuarioDistribuicao($idUsuarioParticipante);
-            #$objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO);
-            $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO);
-            $objMdUtlControleDsmpDTO->setStrDetalhe($arrFiltroDetalhe,InfraDTO::$OPER_IN);
-            #$objMdUtlControleDsmpDTO->setNumUnidadeEsforco(0);
-            $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
             $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+            $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO);
+            $objMdUtlControleDsmpDTO->setStrDetalhe($arrFiltroDetalhe,InfraDTO::$OPER_IN);            
             $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
+
             $objMdUtlControleDsmpDTO->adicionarCriterio(array('Atual', 'Atual', 'Atual'),
                 array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_MAIOR_IGUAL, InfraDTO::$OPER_MENOR_IGUAL),
                 array(null, $dtInicio, $dtFim),
                 array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
+
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
 
             $countHs = $this->contar($objMdUtlControleDsmpDTO);
             if ($countHs > 0) {
@@ -1650,16 +1698,13 @@ class MdUtlControleDsmpRN extends InfraRN
                     $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($objMdUtlHistControleDsmp->getNumIdMdUtlAnalise());
                     $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
                     $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
-                    $objMdUtlAnaliseDTO->retNumTempoExecucao();
+                    $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
 
                     $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
-                    $numTempoExecucaoNaoRealizado += !is_null( $objMdUtlAnalise ) ? $objMdUtlAnalise->getNumTempoExecucao() : 0;
+                    $numTempoExecucaoNaoRealizado += !is_null( $objMdUtlAnalise ) ? $objMdUtlAnalise->getNumTempoExecucaoAtribuido() : 0;
                 }
             }
         }
-
-        $numTempoExecucaoNaoRealizado = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($numTempoExecucaoNaoRealizado, $idTipoControle, $idUsuarioParticipante);
-        #$numTempoExecucaoNaoRealizado = MdUtlAdmPrmGrINT::convertToMins($numTempoExecucaoNaoRealizado['numTempoExecucao']);
         return $numTempoExecucaoNaoRealizado;
     }
 
@@ -1668,28 +1713,24 @@ class MdUtlControleDsmpRN extends InfraRN
         $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
         $objMdUtlTriagemDTO->setNumIdMdUtlTriagem($idTriagem);
         $objMdUtlTriagemDTO->setNumIdUsuario($idUsuarioParticipante);
-        $objMdUtlTriagemDTO->retNumTempoExecucao();
+        $objMdUtlTriagemDTO->retNumTempoExecucaoAtribuido();
 
         $objMdUtlTriagem = $objMdUtlTriagemRN->consultar($objMdUtlTriagemDTO);
-        return !is_null( $objMdUtlTriagem ) ? $objMdUtlTriagem->getNumTempoExecucao() : 0;
-
+        return !is_null( $objMdUtlTriagem ) ? $objMdUtlTriagem->getNumTempoExecucaoAtribuido() : 0;
     }
 
-    protected function getTempoExecucaoAnalise($idAnalise, $idUsuarioParticipante){
-        
+    protected function getTempoExecucaoAnalise($idAnalise, $idUsuarioParticipante){        
         $objMdUtlAnaliseRN  = new MdUtlAnaliseRN();
         $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
         $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($idAnalise);
         $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
-        $objMdUtlAnaliseDTO->retNumTempoExecucao();
-        $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();        
+        $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
 
         $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
 
         $vlrUnidEsf = 0;
         if(!is_null($objMdUtlAnalise)){
             $vlrUnidEsf = $objMdUtlAnalise->getNumTempoExecucaoAtribuido();
-            #MdUtlAdmPrmGrUsuINT::_retornaUnidEsforcoAtividadesAnalisadas( $idAnalise );
         }
         return $vlrUnidEsf;        
     }
@@ -1699,12 +1740,11 @@ class MdUtlControleDsmpRN extends InfraRN
         $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
         $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($idRevisao);
         $objMdUtlRevisaoDTO->setNumIdUsuario($idUsuarioParticipante);
-        $objMdUtlRevisaoDTO->retNumTempoExecucao();
+        $objMdUtlRevisaoDTO->retNumTempoExecucaoAtribuido();
 
         $objMdUtlRevisao = $objMdUtlRevisaoRN->consultar($objMdUtlRevisaoDTO);
-        return !is_null( $objMdUtlRevisao ) ? $objMdUtlRevisao->getNumTempoExecucao() : 0;
+        return !is_null( $objMdUtlRevisao ) ? $objMdUtlRevisao->getNumTempoExecucaoAtribuido() : 0;
     }
-
 
     protected function controlarAjustePrazoControlado($arrDados)
     {
@@ -1907,6 +1947,7 @@ class MdUtlControleDsmpRN extends InfraRN
             foreach ($arrIdAjustePrazo as $objAjustPrazoDTO) {
                 $objMdUtlAjustePrazoDTO = new MdUtlAjustePrazoDTO();
                 $objMdUtlAjustePrazoDTO->setNumIdMdUtlAjustePrazo($objAjustPrazoDTO->getNumIdMdUtlAjustePrazo());
+                $objMdUtlAjustePrazoDTO->setStrSinAtivo('N');
                 $arrObjs[] = $objMdUtlAjustePrazoDTO;
             }
 
@@ -1924,6 +1965,7 @@ class MdUtlControleDsmpRN extends InfraRN
             foreach ($arrIdContestacao as $idContestacao) {
                 $objMdUtlContestacaoDTO = new MdUtlContestacaoDTO();
                 $objMdUtlContestacaoDTO->setNumIdMdUtlContestRevisao($idContestacao);
+                $objMdUtlContestacaoDTO->setStrSinAtivo('N');
                 $arrObjsContest[] = $objMdUtlContestacaoDTO;
             }
 
@@ -2105,6 +2147,11 @@ class MdUtlControleDsmpRN extends InfraRN
     protected function atribuirDistribuicaoUsuarioLogadoControlado()
     {
         try {
+            $objInfraException = new InfraException();
+
+            $nomeUsuarioLgd = SessaoSEI::getInstance()->getStrNomeUsuario() . ' (' . SessaoSEI::getInstance()->getStrSiglaUsuario() . ')';
+
+            if( empty( $nomeUsuarioLgd ) ) $objInfraException->lancarValidacao(MdUtlMensagemINT::$MSG_UTL_122);
 
             $objHistoricoRN = new MdUtlHistControleDsmpRN();
 
@@ -2114,7 +2161,6 @@ class MdUtlControleDsmpRN extends InfraRN
             $idTpCtrl = $_GET['id_tp_ctrl'];
             $idProcedimento = $_GET['id_procedimento'];
             $idUsuarioLgd = SessaoSEI::getInstance()->getNumIdUsuario();
-            $nomeUsuarioLgd = SessaoSEI::getInstance()->getStrNomeUsuario() . ' (' . SessaoSEI::getInstance()->getStrSiglaUsuario() . ')';
             $sinFila = 'N';
             $sinResponsavel = 'N';
 
@@ -2137,18 +2183,39 @@ class MdUtlControleDsmpRN extends InfraRN
             $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
             $idRevisao = $arrRetorno[$idProcedimento]['ID_REVISAO'];
 
+            // Será usado para a atualização do tempo de execução atribuido na relação atividades x triagem
+            $arrDadosPercentualDesempenho = null;
+            $arrStatusPercDsmp = [ MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE , MdUtlControleDsmpRN::$EM_ANALISE ];
+            if ( in_array( $idNovoStatus , $arrStatusPercDsmp ) ) {
+                // Primeiro parametro esta 10, mas não tem diferença, pois será usado somente os valores: tipo de presenca e fator de dsmp
+                $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho(             
+                    10, $idTpCtrl, $idUsuarioLgd
+                );                
+                $tempoExecucao .= '#' . $this->atualizaTempoAtribAtividades( ['idTriagem' => $idTriagem , 'PercDsmp' => $arrDadosPercentualDesempenho] );
+            }
+
             $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $idNovoStatus, null, $tempoExecucao, $idUsuarioLgd, $idTriagem, $idAnalise, $idRevisao, $nomeUsuarioLgd, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO);
             $this->cadastrarNovaSituacaoProcesso($arrParams);
 
-            $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioLgd);
+            $objProtocoloRN = new ProtocoloRN();            
             $objProtocoloDTO = new ProtocoloDTO();
             $objProtocoloDTO->setDblIdProtocolo($idProcedimento);
+            $objProtocoloDTO->retStrStaNivelAcessoGlobal();
+            $arrObjValidaProtocoloDTO = $objProtocoloRN->listarRN0668($objProtocoloDTO);
 
-            $arrObjProtocoloDTO[] = $objProtocoloDTO;
+            $arrObjProtocoloDTO = [];
 
-            $objAtividadeRN = new AtividadeRN();
-            $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
-            $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+            if( $arrObjValidaProtocoloDTO[0]->getStrStaNivelAcessoGlobal() != ProtocoloRN::$NA_SIGILOSO ){
+                $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioLgd);
+                $arrObjProtocoloDTO[] = $objProtocoloDTO;
+            }
+
+            if( InfraArray::contar( $arrObjProtocoloDTO ) > 0 ){
+                $objAtividadeRN = new AtividadeRN();
+                $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
+                $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+            }
+
         } catch (Exception $e) {
             throw new InfraException('Erro realizando a Atribuição.', $e);
         }
@@ -2195,6 +2262,17 @@ class MdUtlControleDsmpRN extends InfraRN
             $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
             $idRevisao = $arrRetorno[$idProcedimento]['ID_REVISAO'];
 
+            // Será usado para a atualização do tempo de execução atribuido na relação atividades x triagem
+            $arrDadosPercentualDesempenho = null;
+            $arrStatusPercDsmp = [ MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE , MdUtlControleDsmpRN::$EM_ANALISE ];
+            if ( in_array( $idNovoStatus , $arrStatusPercDsmp ) ) {
+                // Primeiro parametro esta 10, mas não tem diferença, pois será usado somente os valores: tipo de presenca e fator de dsmp
+                $arrDadosPercentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho(             
+                    10, $idTpCtrl, $idUsuarioLgd
+                );                
+                $tempoExecucao .= '#' . $this->atualizaTempoAtribAtividades( ['idTriagem' => $idTriagem , 'PercDsmp' => $arrDadosPercentualDesempenho] );
+            }
+
             $arrParams = array($idProcedimento, $idFila, $idTpCtrl, $idNovoStatus, null, $tempoExecucao, $idUsuarioLgd, $idTriagem, $idAnalise, $idRevisao, $nomeUsuarioLgd, self::$STR_TIPO_ACAO_DISTRIBUICAO, null, null, null, null, null, self::$STA_ATRIBUIDO_S);
             $this->cadastrarNovaSituacaoProcesso($arrParams);
 
@@ -2213,6 +2291,154 @@ class MdUtlControleDsmpRN extends InfraRN
         return $objProtocoloDTO;
     }
 
-    
+    protected function atualizaTempoAtribAtividades( array $arrParams ){
+        $objTriagemRN            = new MdUtlTriagemRN();
+        $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
+        
+        $arrObjs = $objMdUtlRelTriagemAtvRN->listar( $objTriagemRN->getObjDTOAnaliseAtv( $arrParams['idTriagem'] ) );
 
+        $tmpExecucaoAtribuido = 0;
+        
+        foreach( $arrObjs as $atv ){
+            // valor total da atividade
+            $vlrTempoAtrib = $atv->getNumTempoExecucao(); 
+            
+            // aplica ou nao o fator de desempenho
+            if( $atv->getStrSinNaoAplicarPercDsmpAtv() == 'N' && $arrParams['PercDsmp']['numPercentualDesempenho'] > 0 )
+                $vlrTempoAtrib = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualPresenca([
+                    'tempoExec' => $vlrTempoAtrib , 
+                    'percDsmp'  => $arrParams['PercDsmp']['numPercentualDesempenho']
+                ]);
+            
+            // atualiza a coluna tempo_execucao_atribuido, na tabela md_utl_rel_triagem_atv
+            $objRelTriagemAtv = new MdUtlRelTriagemAtvDTO();
+            $objRelTriagemAtv->setNumTempoExecucaoAtribuido( $vlrTempoAtrib );
+            $objRelTriagemAtv->setNumIdMdUtlRelTriagemAtv( $atv->getNumIdMdUtlRelTriagemAtv() );
+            
+            $objMdUtlRelTriagemAtvRN->alterar( $objRelTriagemAtv );
+            
+            $tmpExecucaoAtribuido += $vlrTempoAtrib;
+        }
+
+        return $tmpExecucaoAtribuido;
+    }
+    
+    private function validarAtribuicaoSituacao($status, $novoStatus, $exception){
+        $msg = 'Erro na atribuição da nova situação do processo.';
+        switch ($status) {
+            case '1':
+            case '2':
+                if ( $novoStatus != 2 ) $exception->adicionarValidacao($msg);
+                break;
+            
+            case '3':
+            case '4':
+                if ( $novoStatus != 4 ) $exception->adicionarValidacao($msg);
+                break;
+
+            case '5':
+            case '6':
+                if ( $novoStatus != 6 ) $exception->adicionarValidacao($msg);
+                break;
+            
+            default:
+                return true;
+        }
+    }
+
+    public function distrAutoAposFinalizarControlado(){
+        try
+        {
+            $objInfraException = new InfraException();
+            
+            $strNovoStatus   = MdUtlControleDsmpRN::$EM_TRIAGEM;
+            $idUsuarioDistr  = $_POST['hdnIdUsuarioDistrAuto'];
+            $strDetalheDistr = $_POST['hdnNmUsuarioDistrAuto'];
+
+            if( empty( $strDetalheDistr ) ) $objInfraException->lancarValidacao( MdUtlMensagemINT::$MSG_UTL_122 );
+
+            $objAtribuirDTO     = new AtribuirDTO();
+            $objAtividadeRN     = new AtividadeRN();
+            $objProtocoloDTO    = new ProtocoloDTO();
+            $objProtocoloRN     = new ProtocoloRN();
+            $arrObjProtocoloDTO = array();
+
+            //Atribuição no Core
+            $objProtocoloDTO->setDblIdProtocolo( $_POST['hdnIdProcedimento'] );
+            $objProtocoloDTO->retStrStaNivelAcessoGlobal();
+            $arrObjValidaProtocoloDTO = $objProtocoloRN->listarRN0668($objProtocoloDTO);
+
+            if ( $arrObjValidaProtocoloDTO[0]->getStrStaNivelAcessoGlobal() != ProtocoloRN::$NA_SIGILOSO ){
+                $arrObjProtocoloDTO[] = $objProtocoloDTO;
+                $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioDistr);
+                $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
+                $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+            }
+
+            $arrIdsProcedimentos = array( $_POST['hdnIdProcedimento'] );
+            $arrObjsAtuais       = $this->getObjsAtivosPorProcedimento( $arrIdsProcedimentos );
+            $arrRetorno          = ( new MdUtlHistControleDsmpRN() )->controlarHistoricoDesempenho(
+                array($arrObjsAtuais, $arrIdsProcedimentos, 'N','S','S')
+            );
+
+            $arrParam = [
+                $arrObjsAtuais[0]->getDblIdProcedimento(), // 0
+                $arrObjsAtuais[0]->getNumIdMdUtlAdmFila(), // 1
+                $arrObjsAtuais[0]->getNumIdMdUtlAdmTpCtrlDesemp(), // 2
+                $strNovoStatus, // 3
+                null, // 4
+                $arrObjsAtuais[0]->getNumTempoExecucao(), // 5
+                $idUsuarioDistr, // 6
+                null, // 7
+                null, // 8
+                null, // 9
+                $strDetalheDistr, // 10
+                MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO // 11
+            ];
+
+            $this->excluir( $arrObjsAtuais );
+
+            $this->cadastrarNovaSituacaoProcesso( $arrParam );
+            
+        } catch (Exception $e) {
+            throw new InfraException('Erro na atribuição automática do processo.', $e);
+        }
+    }
+
+    public function retornaTpCtrlsUsuarioMembroParticipante()
+    {
+        $objRelTpCtrlDesempUsuRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
+        $objAdmPrmGrUsuRN        = new MdUtlAdmPrmGrUsuRN();
+        $objAdmTpCtrlDesempRN    = new MdUtlAdmTpCtrlDesempRN();
+
+        // busca os tipos de controle onde usuario logado eh membro participante na unidade
+        $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+        $objMdUtlAdmPrmGrUsuDTO->retNumIdMdUtlAdmPrmGr();
+
+        $ret = [];
+
+        if ($objAdmPrmGrUsuRN->contar($objMdUtlAdmPrmGrUsuDTO) > 0) {
+            $arrIdsPrmGr = InfraArray::converterArrInfraDTO($objAdmPrmGrUsuRN->listar($objMdUtlAdmPrmGrUsuDTO), 'IdMdUtlAdmPrmGr');
+
+            $objAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+            $objAdmTpCtrlDesempDTO->setNumIdMdUtlAdmPrmGr($arrIdsPrmGr, InfraDTO::$OPER_IN);
+            $objAdmTpCtrlDesempDTO->setStrSinAtivo('S');
+            $objAdmTpCtrlDesempDTO->adicionarCriterio(
+                array('IdMdUtlAdmPrmGr', 'IdMdUtlAdmPrmGr'),
+                array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_DIFERENTE),
+                array('', null),
+                array(InfraDTO::$OPER_LOGICO_AND)
+            );
+
+            $objAdmTpCtrlDesempDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+
+            if ($objAdmTpCtrlDesempRN->contar($objAdmTpCtrlDesempDTO) > 0) {
+                $ret = $this->buscaIdsTpCtrlUndComParametro(
+                    InfraArray::converterArrInfraDTO($objAdmTpCtrlDesempRN->listar($objAdmTpCtrlDesempDTO), 'IdMdUtlAdmTpCtrlDesemp')
+                );
+            }
+        }
+        return $ret;
+    }
 }

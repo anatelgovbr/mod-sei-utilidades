@@ -53,6 +53,9 @@ class MdUtlRevisaoDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRealizarAvalProdProd', 'sin_realizar_aval_prod_prod');
 
+    //coluna responsavel por sinalizar se ocorrerar distribuicao automatica para o ultimo triador/analista
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'DistAutoTriagAnalista', 'sin_dist_auto_triag_analista');
+
     $this->configurarPK('IdMdUtlRevisao',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila', 'id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);

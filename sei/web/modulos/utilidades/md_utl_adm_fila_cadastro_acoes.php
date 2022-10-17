@@ -30,7 +30,7 @@ $strUrlBuscarNomesUsuario = SessaoSEI::getInstance()->assinarLink('controlador_a
 $strUrlValidarVinculoUsuario = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_prm_vinculo_usuario_parametrizado_fila');
 $isAlterar                   = 0;
 $idAparente = 0;
-
+$isConsultar = false;
 
 switch($_GET['acao']){
 
@@ -189,7 +189,7 @@ switch($_GET['acao']){
         $objFilaDTO = new MdUtlAdmFilaDTO();
         $strDesabilitar = 'disabled="disabled"';
         $strTitulo = 'Consultar Fila - '.$nomeTpControle;
-
+        $isConsultar = true;
         if (!is_null($idFila)){
 
             $objFilaDTO->setNumIdMdUtlAdmFila($idFila);

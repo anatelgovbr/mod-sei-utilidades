@@ -117,7 +117,6 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
   private function _salvarObjsRelacionadosRevisao($idRevisao, $isAnalise){
       $hdnTbRevisaoAnalise = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbRevisaoAnalise']);
-
       foreach ($hdnTbRevisaoAnalise as $item){
 
           $objMdUtlRelRevisTrgAnlsDTO = new MdUtlRelRevisTrgAnlsDTO();
@@ -151,22 +150,24 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
       $objHistoricoRN           = new MdUtlHistControleDsmpRN();
       $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
 
-      $isProcessoConcluido = 0;
-      $idProcedimento = $_POST['hdnIdProcedimento'];
-      $idFila         = $_POST['hdnIdFilaAtiva'];
-      $idTpCtrl       = $_POST['hdnIdTpCtrl'];
-      $TmpExecucao     = $_POST['hdnTmpExecucao'];
-      $strDetalheRev  = $_POST['hdnEncaminhamento'];
-      $idUnidade      = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
-      $idEncaminhamento = $_POST['selEncaminhamento'];
-      $isAnalise     = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar'? true : false;
-      $objMdUtlRevisaoRN  = new MdUtlRevisaoRN();
-      //$idRevisao = $objMdUtlRevisaoRN->salvarObjRevisao();
-      $objRevisao = $objMdUtlRevisaoRN->salvarObjRevisao();
-      $idRevisao = $objRevisao->getNumIdMdUtlRevisao();
-      $objRNGerais        = new MdUtlRegrasGeraisRN();
+      $isProcessoConcluido  = 0;
+      $idProcedimento       = $_POST['hdnIdProcedimento'];
+      $idFila               = $_POST['hdnIdFilaAtiva'];
+      $idTpCtrl             = $_POST['hdnIdTpCtrl'];
+      $TmpExecucao          = $_POST['hdnTmpExecucao'];
+      $strDetalheRev        = $_POST['hdnEncaminhamento'];
+      $idUnidade            = SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+      $idEncaminhamento     = $_POST['selEncaminhamento'];
+      $isAnalise            = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar'? true : false;
+      $objMdUtlRevisaoRN    = new MdUtlRevisaoRN();
+      //$idRevisao 			= $objMdUtlRevisaoRN->salvarObjRevisao();
+      $objRevisao         	= $objMdUtlRevisaoRN->salvarObjRevisao();
+      $idRevisao      		= $objRevisao->getNumIdMdUtlRevisao();
+      $ckbDistAutoParaMim = isset( $_POST['ckbDistAutoParaMim'] ) ? $_POST['ckbDistAutoParaMim'] : null;
+
+      $objRNGerais        	= new MdUtlRegrasGeraisRN();
       
-      if( isset($_POST['cbkRealizarAvalProdAProd'])){
+      if( isset($_POST['cbkRealizarAvalProdAProd']) || isset($_POST['chkItemcbkRealizarAvalProdAProd']) ){
         $this->_salvarObjsRelacionadosRevisao($idRevisao, $isAnalise);
       }
 
@@ -174,7 +175,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
           case MdUtlRevisaoRN::$VOLTAR_PARA_FILA:
               $strNovoStatus = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' ? MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE : MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM;
-              $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
+              $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
               
               if($strNovoStatus == MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE){ // unidade de esforco sera o tempo das atividades analisadas
                 $TmpExecucao = MdUtlAdmPrmGrUsuINT::_retornaUnidEsforcoAtividadesAnalisadas( $arrObjsAtuais[0]->getNumIdMdUtlAnalise() );
@@ -242,17 +243,27 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               $idUsuarioDistr  = $arrRetorno[$idProcedimento]['ID_USUARIO'];
               $strDetalheDistr = $arrRetorno[$idProcedimento]['NOME']. ' ('.$arrRetorno[$idProcedimento]['SIGLA'].')';
 
+              $objInfraException = new InfraException();
+
+              if( empty( $strDetalheDistr ) ) $objInfraException->lancarValidacao(MdUtlMensagemINT::$MSG_UTL_122);
+
               $objAtribuirDTO  = new AtribuirDTO();
               $objAtividadeRN  = new AtividadeRN();
               $objProtocoloDTO = new ProtocoloDTO();
+              $objProtocoloRN = new ProtocoloRN();
               $arrObjProtocoloDTO = array();
 
               //Atribuição no Core
               $objProtocoloDTO->setDblIdProtocolo($idProcedimento);
-              $arrObjProtocoloDTO[] = $objProtocoloDTO;
-              $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioDistr);
-              $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
-              $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+              $objProtocoloDTO->retStrStaNivelAcessoGlobal();
+              $arrObjValidaProtocoloDTO = $objProtocoloRN->listarRN0668($objProtocoloDTO);
+
+              if( $arrObjValidaProtocoloDTO[0]->getStrStaNivelAcessoGlobal() != ProtocoloRN::$NA_SIGILOSO ){
+                $arrObjProtocoloDTO[] = $objProtocoloDTO;
+                $objAtribuirDTO->setNumIdUsuarioAtribuicao($idUsuarioDistr);
+                $objAtribuirDTO->setArrObjProtocoloDTO($arrObjProtocoloDTO);
+                $objAtividadeRN->atribuirRN0985($objAtribuirDTO);
+              }
 
               $arrIdsProcedimentos = array($idProcedimento);
               $arrObjsAtuais   = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento($arrIdsProcedimentos);
@@ -317,7 +328,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             $objMdUtlRevisaoDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
 
             $objMdUtlRevisaoDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
-            $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
+            $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido($arrParams['tempoExecucaoAtribuido']);
             $objMdUtlRevisaoDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
 
             $objMdUrltRevisaoRN = new MdUtlRevisaoRN();
@@ -342,11 +353,13 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             $objRevisao          = $objMdUtlRevisaoRN->salvarObjRevisao(true);
             $idNovaRevisao          = $objRevisao->getNumIdMdUtlRevisao();
             $isAnalise              = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar';
-            $this->_salvarObjsRelacionadosRevisao($idNovaRevisao, $isAnalise);
+
+            if( isset($_POST['cbkRealizarAvalProdAProd']) || isset($_POST['chkItemcbkRealizarAvalProdAProd']) ){
+              $this->_salvarObjsRelacionadosRevisao($idNovaRevisao, $isAnalise);
+            }
             $strStatus              = null;
 
             $strEncaminhamentoConts = $_POST['selEncaminhamentoContest'];
-
             switch($strEncaminhamentoConts){
                 case MdUtlRevisaoRN::$MANTER_O_RESPONSAVEL:
 
@@ -366,6 +379,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                    $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strStatus, null, 0,$idUsuarioDistr, $idTriagem, $idAnalise, $idNovaRevisao,MdUtlContestacaoRN::$STR_APROVADA,  MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO));
                 break;
                 case MdUtlRevisaoRN::$FLUXO_FINALIZADO:
+
                     $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
                     if (!is_null($arrObjsAtuais)) {
@@ -378,7 +392,15 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                         $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_CONTESTACAO, $idNovaRevisao));
 
                         $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
-                        $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
+
+                        // Ajuste quando o processo igual a Sigiloso, não realizar atribuição pelo CORE do SEI
+                        $objProtocoloRN = new ProtocoloRN();
+                        $objProtocoloDTO = new ProtocoloDTO();
+                        $objProtocoloDTO->setDblIdProtocolo($idProcedimento);
+                        $objProtocoloDTO->retStrStaNivelAcessoGlobal();
+                        $arrObjValidaProtocoloDTO = $objProtocoloRN->listarRN0668($objProtocoloDTO);
+                        if( $arrObjValidaProtocoloDTO[0]->getStrStaNivelAcessoGlobal() != ProtocoloRN::$NA_SIGILOSO )
+                          $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
 
                         $isAssociado = $this->_verificaProcessoAssociaAutomaticamente($idProcedimento, $idTpCtrl, $isAnalise);
                         if(!$isAssociado){
@@ -425,12 +447,39 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                 $nomeFila = $_POST['hdnSelFila'];
                 $objControleDsmpRN = new MdUtlControleDsmpRN();
                 $objControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idMdUtlAdmFila, $idTipoControle, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO, $nomeFila));
+
+                if ( isset( $_POST['ckbDistAutoTriagAnalise'] ) ) {
+                  $objControleDsmpRN->distrAutoAposFinalizar();
+                }
             }
 
             return true;
         }
 
         return false;
+  }
+
+  public function validaDistAutoTriagAnalise( $objTriagAnalise, &$objMdUtlFilaRN, &$validaDistAutoTriagem, &$strNomeUsuarioDistrAuto, &$idUsuarioDistrAuto ){
+    $dd = $objMdUtlFilaRN->verificaUsuarioLogadoPertenceFila( 
+      [ $objTriagAnalise->getNumIdMdUtlAdmFila() , 1 , true , $objTriagAnalise->getNumIdUsuario() ]
+    );
+
+    if ( $dd ) $validaDistAutoTriagem = true;
+
+    $objUsuarioDTO = new UsuarioDTO();
+    $objUsuarioDTO->setNumIdUsuario( $objTriagAnalise->getNumIdUsuario() );
+    $objUsuarioDTO->retStrNome();
+    $objUsuarioDTO->retStrSigla();
+
+    //insere os valores nome e sigla do Usuario no campo hidden para usar na atribuicao automatica
+    $objUsuarioDTO = ( new UsuarioRN() )->consultarRN0489( $objUsuarioDTO );
+
+    if( $objUsuarioDTO ){
+        $strNomeUsuarioDistrAuto = $objUsuarioDTO->getStrNome() . " ({$objUsuarioDTO->getStrSigla()})";
+        $idUsuarioDistrAuto      = $objTriagAnalise->getNumIdUsuario();
+    }else{
+        $validaDistAutoTriagem = false;
+    }
   }
 
 }

@@ -47,6 +47,8 @@ class MdUtlTriagemDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'PercentualDesempenho', 'percentual_desempenho');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'DistAutoParaMim', 'sin_dist_auto_para_mim');
+
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila', 'id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);
     $this->configurarFK('IdProtocolo','protocolo','id_protocolo');
 

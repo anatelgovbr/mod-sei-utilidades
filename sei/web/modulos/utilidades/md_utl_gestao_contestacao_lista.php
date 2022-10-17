@@ -24,7 +24,7 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
         //Cabeçalho da Tabela
         $strResultadoContest .= '<tr>';
 
-        $strResultadoContest .= '<th class="infraTh" width="5%" style="text-align: left"> Processo </th>';
+        $strResultadoContest .= '<th class="infraTh" width="5%" style="text-align: left; min-width: 175px"> Processo </th>';
         $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: left"> Tipo de Controle </th>';
         $strResultadoContest .= '<th class="infraTh" width="10%" style="text-align: left"> Servidor </th>';
         $strResultadoContest .= '<th class="infraTh" width="8%" style="text-align: left"> Data da Contestação </th>';
@@ -54,7 +54,7 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
             $staAtendimento            = $objMdUtlControleDsmpDTOCont[$i]->getStrStaAtendimentoDsmp();
             $dthDataSolicitacaoCont = explode(' ',$objMdUtlControleDsmpDTOCont[$i]->getDthAtual());
             $usuRevisorCont = MdUtlHistControleDsmpINT::getusuarioRevisor($dblIdProcedimentoCont);
-            
+
             $linkProcedimentoCont = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_gestao_solicitacoes_lista&id_procedimento=' . $dblIdProcedimentoCont . '');
             $linkAprovarCont      = SessaoSEI::getInstance()->assinarLink($strUrlContest . 'aprovar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmpCont . '&id_contest='.$idContestRevisaoExistente . '');
             $linkReprovarCont     = SessaoSEI::getInstance()->assinarLink($strUrlContest . 'reprovar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmpCont . '&id_contest=' . $idContestRevisaoExistente . '');
@@ -102,14 +102,14 @@ if (!is_null($objMdUtlControleDsmpDTOCont)) {
 
             //Linha Ações
             $strResultadoContest .= '<td class="tdAcoes" align="center">';
-            $strResultadoContest .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmpCont . '&is_gerir=0' . '&id_triagem=' . $numIdTriagemCont . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
-            $strResultadoContest .= '<a id="aprovarContestacao" onclick="confirmarAcaoContest(\'' . MdUtlAjustePrazoRN::$APROVADA . '\',\'' . $strProcessoCont . '\', \'' . $linkAprovarCont . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/aprovar_ajuste_prazo.png" title="Aprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
-            $strResultadoContest .= '<a id="reprovarContestacao" onclick="confirmarAcaoContest(\'' . MdUtlAjustePrazoRN::$REPROVADA . '\',\'' . $strProcessoCont . '\', \'' . $linkReprovarCont . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/reprovar_ajuste_prazo.png" title="Reprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
+            $strResultadoContest .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmpCont . '&is_gerir=0' . '&id_triagem=' . $numIdTriagemCont . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
+            $strResultadoContest .= '<a id="aprovarContestacao" onclick="confirmarAcaoContest(\'' . MdUtlAjustePrazoRN::$APROVADA . '\',\'' . $strProcessoCont . '\', \'' . $linkAprovarCont . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="'.PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/transportar.svg" title="Aprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
+            $strResultadoContest .= '<a id="reprovarContestacao" onclick="confirmarAcaoContest(\'' . MdUtlAjustePrazoRN::$REPROVADA . '\',\'' . $strProcessoCont . '\', \'' . $linkReprovarCont . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="'.PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg" title="Reprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
 
            /* $strResultadoContest .= '<td class="tdAcoes" align="center">';
             $strResultadoContest .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_contest_revisao_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmpCont . '&is_gerir=0' . '&id_triagem=' . $numIdTriagemCont . '&id_contestacao_revisao=' . $idContestRevisaoExistente)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
-            $strResultadoContest .= '<a onclick=construcao()><img src="modulos/utilidades/imagens/aprovar_ajuste_prazo.png" title="Aprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
-            $strResultadoContest .= '<a onclick=construcao()><img src="modulos/utilidades/imagens/reprovar_ajuste_prazo.png" title="Reprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
+            $strResultadoContest .= '<a onclick=construcao()><img src="modulos/utilidades/imagens/svg/ajuste_prazo_aprovar.svg?11" width="24" height="24" title="Aprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
+            $strResultadoContest .= '<a onclick=construcao()><img src="modulos/utilidades/imagens/svg/ajuste_prazo_reprovar.svg?11" width="24" height="24" title="Reprovar Solicitação de Contestação" alt="" class="infraImg" /></a>&nbsp;';
             $strResultadoContest .= '</td>';*/
 
             $strResultadoContest .= '</td>';

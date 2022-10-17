@@ -75,65 +75,10 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-
-    #lblQtdDiasReprovacao {position:absolute;left:1%;top:22%;width:40%;}
-    #ancAjudaQtdDiasReprovacao{position: absolute;
-        left: 260px;
-        top: 21%;}
-    #txtQtdDiasReprovacao {position:absolute;left:1%;top:27%;width:4.3%;}
-
-    <?if(0){?></style><?}?>
-<?
+require_once 'md_utl_adm_prm_contest_cadastro_css.php';
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once('md_utl_geral_js.php');
-?>
-<?if(0){?><script type="text/javascript"><?}?>
-
-    function inicializar(){
-        document.getElementById('btnCancelar').focus();
-        infraEfeitoTabelas(true);
-        hiddenblocoQtdDiasReprovacao(document.getElementById('selResultado').value);
-    }
-
-    function hiddenblocoQtdDiasReprovacao(resp) {
-       if(resp === 'S'){
-            let div = document.getElementById('blocoQtdDiasReprovacao');
-            div.style.display = 'block';
-       }else{
-           let div = document.getElementById('blocoQtdDiasReprovacao');
-           let input = document.getElementById('txtQtdDiasReprovacao');
-
-           input.value = '';
-           div.style.display = 'none';
-       }
-    }
-
-    function validarCadastro() {
-        if(document.getElementById('selResultado').value == 0){
-            alert('Informe a se haverá Reprovação Tática.');
-            document.getElementById('selResultado').focus();
-            return false;
-        }
-        if(document.getElementById('selResultado').value === 'S'){
-            if (infraTrim(document.getElementById('txtQtdDiasReprovacao').value)=='' || document.getElementById('txtQtdDiasReprovacao').value == 0) {
-                alert('Informe a quantidade de dias para Reprovação.');
-                document.getElementById('txtQtdDiasReprovacao').focus();
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function OnSubmitForm() {
-        return validarCadastro();
-    }
-    <?if(0){?></script><?}?>
-<?
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
@@ -142,32 +87,43 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     <form id="frmMdUtlAdmPrmContest" method="post" onsubmit="return OnSubmitForm();" action="<?= SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao']) ?>">
         <?
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('36em; overflow:unset;');
+        PaginaSEI::getInstance()->abrirAreaDados();
         ?>
-        <div id="blocoRsultTatico">
-            <fieldset class="infraFieldset" style="padding-bottom: 6%; margin-top: 15px;width: 52%" >
-                </br>
-                <legend class="infraLegend" >Resultado Tácito de Contestação de Avaliação</legend>
-                <div>
-                    <label id="lblResultado" for="selResultado" accesskey="" class="infraLabelObrigatorio">Deseja ter Reprovação Tácita na Contestação de Avaliação:</label>
-                    <a style="" id="btnResultado" <?= PaginaSEI::montarTitleTooltip('Informe se deseja que as Solicitações de Contestações de Avaliação sejam reprovadas automaticamente.') ?>
-                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <img id="imgAjudaResultado" border="0" style="width: 16px;height: 16px;"
-                             src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-                    </a>
-                    <select id="selResultado" name="selResultado" class="infraSelect" onchange=hiddenblocoQtdDiasReprovacao(this.value)
-                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <?= $strItensSelSinReprovacao ?>
-                    </select>
-                </div>
-                <div id=blocoQtdDiasReprovacao style="display:none;">
-                    <label id="lblQtdDiasReprovacao" for="txtQtdDiasReprovacao" accesskey="" class="infraLabelObrigatorio">Quantidade de dias úteis para Reprovação:</label>
-                    <a href="javascript:void(0);" id="ancAjudaQtdDiasReprovacao" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" <?=PaginaSEI::montarTitleTooltip('Informe a quantidade de dias úteis para reprovação automática das Contestações.')?>><img class="tamanhoBtnAjuda" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/></a>
-
-                    <input type="text" id="txtQtdDiasReprovacao" name="txtQtdDiasReprovacao" maxlength="50" class="infraText" utlSomenteNumeroPaste="true" ondrop="return infraMascaraNumero(this,event, 3);" onkeypress="return infraMascaraNumero(this, event,3)"  value="<?=PaginaSEI::tratarHTML($qtdDiasUteisReprovacao) ?>" onkeypress="return infraMascaraTexto(this,event,3);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>" />
-                </div>
-
-            </fieldset>
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <fieldset class="infraFieldset mb-4 p-4">
+                    <legend class="infraLegend">Resultado Tácito de Contestação de Avaliação</legend>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12 col-lg-6">
+                            <div class="form-group">
+                                <label id="lblResultado" for="selResultado" accesskey="" class="infraLabelObrigatorio"> Deseja ter Reprovação Tácita:
+                                    <img align="top" class="infraImg" name="ajuda"
+                                        src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg"
+                                        <?= PaginaSEI::montarTitleTooltip('Informe se deseja que as Solicitações de Contestações de Avaliação sejam reprovadas automaticamente.','Ajuda') ?>/>
+                                </label>
+                                <select id="selResultado" name="selResultado" class="infraSelect form-control" onchange=hiddenblocoQtdDiasReprovacao(this.value) tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                                    <?=$strItensSelSinReprovacao?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-lg-6">
+                            <div class="form-group">
+                                <div id=blocoQtdDiasReprovacao style="display:none;">
+                                    <label id="lblQtdDiasReprovacao" for="txtQtdDiasReprovacao" accesskey="" class="infraLabelObrigatorio">
+                                    Quantidade de dias úteis para Reprovação:
+                                        <img align="top" class="infraImg" name="ajuda"
+                                                src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg"
+                                                <?= PaginaSEI::montarTitleTooltip('Informe a quantidade de dias úteis para reprovação automática das Contestações.','Ajuda') ?>/>
+                                    </label>
+                                    <input type="text" id="txtQtdDiasReprovacao" name="txtQtdDiasReprovacao" onkeypress="return infraMascaraNumero(this, event,6)" ondrop="return infraMascaraNumero(this,event, 3);"
+                                            class="infraText form-control" value="<?=PaginaSEI::tratarHTML($qtdDiasUteisReprovacao) ?>"
+                                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
         </div>
         <?
         PaginaSEI::getInstance()->fecharAreaDados();
@@ -177,6 +133,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     </form>
 
 
-<?
+<?php
+require_once('md_utl_geral_js.php');
+require_once('md_utl_adm_prm_contest_cadastro_js.php');
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

@@ -103,19 +103,32 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-    #frmMdUtlAdmStatusLista {
-        margin-top: 5px;
-    }
-    <?if(0){?></style><?}?>
-<?
+
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
+    <form id="frmMdUtlAdmStatusLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+        <?php
+            PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+            PaginaSEI::getInstance()->abrirAreaDados('0em');
+        ?>
+
+        <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
+
+        <?php
+            PaginaSEI::getInstance()->fecharAreaDados();
+            PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
+            PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+        ?>
+    </form>
+
+<?php require_once 'md_utl_geral_js.php'; ?>
+
+<script type="text/javascript">
 
     function inicializar() {
         if ('<?=$_GET['acao']?>' == 'md_utl_adm_status_selecionar') {
@@ -123,27 +136,8 @@ require_once 'md_utl_geral_js.php';
         }
         infraEfeitoTabelas(true);
     }
+</script>
 
-    <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-    <form id="frmMdUtlAdmStatusLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-        <?
-        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('0em');
-        ?>
-
-        <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
-
-        <?
-        PaginaSEI::getInstance()->fecharAreaDados();
-        PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
-    </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

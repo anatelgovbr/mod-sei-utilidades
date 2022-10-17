@@ -307,7 +307,7 @@ class MdUtlAdmGrpFilaProcRN extends InfraRN {
         }
 
 
-        if(count($arrIdRegistroRemovido)>0) {
+        if(!is_null($arrIdRegistroRemovido)) {
             $arrMdUtlAdmGrpFilaProcDTO = InfraArray::gerarArrInfraDTO('MdUtlAdmGrpFilaProcDTO', 'IdMdUtlAdmGrpFilaProc', $arrIdRegistroRemovido);
            // $arrMdUtlAdmGrpFlProcAtvDTO= InfraArray::gerarArrInfraDTO('MdUtlAdmGrpFlProcAtvDTO','IdMdUtlAdmGrpFilaProc',$arrIdRegistroRemovido);
 
@@ -323,11 +323,11 @@ class MdUtlAdmGrpFilaProcRN extends InfraRN {
             $this->excluirControlado($arrMdUtlAdmGrpFilaProcDTO);
         }
 
-        if(count($arrRegistroNovo)>0){
+        if ( InfraArray::contar($arrRegistroNovo) > 0 ){
             $this->cadastrarDadosProcAtv(array($_POST,$arrRegistroNovo));
         }
 
-        if(count($arrIdAlterado)>0) {
+        if ( InfraArray::contar( $arrIdAlterado) > 0 ) {
             foreach ($arrIdAlterado as $idAlterado) {
                 $arrAtividades = $this->_retornaAtividadeAlterada($strTbGrpAtvOrigin, $arrTbGrpAtv, $idAlterado);
             }

@@ -38,7 +38,6 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN
 
             $objMdUtlAdmRelPrmDsFilaBD = new MdUtlAdmRelPrmDsFilaBD($this->getObjInfraIBanco());
 
-//            var_dump($objMdUtlAdmRelPrmDsFilaDTO);die;
             $ret = $objMdUtlAdmRelPrmDsFilaBD->cadastrar($objMdUtlAdmRelPrmDsFilaDTO);
 
             return $ret;
@@ -183,7 +182,7 @@ class MdUtlAdmRelPrmDsFilaRN extends InfraRN
             $arrFila[] = $fila;
         }
 
-        return array('itensTabela' => $arrFila, 'qtdFila' => count($arrFila));
+        return array('itensTabela' => $arrFila, 'qtdFila' => is_null($arrFila) ? 0 : count($arrFila));
     }
 
     protected function montarArrFilaPrioridadeControlado($idMdUtlAdmPrmDs)

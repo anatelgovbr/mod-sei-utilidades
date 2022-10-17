@@ -36,6 +36,7 @@ $objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
 $objRelTriagemAtvRN        = new MdUtlRelTriagemAtvRN();
 $objFilaRN                 = new MdUtlAdmFilaRN();
 $objMdUtlAdmPrmGrRN        = new MdUtlAdmPrmGrRN();
+$objAnaliseRN              = new MdUtlAnaliseRN();
 
 $objProcedimentoDTO        = $objRegrasGerais->getObjProcedimentoPorId($idProcedimento);
 $idFilaAtiva               = $_GET['id_fila'];
@@ -46,6 +47,11 @@ $objTriagemDTO             = null;
 $isRetriagem               = array_key_exists('id_retriagem', $_GET) ? $_GET['id_retriagem'] : $_POST['hdnIdRetriagem'];
 $isRtgAnlCorrecao          = array_key_exists('isRtgAnlCorrecao', $_GET) ? $_GET['isRtgAnlCorrecao'] : $_POST['hdnIdRtgAnlCorrecao'];
 $isAnalise                 = false;
+$tpPresencaRef             = null;
+$percDsmpRef               = null;
+$idUsuarioFezAnalise       = null;
+$idUsuarioDistrAnalise     = null;
+$arrAtvAnalisadas          = null;
 
 //retona objeto controle desempenho
 $objControleDsmpDTO = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
@@ -64,6 +70,20 @@ if($isBuscaDados) {
     }
 }
 
+//recupera o nome do usuario que realizou/realizara a triagem
+$idObj = in_array(
+    $objControleDsmpDTO->getStrStaAtendimentoDsmp(), 
+    [MdUtlControleDsmpRN::$EM_TRIAGEM,MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM]
+)
+? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+: $objControleDsmpDTO->getNumIdMdUtlTriagem();
+
+$nm_usuario_triagem = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+    $idObj,
+    $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+    MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM
+);
+
 //Urls
 $strLinkAtividadeSelecao   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_selecionar&tipo_selecao=2&id_object=objLupaAtividade&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento.'&acao_origem='.$acaoPrincipal);
 $strLinkAjaxAtividade      = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_atividade_filtro_auto_completar&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
@@ -71,6 +91,7 @@ $strLinkAjaxAtividade      = SessaoSEI::getInstance()->assinarLink('controlador_
 $strLinkGrupoAtividadeSelecao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_grp_fila_selecionar&tipo_selecao=2&id_object=objLupaGrupoAtividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strLinkAjaxGrupoAtividade    = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_grp_fila_auto_completar&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
 $strUrlAjaxValidarGrupoAtvAtividade = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_adm_validar_grupo_atividade&id_fila_ativa='.$idFilaAtiva.'&id_tipo_controle_utl='.$idTipoControle.'&id_tipo_procedimento='.$idTipoProcedimento);
+$strLinkValidaUsuarioPertenceAFila = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_usuario_pertence_fila');
 
 $urlRetorno = 'controlador.php?acao=md_utl_analise_alterar&acao_origem=md_utl_processo_listar&id_procedimento=' . $idProcedimento.'&id_fila='.$idFilaAtiva.'&id_retriagem=1&isRtgAnlCorrecao=1';
 
@@ -92,6 +113,22 @@ $selEncaminhamentoTriagem     = '';
 $vlEncaminhamentoTriagem      = !is_null($objTriagemDTO) ? $objTriagemDTO->getStrStaEncaminhamentoTriagem() : null;
 $vlFila                       = !is_null($objTriagemDTO) ? $objTriagemDTO->getNumIdMdUtlAdmFila() : null;
 
+// informacoes usadas para a funcionalidade de distribuir o processo automaticamente para o triador
+$strSiglaUsuario              = SessaoSEI::getInstance()->getStrSiglaUsuario();
+$strNmSiglaUsuario            = SessaoSEI::getInstance()->getStrNomeUsuario() . " ($strSiglaUsuario)";
+$bolPertenceAFila             = false;
+$chkDistAutoParaMim           = null;
+
+if( !is_null( $objTriagemDTO ) ){
+    // informacao usada para a funcionalidade de distribuir o processo automaticamente para o analista apos finalizar o processo
+    $bolPertenceAFila = $objFilaRN->verificaUsuarioLogadoPertenceFila( 
+        [ $vlFila , 1 , true , $objTriagemDTO->getNumIdUsuario() ]
+    );
+    
+    if( $bolPertenceAFila )
+        $chkDistAutoParaMim  = $objTriagemDTO->getStrDistAutoParaMim() ?: null;
+}
+
 $selEncaminhamentoTriagem     = MdUtlControleDsmpINT::montarSelectEncaminhamentoAnaliseTriagem($vlEncaminhamentoTriagem);
 $arrObjFilaDTO                = $objFilaRN->getFilasVinculadosUsuario( $idTipoControle ); #$objFilaRN->getFilasTipoControle($idTipoControle);
 $selFila                      = MdUtlAdmFilaINT::montarSelectFilas($vlFila, $arrObjFilaDTO);
@@ -104,12 +141,6 @@ $isJsTpProcParametrizado     = $isTpProcessoParametrizado ? '1' : '0';
 // verifica se exite grupo cadastrado para ocultar ou exibir os campos na tela
 $existeGrupoCadastrado = MdUtlAdmGrpINT::verificarExisteGruposParametrizado($objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), $objControleDsmpDTO->getNumIdMdUtlAdmFila(), $idTipoProcedimento);
 
-// buscar id do usuario da última distribuição da triagem e o percentual de desempenho para aplicar o calculo dos tempos
-if (!is_null($objTriagemDTO)) {
-    $idUsuarioDistribuicaoAnalise = MdUtlAdmPrmGrUsuINT::buscarIdUsuarioDitribuidoAnalise($objTriagemDTO->getNumIdMdUtlTriagem());
-    $percentualDesempenho = MdUtlAdmPrmGrUsuINT::retornaDadosPercentualDesempenho(null, $idTipoControle, $idUsuarioDistribuicaoAnalise);
-}
-
 switch ($_GET['acao']) {
 
     //region Listar
@@ -119,7 +150,7 @@ switch ($_GET['acao']) {
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
 
-        $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
+        $arrComandos[] = '<button type="button" accesskey="c" id="" value="Cancelar" onclick="fechar();" class="infraButton">
                                     <span class="infraTeclaAtalho">C</span>ancelar
                             </button>';
 
@@ -153,18 +184,19 @@ switch ($_GET['acao']) {
                             </button>';
 
         if(!is_null($idTriagem)) {
-            $arrObjsRel      = $objRelTriagemAtvRN->getObjsPorIdTriagem($idTriagem);
+            $arrObjsRel   = $objRelTriagemAtvRN->getObjsPorIdTriagem($idTriagem);
             $isSemAnalise = false;
 
             if (!is_null($objTriagemDTO) && (is_array($arrObjsRel) && !is_null($arrObjsRel))) {
                 $arrGrid = array();
                 $contador = 0;
 
+                // buscar id do usuario da última distribuição para aplicar o fator de desempenho
+                //$idUsuarioDistribuicaoAnalise = MdUtlAdmPrmGrUsuINT::buscarIdUsuarioDitribuidoAnalise($objTriagemDTO->getNumIdMdUtlTriagem());
+
                 foreach ($arrObjsRel as $objDTO) {
-                    $tempoExecucao = $objDTO->getNumTempoExecucao();
-                    if($idUsuarioDistribuicaoAnalise){
-                        $tempoExecucao = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($objDTO->getNumTempoExecucao(), $idTipoControle, $idUsuarioDistribuicaoAnalise);
-                    }
+                    $tempoExecucao = $objDTO->getNumTempoExecucaoAtribuido();
+
                     $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
                     $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
                     $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($tempoExecucao) : '0min';
@@ -202,6 +234,24 @@ switch ($_GET['acao']) {
     case 'md_utl_triagem_alterar':
 
         if($isRetriagem == 1){
+            $strTitulo = 'Retriagem ';
+
+            if ( $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE ) {
+                //Quem fez analise
+                $idUsuarioFezAnalise = $objAnaliseRN->getAnalisePorId( 
+                    $objControleDsmpDTO->getNumIdMdUtlAnalise() 
+                )->getNumIdUsuario();
+
+                //Com quem estar neste momento o processo
+                $idUsuarioDistrAnalise = $objControleDsmpDTO->getNumIdUsuarioDistribuicao();
+
+                //Recupera a lista de atividades analisadas
+                $arrAtvAnalisadas = ( new MdUtlRelTriagemAtvRN() )->listarComAnalise( $objControleDsmpDTO->getNumIdMdUtlAnalise() );
+                $arrAtvAnalisadas = InfraArray::converterArrInfraDTO(
+                    InfraArray::distinctArrInfraDTO($arrAtvAnalisadas,'IdMdUtlAdmAtividade'),
+                    'IdMdUtlAdmAtividade'
+                );
+            }
             $strLinkIniciarRevisao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_revisao_analise_consultar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento);
         }else {
             $strLinkIniciarRevisao = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_revisao_triagem_consultar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimento . '&id_revisao=' . $objControleDsmpDTO->getNumIdMdUtlRevisao());
@@ -211,7 +261,7 @@ switch ($_GET['acao']) {
         $arrObjsRel = $objRelTriagemAtvRN->getObjsPorIdTriagem($idTriagem);
 
         if(!$isAnalise) {
-            $arrComandos[] = '<button type="button" accesskey="v" id="btnFecharSelecao" value="Revisao" onclick="abrirModalRevisao();" class="infraButton">
+            $arrComandos[] = '<button type="button" accesskey="v" id="btnAbriAvaliacao" value="Revisao" onclick="abrirModalRevisao();" class="infraButton">
                                             A<span class="infraTeclaAtalho">v</span>aliação
                                     </button>';
         }
@@ -220,31 +270,29 @@ switch ($_GET['acao']) {
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
 
-        $arrComandos[] = '<button type="button" accesskey="c" id="btnFecharSelecao" value="Cancelar" onclick="fechar();" class="infraButton">
+        $arrComandos[] = '<button type="button" accesskey="c" id="" value="Cancelar" onclick="fechar();" class="infraButton">
                                     <span class="infraTeclaAtalho">C</span>ancelar</button>';
-
-
 
         if(!is_null($objTriagemDTO) && (is_array($arrObjsRel) && !is_null($arrObjsRel))) {
             $arrGrid = array();
             $contador = 0;
             $isSemAnalise = false;
 
+            $tpPresencaRef = $objControleDsmpDTO->getStrStaTipoPresenca();
+            $percDsmpRef   = $objControleDsmpDTO->getNumPercentualDesempenho();
+
             foreach ($arrObjsRel as $objDTO) {
-                $numVlTmpExecucaoAtv = $objDTO->getNumVlTmpExecucaoAtv();
-                if($idUsuarioDistribuicaoAnalise){
-                    $numVlTmpExecucaoAtv = MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($objDTO->getNumVlTmpExecucaoAtv(), $idTipoControle, $idUsuarioDistribuicaoAnalise);
-                }
+                $vlrTmpExec = $objDTO->getStrSinAnalise() == 'S' && !is_null($objDTO->getNumTempoExecucaoAtribuido()) ? $objDTO->getNumTempoExecucaoAtribuido() : 0;
 
                 $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
-                $idPk = $objDTO->getNumIdMdUtlAdmAtividade();      
-                $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($numVlTmpExecucaoAtv) : '0min';
+                $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
+                $vlUe = $vlrTmpExec > 0 ? MdUtlAdmPrmGrINT::convertToHoursMins( $vlrTmpExec ) : $vlrTmpExec.'min';
                 $vlUeHdn = $objDTO->getStrSinAnalise() == 'S' ? $objDTO->getNumVlTmpExecucaoAtv() : $objDTO->getNumVlTmpExecucaoRev();
                 $strVlAnalise = $objDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
                 $contador++;
-                $valorTotalUE += $objDTO->getStrSinAnalise() == 'S' ? $numVlTmpExecucaoAtv : '';
+                $valorTotalUE += $vlrTmpExec;
                 $valorTotalHdn += $vlUeHdn;
-                $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidadeAtividade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $vlUeHdn);
+                $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidadeAtividade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $vlUeHdn, $vlrTmpExec);
                 $isSemAnalise = $objDTO->getStrSinAnalise() == 'N';
             }
 
@@ -267,7 +315,6 @@ switch ($_GET['acao']) {
                     $displayFila = '';
                 }
             }
-
         }
 
         if(!empty($_POST)){
@@ -315,108 +362,18 @@ switch ($_GET['acao']) {
     //endregion
 }
 
-
 //Botões de ação do topo
-
-
-
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNomeSistema() . ' - ' . $strTitulo . ' ::');
 PaginaSEI::getInstance()->montarStyle();
-PaginaSEI::getInstance()->abrirStyle(); ?>
-    .clear {
-    clear: both;
-    }
-
-    select[multiple] {
-    width: 79%;
-    margin-top: 0.5%;
-    }
-
-    #divAtividade {
-    margin-top: 0px;
-    }
-
-    #divTbAtividade{
-    margin-bottom: 4%;
-    }
-
-    #btnAdicionar{
-    margin-left: 55.9%;
-    margin-top: 2.5%;
-    }
-
-    #divEncaminhamentoTriagem{
-     margin-top: -1.8%;
-     margin-bottom: 2%;
-     display: inline-block;
-     margin-right: 45px;
-    }
-
-    #divFila{
-      display: inline-block;
-      margin-bottom: 2%;
-      margin-right: 320px;
-    }
-
-    #divPrincipalEncaminhamento{
-       width: 100%;
-    }
-
-    #selEncaminhamentoTriagem{
-       width: 260px;
-    }
-
-    #selFila{
-    width: 201px;
-    }
-
-    .tamanhoBtnAjuda{
-    width: 16px;
-    height: 16px;
-    }
-
-    #imgAjudaEncTriagem{
-    position: absolute;
-    margin-top: -0.4px;
-    }
-
-
-<?php if($isConsultar){ ?>
-    #divPrazoResposta{
-    width: 45% !important;
-    margin-left: 0%;
-    }
-<?php }else{ ?>
-    #divPrazoResposta{
-    width: 45% !important;
-    margin-left: 0%;
-    margin-top: 3px;
-    margin-bottom: 13px;
-    }
-
-<?php } ?>
-    #imgPrazoResposta{
-    width: 16px;
-    height: 16px;
-    margin-bottom: -1%;
-    }
-
-    @media screen and (max-width: 600px){
-        #divPrazoResposta{
-            width: 60% !important;
-        }
-    }
-
-<?php PaginaSEI::getInstance()->fecharStyle();
+PaginaSEI::getInstance()->abrirStyle();
+PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_geral_css.php";
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once ('md_utl_funcoes_js.php');
-require_once('md_utl_triagem_cadastro_js.php');
-require_once('md_utl_geral_js.php');
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
@@ -424,200 +381,236 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 // Texto do tooltip
 $txtTooltipEncaminhamentoTriagem = 'A depender das parametrizações em seu perfil ou sobre as Atividades entregues, o que for selecionado neste campo será meramente sugestivo ou será executado imediatamente.\n \n Selecione a opção "Associar em Fila após Finalizar Fluxo" caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual.\n \n Ou selecione a opção "Finalizar Fluxo" para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual.';
 
-
 ?>
     <form onsubmit="return onSubmitForm();" id="frmUtlTriagemCadastro" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
               SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
           ) ?>">
 
-        <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos); ?>
-        <?php PaginaSEI::getInstance()->abrirAreaDados('auto');
+        <?php
+            PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+            PaginaSEI::getInstance()->abrirAreaDados('auto');
         ?>
 
-        <div class="clear"></div>        
         <?php if( $isPgPadrao != 0 ) { ?>
-            <label style='margin-bottom: .2em; font-weight: bold; line-height: 1.5em; color: black;'>
-                Número do Processo:
-            </label>
-            <label><?= $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado() ?> </label>
-            
-            <div class="clear"></div>
-            <br/> <br>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label>
+                        <strong>Número do Processo:</strong> <?= $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado() ?>
+                    </label>
+                </div>
+            </div>
         <?php } ?>
 
-        <label id="lblTipoControle" for="selTipoControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label><br/>
-        <div class="clear"></div>
-        <input type="text" style="width:59.9%" id="txtTipoControle" name="txtTipoControle" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeTpControle() ?>" disabled/><br/><br/>
+        <div class="row">
+            <div class="col-sm-6 col-md-5 col-lg-4 mb-2">
+                <label id="lblTipoControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
+                <input type="text" id="txtTipoControle" name="txtTipoControle" class="infraText form-control" value="<?= $objControleDsmpDTO->getStrNomeTpControle() ?>" disabled/>
+            </div>
 
-        <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label><br/>
-        <div class="clear"></div>
-        <input type="text" style="width:59.9%" id="txtNomeFila" name="txtNomeFila" class="infraText" value="<?= $objControleDsmpDTO->getStrNomeFila() ?>" disabled/><br/><br/>
+            <div class="col-sm-6 col-md-5 col-lg-4 mb-2">
+                <label id="lblFila" accesskey="" class="infraLabelOpcional">Fila:</label>
+                <input type="text" id="txtNomeFila" name="txtNomeFila" class="infraText form-control" value="<?= $objControleDsmpDTO->getStrNomeFila() ?>" disabled/>
+            </div>
 
-        <br/>
-        <div id="divPrincipalEncaminhamento">
-            <div id="divEncaminhamentoTriagem" style="<?php echo $displayEncaminhamento ?>">
+            <div class="col-sm-12 col-md-12 col-lg-4 mb-2">
+                <label class="infraLabelOpcional">Membro Responsável pela Triagem:</label>
+                <input type="text" value="<?= $nm_usuario_triagem ?>" readonly class="infraText form-control">
+            </div>
+        </div>
+
+        <div id="divGrupoAtividade" class="mb-3" <?php if (!$existeGrupoCadastrado || $isConsultar) { echo 'style="display:none"'; }?>>
+            <div class="row mb-1">
+                <div class="col-xs-4 col-sm-6 col-md-6 col-lg-6">
+                    <label id="lblGrupoAtividade" for="selGrupoAtividade" accesskey="" class="infraLabelOpcional">Grupo de Atividade:</label>
+                    <img id="btnGrupoAtividade" align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip('Selecione um Grupo de Atividade.','Ajuda') ?> />
+                    <input type="text" id="txtGrupoAtividade" name="txtGrupoAtividade" class="infraText form-control"
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-9 col-md-9 col-lg-9">
+                    <div class="input-group">
+                        <select id="selGrupoAtividade" name="selGrupoAtividade" multiple="multiple" class="infraSelect form-control">
+                            <?= $strItensSelGrupoAtividade ?>
+                        </select>
+                        <div id="divOpcoesAtividade">
+                            <div id="divOpcoesGrupoAtividade" class="ml-1">
+                                <img id="imgLupaGrupoAtividade" onclick="abrirGrupoAtividade();" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>"
+                                    alt="Selecionar Grupo de Atividade" title="Selecionar Grupo de Atividade" class="infraImg"/>
+                                <br>
+                                <img id="imgExcluirGrupoAtividade" onclick="removerGrupoAtividade()" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>"
+                                    alt="Remover Grupo de Atividade Selecionada" title="Remover Grupo de Atividade Selecionada" class="infraImg"/>
+                            </div>
+                        </div>
+                        <input type="hidden" id="hdnGrupoAtividade" name="hdnGrupoAtividade" value=""/>
+                        <input type="hidden" id="hdnIdGrupoAtividade" name="hdnIdGrupoAtividade" value=""/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="divAtividade" class="mb-3" <?= $isConsultar ? 'style="display:none"' : '' ?>>
+            <div class="row">
+                <div class="col-xs-4 col-sm-10 col-md-10 col-lg-6">
+                    <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">Atividades:</label>
+                    <img id="btnAtividade" align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip('Selecione uma ou múltiplas Atividades.','Ajuda') ?> />
+                    <input type="text" id="txtAtividade" name="txtAtividade" class="infraText form-control"
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-12 col-lg-9">
+                    <div class="input-group">
+                        <select id="selAtividade" name="selAtividade" multiple="multiple" class="infraSelect form-control">
+                            <?= $strItensSelAtividade ?>
+                        </select>
+                        <div id="divOpcoesAtividade" class="ml-1">
+                            <img id="imgLupaAtividade" onclick="selecionarAtividade();" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/pesquisar.svg'?>"
+                                alt="Selecionar Atividade" title="Selecionar Atividade" class="infraImg"/>
+                            <br>
+                            <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/remover.svg'?>"
+                                alt="Remover Atividade Selecionada" title="Remover Atividade Selecionada" class="infraImg"/>
+                        </div>
+                        <input type="hidden" id="hdnAtividade" name="hdnAtividade" value=""/>
+                        <input type="hidden" id="hdnIdAtividade" name="hdnIdAtividade" value=""/>
+                        <input type="hidden" id="hdnContadorTableAtv" name="hdnContadorTableAtv" value="<?= $hdnContadorPagina ?>"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3" <?= $isConsultar ? 'style="display:none"' : '' ?>>
+            <div class="col-xs-2 col-sm-12 col-md-12 col-lg-9 text-right">
+                <?php $disabled = $isConsultar ? 'style="display:none"' : ''; ?>
+                <button <?= $disabled ?> type="button" class="infraButton" id="btnAdicionar" accesskey="a" onclick="adicionarRegistroTabelaAtividade();">
+                    <span class="infraTeclaAtalho">A</span>dicionar
+                </button>
+            </div>
+        </div>
+
+        <div id="divPrincipalEncaminhamento" class="row mb-3" style="<?= $displayEncaminhamento ?>">
+            <div id="divEncaminhamentoTriagem" class="col-xs-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                 <label for="selEncaminhamentoTriagem" id="lblEncaminhamentoTriagem" class="infraLabelObrigatorio">Encaminhamento da Triagem:</label>
-                <a style="" Kid="btAjudaEncTriagem" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoTriagem)?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img class="tamanhoBtnAjuda" id="imgAjudaEncTriagem" border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" class="infraImg"/>
-                </a>
+                <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                     name="ajuda" <?= PaginaSEI::montarTitleTooltip( $txtTooltipEncaminhamentoTriagem,'Ajuda') ?> />
 
-                <select onchange="controlarExibicaoFila(this);" id="selEncaminhamentoTriagem" class="infraSelect" name="selEncaminhamentoTriagem">
+                <select onchange="controlarExibicaoFila(this);" id="selEncaminhamentoTriagem" class="infraSelect form-control" name="selEncaminhamentoTriagem">
                     <?= $selEncaminhamentoTriagem; ?>
                 </select>
             </div>
 
-            <div id="divFila" style="<?php echo $displayFila ?>">
+            <div id="divFila" style="<?= $displayFila ?>" class="col-xs-12 col-sm-6 col-md-6 col-lg-6 mb-3 pt-2 col-xl-6">
                 <label for="selFila" id="lblFila" class="infraLabelObrigatorio">Fila:</label>
-
-                <select id="selFila" name="selFila" class="infraSelect">
+                <select id="selFila" name="selFila" class="infraSelect form-control" onchange="distribuicaoAutoParaMim(this , 1 , <?= SessaoSEI::getInstance()->getNumIdUsuario() ?>)">
                     <?= $selFila; ?>
                 </select>
             </div>
-        </div>
 
-        <div id="divGrupoAtividade" <?php if (!$existeGrupoCadastrado || $isConsultar) { echo 'style="display:none"'; }?>>
-            <div style='width: 60%; margin: 0; display:inline; float:left;'>
-                <label id="lblGrupoAtividade" for="selGrupoAtividade" accesskey="" class="infraLabelOpcional">Grupo de Atividade:</label>
-                <a id="btnGrupoAtividade" <?= PaginaSEI::montarTitleTooltip('Selecione um Grupo de Atividade.') ?>
-                   tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    <img id="imgAjudaGrupoAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                         src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-                </a>
-                <div class="clear"></div>
-                <input type="text" style="width:100%" id="txtGrupoAtividade" name="txtGrupoAtividade" class="infraText"
-                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-
-                <select id="selGrupoAtividade" style="width:101%" name="selGrupoAtividade" size="4" multiple="multiple" class="infraSelect">
-                    <?= $strItensSelGrupoAtividade ?>
-                </select>
-            </div>
-            <div id="divOpcoesAtividade" style="width: 10%; display:inline; float:left; margin-left: 12px; padding-top: 18px;">
-                <div id="divOpcoesGrupoAtividade">
-                    <img id="imgLupaGrupoAtividade" onclick="abrirGrupoAtividade();" src="/infra_css/imagens/lupa.gif"
-                         alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirGrupoAtividade" onclick="removerGrupoAtividade()" src="/infra_css/imagens/remover.gif"
-                         alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg"/>
+            <div id="divDistAutoParaMim" class="col-12" <?= $bolPertenceAFila ? '' : 'style="display:none;"'?> >
+                <div class="infraCheckboxDiv">
+                    <input type="checkbox" name="ckbDistAutoParaMim" id="ckbDistAutoParaMim" 
+                            <?= $chkDistAutoParaMim == 'S' ? 'checked' : '' ?> value="S">
+                    <label class="infraCheckboxLabel" for="ckbDistAutoParaMim"></label>
                 </div>
+                <label class="infraLabelChec infraLabelOpcional mr-3" for="ckbDistAutoParaMim">
+                    Distribuir automaticamente a Triagem do próximo fluxo para você mesmo?
+                </label>
             </div>
-
-            <input type="hidden" id="hdnGrupoAtividade" name="hdnGrupoAtividade" value=""/>
-            <input type="hidden" id="hdnIdGrupoAtividade" name="hdnIdGrupoAtividade" value=""/>
         </div>
 
-        <div <?php echo $existeGrupoCadastrado ? 'style="margin-top:10px"' : '' ?>>
-            <div id="divAtividade" <?php echo $isConsultar ? 'style="display:none"' : '' ?>>
-                <div style='width: 60%; margin: 0; display:inline; float:left; '>                   
-                    <label id="lblAtividade" for="selAtividade" accesskey="" class="infraLabelObrigatorio">Atividades:</label>
-                    <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip('Selecione uma ou múltiplas Atividades.') ?>
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                        <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                            src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-                    </a>
-                    <div class="clear"></div>
-                    <input type="text" style="width:100%" id="txtAtividade" name="txtAtividade" class="infraText"
+        <div class="row mb-4">
+            <div class="col-12">
+                <div id="divTbAtividade" style="<?= $strGridTriagem != '' ? '' : 'display:none' ?>">
+                    <table class="infraTable table" summary="Atividade" id="tbAtividade">
+                        <caption class="infraCaption">&nbsp;</caption>
+                        <tr>
+                            <th style="display: none">id_atividade_contador</th><!--0-->
+                            <th style="display: none">id_atividade</th><!--1-->
+                            <th class="infraTh" align="center" width="50%">Atividade</th> <!--2-->
+                            <th class="infraTh" align="center" width="35%">Tempo de Execução</th> <!--3ComAnalise-->
+                            <th style="display: none"></th><!--4-->
+                            <th class="infraTh" align="center" width="20%">Com Análise? </th> <!--5-->
+                            <th style="display: none">Total de Tempo de Execução </th><!--4-->
+                            <th style="display: none">Total de Tempo de Execução Atribuido </th>
+                            <?php if(!$isConsultar) { ?>
+                                <th class="infraTh" align="center" width="15%">Ações</th><!--6-->
+                            <?php } ?>
+                        </tr>
+                    </table>
+                    <div id="divContadorTabela" style="margin-top: 12px">
+                        <label id="lblTltAtividade">Total de Tempo de Execução: </label>
+                        <label id="lblVlTltAtividade"><?= MdUtlAdmPrmGrINT::convertToHoursMins($valorTotalUE) ?></label>
+                    </div>
+                </div>
+                <input type="hidden" name="hdnTbAtividade" id="hdnTbAtividade" utlCampoObrigatorio="a" value="<?= $strGridTriagem; ?>"/>
+            </div>
+        </div>
+
+        <div id="divPrazoResposta" class="row mb-3">
+            <div class="col-xs-4 col-sm-5 col-md-5 col-lg-5">
+                <label id="lblPrazoResposta" accesskey="" for="txtPrazoResposta" class="infraLabelOpcional"
+                      tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    Prazo para Resposta:
+                </label>
+                <div class="input-group">
+                    <input onchange="return validarFormatoDataTriagem(this);" type="text" id="txtPrazoResposta"
+                            name="txtPrazoResposta" onkeypress="return infraMascaraData(this, event)"
+                            class="infraText form-control" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
+                            value="<?= $dtaPrazoResp ?>"/>
+
+                    <img src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/calendario.svg"
+                        id="imgPrazoResposta" title="Selecionar Prazo para Resposta" alt="Selecionar Prazo para Resposta"
+                        class="infraImg ml-1" onclick="infraCalendario('txtPrazoResposta',this);"
                         tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-
-                    <select id="selAtividade" style="width:101%;" name="selAtividade" size="4" multiple="multiple" class="infraSelect">
-                        <?= $strItensSelAtividade ?>
-                    </select>
                 </div>
-                <div id="divOpcoesAtividade" style="width: 10%; display:inline; float:left; margin-left: 12px; padding-top: 18px;">
-                    <img id="imgLupaAtividade" onclick="selecionarAtividade();" src="/infra_css/imagens/lupa.gif"
-                        alt="Selecionar Unidade" title="Selecionar Unidade" class="infraImg"/>
-                    <br>
-                    <img id="imgExcluirAtividade" onclick="objLupaAtividade.remover();" src="/infra_css/imagens/remover.gif"
-                        alt="Remover Unidade Selecionada" title="Remover Unidade Selecionada" class="infraImg"/>
-                </div>
-                <div class="clear"></div>
-                <input type="hidden" id="hdnAtividade" name="hdnAtividade" value=""/>
-                <input type="hidden" id="hdnIdAtividade" name="hdnIdAtividade" value=""/>
-                <input type="hidden" id="hdnContadorTableAtv" name="hdnContadorTableAtv" value="<?php echo $hdnContadorPagina ?>"/>
             </div>
         </div>
 
-        <div class="clear">
-            <?php $disabled= $isConsultar ? 'style="display:none"' : ''; ?>
-            <button <?php echo $disabled; ?> type="button" class="infraButton" id="btnAdicionar" accesskey="a" onclick="adicionarRegistroTabelaAtividade();">
-                <span class="infraTeclaAtalho">A</span>dicionar
-            </button>
-        </div>
-
-        <div id="divTbAtividade" style="<?php echo $strGridTriagem != '' ? '' : 'display:none' ?>">
-            <table width="60.6%" class="infraTable" summary="Atividade" id="tbAtividade">
-                <caption class="infraCaption">&nbsp;</caption>
-                <tr>
-                    <th style="display: none">id_atividade_contador</th><!--0-->
-                    <th style="display: none">id_atividade</th><!--1-->
-                    <th class="infraTh" align="center" width="50%">Atividade</th> <!--2-->
-                    <th class="infraTh" align="center" width="35%">Tempo de Execução</th> <!--3ComAnalise-->
-                    <th style="display: none"></th><!--4-->
-                    <th class="infraTh" align="center" width="20%">Com Análise? </th> <!--5-->
-                    <th style="display: none">Total de Tempo de Execução </th><!--4-->
-                    <?php if(!$isConsultar) { ?>
-                        <th class="infraTh" align="center" width="15%"  >Ações</th><!--6-->
-                    <?php } ?>
-                </tr>
-            </table>
-            <div id="divContadorTabela" style="margin-top: 12px">
-                <label id="lblTltAtividade">Total de Tempo de Execução: </label> <label id="lblVlTltAtividade"><?php echo MdUtlAdmPrmGrINT::convertToHoursMins($valorTotalUE); ?></label>
+        <div class="row">
+            <div class="col-12">
+                <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelOpcional"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    Informação Complementar:
+                </label>
+                <textarea id="txaInformacaoComplementar" name="txaInformacaoComplementar" rows="4" class="infraTextArea form-control"
+                        onkeypress="return infraMascaraTexto(this,event, 500);"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados()?>"><?= $strInformComp ?></textarea>
             </div>
         </div>
 
-        <input type="hidden" name="hdnTbAtividade" id="hdnTbAtividade" utlCampoObrigatorio="a" value="<?php echo $strGridTriagem; ?>"/>
-
-        <div  id="divPrazoResposta">
-
-            <label id="lblPrazoResposta" accesskey="" for="txtPrazoResposta" class="infraLabelOpcional"
-                   tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                Prazo para Resposta:
-            </label>
-            <br>
-            <input onchange="return validarFormatoDataTriagem(this);" type="text" id="txtPrazoResposta" name="txtPrazoResposta" onkeypress="return infraMascaraData(this, event)"
-                   class="infraText" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"
-                   style="width: 100px;margin-top: 1%;"
-                   value="<?php echo $dtaPrazoResp ?>"/>
-
-            <img src="/infra_css/imagens/calendario.gif" id="imgPrazoResposta" title="Selecionar Prazo para Resposta"
-                 alt="Selecionar Prazo para Resposta"
-                 size="10"
-                 class="infraImg" onclick="infraCalendario('txtPrazoResposta',this);"
-                 tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
-
-        </div>
-
-        <div id="divInformacaoComplementar" style="margin-top: 1.8%">
-            <label id="lblInformacaoComplementar" style="display: block" for="txaInformacaoComplementar" class="infraLabelOpcional"
-                   tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                Informação Complementar:
-            </label>
-
-            <textarea style="width: 59.9%;resize: none" id="txaInformacaoComplementar" name="txaInformacaoComplementar" rows="4" class="infraTextArea" maxlength="500" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?php echo $strInformComp ?></textarea>
-        </div>
-
-        <input type="hidden" name="hdnIdProcedimento"   id="hdnIdProcedimento" value="<?php echo $idProcedimento ?>"/>
-        <input type="hidden" name="hdnIdFilaAtiva"      id="hdnIdFilaAtiva"    value="<?php echo $idFilaAtiva ?>"/>
-        <input type="hidden" name="hdnIdTpCtrl"         id="hdnIdTpCtrl"       value="<?php echo $idTipoControle ?>"/>
-        <input type="hidden" name="hdnTmpExecucao" id="hdnTmpExecucao" value="<?php echo $valorTotalHdn; ?>"/>
+        <input type="hidden" name="hdnIdProcedimento"   id="hdnIdProcedimento" value="<?= $idProcedimento ?>"/>
+        <input type="hidden" name="hdnIdFilaAtiva"      id="hdnIdFilaAtiva"    value="<?= $idFilaAtiva ?>"/>
+        <input type="hidden" name="hdnIdTpCtrl"         id="hdnIdTpCtrl"       value="<?= $idTipoControle ?>"/>
+        <input type="hidden" name="hdnTmpExecucao" id="hdnTmpExecucao" value="<?= $valorTotalHdn; ?>"/>
         <input type="hidden" name="hdnIsPossuiAnalise" id="hdnIsPossuiAnalise" value=""/>
-        <input type="hidden" name="hdnStaPermiteAssociarFila" id="hdnStaPermiteAssociarFila" value="<?php echo MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA ?>"/>
+        <input type="hidden" name="hdnStaPermiteAssociarFila" id="hdnStaPermiteAssociarFila" value="<?= MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA ?>"/>
         <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
-        <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
-        <input type="hidden" name="hdnIdRetriagem" id="hdnIdRetriagem" value="<?php echo $isRetriagem?>">
-        <input type="hidden" name="hdnIdRtgAnlCorrecao" id="hdnIdRtgAnlCorrecao" value="<?php echo $isRtgAnlCorrecao?>">
+        <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?= $isPgPadrao; ?>"/>
+        <input type="hidden" name="hdnIdRetriagem" id="hdnIdRetriagem" value="<?= $isRetriagem?>">
+        <input type="hidden" name="hdnIdRtgAnlCorrecao" id="hdnIdRtgAnlCorrecao" value="<?= $isRtgAnlCorrecao?>">
+
+        <input type="hidden" name="hndTpPresencaRef" id="hndTpPresencaRef" value="<?= $tpPresencaRef ?>">
+        <input type="hidden" name="hndPercDsmpRef" id="hndPercDsmpRef" value="<?= $percDsmpRef ?>">
+        <input type="hidden" id="hdnAtividadesAnalisadas" value="<?= !empty($arrAtvAnalisadas) ? implode(',' , $arrAtvAnalisadas) : null ?>">
+
+        <input type="hidden" name="hdnIdUsuarioDistrAuto" value="<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>">
+        <input type="hidden" name="hdnNmUsuarioDistrAuto" value="<?= $strNmSiglaUsuario ?>">
 
         <?php
-
-        PaginaSEI::getInstance()->fecharAreaDados();
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+            PaginaSEI::getInstance()->fecharAreaDados();
+            PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
         ?>
-
 
     </form>
 
 <?php
+
+require_once('md_utl_funcoes_js.php');
+require_once('md_utl_geral_js.php');
+require_once('md_utl_triagem_cadastro_js.php');
+
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();
-

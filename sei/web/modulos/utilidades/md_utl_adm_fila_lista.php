@@ -37,20 +37,16 @@ switch ($_GET['acao']) {
             $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
             $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
             $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
-
-
-
-
             $idExcluir = array_key_exists(0, $arrStrIds) ? $arrStrIds[0] : null;
 
             if (!is_null($idExcluir)) {
                 if( $objMdUtlAdmFilaRN->validarExclusaoFila(array($idExcluir, $idTipoControle, false))){
                     $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($arrStrIds[0]);
+                    $objMdUtlAdmFilaDTO->setStrSinAtivo('N');
                     $arrObjMdUtlAdmFila[] = $objMdUtlAdmFilaDTO;
                     $objMdUtlAdmFilaRN->desativar($arrObjMdUtlAdmFila);
                 }
             }
-
 
         } catch (Exception $e) {
             PaginaSEI::getInstance()->processarExcecao($e);
@@ -69,6 +65,7 @@ switch ($_GET['acao']) {
             for ($i = 0; $i < count($arrStrIds); $i++) {
                 $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
                 $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($arrStrIds[$i]);
+                $objMdUtlAdmFilaDTO->setStrSinAtivo('S');
                 $arrObjMdUtlAdmFila[] = $objMdUtlAdmFilaDTO;
             }
             $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
@@ -87,8 +84,6 @@ switch ($_GET['acao']) {
     //region Excluir
     case 'md_utl_adm_fila_excluir':
         try {
-
-
             $arrStrIds = PaginaSEI::getInstance()->getArrStrItensSelecionados();
             $objMdUtlAdmFilaRN = new MdUtlAdmFilaRN();
             $mdUtlAdmFilaRN = new MdUtlAdmFilaRN();
@@ -103,10 +98,6 @@ switch ($_GET['acao']) {
                     $objMdUtlAdmFilaRN->excluir($arrObjMdUtlAdmFila);
                 }
             }
-
-
-
-
         } catch (Exception $e) {
             PaginaSEI::getInstance()->processarExcecao($e);
         }
@@ -132,14 +123,11 @@ switch ($_GET['acao']) {
             $displayNone = "";
         }
 
-
         break;
     //endregion
 
     //region Listar
     case 'md_utl_adm_fila_listar':
-  
-
         break;
     //endregion
 
@@ -221,19 +209,19 @@ $numRegistros = count($arrObjMdUtlAdmFila);
 //Tabela de resultado.
 if ($numRegistros > 0) {
 
-    $strResultado .= '<table width="99%" class="infraTable" summary="Fila">';
+    $strResultado .= '<table class="infraTable" summary="Fila" width="100%">';
     $strResultado .= '<caption class="infraCaption">';
     $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela($strTitulo, $numRegistros);
     $strResultado .= '</caption>';
     //Cabeçalho da Tabela
     $strResultado .= '<tr>';
     $strResultado .= '<th class="infraTh" align="center" width="1%" '.$displayNone.' >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
-    $strResultado .= '<th class="infraTh" width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila', 'Nome', $arrObjMdUtlAdmFila) . '</th>';
-    $strResultado .= '<th class="infraTh" width="30%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Descrição', 'Descricao', $arrObjMdUtlAdmFila) . '</th>';
+    $strResultado .= '<th class="infraTh" width="28%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila', 'Nome', $arrObjMdUtlAdmFila) . '</th>';
+    $strResultado .= '<th class="infraTh" width="43%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Descrição', 'Descricao', $arrObjMdUtlAdmFila) . '</th>';
     if(!$isPrmDistrib) {
-        $strResultado .= '<th class="infraTh" width="25%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila Padrão', 'FilaPadrao', $arrObjMdUtlAdmFila) . '</th>';
+        $strResultado .= '<th class="infraTh" width="10%">' . PaginaSEI::getInstance()->getThOrdenacao($objMdUtlAdmFilaDTO, 'Fila Padrão', 'FilaPadrao', $arrObjMdUtlAdmFila) . '</th>';
     }
-    $strResultado .= '<th class="infraTh" width="15%">Ações</th>';
+    $strResultado .= '<th class="infraTh" width="18%">Ações</th>';
     $strResultado .= '</tr>';
 
     //Linhas
@@ -285,26 +273,26 @@ if ($numRegistros > 0) {
         if (!$bolSelecionar) {
 
             //Ação Consultar 
-            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl='.$idTipoControle.'&id_fila_utl='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/consultar.gif" title="Consultar Fila" alt="Consultar Fila" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl='.$idTipoControle.'&id_fila_utl='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Fila" alt="Consultar Fila" class="infraImg" /></a>&nbsp;';
 
             //Ação Alterar
-            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl='.$idTipoControle.'&id_fila_utl='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/alterar.gif" title="Alterar Fila" alt="Alterar Fila" class="infraImg" /></a>&nbsp;';
+            $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink($strUrl . 'alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_tipo_controle_utl='.$idTipoControle.'&id_fila_utl='.$strId)) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar Fila" alt="Alterar Fila" class="infraImg" /></a>&nbsp;';
 
             //Ação Desativar
             if ($bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/desativar.gif" title="Desativar Fila" alt="Desativar Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="desativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar Fila" alt="Desativar Fila" class="infraImg" /></a>&nbsp;';
             }
 
             //Ação Reativar
             if (!$bolRegistroAtivo) {
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/reativar.gif" title="Reativar Fila" alt="Reativar Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="reativar(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar Fila" alt="Reativar Fila" class="infraImg" /></a>&nbsp;';
             }
 
 /*            //Ação Excluir
             if($arrObjMdUtlAdmFila[$i]->getStrFilaPadrao() == 'Sim') {
                 $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="alert(\''.MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_23, 'excluir').'\')" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
             }else {*/
-                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
+                $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="excluir(\'' . $strId . '\',\'' . PaginaSEI::getInstance()->formatarParametrosJavaScript($strNomeFila) . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Fila" alt="Excluir Fila" class="infraImg" /></a>&nbsp;';
          //   }
         } else {
             $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i, $strId);
@@ -327,160 +315,10 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 //Include de estilos CSS
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if (0) { ?>
-    <style><? }?>
-.bloco {
-    position: relative;
-    float: left;
-    margin-top: 1%;
-    width: 90%;
-    }
-
-    .clear {
-    clear: both;
-    }
-
-    inputFila{
-    width: 45%!important;
-    }
-
-    textarea {
-    resize: none;
-    width : 60%;
-    }
-
-    select[multiple] {
-    width: 61%;
-    margin-top: 0.5%;
-    }
-
-    img[id^="imgExcluir"]{
-    margin-left: -2px;
-    }
-
-    div[id^="divOpcoes"]{
-    position: absolute;
-    width:1%;
-    left: 62%;
-    top: 44%;
-    }
-
-    img[id^="imgAjuda"]{
-    margin-bottom: -4px;
-    }
-
-    #divMembro{
-        position: absolute;
-        margin-left: 60%;
-        margin-top: 1.1%;
-
-    }
-
-    #divDescricao{
-        position: absolute;
-        margin-left: 30%;
-    }
-
-
-
-<?
-if (0) { ?></style><?
-} ?>
-
-<?php PaginaSEI::getInstance()->fecharStyle();
-
+PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-?>
-
-    var msg71 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_71); ?>';
-    var msg73 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_73); ?>';
-    var msg75 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_75); ?>';
-
-    function inicializar() {
-    if ('<?= $_GET['acao'] ?>' == 'md_utl_adm_fila_selecionar') {
-    infraReceberSelecao();
-    document.getElementById('btnFecharSelecao').focus();
-    } else {
-    infraEfeitoTabelas();
-    }
-
-    addEventoEnter();
-    }
-
-    function addEventoEnter() {
-        var obj1 = document.getElementById('txtNomeFila');
-        var obj2 = document.getElementById('txtDescricaoFila');
-
-        obj1.addEventListener("keypress", function (evt) {
-            addPesquisarEnter(evt);
-        });
-
-        obj2.addEventListener("keypress", function (evt) {
-        addPesquisarEnter(evt);
-        });
-    }
-
-
-    function addPesquisarEnter(evt) {
-        var key_code = evt.keyCode ? evt.keyCode :
-            evt.charCode ? evt.charCode :
-                evt.which ? evt.which : void 0;
-
-        if (key_code == 13) {
-            pesquisar();
-        }
-
-    }
-
-    function pesquisar(){
-    document.getElementById('frmTpControleLista').action='<?= $strUrlPesquisar ?>';
-    document.getElementById('frmTpControleLista').submit();
-    }
-
-    function desativar(id, desc) {
-    var msg = setMensagemPersonalizada(msg71, ['Fila', desc]);
-    if (confirm(msg)) {
-    document.getElementById('hdnInfraItemId').value = id;
-    document.getElementById('frmTpControleLista').action = '<?= $strUrlDesativar ?>';
-    document.getElementById('frmTpControleLista').submit();
-    }
-    }
-
-    function reativar(id, desc){
-    var msg = setMensagemPersonalizada(msg73, ['Fila', desc]);
-    if (confirm(msg)){
-    document.getElementById('hdnInfraItemId').value=id;
-    document.getElementById('frmTpControleLista').action='<?= $strUrlReativar ?>';
-    document.getElementById('frmTpControleLista').submit();
-    }
-    }
-
-    function excluir(id, desc){
-    var msg = setMensagemPersonalizada(msg75, ['Fila', desc]);
-    if (confirm(msg)){
-    document.getElementById('hdnInfraItemId').value=id;
-    document.getElementById('frmTpControleLista').action='<?= $strUrlExcluir ?>';
-    document.getElementById('frmTpControleLista').submit();
-    }
-    }
-
-    function novo(){
-    location.href="<?= $strUrlNovo ?>";
-    }
-
-    function imprimir(){
-    infraImprimirTabela();
-    }
-
-    function fechar(){
-    location.href="<?= $strUrlFechar ?>";
-    }
-<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-
-<?php
+PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 ?>
@@ -491,41 +329,31 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
         <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos); ?>
 
-        <div id="divInfraAreaDados" class="infraAreaDados">
-
-            <div style="width: 45%;" class="bloco" id="divNome">
-                    <label id="lblNomeTpControle" for="txtNomeFila" accesskey="S" class="infraLabelOpcional">
-                        Nome:
-                    </label>
-
-                <div class="clear"></div>
-
-                    <input type="text" style="width: 60%" id="txtNomeFila" name="txtNomeFila" class="inputFila infraText" size="30"
-                           value="<?php echo array_key_exists('txtNomeFila', $_POST) ? $_POST['txtNomeFila'] : '' ?>" maxlength="100" tabindex="502"/>
+        <div class="row">
+            <div class="col-sm-4 col-md-4 col-lg-4 mb-2">
+                <label id="lblNomeTpControle" for="txtNomeFila" accesskey="S" class="infraLabelOpcional">
+                    Nome:
+                </label>
+                <input type="text" id="txtNomeFila" name="txtNomeFila" class="inputFila infraText form-control"
+                    value="<?php echo array_key_exists('txtNomeFila', $_POST) ? $_POST['txtNomeFila'] : '' ?>" maxlength="100" tabindex="502"/>
+            </div>
+            <div class="col-sm-4 col-md-4 col-lg-4 mb-2">
+                <label id="lblDescricaoTpControle" for="txtDescricaoFila" accesskey="S" class="infraLabelOpcional">
+                    Descrição:
+                </label>
+                <input type="text" id="txtDescricaoFila" name="txtDescricaoFila" class="inputFila infraText form-control" value="<?php echo array_key_exists('txtDescricaoFila', $_POST) ?  $_POST ['txtDescricaoFila'] : '' ?>"
+                       maxlength="100" tabindex="502"/>
             </div>
 
-            <div style="width: 45%;" class="bloco" id="divDescricao">
-                    <label id="lblDescricaoTpControle" for="txtDescricaoFila" accesskey="S"
-                           class="infraLabelOpcional">
-                        Descrição:
-                    </label>
-
-                <div class="clear"></div>
-
-                    <input value="<?php echo array_key_exists('txtDescricaoFila', $_POST) ?  $_POST ['txtDescricaoFila'] : '' ?>" style="width: 60%" type="text" id="txtDescricaoFila" name="txtDescricaoFila" class="inputFila infraText"
-                           size="30"  maxlength="100" tabindex="502"/>
-            </div>
-
-            <?php     if(!$isPrmDistrib) { ?>
-            <div id="divMembro">
-                <label id="lblMembro" for="selMembro" accesskey="" class="infraLabelOpcional">Membro:</label>
-                <select style="width:200px" id="selMembro"  name="selMembro" class="infraSelect" onchange="pesquisar();"
-                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    <?=$selMembros ?>
-                </select>
-            </div>
+            <?php if( ! $isPrmDistrib ) { ?>
+                <div id="divMembro" class="col-sm-4 col-md-4 col-lg-4">
+                    <label id="lblMembro" for="selMembro" accesskey="" class="infraLabelOpcional">Membro:</label>
+                    <select id="selMembro"  name="selMembro" class="infraSelect form-control" onchange="pesquisar();"
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        <?= $selMembros ?>
+                    </select>
+                </div>
             <?php } ?>
-
         </div>
 
         <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl" value="<?php echo $idTipoControle; ?>"/>
@@ -534,12 +362,95 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
 
         <?php
-        PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+            PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
+            PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
         ?>
 
     </form>
+    <?php require_once 'md_utl_geral_js.php' ?>
+    <script>
+        var msg71 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_71); ?>';
+        var msg73 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_73); ?>';
+        var msg75 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_75); ?>';
 
+        function inicializar() {
+            if ('<?= $_GET['acao'] ?>' == 'md_utl_adm_fila_selecionar') {
+                infraReceberSelecao();
+                document.getElementById('btnFecharSelecao').focus();
+            } else {
+                infraEfeitoTabelas();
+            }
+
+            addEventoEnter();
+        }
+
+        function addEventoEnter() {
+            var obj1 = document.getElementById('txtNomeFila');
+            var obj2 = document.getElementById('txtDescricaoFila');
+
+            obj1.addEventListener("keypress", function (evt) {
+                addPesquisarEnter(evt);
+            });
+
+            obj2.addEventListener("keypress", function (evt) {
+                addPesquisarEnter(evt);
+            });
+        }
+
+        function addPesquisarEnter(evt) {
+            var key_code = evt.keyCode ? evt.keyCode :
+                evt.charCode ? evt.charCode :
+                    evt.which ? evt.which : void 0;
+
+            if (key_code == 13) {
+                pesquisar();
+            }
+        }
+
+        function pesquisar(){
+            document.getElementById('frmTpControleLista').action='<?= $strUrlPesquisar ?>';
+            document.getElementById('frmTpControleLista').submit();
+        }
+
+        function desativar(id, desc) {
+        var msg = setMensagemPersonalizada(msg71, ['Fila', desc]);
+            if (confirm(msg)) {
+                document.getElementById('hdnInfraItemId').value = id;
+                document.getElementById('frmTpControleLista').action = '<?= $strUrlDesativar ?>';
+                document.getElementById('frmTpControleLista').submit();
+            }
+        }
+
+        function reativar(id, desc){
+        var msg = setMensagemPersonalizada(msg73, ['Fila', desc]);
+            if (confirm(msg)){
+                document.getElementById('hdnInfraItemId').value=id;
+                document.getElementById('frmTpControleLista').action='<?= $strUrlReativar ?>';
+                document.getElementById('frmTpControleLista').submit();
+            }
+        }
+
+        function excluir(id, desc){
+        var msg = setMensagemPersonalizada(msg75, ['Fila', desc]);
+            if (confirm(msg)){
+                document.getElementById('hdnInfraItemId').value=id;
+                document.getElementById('frmTpControleLista').action='<?= $strUrlExcluir ?>';
+                document.getElementById('frmTpControleLista').submit();
+            }
+        }
+
+        function novo(){
+            location.href="<?= $strUrlNovo ?>";
+        }
+
+        function imprimir(){
+            infraImprimirTabela();
+        }
+
+        function fechar(){
+            location.href="<?= $strUrlFechar ?>";
+        }
+    </script>
 <?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

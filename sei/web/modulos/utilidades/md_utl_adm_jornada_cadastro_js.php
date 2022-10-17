@@ -1,6 +1,4 @@
-<?php if(0){ ?>
-    <script>
-<?php } ?>
+<script type="text/javascript">
 
 //variaveis globais - declarar fora do escopo das funçoes da pagina
 var objLupaMembros          = null;
@@ -550,9 +548,6 @@ function zerarCamposMembrosParticipantes() {
     document.getElementById('txtTipoRevisao').value = 0;
 }
 
-
-
-
 function validarValorPercentual(obj){
     var valorPercentual = obj.value;
 
@@ -574,9 +569,5 @@ function habilitarUltimaJornada(obj){
     }
 }
 
-
-<?php if(0){ ?>
-<script>
-<?php } ?>
-
+</script>
         

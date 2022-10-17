@@ -28,7 +28,7 @@ try {
   $idTpCtrl = array_key_exists('id_tipo_controle_utl', $_GET) ? $_GET['id_tipo_controle_utl'] : $_POST['hdnIdTpCtrlUtl'];
   $objTpControleUtlRN    = new MdUtlAdmTpCtrlDesempRN();
   $objTipoControleUtlDTO = $objTpControleUtlRN->buscarObjTpControlePorId($idTpCtrl);
-  $displayNone =  "style='display: none'";
+  $displayNone =  "display: none;";
   $strLinkSelecionar = '';
   $objTriagemRn = new MdUtlTriagemRN();
   $isSelecionar = $_GET['acao'] == 'md_utl_adm_atividade_selecionar';
@@ -116,6 +116,7 @@ try {
       $nomeTpCtrl = !is_null($objTipoControleUtlDTO) ? $objTipoControleUtlDTO->getStrNome() : '';
       $strTitulo  = 'Atividades - '.$nomeTpCtrl;
       $bolAcaoReativar = SessaoSEI::getInstance()->verificarPermissao('md_utl_adm_atividade_reativar');
+      $bolAcaoClonar   = true;
       break;
 
       case 'md_utl_adm_atividade_selecionar':
@@ -166,12 +167,14 @@ try {
   $objMdUtlAdmAtividadeDTO->retNumIdMdUtlAdmAtividade();
   $objMdUtlAdmAtividadeDTO->retStrNome();
   $objMdUtlAdmAtividadeDTO->retStrDescricao();
-  $objMdUtlAdmAtividadeDTO->retNumComplexidade() ;
+  $objMdUtlAdmAtividadeDTO->retNumComplexidade();
   $objMdUtlAdmAtividadeDTO->retStrSinAtivo();
   $objMdUtlAdmAtividadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTpCtrl);
   $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoAtv();
   $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoRev();
   $objMdUtlAdmAtividadeDTO->retStrSinAnalise();
+  $objMdUtlAdmAtividadeDTO->retStrSinNaoAplicarPercDsmp();
+
   if($bolAcaoReativar) {
     $objMdUtlAdmAtividadeDTO->setBolExclusaoLogica(false);
   }
@@ -188,13 +191,10 @@ try {
     }
   }
 
-
-      $selTpAnalise = array_key_exists('selTipoAnalise', $_POST) && $_POST['selTipoAnalise'] != '' ? $_POST['selTipoAnalise'] : null;
-      if(!is_null($selTpAnalise)){
-          $objMdUtlAdmAtividadeDTO->setStrSinAnalise($selTpAnalise);
-      }
-
-
+  $selTpAnalise = array_key_exists('selTipoAnalise', $_POST) && $_POST['selTipoAnalise'] != '' ? $_POST['selTipoAnalise'] : null;
+  if(!is_null($selTpAnalise)){
+      $objMdUtlAdmAtividadeDTO->setStrSinAnalise($selTpAnalise);
+  }
 
   PaginaSEI::getInstance()->prepararOrdenacao($objMdUtlAdmAtividadeDTO, 'Nome', InfraDTO::$TIPO_ORDENACAO_ASC);
   PaginaSEI::getInstance()->prepararPaginacao($objMdUtlAdmAtividadeDTO, 200);
@@ -205,11 +205,10 @@ try {
   PaginaSEI::getInstance()->processarPaginacao($objMdUtlAdmAtividadeDTO);
   $numRegistros = count($arrObjMdUtlAdmAtividadeDTO);
 
-  
   if ($numRegistros > 0){
     $idsAtividades = InfraArray::converterArrInfraDTO($arrObjMdUtlAdmAtividadeDTO, 'IdMdUtlAdmAtividade');
     $arrVinculosTriagemAtividade = $objTriagemRn->retornaArrVinculosAtividadeTriagem($idsAtividades);
-    
+
     $bolCheck = false;
 
     if ($_GET['acao']=='md_utl_adm_atividade_selecionar'){
@@ -255,7 +254,6 @@ try {
       $strLinkExcluir = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_excluir&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao']);
     }
 
-
     $strResultado = '';
 
     if ($_GET['acao']!='md_utl_adm_atividade_reativar'){
@@ -272,16 +270,16 @@ try {
     $strResultado .= '<caption class="infraCaption">'.PaginaSEI::getInstance()->gerarCaptionTabela($strCaptionTabela,$numRegistros).'</caption>';
     $strResultado .= '<tr>';
     if ($bolCheck) {
-      $strResultado .= '<th class="infraTh" width="1%" '.$displayNone.'>'.PaginaSEI::getInstance()->getThCheck().'</th>'."\n";
+      $strResultado .= '<th class="infraTh" width="1%" style="vertical-align:middle;'.$displayNone.'">'.PaginaSEI::getInstance()->getThCheck().'</th>'."\n";
     }
     $strResultado .= '<th class="infraTh" width="15%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Atividade ','Nome',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="25%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Descrição','Descricao',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="20%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Complexidade','Complexidade',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
-    $strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Tempo de Execucão', 'UndEsforcoAtv', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
-    $strResultado .= '<th class="infraTh" width="15%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
-    
+    $strResultado .= '<th class="infraTh" width="11%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Tempo de Execucão', 'UndEsforcoAtv', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
+    $strResultado .= '<th class="infraTh" width="11%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
 
-    $strResultado .= '<th class="infraTh" width="15%">Ações</th>'."\n";
+
+    $strResultado .= '<th class="infraTh" width="23%">Ações</th>'."\n";
     $strResultado .= '</tr>'."\n";
     $strCssTr='';
     for($i = 0;$i < $numRegistros; $i++){
@@ -317,7 +315,7 @@ try {
           }
           if($isComAnalise)
           {
-            $vlTriagem = 'S_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoAtv().'_'.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$numComplexidade];
+            $vlTriagem = 'S_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoAtv().'_'.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$numComplexidade].'_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinNaoAplicarPercDsmp();
           }
 
           $idSelecao = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade().'_'.$vlTriagem;
@@ -326,27 +324,31 @@ try {
         {
           $idSelecao = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade();
         }
-        $strResultado .= '<td valign="top" '.$displayNone.'>'.PaginaSEI::getInstance()->getTrCheck($i,$idSelecao,$strNomeFilaChecked).'</td>';
+        $strResultado .= '<td valign="top" style="vertical-align:middle;'.$displayNone.'">'.PaginaSEI::getInstance()->getTrCheck($i,$idSelecao,$strNomeFilaChecked).'</td>';
      }
 
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrNome()).'</td>';
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrDescricao()).'</td>';
-      $strResultado .= '<td>'.PaginaSEI::tratarHTML(MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjMdUtlAdmAtividadeDTO[$i]->getNumComplexidade()]).'</td>';  
+      $strResultado .= '<td>'.PaginaSEI::tratarHTML(MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjMdUtlAdmAtividadeDTO[$i]->getNumComplexidade()]).'</td>';
       $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlrUndEsforco).'</td>';
 
-      $vlAnalise     = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';      
-      $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlAnalise).'</td>';     
+      $vlAnalise     = $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
+      $strResultado .= '<td>'.PaginaSEI::tratarHTML($vlAnalise).'</td>';
 
       $strResultado .= '<td align="center">';
 
       $strResultado .= PaginaSEI::getInstance()->getAcaoTransportarItem($i,$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade());
 
+      if ( isset( $bolAcaoClonar ) && $bolAcaoClonar === true ) {
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_cadastrar&id_tipo_controle_utl='.$idTpCtrl.'&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_md_utl_adm_atividade='.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade().'&isClonar=S').'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/mais.svg" title="Clonar Atividade" alt="Clonar Atividade" class="infraImg" /></a>&nbsp;';
+      }
+
       if ($bolAcaoConsultar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_atividade='.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/consultar.gif" title="Consultar Atividade" alt="Consultar Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_consultar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_atividade='.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/consultar.svg" title="Consultar Atividade" alt="Consultar Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoAlterar){
-        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_atividade='.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/alterar.gif" title="Alterar Atividade" alt="Alterar Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_atividade_alterar&acao_origem='.$_GET['acao'].'&acao_retorno='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl.'&id_md_utl_adm_atividade='.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade()).'" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg" title="Alterar Atividade" alt="Alterar Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoDesativar || $bolAcaoReativar || $bolAcaoExcluir){
@@ -355,20 +357,19 @@ try {
       }
 
       if ($bolAcaoDesativar && $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAtivo()=='S'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/desativar.gif" title="Desativar Atividade" alt="Desativar Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoDesativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/desativar.svg" title="Desativar Atividade" alt="Desativar Atividade" class="infraImg" /></a>&nbsp;';
       }
 
       if ($bolAcaoReativar && $arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAtivo()=='N'){
-        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="'.PaginaSEI::getInstance()->getDiretorioImagensGlobal().'/reativar.gif" title="Reativar Atividade" alt="Reativar Atividade" class="infraImg" /></a>&nbsp;';
+        $strResultado .= '<a href="'.PaginaSEI::getInstance()->montarAncora($strId).'" onclick="acaoReativar(\''.$strId.'\',\''.$strDescricao.'\');" tabindex="'.PaginaSEI::getInstance()->getProxTabTabela().'"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/reativar.svg" title="Reativar Atividade" alt="Reativar Atividade" class="infraImg" /></a>&nbsp;';
       }
-
 
       if ($bolAcaoExcluir){
         $possuiVinculo = $arrVinculosTriagemAtividade[$arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade()];
         if($possuiVinculo){
-          $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="alertarUsuarioExclusao(\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Atividade" alt="Excluir Atividade" class="infraImg" /></a>&nbsp;';
+          $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="alertarUsuarioExclusao(\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Atividade" alt="Excluir Atividade" class="infraImg" /></a>&nbsp;';
         }else {
-          $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoExcluir(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioImagensGlobal() . '/excluir.gif" title="Excluir Atividade" alt="Excluir Atividade" class="infraImg" /></a>&nbsp;';
+          $strResultado .= '<a href="' . PaginaSEI::getInstance()->montarAncora($strId) . '" onclick="acaoExcluir(\'' . $strId . '\',\'' . $strDescricao . '\');" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="' . PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg" title="Excluir Atividade" alt="Excluir Atividade" class="infraImg" /></a>&nbsp;';
         }
       }
 
@@ -393,49 +394,81 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-<?if(0){?><style><?}?>
-
-  .bloco {
-    position: relative;
-    float: left;
-  }
-
-  .clear {
-    clear: both;
-  }
-
-    #blocoDesc{
-        margin-left: 30px;
-    }
-
-    #selTipoAnalise{
-        width: 140px;
-    }
-
-    <?if($isSelecionar){?>
-    #blocoTipoAnalise{
-        margin-left: -71px;
-     }
-     <?php } else { ?>
-    #blocoTipoAnalise{
-      margin-left: -121px;
-    }
-
-   <?php } ?>
-
-  <?if(0){?></style><?}?>
-<?
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 ?>
-<?if(0){?><script type="text/javascript"><?}?>
-    var msg28 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_28, array('excluir')); ?>';
-    var msg71 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_71); ?>';
-    var msg73 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_73); ?>';
-    var msg75 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_75); ?>';
+
+<form id="frmMdUtlAdmAtividadeLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao_origem'])?>">
+
+  <?php
+    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+    PaginaSEI::getInstance()->abrirAreaDados('auto');
+  ?>
+
+  <div class="row" id="divInfraAreaDados">
+      <div class="col-sm-4 col-md-4 col-lg-4 mb-2" id="blocoAtv">
+        <div class="form-group">
+          <label id="lblAtividade" for="txtAtividade" accesskey="S" class="infraLabelOpcional">Atividade:</label>
+          <input type="text" id="txtAtividade" name="txtAtividade" class="infraText form-control"
+                value="<?= $tpRevisao ?>" maxlength="100" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+        </div>
+      </div>
+
+      <div class="col-sm-4 col-md-4 col-lg-4 mb-2" id="blocoDesc">
+        <div class="form-group">
+          <label id="lblDescricao" for="txtDescricao" accesskey="S" class="infraLabelOpcional">Descrição:</label>
+          <input type="text" id="txtDescricao" name="txtDescricao" class="infraText form-control" value="<?= $descricao ?>" maxlength="100"
+                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>"/>
+        </div>
+      </div>
+
+      <?php if (!$isPrmDistrib) { ?>
+        <div class="col-sm-4 col-md-4 col-lg-4" id="blocoTipoAnalise">
+          <div class="form-group">
+              <label id="lblTipoAnalise" name="lblTipoAnalise" for="selTipoAnalise" class="infraLabelOpcional">Possui Análise?</label>
+              <select class="infraSelect form-control" id="selTipoAnalise" onchange="pesquisar();" name="selTipoAnalise">
+                  <option value=""></option>
+                  <option <?php echo $selTpAnalise != '' && $selTpAnalise == 'S' ? 'selected = selected' : ''; ?> value="S">Sim</option>
+                  <option <?php echo $selTpAnalise != '' && $selTpAnalise == 'N' ? 'selected = selected' : ''; ?> value="N">Não</option>
+              </select>
+          </div>
+        </div>
+      <?php } ?>
+  </div>
+
+  <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
+  <input type="hidden" name="hdnIdsGrupoAtividadeTriagem" id="hdnIdsGrupoAtividadeTriagem" value="<?php echo array_key_exists('hdnIdsGrupoAtividadeTriagem', $_POST) ? $_POST['hdnIdsGrupoAtividadeTriagem'] : '' ?>"/>
+
+  <input type="hidden" id="hdnObjLupaAtividade" name="hdnObjLupaAtividade" value="<?php echo $objLupaAtividade; ?>"/>
+  <input type="hidden" id="hdnObjLupaAtividadeUnica" name="hdnObjLupaAtividadeUnica" value="<?php echo $objLupaAtividadeUnica; ?>"/>
+  <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="table-responsive">
+        <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros); ?>
+      </div>
+    </div>
+  </div>
+
+  <?php
+    PaginaSEI::getInstance()->fecharAreaDados();
+    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+  ?>
+
+</form>
+
+<?php require_once 'md_utl_geral_js.php';  ?>
+
+<script type="text/javascript">
+  var msg28 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_28, array('excluir')); ?>';
+  var msg71 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_71); ?>';
+  var msg73 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_73); ?>';
+  var msg75 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_75); ?>';
 
   function inicializar(){
     if ('<?=$_GET['acao']?>'=='md_utl_adm_atividade_selecionar'){
@@ -467,18 +500,23 @@ require_once 'md_utl_geral_js.php';
       });
   }
 
-    function addPesquisarEnter(evt) {
-        var keyCode = evt.keyCode ? evt.keyCode :
-            evt.charCode ? evt.charCode :
-                evt.which ? evt.which : void 0;
+  function addPesquisarEnter(evt) {
+      var keyCode = evt.keyCode ? evt.keyCode :
+          evt.charCode ? evt.charCode :
+              evt.which ? evt.which : void 0;
 
-        if (keyCode == 13) {
-            pesquisar();
-        }
-    }
+      if (keyCode == 13) {
+          pesquisar();
+      }
+  }
 
   function preencherHiddenGrupoAtividade(){
-    var idsGrupoAtv = window.opener.document.getElementById('hdnGrupoAtividade').value;
+    if( window.top.document.querySelector("#ifrVisualizacao") != null ) {
+      var idsGrupoAtv = window.top.document.getElementById("ifrVisualizacao").contentWindow.document.getElementById('hdnGrupoAtividade').value;
+    } else {
+      var idsGrupoAtv = window.top.document.getElementById("hdnGrupoAtividade");
+    }
+
     var isVazioHdn = document.getElementById('hdnIdsGrupoAtividadeTriagem').value == '';
 
     if(isVazioHdn) {
@@ -489,7 +527,7 @@ require_once 'md_utl_geral_js.php';
     }
   }
 
-  <? if ($bolAcaoDesativar){ ?>
+  <?php if ($bolAcaoDesativar){ ?>
   function acaoDesativar(id,desc){
     var msg = setMensagemPersonalizada(msg71, ['Atividade', desc]);
     if (confirm(msg)){
@@ -498,9 +536,9 @@ require_once 'md_utl_geral_js.php';
       document.getElementById('frmMdUtlAdmAtividadeLista').submit();
     }
   }
-  <? } ?>
+  <?php } ?>
 
-  <? if ($bolAcaoReativar){ ?>
+  <?php if ($bolAcaoReativar){ ?>
   function acaoReativar(id,desc){
       var msg = setMensagemPersonalizada(msg73, ['Atividade', desc]);
     if (confirm(msg)){
@@ -510,106 +548,30 @@ require_once 'md_utl_geral_js.php';
     }
   }
 
-  <? } ?>
+  <?php } ?>
 
-  <? if ($bolAcaoExcluir){ ?>
-  function acaoExcluir(id,desc){
-      var msg = setMensagemPersonalizada(msg75, ['Atividade', desc]);
-    if (confirm(msg)){
-      document.getElementById('hdnInfraItemId').value=id;
-      document.getElementById('frmMdUtlAdmAtividadeLista').action='<?=$strLinkExcluir?>';
-      document.getElementById('frmMdUtlAdmAtividadeLista').submit();
+  <?php if ($bolAcaoExcluir){ ?>
+    function acaoExcluir(id,desc){
+        var msg = setMensagemPersonalizada(msg75, ['Atividade', desc]);
+      if (confirm(msg)){
+        document.getElementById('hdnInfraItemId').value=id;
+        document.getElementById('frmMdUtlAdmAtividadeLista').action='<?=$strLinkExcluir?>';
+        document.getElementById('frmMdUtlAdmAtividadeLista').submit();
+      }
     }
-  }
 
-  function alertarUsuarioExclusao(desc){
-    alert(msg28);
-  }
+    function alertarUsuarioExclusao(desc){
+      alert(msg28);
+    }
 
-  <? } ?>
+  <?php } ?>
 
     function pesquisar(){
         var form = document.getElementById('frmMdUtlAdmAtividadeLista');
         form.submit();
     }
+</script>
 
-  <?if(0){?></script><?}?>
-<?
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-  <form id="frmMdUtlAdmAtividadeLista" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao_origem'])?>">
-    <?
-    PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-    ?>
-
-    <div id="divInfraAreaDados" class="infraAreaDados">
-        <?php
-        if($isSelecionar){
-
-        ?>
-
-            <div class="clear"></div>
-        <?php } ?>
-
-      <div style="width: 30%;" class="bloco" id="blocoAtv">
-        <label id="lblAtividade" for="txtAtividade" accesskey="S" class="infraLabelOpcional">
-          Atividade:
-        </label>
-
-        <div class="clear"></div>
-
-        <input type="text" id="txtAtividade" name="txtAtividade" style="width: 100%" class="infraText" size="30"
-               value="<?=$tpRevisao?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-      <div style="width: 45%;" class="bloco" id="blocoDesc">
-        <label id="lblDescricao" for="txtDescricao" accesskey="S"
-               class="infraLabelOpcional">
-          Descrição:
-        </label>
-
-        <div class="clear"></div>
-
-        <input style="width: 68%" type="text" id="txtDescricao" name="txtDescricao" class="infraText"
-               size="30"
-               value="<?=$descricao?>" maxlength="100"
-               tabindex="502"/>
-      </div>
-        <?php   if (!$isPrmDistrib) { ?>
-        <div style="width: 25%" class="bloco" id="blocoTipoAnalise">
-
-            <label id="lblTipoAnalise" name="lblTipoAnalise" for="selTipoAnalise"
-                   class="infraLabelOpcional">
-                Possui Análise?
-            </label>
-
-            <div class="clear"></div>
-
-            <select style="width: 80%;" id="selTipoAnalise" onchange="pesquisar();" name="selTipoAnalise">
-                <option value=""></option>
-                <option <?php echo $selTpAnalise != '' && $selTpAnalise == 'S' ? 'selected = selected' : ''; ?> value="S">Sim</option>
-                <option <?php echo $selTpAnalise != '' && $selTpAnalise == 'N' ? 'selected = selected' : ''; ?> value="N">Não</option>
-            </select>
-
-        </div>
-        <?php  } ?>
-
-    </div>
-
-    <input type="hidden" name="hdnIdTpCtrlUtl" id="hdnIdTpCtrlUtl" value="<?php echo $idTpCtrl ?>"/>
-    <input type="hidden" name="hdnIdsGrupoAtividadeTriagem" id="hdnIdsGrupoAtividadeTriagem" value="<?php echo array_key_exists('hdnIdsGrupoAtividadeTriagem', $_POST) ? $_POST['hdnIdsGrupoAtividadeTriagem'] : '' ?>"/>
-
-    <input type="hidden" id="hdnObjLupaAtividade" name="hdnObjLupaAtividade" value="<?php echo $objLupaAtividade; ?>"/>
-    <input type="hidden" id="hdnObjLupaAtividadeUnica" name="hdnObjLupaAtividadeUnica" value="<?php echo $objLupaAtividadeUnica; ?>"/>
-    <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
-    <?
-    PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
-    //PaginaSEI::getInstance()->montarAreaDebug();
-    PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-    ?>
-  </form>
-<?
+<?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

@@ -56,10 +56,6 @@ margin-right: 71.5%;
 margin: -0.5% 92% 0.5%;
 }
 
-#txtNome {
-width: 45%!important;
-}
-
 #txtTmpExecucaoTriagem {
 width: 45%!important;
 }
@@ -82,17 +78,6 @@ margin-top: 0.2%;
 margin-left: 73.7%;
 }
 
-#txtPercentualAjuste
-{
-width: 13%;
-}
-
-#txtDtFim
-{
-width: 7%;
-margin-left: 28px;
-}
-
 #divTpAjuste{
 margin-top: 13px;
 }
@@ -105,39 +90,13 @@ width: 30%;
 width: 27%;
 }
 
-#lblDtFim{
-margin-left: 88px;
-}
-
 .tamanhoBtnAjuda{
 width: 16px;
 height: 16px;
 }
 
-#rdoEspecifico{
-margin-left: 68px;
-position: absolute;
-}
-
-#rdoGeral{
-position: absolute;
-margin-left: 1px;
-margin-top: 1px;
-}
-
-#lblGeral{
-margin-left: 13px;
-margin-top: -1px;
-}
-
-#lblEspecifico
-{
-margin-left: 80px;
-margin-top: 1px;
-}
-
-#divRadiosTpAjuste{
-margin-top: 2px;
+.infraRadio {
+display: inline-block !important;
 }
 
 

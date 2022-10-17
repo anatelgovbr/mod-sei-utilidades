@@ -29,7 +29,7 @@ $selStatusCampo = array_key_exists('selStatusUtlMs', $_POST) ? $_POST['selStatus
 $selAtividadeCampo = array_key_exists('selAtividadeUtlMs', $_POST) ? $_POST['selAtividadeUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlMs');
 $selTpControleCampo = array_key_exists('selTpControle', $_POST) ? $_POST['selTpControle'] : PaginaSEI::getInstance()->recuperarCampo('selTpControle');
 
-$somaTmpExecucao = '';
+$somaTmpExecucao = 0;
 $idProcedimentoMeusProcessos = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 $strSituacao = '';
 
@@ -51,6 +51,7 @@ if ($idProcedimentoMeusProcessos != null && $idProcedimentoMeusProcessos != '') 
     $msg107 = '';
 }
 
+/*
 if ($isProcessoAutorizadoConcluir == 1) {
     $_POST['hdnIsConcluirProcesso'] = 0;
     $isProcessoAutorizadoConcluir = 0;
@@ -61,7 +62,7 @@ if ($isProcessoAutorizadoConcluir == 1) {
     $objSEIRN = new SeiRN();
     $objSEIRN->concluirProcesso($objEntradaConcluirProcessoAPI);
 }
-
+*/
 
 $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso' => $selTipoProcessoCampo, 'selStatus' => $selStatusCampo, 'selTpControle' => $selTpControleCampo);
 
@@ -69,7 +70,7 @@ $arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaC
 $arrObjTpControleUnidadeLogada     = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
 $arrListaTpControle                = array();
 $arrListaIdsTpControle             = array();
-if (count($arrObjTpControleUnidadeLogada) > 0 ){
+if (!is_null($arrObjTpControleUnidadeLogada) ){
     foreach ($arrObjTpControleUnidadeLogada as $k => $v) {
         $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
         array_push( $arrListaIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
@@ -97,7 +98,7 @@ $selTpControle = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarS
 $idTipoControle = null;
 if( isset($_POST['selTpControle']) && !empty($_POST['selTpControle']) ) {
     $idTipoControle = $_POST['selTpControle'];
-} else if( count( $arrObjTpControle ) == 1 ) {
+} else if( !is_null( $arrObjTpControle ) && count( $arrObjTpControle ) == 1 ) {
     $idTipoControle = $arrObjTpControle[0]->getNumIdMdUtlAdmTpCtrlDesemp();
 }
 
@@ -128,15 +129,15 @@ if ($isParametrizado) {
     $strUrlDistrMim = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_distribuir_para_mim&ids_tp_ctrl_dist='.implode(',',$arrTpControleUsuMembroUnid));
     $strUrlBuscarDadosCarga = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_buscar_dados_carga_usuario_todos_tpctrl');
 
-    $idsFilasPermitidasUsBasico = $isGestorSipSei || count($arrObjsFilaUsuDTO) == 0 ? null : InfraArray::converterArrInfraDTO($arrObjsFilaUsuDTO, 'IdMdUtlAdmFila');
+    $idsFilasPermitidasUsBasico = $isGestorSipSei || is_null($arrObjsFilaUsuDTO) ? null : InfraArray::converterArrInfraDTO($arrObjsFilaUsuDTO, 'IdMdUtlAdmFila');
 
     if ($isGestorSipSei) {
         $selFila = MdUtlAdmFilaINT::montarSelectFilas($selFilaCampo, $arrObjsFilaDTO);
     } else {
-        $selFila = count($idsFilasPermitidasUsBasico) > 0 ? $selFila = MdUtlAdmFilaINT::montarSelectFilas($selFilaCampo, $arrObjsFilaDTO, $idsFilasPermitidasUsBasico) : null;
+        $selFila = !is_null($idsFilasPermitidasUsBasico) ? $selFila = MdUtlAdmFilaINT::montarSelectFilas($selFilaCampo, $arrObjsFilaDTO, $idsFilasPermitidasUsBasico) : null;
     }
 
-    $selStatus = count($idsStatusPermitido) > 0 || $isGestorSipSei ? MdUtlControleDsmpINT::montarSelectStatusMeusProcessos($selStatusCampo, false, $idsStatusPermitido) : null;
+    $selStatus = !is_null($idsStatusPermitido) || $isGestorSipSei ? MdUtlControleDsmpINT::montarSelectStatusMeusProcessos($selStatusCampo, false, $idsStatusPermitido) : null;
     $arrObjsTpProcesso = $objMdUtlControleDsmpRN->getTiposProcessoTipoControleAssociarFila(!is_null($idTipoControle) ? array($idTipoControle => $idTipoControle) : $arrListaTpControle);
     $selTipoProcesso = $isPermiteAssociacao ? InfraINT::montarSelectArrInfraDTO(null, null, $selTipoProcessoCampo, $arrObjsTpProcesso, 'IdTipoProcedimento', 'NomeProcedimento') : '';
 }
@@ -222,6 +223,7 @@ if ($isParametrizado) {
         $objDTO->retStrNomeFila();
         $objDTO->retNumIdFila();
         $objDTO->retNumTempoExecucao();
+        $objDTO->retNumTempoExecucaoAtribuido();
         $objDTO->retStrNomeUsuarioDistribuicao();
         $objDTO->retDthAtual();
         $objDTO->retDthPrazoTarefa();
@@ -244,7 +246,7 @@ if ($isParametrizado) {
             $objDTO->setStrValorAtividadeSelectUtl($selAtividadeCampo);
             $idsTriagem = $objMdUtlControleDsmpRN->pesquisarAtividade($objDTO);
 
-            if (count($idsTriagem) > 0) {
+            if (!is_null($idsTriagem) ) {
                 $objDTO->setNumIdMdUtlTriagem($idsTriagem, InfraDTO::$OPER_IN);
             } else {
                 $objDTO = null;
@@ -259,7 +261,14 @@ if ($isParametrizado) {
         $arrObjsCombo = $objMdUtlControleDsmpRN->listarProcessos($objDTOCombo);
         $idTriagemCombo = InfraArray::converterArrInfraDTO($arrObjsCombo, 'IdMdUtlTriagem');
         $idTriagemCombo = MdUtlControleDsmpINT::removeNullsTriagem($idTriagemCombo);
-        $count = count($idTriagemCombo);
+
+        /* 
+            Habilita o icone de solicitacao de ajuste de prazo pela regra: 
+            Todas as Atividade não possuírem o Prazo em Dias para Análise ou for igual a zero
+        */
+        $arrHabAjustePrazoAti = MdUtlControleDsmpINT::habAjustePrazoAtv( $idTriagemCombo );
+
+        $count = !is_null($idTriagemCombo) ? count($idTriagemCombo) : $count;
     }
 
     $arrayObjs = [];
@@ -273,7 +282,7 @@ if ($isParametrizado) {
             if (array_key_exists($obj->getNumIdMdUtlTriagem(), $arrayObjs)) {
                 $arrayObjs[$obj->getNumIdMdUtlTriagem()] = array();
             } else {
-                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = $obj->getStrNomeAtividade() . ' - ' . MdUtlAdmPrmGrINT::convertToHoursMins($obj->getNumTempoExecucao());
+                $arrayObjs[$obj->getNumIdMdUtlTriagem()] = $obj->getStrNomeAtividade() . ' - ' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[ $obj->getNumComplexidadeAtividade() ];
             }
         }
 
@@ -290,36 +299,36 @@ if ($isParametrizado) {
 
 
         $arrObjs = $objMdUtlControleDsmpRN->listarProcessos($objDTO);
-        $numRegistros = count($arrObjs);
+        $numRegistros = !is_null($arrObjs) ? count($arrObjs) : 0;
         MdUtlControleDsmpINT::setNomeAtividade($arrObjs, $arrayObjs);
         PaginaSEI::getInstance()->processarPaginacao($objDTO);
-
+        
         if ($numRegistros > 0) {
             //Tabela de resultado.
             $displayNoneCheck = 'style="display:none"';
-            $strResultado .= '<table width="99%" class="infraTable" summary="Processos" id="tbCtrlProcesso">';
+            $strResultado .= '<table class="infraTable" style="width:100%;" summary="Processos" id="tbCtrlProcesso">';
             $strResultado .= '<caption class="infraCaption">';
             $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Meus Processos', $numRegistros);
             $strResultado .= '</caption>';
 
 
             //Cabeçalho da Tabela
-            $strResultado .= '<tr>';
-            $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
-            $strResultado .= '<th class="infraTh" style="width: 160px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'NomeAtividadeTriagem', $arrObjs) . '</th>';
+            $strResultado .= '<thead><tr>';
+            $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%">' . PaginaSEI::getInstance()->getThCheck() . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 175px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 155px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Atividade', 'NomeAtividadeTriagem', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
-            $strResultado .= '<th class="infraTh" style="width: 110px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tipo de Controle', 'NomeTpCtrlDsmp', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh"  >' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Fila', 'NomeFila', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" style="text-align: left;width: 90px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tempo de Execução', 'TempoExecucao', $arrObjs) . ' </th>';
-            $strResultado .= '<th class="infraTh" style="width: 160px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Situação', 'StaAtendimentoDsmp', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" style="width: 80px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Data Situação', 'Atual', $arrObjs) . '</th>';
-            $strResultado .= '<th class="infraTh" style="width: 80px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo', 'PrazoTarefa', $arrObjs) . ' </th>';
-            $strResultado .= '<th class="infraTh" style="width: 80px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo Resposta', 'PrazoResposta', $arrObjs) . ' </th>';
-            $strResultado .= '<th class="infraTh" style="width: 40px">Ações</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 125px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tipo de Controle', 'NomeTpCtrlDsmp', $arrObjs) . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 125px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Fila', 'NomeFila', $arrObjs) . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 120px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tempo de Execução', 'TempoExecucao', $arrObjs) . ' </th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 155px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Situação', 'StaAtendimentoDsmp', $arrObjs) . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 112px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Data Situação', 'Atual', $arrObjs) . '</th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 110px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo', 'PrazoTarefa', $arrObjs) . ' </th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 110px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Prazo Resposta', 'PrazoResposta', $arrObjs) . ' </th>';
+            $strResultado .= '<th class="txt-col-center infraTh" style="min-width: 65px;">Ações</th>';
             $strResultado .= '<th class="infraTh" style="display: none">Última Fila</th>';
-            $strResultado .= '</tr>';
+            $strResultado .= '</tr></thead>';
 
             //Linhas
             $strCssTr = '';
@@ -332,17 +341,17 @@ if ($isParametrizado) {
                 $nomeTpProcesso = $arrObjs[$i]->getStrNomeTipoProcedimento();
                 $strStatus = trim($arrObjs[$i]->getStrStaAtendimentoDsmp());
                 $numIdControleDsmp = $arrObjs[$i]->getNumIdMdUtlControleDsmp();
-                $numTempoExecucao = $arrObjs[$i]->getNumTempoExecucao();
+                $numTempoExecucao = $arrObjs[$i]->getNumTempoExecucaoAtribuido();
                 $numIdTriagem = $arrObjs[$i]->getNumIdMdUtlTriagem();
                 $numIdAjustePrazo = $arrObjs[$i]->getNumIdMdUtlAjustePrazo();
                 $numIdContestRevisao = $arrObjs[$i]->getNumIdMdUtlContestRevisao();
                 $strNmTpCtrl = $arrObjs[$i]->getStrNomeTpCtrlDsmp();
+
                 $strNomeAtividade = array_key_exists($numIdTriagem, $arrayObjs) ? $arrayObjs[$numIdTriagem] : '';
-                
                 $linkAtvTriagem = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_atividade_triagem_listar&acao_origem=md_utl_distrib_usuario_listar&id_triagem=' . $numIdTriagem . '');
 
                 if (is_array($strNomeAtividade)) {
-                    $strNomeAtividade = '<a href="javascript:void(0);" onclick="infraAbrirJanela(\'' . $linkAtvTriagem . '\',\'urlAtividadeTriagemMult\',650,500,)" alt="Múltiplas" title="Múltiplas" class="ancoraPadraoAzul"> Múltiplas </a>';
+                    $strNomeAtividade = '<a href="#" onclick="infraAbrirJanelaModal(\'' . $linkAtvTriagem . '\',650,500)" alt="Múltiplas" title="Múltiplas" class="ancoraPadraoAzul"> Múltiplas </a>';
                 }
 
                 $objStatusAnterior = $objMdUtlHistControleRN->getStatusAnterior($strId);
@@ -416,7 +425,7 @@ if ($isParametrizado) {
 
                 //Linha Nome
                 $strResultado .= '<td class="tdNomeProcesso">';
-                $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul">' . $strProcesso . '</a>';
+                $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul" style="padding:0px !important;">' . $strProcesso . '</a>';
                 $strResultado .= '</td>';
 
                 //Linha Atividade
@@ -434,20 +443,8 @@ if ($isParametrizado) {
                 $strResultado .= PaginaSEI::tratarHTML($strFila);
                 $strResultado .= '</td>';
 
-                if( $strStatus == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE && $numTempoExecucao == 0 ){
-                    $vlrUndEsf = MdUtlAdmPrmGrUsuINT::_retornaUnidEsforcoAtividadesAnalisadas( $arrObjs[$i]->getNumIdMdUtlAnalise() );
-                    $valorCalculoTempoExecucao = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($vlrUndEsf, $arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp(), $arrObjs[$i]->getNumIdUsuarioDistribuicao()));
-                    $somaTmpExecucao += MdUtlAdmPrmGrINT::convertToMins($valorCalculoTempoExecucao);
-                }
-                else if( $strStatus == MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM && $numTempoExecucao == 0 ){
-                    $vlrUndEsf = MdUtlAdmPrmGrUsuINT::_retornaUnidEsforcoTriagem( $arrObjs[$i]->getNumIdMdUtlTriagem() );
-                    $valorCalculoTempoExecucao = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($vlrUndEsf, $arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp(), $arrObjs[$i]->getNumIdUsuarioDistribuicao()));
-                    $somaTmpExecucao += MdUtlAdmPrmGrINT::convertToMins($valorCalculoTempoExecucao);
-                }
-                else{
-                    $valorCalculoTempoExecucao = MdUtlAdmPrmGrINT::convertToHoursMins(MdUtlAdmPrmGrUsuINT::retornaCalculoPercentualDesempenho($numTempoExecucao, $arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp(), $arrObjs[$i]->getNumIdUsuarioDistribuicao()));
-                    $somaTmpExecucao += MdUtlAdmPrmGrINT::convertToMins($valorCalculoTempoExecucao);
-                }
+                $somaTmpExecucao += $numTempoExecucao;
+                $valorCalculoTempoExecucao = MdUtlAdmPrmGrINT::convertToHoursMins( $numTempoExecucao );
 
                 //Linha Unidade de Esforço
                 $strResultado .= '<td class="tdUniEsforco">';
@@ -481,7 +478,7 @@ if ($isParametrizado) {
 
                 $strResultado .= '<td style="text-align: center">';
 
-                $strResultado .= !$numIdContestRevisao ? MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strId, $statusAnterior) : '';
+                $strResultado .= !$numIdContestRevisao ? MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strId, $statusAnterior, $prazoResposta, !is_null($numIdTriagem) ? $arrHabAjustePrazoAti[$numIdTriagem] : null ) : '';
                 $strResultado .= !$numIdAjustePrazo ? MdUtlControleDsmpINT::getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $arrObjs[$i], $numIdTriagem, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strSituacao) : '';
                 $strResultado .= '</td>';
 
@@ -503,286 +500,13 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 //Include de estilos CSS
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if (0) { ?>
-    <style><? }
-    ?>
-        .bloco {
-            position: relative;
-            float: left;
-            margin-top: 1%;
-            width: 90%;
-        }
-
-        .clear {
-            clear: both;
-        }
-
-        .padraoSelect {
-            margin-top: 1px;
-            height: 21px;
-            width: 78%;
-        }
-
-        .padraoInput {
-            width: 78%;
-        }
-
-
-        textarea {
-            resize: none;
-            width: 60%;
-        }
-
-        select[multiple] {
-            width: 61%;
-            margin-top: 0.5%;
-        }
-
-        img[id^="imgExcluir"] {
-            margin-left: -2px;
-        }
-
-        div[id^="divOpcoes"] {
-            position: absolute;
-            width: 1%;
-            left: 62%;
-            top: 44%;
-        }
-
-        img[id^="imgAjuda"] {
-            margin-bottom: -4px;
-        }
-
-        .div_comun{
-            position: relative;
-            margin-top: 9px;
-            width: 20%;
-        }
-
-        #divSomaTmpExecucao {
-            margin-top: 105px;
-            position: absolute;
-        }
-
-        #divCargaHrDistribExec {
-            margin-top: 111px;
-            position: absolute;
-            margin-bottom: 10px;
-        }
-
-        #divCargaHrPadrao {
-            margin-top: 123px;
-            position: absolute;
-            margin-bottom: 10px;
-        }
-
-        #divCargaHrDistrib {
-            margin-top: 132px;
-            position: absolute;
-            margin-bottom: 10px;
-        }
-        <?php if( $numRegistros == 0 ){ ?>
-
-            div.infraAreaTabela{
-                margin-top: -17px;
-            }
-
-        <?php } ?>
-        .tdNomeProcesso, .tdStatusProcesso {
-            font-size: 0.92em;
-        }
-
-        a.ancoraPadraoAzul{
-            padding: 0;
-        }
-
-        <?
-        if (0) { ?></style><?
-} ?>
-
-<?php PaginaSEI::getInstance()->fecharStyle();
+PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_geral_css.php";
 
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-require_once 'md_utl_funcoes_js.php';
+PaginaSEI::getInstance()->fecharJavaScript();
 
-if (0){ ?>
-    <script type="text/javascript"><?}?>
-
-        var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24)?>';
-        var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
-
-        function inicializar() {
-            infraEfeitoTabelas();
-            var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
-            var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
-            var tpCtrl = document.getElementById('hdnValidaTipoControleUtl').value;
-            var isProcessoConcl = '<?php echo $isProcessoConcluido ?>';
-            var msgConclusao = '<?php echo $msg107 ?>';
-
-            if (tpCtrl == 0) {
-                alert(msg24);
-                window.location.href = urlCtrlProcessos;
-                return false;
-            }
-
-            if (idParam == 0) {
-                alert(msg25);
-                window.location.href = urlCtrlProcessos;
-                return false;
-            }
-
-            if (isProcessoConcl == 1) {
-                if (confirm(msgConclusao)) {
-                    document.getElementById('hdnIsConcluirProcesso').value = 1;
-                    document.getElementById("frmTpControleLista").submit();
-                }
-            }
-
-            // traz a carga distribuida periodo
-            let selTpCtrl = document.getElementById('selTpControle').value;
-            let todosValoresTpCtrl = new Array();
-            
-            if( selTpCtrl != '' ){
-                todosValoresTpCtrl.push( selTpCtrl );
-            }else{
-                $("#selTpControle option").each(function(){
-                    if( $( this ).val() != '' ) todosValoresTpCtrl.push( $( this ).val() );
-                });
-
-                if( todosValoresTpCtrl.length == 0 ){
-                    <?php foreach( $arrTpControleUsuMembroUnid as $idTpCtrl ) { ?>
-                        todosValoresTpCtrl.push(<?= $idTpCtrl ?>);
-                    <?php } ?>                    
-                }
-            }
-
-            getCargaHrDistribuida( todosValoresTpCtrl );
-
-            addEnter();
-        }
-
-        function confirmarRetorno(strStatus, $strUrlLink) {
-
-            var msg105padrao = '<?=MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_105)?>';
-
-            if (strStatus == '<?=MdUtlControleDsmpRN::$SUSPENSO?>') {
-                var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_SUSPENSO?>']);
-                var validar = confirm(msg);
-                if (validar == true) {
-                    document.getElementById('frmTpControleLista').action = $strUrlLink;
-                    document.getElementById('frmTpControleLista').submit();
-                }
-            }
-
-            if (strStatus == '<?=MdUtlControleDsmpRN::$INTERROMPIDO?>') {
-                var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_INTERROMPIDO?>']);
-                var validar = confirm(msg);
-                if (validar == true) {
-                    document.getElementById('frmTpControleLista').action = $strUrlLink;
-                    document.getElementById('frmTpControleLista').submit();
-                }
-            }
-
-        }
-
-        function addEnter() {
-            document.getElementById('txtProcessoUtlMs').addEventListener("keypress", function (evt) {
-                addPesquisarEnter(evt);
-            });
-
-        }
-
-        function addPesquisarEnter(evt) {
-            var key_code = evt.keyCode ? evt.keyCode :
-                evt.charCode ? evt.charCode :
-                    evt.which ? evt.which : void 0;
-            q
-            if (key_code == 13) {
-                pesquisar();
-            }
-
-        }
-
-        function pesquisar() {
-            document.getElementById('frmTpControleLista').action = "<?= $strUrlPesquisar ?>";
-            document.getElementById('frmTpControleLista').submit();
-        }
-
-        function fechar() {
-            location.href = "<?= $strUrlFechar ?>";
-        }
-
-        function atribuirProximoModal() {
-            <?php if( !empty( $arrObjTpControle ) and count($arrObjTpControle) > 1 ) { ?>
-                infraAbrirJanela("<?= $strUrlDistrMim ?>",'SelecionarTipoControle', 500, 250, 'location=0,status=1,resizable=1,scrollbars=1');                
-            <?php } else { ?>
-                atribuirProximo( <?= $idTipoControle ?> );
-            <?php } ?>
-        }
-
-        window.atribuirProximo = function(idTpCtrl) {
-
-            $.ajax({
-                url: "<?= $strUrlAjaxAtribuirProximo ?>",
-                type: 'post',
-                dataType: 'xml',
-                data: { idTpCtrl: idTpCtrl },
-                beforeSend: function(){
-                    infraExibirAviso(false);
-                },
-                success: function (result) {
-                    alert('O Processo sob número: ' + $(result).find('ProtocoloFormatado').text() + ' foi distribuído para você.');
-                    //window.location.reload();
-                },
-                error: function (e) {
-                    alert('Seguindo as parametrizações de prioridade nenhum processo foi encontrado para Distribuição!');
-                    console.error('Erro ao processar o XML do SEI: ' + e.responseText);
-                },
-                complete: function(xhr){
-                    infraAvisoCancelar();
-                    if(xhr.status == 200){
-                       window.location.reload();
-                    }
-                }
-            });
-        }
-
-        function getCargaHrDistribuida( idsTpCtrl ){
-            var params = {
-                idUsuarioParticipante: "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>",
-                idTipoControle: idsTpCtrl
-            };
-
-            $.ajax({
-                url: "<?= $strUrlBuscarDadosCarga ?>",
-                type: 'POST',
-                data: params,
-                dataType: 'XML',
-                success: function (r) {
-                    var cargaDisti    = $(r).find('ValorUndEs').text();
-                    var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
-                    var cargaPadrao = $(r).find('ValorCarga').text();
-                    document.getElementById('divCargaHrDistrib').style.display = 'block';
-                    document.getElementById('divCargaHrDistribExec').style.display = 'block';
-                    document.getElementById('spnCargaHrDistrib').innerHTML = String(convertToHoursMins(cargaDisti));
-                    document.getElementById('spnCargaHrDistribExec').innerHTML = String(convertToHoursMins(cargaDistiExe));
-                    document.getElementById('spnCargaHrPadrao').innerHTML = String(convertToHoursMins(cargaPadrao));
-                },
-                error: function (e) {
-                    console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
-                }
-            });
-        }
-
-        <?php if (0){ ?>
-    </script><? } ?>
-
-<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-
-<?php
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
@@ -792,8 +516,6 @@ $txtTooltipTotalTempoPendenteExecucao = 'O Total corresponde à soma do Tempo de 
 $txtTooltipTotalTempoExecutadoPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idTipoControle);
 
 $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamicoCargaHorariaDistribuidaPeriodo($idTipoControle);
-
-$txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão no Período corresponde ao tempo da jornada de trabalho esperada para o Período de distribuição e acompanhamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho, abatendo Feriados que ocorram no Período ou possível jornada reduzida do Participante neste Tipo de Controle de Desempenho.';
 ?>
     <form id="frmTpControleLista" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -801,75 +523,72 @@ $txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão no Período corresponde a
           ) ?>">
 
         <?php
-        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados();
+            PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+            PaginaSEI::getInstance()->abrirAreaDados('');
+            $col_default = "col-sm-6 col-md-6 col-lg-4 mb-2";
         ?>
-        <div class="bloco div_comun" id="divProcesso">
-            <label id="lblProcesso" for="txtProcessoUtlMs" class="infraLabelOpcional">
-                Processo:
-            </label>
-
-            <div class="clear"></div>
-
-            <input type="text" id="txtProcessoUtlMs" name="txtProcessoUtlMs" class="inputFila infraText padraoInput"
-                   size="30"
-                   value="<?php echo $txtProcessoCampo ?>"
+        
+        <div class="row mb-3">
+            <div class="<?= $col_default ?>" id="divProcesso">
+                <label id="lblProcesso" for="txtProcessoUtlMs" class="infraLabelOpcional"> Processo: </label>
+                <input type="text" id="txtProcessoUtlMs" name="txtProcessoUtlMs" class="inputFila infraText padraoInput form-control"                   
+                   value="<?= $txtProcessoCampo ?>"
                    maxlength="100" tabindex="502"/>
-        </div>
+            </div>
 
-        <div id="divTpCtrl" class="bloco div_comun">
-            <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
-            <select id="selTpControle" name="selTpControle" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?= $selTpControle ?>
-            </select>
-        </div>
+            <div class="<?= $col_default ?>" id="divTpCtrl">
+                <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
+                <select id="selTpControle" name="selTpControle" class="infraSelect padraoSelect form-control"
+                        onchange="pesquisar();"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <?= $selTpControle ?>
+                </select>
+            </div>
 
-        <div id="divFila" class="bloco div_comun">
-            <label id="lblFila" for="selFilaUtlMs" accesskey="" class="infraLabelOpcional">Fila:</label>
-            <select id="selFilaUtlMs" name="selFilaUtlMs" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?= $selFila ?>
-            </select>
-        </div>
+            <div class="<?= $col_default ?>" id="divFila">
+                <label id="lblFila" for="selFilaUtlMs" accesskey="" class="infraLabelOpcional">Fila:</label>
+                <select id="selFilaUtlMs" name="selFilaUtlMs" class="infraSelect padraoSelect form-control"
+                        onchange="pesquisar();"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <?= $selFila ?>
+                </select>
+            </div>
 
+            <div class="<?= $col_default ?>" id="divFila">
+                <label id="lblTipoProcesso" for="selTipoProcessoUtlMs" accesskey="" class="infraLabelOpcional">
+                    Tipo de Processo:
+                </label>
+                <select id="selTipoProcessoUtlMs" name="selTipoProcessoUtlMs" class="infraSelect padraoSelect form-control"
+                        onchange="pesquisar();"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <option value=""></option>
+                    <?= $selTipoProcesso ?>
+                </select>
+            </div>
 
-        <div id="divTipoProcesso" class="bloco div_comun">
-            <label id="lblTipoProcesso" for="selTipoProcessoUtlMs" accesskey="" class="infraLabelOpcional">Tipo de
-                Processo:</label>
-            <select id="selTipoProcessoUtlMs" name="selTipoProcessoUtlMs" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <option value=""></option>
-                <?= $selTipoProcesso ?>
-            </select>
-        </div>
+            <div class="<?= $col_default ?>" id="divStatus">
+                <label id="lblStatus" for="selStatusUtlMs" accesskey="" class="infraLabelOpcional">Situação:</label>
+                <select id="selStatusUtlMs" name="selStatusUtlMs" class="infraSelect padraoSelect form-control"
+                        onchange="pesquisar();"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <?= $selStatus ?>
+                </select>
+            </div>
 
-
-        <div id="divStatus" class="bloco div_comun">
-            <label id="lblStatus" for="selStatusUtlMs" accesskey="" class="infraLabelOpcional">Situação:</label>
-            <select id="selStatusUtlMs" name="selStatusUtlMs" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?= $selStatus ?>
-            </select>
-        </div>
-
-        <div id="divAtividade" style="" class="bloco div_comun">
-            <label id="lblAtividade" for="selAtividadeUtlMs" accesskey="" class="infraLabelOpcional">Atividade:</label>
-            <select id="selAtividadeUtlMs" name="selAtividadeUtlMs" class="infraSelect padraoSelect" onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <option value=""></option>
-                <?= $selAtividade ?>
-            </select>
-        </div>
-
-
+            <div class="<?= $col_default ?>" id="divAtividade">
+                <label id="lblAtividade" for="selAtividadeUtlMs" accesskey="" class="infraLabelOpcional">Atividade:</label>
+                <select id="selAtividadeUtlMs" name="selAtividadeUtlMs" class="infraSelect padraoSelect form-control" 
+                        onchange="pesquisar();"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <option value=""></option>
+                    <?= $selAtividade ?>
+                </select>
+            </div>
+        </div>        
+        
         <input type="hidden" id="hdnSubmit" name="hdnSubmit" value="<?php echo $vlControlePost; ?>"/>
         <input type="hidden" id="hdnValidaTipoControleUtl" name="hdnValidaTipoControleUtl"
-               value="<?= count($arrListaTpControle) == 0 ? 0 : 1 ?>"/>
+               value="<?= is_null($arrListaTpControle) ? 0 : 1 ?>"/>
         <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
                value="<?php echo is_null($idTipoControle) ? '0' : $idTipoControle; ?>"/>
         <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
@@ -880,63 +599,247 @@ $txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão no Período corresponde a
         <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso"
                value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
         <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento"
-               value="<?php echo $idProcedimentoMeusProcessos ?>"/>
+               value="<?php echo $idProcedimentoMeusProcessos ?>"/>   
+
+        <?php $col_def_labels = "col-12 col-sm-10 col-md-10 col-lg-6"; ?>
+
+        <div class="row mt-3">
+            <div class="<?= $col_def_labels ?> mb-2 justify-content-center align-self-center" id="divSomaTmpExecucao">
+                <label class="infraLabelOpcional">
+                    Total de Tempo Pendente de Execução:
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
+                </label>
+                <span class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;"><?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTmpExecucao) ?></span>            
+            </div>
+
+            <div class="<?= $col_def_labels ?> mb-2" id="divCargaHrDistribExec">
+                <label id="lblCargaHrDistribExec" class="infraLabelOpcional">
+                    Total de Tempo Executado no Período:
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
+                </label>
+                <span id="spnCargaHrDistribExec" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+            </div>
+
+            <div class="<?= $col_def_labels ?> mb-2" id="divCargaPadPeriodo">
+                <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                            name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
+
+                <span id="spnCargaHrPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+            </div>
+
+            <div class="<?= $col_def_labels ?> mb-2" id="divCargaHrDistrib">
+                <label id="lblCargaHrDistrib" class="infraLabelOpcional">
+                    Carga Horária Distribuída no Período:
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
+                </label>
+                <span id="spnCargaHrDistrib" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros); ?>
+            </div>
+        </div>
 
         <?php PaginaSEI::getInstance()->fecharAreaDados(); ?>
 
-        <div id="divSomaTmpExecucao">
-            <label>Total de Tempo Pendente de Execução:
-                <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao) ?>>
-                    <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                            src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-                </a>
-                <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTmpExecucao) ?>
-            </label>
-        </div>
-
-        <br/>
-
-        <div id="divCargaHrDistribExec" style='padding-top: 3px;'>
-            <label id="lblCargaHrDistribExec" class="infraLabelOpcional">Total de Tempo Executado no Período:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo) ?>>
-                <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                     src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-            </a>
-            <span id="spnCargaHrDistribExec" style='font-size:12px;'>0min</span>
-        </div>
-
-        <br/>
-
-        <div id="divCargaHrPadrao">
-            <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao) ?>>
-                <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                     src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-            </a>
-            <span id="spnCargaHrPadrao" style='font-size:12px;'>0min</span>
-        </div>
-
-        <br/>
-
-        <div id="divCargaHrDistrib">
-            <label id="lblCargaHrDistrib" class="infraLabelOpcional">Carga Horária Distribuída no Período:</label>
-            <a id="btnAtividade" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo) ?>>
-                <img id="imgAjudaAtividade" border="0" style="width: 16px;height: 16px;margin-bottom: -3px;"
-                     src="<?= PaginaSEI::getInstance()->getDiretorioImagensGlobal() ?>/ajuda.gif" class="infraImg"/>
-            </a>
-            <span id="spnCargaHrDistrib" style='font-size:12px;'>0min</span>
-        </div>
-
-        <div style="margin-top: 130px;">
-            <?php
-            PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
-            ?>
-        </div>
-        <?php
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
-
     </form>
+
+    <?php        
+        require_once 'md_utl_geral_js.php';
+        require_once 'md_utl_funcoes_js.php';
+    ?>
+  
+<script type="text/javascript">
+
+    var msg24 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24)?>';
+    var msg25 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25)?>';
+
+    function inicializar() {
+        infraEfeitoTabelas();
+        var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
+        var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
+        var tpCtrl = document.getElementById('hdnValidaTipoControleUtl').value;
+        var isProcessoConcl = '<?php echo $isProcessoConcluido ?>';
+        var msgConclusao = '<?php echo $msg107 ?>';
+        
+        if (tpCtrl == 0) {
+            alert(msg24);
+            window.location.href = urlCtrlProcessos;
+            return false;
+        }
+
+        if (idParam == 0) {
+            alert(msg25);
+            window.location.href = urlCtrlProcessos;
+            return false;
+        }
+
+        /*
+        if (isProcessoConcl == 1) {
+            if (confirm(msgConclusao)) {
+                document.getElementById('hdnIsConcluirProcesso').value = 1;
+                document.getElementById("frmTpControleLista").submit();
+            }
+        }
+        */
+
+        // traz a carga distribuida periodo
+        let selTpCtrl = document.getElementById('selTpControle').value;
+        let todosValoresTpCtrl = new Array();
+        
+        if( selTpCtrl != '' ){
+            todosValoresTpCtrl.push( selTpCtrl );
+        }else{
+            $("#selTpControle option").each(function(){
+                if( $( this ).val() != '' ) todosValoresTpCtrl.push( $( this ).val() );
+            });
+
+            if( todosValoresTpCtrl.length == 0 ){
+                <?php foreach( $arrTpControleUsuMembroUnid as $idTpCtrl ) { ?>
+                    todosValoresTpCtrl.push(<?= $idTpCtrl ?>);
+                <?php } ?>                    
+            }
+        }
+
+        getCargaHrDistribuida( todosValoresTpCtrl );
+
+        addEnter();
+        
+        // Adiciona a class "infraLabelOpcional" quando não retorna nenhum registro na grid
+        // para ficar na mesma formatação das labels que retornam dados referentes a tempo
+        if( $('#divInfraAreaTabela').find('table').length == 0 ){
+            $('#divInfraAreaPaginacaoSuperior').hide();
+            $('#divInfraAreaTabela').parent().parent().addClass('mt-2');
+            $('#divInfraAreaTabela > label').addClass('infraLabelOpcional'); 
+        }else{
+            if( $('#divInfraAreaPaginacaoSuperior').find('select').length == 0 ){
+                $('#divInfraAreaPaginacaoSuperior').hide();
+            }
+        }
+    }
+
+    function confirmarRetorno(strStatus, $strUrlLink) {
+
+        var msg105padrao = '<?=MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_105)?>';
+
+        if (strStatus == '<?=MdUtlControleDsmpRN::$SUSPENSO?>') {
+            var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_SUSPENSO?>']);
+            var validar = confirm(msg);
+            if (validar == true) {
+                document.getElementById('frmTpControleLista').action = $strUrlLink;
+                document.getElementById('frmTpControleLista').submit();
+            }
+        }
+
+        if (strStatus == '<?=MdUtlControleDsmpRN::$INTERROMPIDO?>') {
+            var msg = setMensagemPersonalizada(msg105padrao, ['<?=MdUtlControleDsmpRN::$STR_INTERROMPIDO?>']);
+            var validar = confirm(msg);
+            if (validar == true) {
+                document.getElementById('frmTpControleLista').action = $strUrlLink;
+                document.getElementById('frmTpControleLista').submit();
+            }
+        }
+
+    }
+
+    function addEnter() {
+        document.getElementById('txtProcessoUtlMs').addEventListener("keypress", function (evt) {
+            addPesquisarEnter(evt);
+        });
+
+    }
+
+    function addPesquisarEnter(evt) {
+        var key_code = evt.keyCode ? evt.keyCode :
+            evt.charCode ? evt.charCode :
+                evt.which ? evt.which : void 0;
+        
+        if (key_code == 13) {
+            pesquisar();
+        }
+
+    }
+
+    function pesquisar() {
+        document.getElementById('frmTpControleLista').action = "<?= $strUrlPesquisar ?>";
+        document.getElementById('frmTpControleLista').submit();
+    }
+
+    function fechar() {
+        location.href = "<?= $strUrlFechar ?>";
+    }
+
+    function atribuirProximoModal() {
+        <?php if( !empty( $arrObjTpControle ) and count($arrObjTpControle) > 1 ) { ?>
+            infraAbrirJanela("<?= $strUrlDistrMim ?>",'SelecionarTipoControle', 500, 250, 'location=0,status=1,resizable=1,scrollbars=1');                
+        <?php } else { ?>
+            atribuirProximo( <?= $idTipoControle ?> );
+        <?php } ?>
+    }
+
+    window.atribuirProximo = function(idTpCtrl) {
+
+        $.ajax({
+            url: "<?= $strUrlAjaxAtribuirProximo ?>",
+            type: 'post',
+            dataType: 'xml',
+            data: { idTpCtrl: idTpCtrl },
+            beforeSend: function(){
+                infraExibirAviso(false);
+            },
+            success: function (result) {                
+                if( $(result).find('Erro').length > 0 ){
+                    alert( $(result).find('Msg').text() );
+                }else{
+                    alert('O Processo sob número: ' + $(result).find('ProtocoloFormatado').text() + ' foi distribuído para você.');
+                }                
+            },
+            error: function (e) {
+                alert('Seguindo as parametrizações de prioridade nenhum processo foi encontrado para Distribuição!');
+                console.error('Erro ao processar o XML do SEI: ' + e.responseText);
+            },
+            complete: function(xhr){
+                infraAvisoCancelar();
+                if(xhr.status == 200){
+                    window.location.reload();
+                }
+            }
+        });
+    }
+
+    function getCargaHrDistribuida( idsTpCtrl ){
+        var params = {
+            idUsuarioParticipante: "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>",
+            idTipoControle: idsTpCtrl
+        };
+        
+        $.ajax({
+            url: "<?= $strUrlBuscarDadosCarga ?>",
+            type: 'POST',
+            data: params,
+            dataType: 'XML',
+            success: function (r) {
+                var cargaDisti    = $(r).find('ValorUndEs').text();
+                var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
+                var cargaPadrao = $(r).find('ValorCarga').text();
+                document.getElementById('divCargaHrDistrib').style.display = 'block';
+                document.getElementById('divCargaHrDistribExec').style.display = 'block';
+                document.getElementById('spnCargaHrDistrib').innerHTML = String(convertToHoursMins(cargaDisti));
+                document.getElementById('spnCargaHrDistribExec').innerHTML = String(convertToHoursMins(cargaDistiExe));
+                document.getElementById('spnCargaHrPadrao').innerHTML = String(convertToHoursMins(cargaPadrao));
+            },
+            error: function (e) {
+                console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
+            }
+        });
+    }
+</script>
 
 <?php
 PaginaSEI::getInstance()->fecharBody();

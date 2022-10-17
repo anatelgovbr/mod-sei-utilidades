@@ -24,7 +24,7 @@ $objMdUtlAdmTpCtrlUsuRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
 //Array que sera usado para montar os tipos de controles da unidade
 $arrObjTpControle   = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();  
 $arrListaTpControle = array();
-if (count($arrObjTpControle) > 0 ){
+if (!is_null($arrObjTpControle) && count($arrObjTpControle) > 0 ){
     foreach ($arrObjTpControle as $k => $v) {
         $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
     }
@@ -66,6 +66,17 @@ if(!is_null($idTipoControle) && $isParametrizado) {
     $selFila = MdUtlAdmFilaINT::montarSelectFilas($_POST['selFila'], $arrObjFilaDTO);
 }
 
+# CRIA REGRAS PARA PERMITIR PROSSEGUIMENTO NA ACAO DE: ASSOCIAR A FILA
+$isGestorTpControle = false;
+if( $idsTpCtrlUsuarioGestor )
+    $isGestorTpControle = !empty( $objMdUtlControleDsmpRN->buscaIdsTpCtrlUndComParametro($idsTpCtrlUsuarioGestor) );
+
+$arrIdsPrmGr = $objMdUtlAdmUtlTpCtrlRN->_getIdsParamsTpControle(empty($idTipoControle) ? array_keys($arrListaTpControle) : [$idTipoControle]);
+$isAvaliadorFila = !empty( $objFilaRN->buscaFilasUsuarioAvaliador( $arrIdsPrmGr ) );
+
+$isValidAssociarAposInicializado = ($isGestorTpControle || $isAvaliadorFila) ? 's' : 'n';
+# FINAL REGRAS PARA ASSOCIAR A FILA
+
 $strTitulo = 'Associar Processos a Filas';
 
 switch ($_GET['acao']) {
@@ -101,7 +112,7 @@ $objDTO = new MdUtlProcedimentoDTO();
 
 //Set Campos definidos por Regras
 $objDTO->setStrStaEstadoProtocolo(ProtocoloRN::$TE_NORMAL);
-$objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO), InfraDTO::$OPER_IN);
+$objDTO->setStrStaNivelAcessoLocalProtocolo(array(ProtocoloRN::$NA_PUBLICO, ProtocoloRN::$NA_RESTRITO, ProtocoloRN::$NA_SIGILOSO), InfraDTO::$OPER_IN);
 $objDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
 
 
@@ -214,7 +225,7 @@ if ( $isParametrizado ) {
             $arrUltimasFilas = array();
 
             $displayNoneCheck = $isPermiteAssociacao ? '' : 'style="display:none"';
-            $strResultado .= '<table width="99%" class="infraTable" summary="Associar Processos a Filas" id="tbCtrlProcesso">';
+            $strResultado .= '<table class="infraTable" summary="Associar Processos a Filas" id="tbCtrlProcesso">';
             $strResultado .= '<caption class="infraCaption">';
             $strResultado .= PaginaSEI::getInstance()->gerarCaptionTabela('Associar Processos a Filas', $numRegistros);
             $strResultado .= '</caption>';
@@ -223,7 +234,7 @@ if ( $isParametrizado ) {
             //Cabeçalho da Tabela
             $strResultado .= '<tr>';
             $strResultado .= '<th ' . $displayNoneCheck . ' class="infraTh" align="center" width="1%" >' . PaginaSEI::getInstance()->getThCheck() . '</th>';
-            $strResultado .= '<th class="infraTh" style="width:160px">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
+            $strResultado .= '<th class="infraTh" style="min-width:160px;">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Processo', 'ProtocoloProcedimentoFormatado', $arrObjs) . '</th>';
             $strResultado .= '<th class="infraTh">' . PaginaSEI::getInstance()->getThOrdenacao($objDTO, 'Tipo de Processo', 'IdTipoProcedimento', $arrObjs) . '</th>';
 
             //ADICIONAR ORDENAÇÃO PARA OS OUTROS CAMPOS
@@ -274,7 +285,7 @@ if ( $isParametrizado ) {
 
                 //Linha Nome
                 $strResultado .= '<td class="tdNomeProcesso">';
-                $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzulLocal">' . $strProcesso . '</a>';
+                $strResultado .= '<a href="javascript:void(0);" onclick="window.open(\'' . $linkProcedimento . '\')" alt="' . $nomeTpProcesso . '" title="' . $nomeTpProcesso . '" class="ancoraPadraoAzul" style="padding:0px !important;">' . $strProcesso . '</a>';
                 $strResultado .= '</td>';
 
                 //Linha Descrição
@@ -338,359 +349,311 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 //Include de estilos CSS
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if (0) { ?>
-    <style><? }
-    ?>
-        .bloco {
-            position: relative;
-            float: left;
-            margin-top: 1%;
-            width: 90%;
-        }
-
-        .clear {
-            clear: both;
-        }
-
-        .padraoSelect {
-            margin-top: 1px;
-            height: 21px;
-        }
-
-        /*  .inputFila{
-              width: 45%!important;
-          }*/
-
-        textarea {
-            resize: none;
-            width: 60%;
-        }
-
-        select[multiple] {
-            width: 61%;
-            margin-top: 0.5%;
-        }
-
-        img[id^="imgExcluir"] {
-            margin-left: -2px;
-        }
-
-        div[id^="divOpcoes"] {
-            position: absolute;
-            width: 1%;
-            left: 62%;
-            top: 44%;
-        }
-
-        img[id^="imgAjuda"] {
-            margin-bottom: -4px;
-        }
-
-        .div_comun{
-            position: relative;
-            margin-top: 9px;
-            width: 20%;
-        }
-
-        .ancoraPadraoAzulLocal{
-            text-decoration: none;
-            font-size: 1.2em;
-            color: #0066CC;
-        }
-        <?
-        if (0) { ?></style><?
-} ?>
-
-<?php PaginaSEI::getInstance()->fecharStyle();
+PaginaSEI::getInstance()->fecharStyle();
 
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-if (0){ ?>  <script type="text/javascript"> <? } ?>
-        var msg24 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
-        var msg25 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
-        var msg26 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_26); ?>';
-        var msg27 ='<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_27); ?>';
-        var arrTpCtrl = new Array();
-        var strUrlAssocFila = '';
-        var strAssociarParcial;
-        var arrTpCtrlUserGestor = new Array();       
+PaginaSEI::getInstance()->fecharJavaScript();
 
-        // loop para adicionar os tipos de controles da unidade
-        <?php 
-            if (!empty($arrListaTpControle)) { 
-                foreach ($arrListaTpControle as $k => $v) { 
-        ?>
-                    arrTpCtrl.push( <?= $k ?> );
-        <?php 
-                }
-            }
-        ?>
-
-        // loop para adicionar os tipos de controles onde usuario é gestor
-        <?php 
-            if($idsTpCtrlUsuarioGestor){
-                foreach($idsTpCtrlUsuarioGestor as $k => $v ){
-        ?>
-                    arrTpCtrlUserGestor.push(<?= $v ?>);
-        <?php
-                }
-            }
-        ?>
-        
-        function inicializar() {
-            var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
-            var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
-            var tpCtrl = document.getElementById('hdnValidaCtrlUnidUtl').value;
-
-            if (tpCtrl == 0) {
-                alert(msg24);
-                window.location.href = urlCtrlProcessos;
-                return false;
-            }
-
-            if (idParam == 0) {
-                alert(msg25);
-                window.location.href = urlCtrlProcessos;
-                return false;
-            }
-
-            if ('<?= $_GET['acao'] ?>' == 'md_utl_ctrl_controle_dsmp_selecionar') {
-                infraReceberSelecao();
-                document.getElementById('btnFecharSelecao').focus();
-            } else {
-                infraEfeitoTabelas();
-            }
-
-            addEnter();
-        }
-
-        function addEnter() {
-            document.getElementById('txtProcesso').addEventListener("keypress", function (evt) {
-                addPesquisarEnter(evt);
-            });
-
-            document.getElementById('txtDocumento').addEventListener("keypress", function (evt) {
-                addPesquisarEnter(evt);
-            });
-        }
-
-        function addPesquisarEnter(evt) {
-            var key_code = evt.keyCode ? evt.keyCode :
-                evt.charCode ? evt.charCode :
-                    evt.which ? evt.which : void 0;
-
-            if (key_code == 13) {
-                pesquisar();
-            }
-
-        }
-
-        function associacaoIsPermitida(){
-            var valido = true;
-            var linhas = document.getElementsByClassName('infraTrMarcada');
-            var msgInicio = msg26;
-            for(var i = 0; i < linhas.length; i++){
-                var idStatus = $(linhas[i]).find('.tdIdStatusAtual').text();
-                if(idStatus > 4){
-                    var tpCtrlEle = parseInt( $(linhas[i]).find('.tdIdTpCtrl').text() );                    
-                    var valElem = arrTpCtrlUserGestor.indexOf( tpCtrlEle );                    
-                    if( valElem < 0 ){
-                        if(valido){
-                            msgInicio  += "\n";
-                        }
-                        valido = false;
-                        msgInicio += "\n";
-                        msgInicio +=  " - " + $(linhas[i]).find('.tdNomeProcessoFormatado').text();
-                    }
-                }
-            }
-
-            if(!valido) {
-                alert(msgInicio);
-            }
-            return valido;
-        }
-
-        function associarFila() {
-            var valido = true;
-            var numeroRegistroTela = '<?= $numRegistros ?>';
-
-            if(numeroRegistroTela == 0){
-                alert(msg27);
-                return false;
-            }
-
-            var numSelecionados = infraNroItensSelecionados();
-            valido = numSelecionados != 0;
-
-            if (!valido) {
-                alert(msg27);
-                return false;
-            }
-            
-            if( !validaTpProcedimentoComTpCtrl() ){
-                return false;
-            }
-            
-            valido = associacaoIsPermitida();                    
-            if( valido ){
-                infraAbrirJanela(strUrlAssocFila, 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');                      
-            }
-        }     
-
-        function pesquisar() {
-            var selTpControle = document.getElementById('selTpControle').value;
-            document.getElementById('hdnIdTipoControleUtl').value = selTpControle;
-            document.getElementById('frmTpControleLista').action  = "<?= $strUrlsPesquisar ?>";
-            document.getElementById('frmTpControleLista').submit();
-        }
-
-        function fechar() {
-            location.href = "<?= $strUrlFechar ?>";
-        }
-
-        function validaTpProcedimentoComTpCtrl(){
-            var arrValTpCtrl     = new Array();
-            var arrObjTpProcesso = new Array();
-            var arrObjProcesso   = new Array();
-            var ultTpCtrl        = '.';
-            var elems            = $('.infraCheckbox:checked');
-            var valid            = true;
-            
-            $( elems ).each(function( i , obj ){
-                arrObjTpProcesso.push( parseInt( $(obj).closest('tr').find('.tdIdTpProcedimento').text() ) );
-                arrObjProcesso.push( parseInt( $(obj).closest('tr').find('.tdIdProcesso').text() ) );
-            });
-
-            var params = {
-                listTpCtrl: arrTpCtrl,
-                listTpProced: arrObjTpProcesso,
-                listProcessos: arrObjProcesso,
-                acao_origem: "<?= $_GET['acao'] ?>"
-            };
-
-            $.ajax({
-                url: "<?= $strUrlValTpProced ?>",
-                data: params,
-                type: 'post',
-                dataType: 'xml',
-                async: false
-            })
-            .done( function( rs ){
-                if ( $( rs ).find('Validado').length > 0 ){
-                    strUrlAssocFila = $( rs ).find('Url').text().trim();
-                    valid = true;
-                }else if( $( rs ).find('Qtd').length > 0 ){
-                    alert("<?= MdUtlMensagemINT::$MSG_UTL_120 ?>");
-                    valid = false;
-                }else if( $( rs ).find('NaoValidado').length > 0 ){
-                    alert( $( rs ).find('Mensagem').text().trim() );                    
-                    valid = false;
-                }
-            })
-            .fail( function( e ){
-               console.error('Erro ao validar o Tipo de Controle: ' + e.responseText);
-            });
-
-            return valid;
-        }
-        <?php if (0){ ?> </script> <? } ?>
-
-<?php PaginaSEI::getInstance()->fecharJavaScript(); ?>
-
-<?php
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 ?>
-    <form id="frmTpControleLista" method="post"
-          action="<?= PaginaSEI::getInstance()->formatarXHTML(
-              SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
-          ) ?>">
 
-        <?php
+<form id="frmTpControleLista" method="post"
+        action="<?= PaginaSEI::getInstance()->formatarXHTML(
+            SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
+        ) ?>">
+
+    <?php
         PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
         PaginaSEI::getInstance()->abrirAreaDados();
-        ?>
-        <div class="bloco div_comun" id="divProcesso">
+        $col_def = "col-sm-6 col-md-6 col-lg-4 mb-2";
+    ?>
+    
+    <div class="row mb-2">
+        <div class="<?= $col_def ?> bloco" id="divProcesso">
             <label id="lblProcesso" for="txtProcesso" class="infraLabelOpcional">
                 Processo:
             </label>
-
-            <div class="clear"></div>
-
-            <input type="text" style="width: 85%" id="txtProcesso" name="txtProcesso" class="inputFila infraText"
-                   size="30"
-                   value="<?php echo array_key_exists('txtProcesso', $_POST) ? $_POST['txtProcesso'] : '' ?>"
-                   maxlength="100" tabindex="502"/>
+            <input type="text" id="txtProcesso" name="txtProcesso" class="inputFila infraText form-control"                   
+                value="<?php echo array_key_exists('txtProcesso', $_POST) ? $_POST['txtProcesso'] : '' ?>"
+                maxlength="100" tabindex="502"/>
         </div>
 
-        <div class="bloco div_comun" id="divDocumento">
+        <div class="<?= $col_def ?> bloco" id="divDocumento">
             <label id="lblDocumento" for="txtDocumento" accesskey="S" class="infraLabelOpcional">
                 Documento SEI:
             </label>
-
-            <div class="clear"></div>
-
-            <input type="text" style="width: 85%" id="txtDocumento" name="txtDocumento" class="inputFila infraText"
-                   size="30"
-                   value="<?php echo array_key_exists('txtDocumento', $_POST) ? $_POST['txtDocumento'] : '' ?>"
-                   maxlength="100" tabindex="502"/>
+            <input type="text" id="txtDocumento" name="txtDocumento" class="inputFila infraText form-control"
+                value="<?php echo array_key_exists('txtDocumento', $_POST) ? $_POST['txtDocumento'] : '' ?>"
+                maxlength="100" tabindex="502"/>
         </div>
-        
-        <div id="divTpControle" class="bloco div_comun">
+
+        <div class="<?= $col_def ?> bloco" id="divTpControle">
             <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
-            <select style="width:85%" id="selTpControle" name="selTpControle" class="infraSelect padraoSelect"                    
-                    onchange="pesquisar()"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <select id="selTpControle" name="selTpControle" class="infraSelect form-control"                    
+                onchange="pesquisar()" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <?= $selTpControle ?>
             </select>
         </div>
 
-        <div id="divFila" class="bloco div_comun">
+        <div id="divFila" class="bloco <?= $col_def ?>">
             <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label>
-            <select style="width:85%" id="selFila" name="selFila" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <select id="selFila" name="selFila" class="infraSelect form-control"
+                    onchange="pesquisar();" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <?= $selFila ?>
             </select>
         </div>
-
-        <div id="divStatus" class="bloco div_comun">
+        
+        <div id="divStatus" class="bloco <?= $col_def ?>">
             <label id="lblStatus" for="selStatus" accesskey="" class="infraLabelOpcional">Situação:</label>
-            <select style="width:85%" id="selStatus" name="selStatus" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <select id="selStatus" name="selStatus" class="infraSelect form-control"
+                    onchange="pesquisar();" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <?= $selStatus ?>
             </select>
         </div>
 
-        <div id="divTipoProcesso" class="bloco div_comun">
-            <label id="lblTipoProcesso" for="selTipoProcesso" accesskey="" class="infraLabelOpcional">Tipo de
-                Processo:
+        <div id="divTipoProcesso" class="bloco <?= $col_def ?>">
+            <label id="lblTipoProcesso" for="selTipoProcesso" accesskey="" class="infraLabelOpcional">
+                Tipo de Processo:
             </label>
-            <select style="width:85%" id="selTipoProcesso" name="selTipoProcesso" class="infraSelect padraoSelect"
-                    onchange="pesquisar();"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+            <select id="selTipoProcesso" name="selTipoProcesso" class="infraSelect form-control" onchange="pesquisar();" 
+                tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                 <option value=""></option>
                 <?= $selTipoProcesso ?>
             </select>
-        </div>        
+        </div>
+    </div>
 
-        <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
-               value="<?= empty($arrListaTpControle) ? '0' : (!empty($arrListaTpControle) ? '1' : $idTipoControle); ?>"/>
-        <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
-               value="<?php echo $isParametrizado ? '1' : '0'; ?>"/>
-        <input type="hidden" id="hdnValidaCtrlUnidUtl" name="hdnValidaCtrlUnidUtl" value="<?= empty($arrListaTpControle) ? '0' : '1' ?>"/>
-        <input type="hidden" id="hdnDadosAssociarFila" name="hdnDadosAssociarFila"/>
-        <input type="hidden" id="hdnUrlControleProcessos" name="hdnUrlControleProcessos"
-               value="<?php echo SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']); ?>"/>
-        <?php
+    <input type="hidden" id="hdnIdTipoControleUtl" name="hdnIdTipoControleUtl"
+            value="<?= empty($arrListaTpControle) ? '0' : (!empty($arrListaTpControle) ? '1' : $idTipoControle); ?>"/>
+    <input type="hidden" id="hdnIdParametroCtrlUtl" name="hdnIdParametroCtrlUtl"
+            value="<?php echo $isParametrizado ? '1' : '0'; ?>"/>
+    <input type="hidden" id="hdnValidaCtrlUnidUtl" name="hdnValidaCtrlUnidUtl" value="<?= empty($arrListaTpControle) ? '0' : '1' ?>"/>
+    <input type="hidden" id="hdnDadosAssociarFila" name="hdnDadosAssociarFila"/>
+    <input type="hidden" id="hdnUrlControleProcessos" name="hdnUrlControleProcessos"
+            value="<?php echo SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']); ?>"/>
+    <?php
         PaginaSEI::getInstance()->fecharAreaDados();
         PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros);
         PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
+    ?>
 
-    </form>
+</form>
+
+<script type="text/javascript">
+    var msg24 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_24); ?>';
+    var msg25 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_25); ?>';
+    var msg26 = '<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_26); ?>';
+    var msg27 ='<?php  echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_27); ?>';
+    var arrTpCtrl = new Array();
+    var strUrlAssocFila = '';
+    var strAssociarParcial;
+    var arrTpCtrlUserGestor = new Array();
+    var isValidAssociarAposInicializado = "<?= $isValidAssociarAposInicializado ?>";
+
+    // loop para adicionar os tipos de controles da unidade
+    <?php 
+        if (!empty($arrListaTpControle)) { 
+            foreach ($arrListaTpControle as $k => $v) { 
+    ?>
+                arrTpCtrl.push( <?= $k ?> );
+    <?php 
+            }
+        }
+    ?>
+
+    // loop para adicionar os tipos de controles onde usuario é gestor
+    <?php 
+        if($idsTpCtrlUsuarioGestor){
+            foreach($idsTpCtrlUsuarioGestor as $k => $v ){
+    ?>
+                arrTpCtrlUserGestor.push(<?= $v ?>);
+    <?php
+            }
+        }
+    ?>
+    
+    function inicializar() {
+        var urlCtrlProcessos = document.getElementById('hdnUrlControleProcessos').value;
+        var idParam = document.getElementById('hdnIdParametroCtrlUtl').value;
+        var tpCtrl = document.getElementById('hdnValidaCtrlUnidUtl').value;
+
+        if (tpCtrl == 0) {
+            alert(msg24);
+            window.location.href = urlCtrlProcessos;
+            return false;
+        }
+
+        if (idParam == 0) {
+            alert(msg25);
+            window.location.href = urlCtrlProcessos;
+            return false;
+        }
+
+        if ('<?= $_GET['acao'] ?>' == 'md_utl_ctrl_controle_dsmp_selecionar') {
+            infraReceberSelecao();
+            document.getElementById('btnFecharSelecao').focus();
+        } else {
+            infraEfeitoTabelas();
+        }
+
+        addEnter();
+
+        // Adiciona a class "infraLabelOpcional" quando não retorna nenhum registro na grid
+        // para ficar na mesma formatação das labels que retornam dados referentes a tempo
+        if( $('#divInfraAreaTabela').find('table').length == 0 ){
+            $('#divInfraAreaPaginacaoSuperior').hide();
+            $('#divInfraAreaTabela').addClass('mt-3');
+            $('#divInfraAreaTabela > label').addClass('infraLabelOpcional'); 
+        }else{
+            if( $('#divInfraAreaPaginacaoSuperior').find('select').length == 0 ){
+                $('#divInfraAreaPaginacaoSuperior').hide();
+            }
+        }
+    }
+
+    function addEnter() {
+        document.getElementById('txtProcesso').addEventListener("keypress", function (evt) {
+            addPesquisarEnter(evt);
+        });
+
+        document.getElementById('txtDocumento').addEventListener("keypress", function (evt) {
+            addPesquisarEnter(evt);
+        });
+    }
+
+    function addPesquisarEnter(evt) {
+        var key_code = evt.keyCode ? evt.keyCode :
+            evt.charCode ? evt.charCode :
+                evt.which ? evt.which : void 0;
+
+        if (key_code == 13) {
+            pesquisar();
+        }
+
+    }
+
+    function associacaoIsPermitida(){
+        var valido = true;
+        var linhas = document.getElementsByClassName('infraTrMarcada');
+        var msgInicio = msg26;
+        for(var i = 0; i < linhas.length; i++){
+            var idStatus = $(linhas[i]).find('.tdIdStatusAtual').text();
+            var protFormatado = $(linhas[i]).find('.tdNomeProcessoFormatado').text();
+
+            if( idStatus != 0 && isValidAssociarAposInicializado == 'n')
+            {
+                msgInicio = `Não é possível associar o Processo ${protFormatado} em Fila, pois o Controle de Desempenho está em andamento.\nVerifique com o Avaliador ou o Gestor do Controle de Desempenho`;
+                valido = false;
+                break;
+            }
+
+            if(idStatus > 4)
+            {
+                var tpCtrlEle = parseInt( $(linhas[i]).find('.tdIdTpCtrl').text() );                    
+                var valElem = arrTpCtrlUserGestor.indexOf( tpCtrlEle );                    
+                if( valElem < 0 ){
+                    if(valido){
+                        msgInicio  += "\n";
+                    }
+                    valido = false;
+                    msgInicio += "\n";
+                    msgInicio +=  " - " + protFormatado;
+                }
+            }
+        }
+
+        if(!valido) {
+            alert(msgInicio);
+        }
+        return valido;
+    }
+
+    function associarFila() {
+        var valido = true;
+        var numeroRegistroTela = '<?= $numRegistros ?>';
+
+        if(numeroRegistroTela == 0){
+            alert(msg27);
+            return false;
+        }
+
+        var numSelecionados = infraNroItensSelecionados();
+        valido = numSelecionados != 0;
+
+        if (!valido) {
+            alert(msg27);
+            return false;
+        }
+        
+        if( !validaTpProcedimentoComTpCtrl() ){
+            return false;
+        }
+
+        valido = associacaoIsPermitida();                    
+        if( valido ){
+            infraAbrirJanela(strUrlAssocFila, 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');                      
+        }
+    }     
+
+    function pesquisar() {
+        var selTpControle = document.getElementById('selTpControle').value;
+        document.getElementById('hdnIdTipoControleUtl').value = selTpControle;
+        document.getElementById('frmTpControleLista').action  = "<?= $strUrlsPesquisar ?>";
+        document.getElementById('frmTpControleLista').submit();
+    }
+
+    function fechar() {
+        location.href = "<?= $strUrlFechar ?>";
+    }
+
+    function validaTpProcedimentoComTpCtrl(){
+        var arrValTpCtrl     = new Array();
+        var arrObjTpProcesso = new Array();
+        var arrObjProcesso   = new Array();
+        var ultTpCtrl        = '.';
+        var elems            = $('.infraCheckboxInput:checked');
+        var valid            = true;
+        
+        $( elems ).each(function( i , obj ){
+            arrObjTpProcesso.push( parseInt( $(obj).closest('tr').find('.tdIdTpProcedimento').text() ) );
+            arrObjProcesso.push( parseInt( $(obj).closest('tr').find('.tdIdProcesso').text() ) );
+        });
+
+        var params = {
+            listTpCtrl: arrTpCtrl,
+            listTpProced: arrObjTpProcesso,
+            listProcessos: arrObjProcesso,
+            acao_origem: "<?= $_GET['acao'] ?>"
+        };
+
+        $.ajax({
+            url: "<?= $strUrlValTpProced ?>",
+            data: params,
+            type: 'post',
+            dataType: 'xml',
+            async: false
+        })
+        .done( function( rs ){
+            if ( $( rs ).find('Validado').length > 0 ){
+                strUrlAssocFila = $( rs ).find('Url').text().trim();
+                valid = true;
+            }else if( $( rs ).find('Qtd').length > 0 ){
+                alert("<?= MdUtlMensagemINT::$MSG_UTL_120 ?>");
+                valid = false;
+            }else if( $( rs ).find('NaoValidado').length > 0 ){
+                alert( $( rs ).find('Mensagem').text().trim() );                    
+                valid = false;
+            }
+        })
+        .fail( function( e ){
+            console.error('Erro ao validar o Tipo de Controle: ' + e.responseText);
+        });
+
+        return valid;
+    }
+</script>
 
 <?php
 PaginaSEI::getInstance()->fecharBody();

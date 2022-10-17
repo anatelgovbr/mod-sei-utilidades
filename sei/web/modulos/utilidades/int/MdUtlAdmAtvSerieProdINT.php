@@ -46,6 +46,7 @@ class MdUtlAdmAtvSerieProdINT extends InfraINT {
 
   }
 
+  /*Em Desuso
   public static function montarSelectStaAplicabilidadeSerie($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado){
     $objMdUtlAdmAtvSerieProdRN = new MdUtlAdmAtvSerieProdRN();
 
@@ -54,4 +55,5 @@ class MdUtlAdmAtvSerieProdINT extends InfraINT {
     return parent::montarSelectArrInfraDTO($strPrimeiroItemValor, $strPrimeiroItemDescricao, $strValorItemSelecionado, $arrObjAplicabilidadeSerieMdUtlAdmAtvSerieProdDTO, 'StaAplicabilidadeSerie', 'Descricao');
 
   }
+  */
 }

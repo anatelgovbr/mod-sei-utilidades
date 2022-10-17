@@ -230,8 +230,7 @@ try {
 
 
     PaginaSEI::getInstance()->processarPaginacao($objUsuarioDTO);
-
-    $numRegistros = count($arrObjUsuarioDTO);
+    $numRegistros = is_null($arrObjUsuarioDTO) ? 0 : count($arrObjUsuarioDTO);
 
     if ($numRegistros > 0) {
 

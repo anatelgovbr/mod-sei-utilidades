@@ -5,7 +5,8 @@
  * Date: 14/09/2018
  * Time: 15:21
  */
-if (0){?><script type="text/javascript"><?}?>
+?>
+<script type="text/javascript">
     var objTabelaDinamicaGrpAtv = null;
     var isAlterar = false;
     var idMdUtlAdmPrmGrUsu = 0;
@@ -85,7 +86,7 @@ if (0){?><script type="text/javascript"><?}?>
             if (arrListaAtvPart.length > 0) {
                 for (i = 0; i < arrListaAtvPart.length; i++) {
                     hdnListaAtividade = arrListaAtvPart[i].split('±');
-                    var btnClonar = "<a onclick='clonarAtividade("+hdnListaAtividade[0]+")'><img title='Clonar Atividades' alt='Clonar Atividades' src='/infra_css/imagens/clonar.gif' class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
+                    var btnClonar = "<a onclick='clonarAtividade("+hdnListaAtividade[0]+")'><img title='Clonar Atividades' alt='Clonar Atividades' src='<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . "/clonar.svg" ?>' class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
 
                     objTabelaDinamicaGrpAtv.adicionarAcoes(hdnListaAtividade[0], btnClonar);
                 }
@@ -337,7 +338,7 @@ if (0){?><script type="text/javascript"><?}?>
                 isAlterar = false;
 
             }else {
-                var btnClonar = "<a onclick='clonarAtividade("+idVinculo+")'><img title='Clonar Atividades' alt='Clonar Atividades' src='/infra_css/imagens/clonar.gif' class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
+                var btnClonar = "<a onclick='clonarAtividade("+idVinculo+")'><img title='Clonar Atividades' alt='Clonar Atividades' src='<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . "/clonar.svg" ?>' class='infraImg'/></a><img src=\"/infra_css/imagens/espaco.gif\" class=\"\" border=\"0\">";
                 objTabelaDinamicaGrpAtv.adicionarAcoes(idVinculo, btnClonar);
             }
 
@@ -372,5 +373,4 @@ if (0){?><script type="text/javascript"><?}?>
         infraSelectLimpar('selAtividade');
         document.getElementById('divTpProcOrigem').style.display = 'none';
     }
-
-    <? if (0){ ?></script><? } ?>
+</script>

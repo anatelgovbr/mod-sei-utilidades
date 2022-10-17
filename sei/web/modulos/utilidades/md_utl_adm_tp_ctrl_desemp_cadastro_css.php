@@ -1,3 +1,5 @@
+<style>
+/*
 .bloco {
 position: relative;
 float: left;
@@ -51,5 +53,11 @@ margin-bottom: -4px;
 width: 16px;
 height: 16px;
 }
+*/
 
-
+@media screen and (max-width: 576px) {
+    .col-xs-5{
+        width: 84%;
+    }
+}
+</style>

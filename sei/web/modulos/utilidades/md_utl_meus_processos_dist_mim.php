@@ -48,27 +48,29 @@ PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
-    PaginaSEI::getInstance()->abrirJavaScript();
-    if (0){ ?>
-        <script type="text/javascript"><?php } ?>
-
-        function atribuirProcessoPai(idTpCtrl){
-            window.opener.atribuirProximo(idTpCtrl);
-            window.close();            
-        }
-    <?php if (0){ ?> </script> <?php } ?>
-<?php
-    PaginaSEI::getInstance()->fecharJavaScript();
+PaginaSEI::getInstance()->abrirJavaScript();
+PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>   
-    <div id="divTpCtrl" style="margin-top:68px;">
+?>
+
+<div id="divTpCtrl" class="row">
+    <div class="col-10">
         <label id="lblTpControleModal" for="selTpControleModal" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
-        <select id="selTpControleModal" name="selTpControleModal" class="infraSelect padraoSelect" style="width: 282px;"
+        <select id="selTpControleModal" name="selTpControleModal" class="infraSelect padraoSelect form-control"
                 onchange="atribuirProcessoPai(this.value)" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
             <?= $selTpControle ?>
         </select>
     </div>
+</div>
+
+<script type="text/javascript">
+    function atribuirProcessoPai(idTpCtrl){
+        window.opener.atribuirProximo(idTpCtrl);
+        window.close();            
+    }
+</script>
+
 <?php
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

@@ -170,7 +170,10 @@ class MdUtlAdmRelPrmDsAtivRN extends InfraRN{
             $arrAtividade[]= $atividade;
         }
 
-        return array('itensTabela'=>$arrAtividade,'qtdAtividade'=>count($arrAtividade));
+        return array(
+            'itensTabela' => empty($arrAtividade) ? array() : $arrAtividade ,
+            'qtdAtividade'=> empty($arrAtividade) ? 0 : count($arrAtividade)
+        );
     }
 
     protected function montarArrAtiviPrioridadeControlado($idMdUtlAdmPrmDs){

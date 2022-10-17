@@ -1,6 +1,4 @@
-<?php if(0){ ?>
-    <script>
-<?php } ?>
+<script type="text/javascript">
 
 //variaveis globais - declarar fora do escopo das funçoes da pagina
 var objLupaUnidades = null;
@@ -40,13 +38,19 @@ function onSubmitForm(){
         return false;
     }
 
-
-
     var txtDesc = document.getElementById('txaDescricao');
     if($.trim(txtDesc.value) == ''){
         var msg = setMensagemPersonalizada(msg11Padrao, ['Descrição']);
         alert(msg);
         document.getElementById('txaDescricao').focus();
+        return false;
+    }
+
+    var selTpDoc = document.getElementById('selTpDocumento');
+    if( $.trim(selTpDoc.value) == '0' ){
+        var msg = setMensagemPersonalizada(msg11Padrao, ['Tipo de Documento do Plano de Trabalho']);
+        alert(msg);
+        document.getElementById('selTpDocumento').focus();
         return false;
     }
 
@@ -204,9 +208,4 @@ function carregarComponenteUnidades(){
     }
 }
 
-
-<?php if(0){ ?>
-<script>
-<?php } ?>
-
-        
+</script>        

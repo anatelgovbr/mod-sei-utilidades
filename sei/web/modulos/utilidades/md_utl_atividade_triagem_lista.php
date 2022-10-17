@@ -20,15 +20,16 @@ try {
     if ($numRegistro > 0) {
         $arrayObjs = [];
         foreach ($arrObjsTriagemAtividade as $obj) {
-            $strNomeAtividade = $obj->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$obj->getNumComplexidadeAtividade()] . ') - '. MdUtlAdmPrmGrINT::convertToHoursMins($obj->getNumTempoExecucao());
+            $strNomeAtividade = $obj->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$obj->getNumComplexidadeAtividade()] . ') - '. MdUtlAdmPrmGrINT::convertToHoursMins($obj->getNumTempoExecucaoAtribuido());
             array_push($arrayObjs, $strNomeAtividade);
 
         }
 
     }
 
-    $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="window.close()" class="infraButton">
-                                        Fe<span class="infraTeclaAtalho">c</span>har</button>';
+    $arrComandos[] = '';
+    //'<button type="button" accesskey="c" id="btnFechar" onclick="window.close()" class="infraButton">
+    //                                  Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
     switch($_GET['acao']){
 

@@ -29,8 +29,6 @@ class MdUtlAdmAtvSerieProdDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinObrigatorio', 'sin_obrigatorio');
 
-    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaAplicabilidadeSerie', 'sta_aplicabilidade_serie');
-
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoProduto', 'tmp_execucao_rev_produto');
 
     //$this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmAtividadeMdUtlAdmAtividade', 'id_md_utl_adm_atividade', 'md_utl_adm_atividade');

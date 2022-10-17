@@ -153,7 +153,7 @@ try {
                     };
 
 
-                $arrRetorno = $objMdUtlControleDsmpRN->controlarHistorico($arrDados, 'S', 'N', true, true);
+                    $arrRetorno = $objMdUtlControleDsmpRN->controlarHistorico($arrDados, 'S', 'N', true, true, 'associar_fila');
 
                     $arrIdProcedimento = array_map($funcFirstElement, $arrDados);
 
@@ -207,16 +207,89 @@ PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
 PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(PaginaSEI::getInstance()->getStrNomeSistema().' - '.$strTitulo);
+
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-?>
-
-<?
 PaginaSEI::getInstance()->fecharStyle();
+
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once 'md_utl_geral_js.php';
-if(0){?><script><?}?>
+PaginaSEI::getInstance()->fecharJavaScript();
+
+PaginaSEI::getInstance()->fecharHead();
+PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
+?>
+    <form id="frmAssociarFila" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
+
+        <?php
+            //PaginaSEI::getInstance()->montarBarraLocalizacao($strTitulo);
+            PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
+            PaginaSEI::getInstance()->abrirAreaDados('auto');
+            //PaginaSEI::getInstance()->montarAreaValidacao();
+        ?>
+
+        <div class="row mb-3">
+            <div class="col-5" id="divTpCtrl">
+                <label for="lblTpCtrl" class="infraLabelOpcional">Tipo de Controle:</label>
+                <select name="selTpCtrl" id="selTpCtrl" class="infraSelect form-control" onchange="SelecionaTpCtrl()">
+                    <option value="" <?= $idTpControle == '0' ? 'selected' : '' ?> ></option>
+                    <?php foreach ($arrListTpCtrlDsmp as $k => $v) { ?>                   
+                        <?php if( (int) $idTpControle === (int) $v->getNumIdMdUtlAdmTpCtrlDesemp() ){ ?>
+                            <option value="<?= $v->getNumIdMdUtlAdmTpCtrlDesemp() ?>" selected ><?= $v->getStrNome() ?></option>
+                        <?php } else { ?>
+                            <option value="<?= $v->getNumIdMdUtlAdmTpCtrlDesemp() ?>" ><?= $v->getStrNome() ?></option>
+                        <?php } ?>        
+                    <?php } ?>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-5" id="divFila">
+                <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label>
+                <select id="selFila"  name="selFila" class="infraSelect form-control"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                    <?=$selFila ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <table class="infraTable table" summary="Associar à Fila" id="tbAssociarFila">
+                    <tr>
+                        <th class="infraTh" align="center" width="" style="display: none" >IdVinculo</th>
+                        <th class="infraTh" width="">Processo</th>                
+                        <th class="infraTh" width="">Última Fila Registrada</th>
+                        <th class="infraTh" width="">Fila Atual</th>
+                        <th class="infraTh" style="display: none">Status</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <?php
+            PaginaSEI::getInstance()->fecharAreaDados();
+            //PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
+            //PaginaSEI::getInstance()->montarAreaDebug();
+            //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+        ?>
+
+        <input type="hidden" id="hdnTbAssociarFila"     name="hdnTbAssociarFila"  />
+        <input type="hidden" id="sbmAssociarFila"       name="sbmAssociarFila"      value="" />
+        <input type="hidden" id="hdnAssociarFila"       name="hdnAssociarFila"      value="" />
+        <input type="hidden" id="hdnIdTipoControleUtl"  name="hdnIdTipoControleUtl" value="<?= $idTpControle ?>" />
+        <input type="hidden" id="hdnIdsTipoCtrlCombo"   name="hdnIdsTipoCtrlCombo"  value="<?= $strIdsTpCtrl ?>" />
+        <input type="hidden" id="hdnIdProcedimento"     name="hdnIdProcedimento"    value="<?= $idProcedimento ?>" />
+        <input type="hidden" id="hdnSelFila"            name="hdnSelFila" />
+        <input type="hidden" id="hdnValueFila"          name="hdnValueFila" />
+        <input type="hidden" id="hdnDetalhamento"       name="hdnDetalhamento" value="<?= $isDetalhamento ?>" />
+
+    </form>
+
+<?php require_once 'md_utl_geral_js.php'; ?>
+
+<script>
     var msgNenhumaFila = new Array();
     var msgPadrao84 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_84)?>';
     var msgPadrao85 ='<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_85)?>';
@@ -378,80 +451,19 @@ if(0){?><script><?}?>
 
     }
 
-    function SelecionaTpCtrl(){
+    function SelecionaTpCtrl(){        
         var tpCtrl = $('#selTpCtrl').val();
         if( tpCtrl != "" ){
+            infraExibirAviso(false);
             $('#hdnIdTipoControleUtl').val( tpCtrl );
             $("#frmAssociarFila").attr("action","<?= $strUrlChangeTpCtrl ?>");
             $("#frmAssociarFila").submit();
         }
     }    
 
-    <?if(0){?></script><?}
+</script>
 
-PaginaSEI::getInstance()->fecharJavaScript();
-PaginaSEI::getInstance()->fecharHead();
-PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
-?>
-    <form id="frmAssociarFila" method="post" action="<?=SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.$_GET['acao'].'&acao_origem='.$_GET['acao'])?>">
-
-        <?
-        //PaginaSEI::getInstance()->montarBarraLocalizacao($strTitulo);
-        PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);
-        PaginaSEI::getInstance()->abrirAreaDados('26em');
-        //PaginaSEI::getInstance()->montarAreaValidacao();
-        ?>
-        <div style="margin-bottom: 5px;">
-            <label for="lblTpCtrl" class="infraLabelOpcional">Tipo de Controle:</label>
-            <br>
-            <select name="selTpCtrl" id="selTpCtrl" class="infraSelect" onchange="SelecionaTpCtrl()" style="width: 300px">
-                <option value="" <?= $idTpControle == '0' ? 'selected' : '' ?> ></option>
-                <?php foreach ($arrListTpCtrlDsmp as $k => $v) { ?>                   
-                    <?php if( (int) $idTpControle === (int) $v->getNumIdMdUtlAdmTpCtrlDesemp() ){ ?>
-                        <option value="<?= $v->getNumIdMdUtlAdmTpCtrlDesemp() ?>" selected ><?= $v->getStrNome() ?></option>
-                    <?php } else { ?>
-                        <option value="<?= $v->getNumIdMdUtlAdmTpCtrlDesemp() ?>" ><?= $v->getStrNome() ?></option>
-                    <?php } ?>        
-                <?php } ?>
-            </select>
-        </div>
-        <div id="divFila">
-            <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label>
-            <select style="width:300px" id="selFila"  name="selFila" class="infraSelect"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                <?=$selFila ?>
-            </select>
-        </div>
-        <br><br>
-        <table width="100%" class="infraTable" summary="Associar à Fila" id="tbAssociarFila">
-            <tr>
-                <th class="infraTh" align="center" width="1%" style="display: none" >IdVinculo</th>
-                <th class="infraTh" width="18%">Processo</th>                
-                <th class="infraTh" width="22%">Última Fila Registrada</th>
-                <th class="infraTh" width="22%">Fila Atual</th>
-                <th class="infraTh" style="display: none">Status</th>
-            </tr>
-        </table>
-        <?
-
-        PaginaSEI::getInstance()->fecharAreaDados();
-        //PaginaSEI::getInstance()->montarAreaTabela($strResultado,$numRegistros);
-        PaginaSEI::getInstance()->montarAreaDebug();
-        //PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
-        ?>
-        <input type="hidden" id="hdnTbAssociarFila"     name="hdnTbAssociarFila"  />
-        <input type="hidden" id="sbmAssociarFila"       name="sbmAssociarFila"      value="" />
-        <input type="hidden" id="hdnAssociarFila"       name="hdnAssociarFila"      value="" />
-        <input type="hidden" id="hdnIdTipoControleUtl"  name="hdnIdTipoControleUtl" value="<?= $idTpControle ?>" />
-        <input type="hidden" id="hdnIdsTipoCtrlCombo"   name="hdnIdsTipoCtrlCombo"  value="<?= $strIdsTpCtrl ?>" />
-        <input type="hidden" id="hdnIdProcedimento"     name="hdnIdProcedimento"    value="<?= $idProcedimento ?>" />
-        <input type="hidden" id="hdnSelFila"            name="hdnSelFila" />
-        <input type="hidden" id="hdnValueFila"          name="hdnValueFila" />
-        <input type="hidden" id="hdnDetalhamento"       name="hdnDetalhamento" value="<?= $isDetalhamento ?>" />
-
-
-    </form>
-<?
-PaginaSEI::getInstance()->fecharBody();
-PaginaSEI::getInstance()->fecharHtml();
+<?php
+    PaginaSEI::getInstance()->fecharBody();
+    PaginaSEI::getInstance()->fecharHtml();
 ?>

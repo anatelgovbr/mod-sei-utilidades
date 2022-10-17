@@ -41,6 +41,8 @@ class MdUtlAdmAtividadeDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinNaoAplicarPercDsmp', 'sin_nao_aplicar_perc_dsmp');
+
     $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'IdAutoComplete');
 
     $this->configurarPK('IdMdUtlAdmAtividade',InfraDTO::$TIPO_PK_NATIVA);

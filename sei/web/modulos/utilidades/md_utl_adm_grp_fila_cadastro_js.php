@@ -1,11 +1,4 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: jhon.carvalho
- * Date: 11/09/2018
- * Time: 11:29
- */
-if(0){?><script type="text/javascript"><?}?>
+<script type="text/javascript">
     var msg10 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_10, 'Fila') ?>';
     var msg18 = '<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_18, 'Fila') ?>';
 
@@ -127,4 +120,4 @@ if(0){?><script type="text/javascript"><?}?>
         return validarCadastro();
     }
 
-    <?if(0){?></script><?}?>
+</script>

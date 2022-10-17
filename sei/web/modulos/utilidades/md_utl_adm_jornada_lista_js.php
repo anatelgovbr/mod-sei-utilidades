@@ -1,16 +1,12 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: jhon.carvalho
- * Date: 04/09/2018
- * Time: 12:00
- */
- if(0){ ?>
-    <script>
-<?php } ?>
+<script type="text/javascript">
+    
 var msg55 = '<?php MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_55); ?>';
 var msg46 = '<?php MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_46); ?>';
 var msg56 = '<?php MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_56); ?>';
+
+//evento click no icone calendario da Data Fim
+const btnDtFim = document.querySelector('#imgDtFim');
+btnDtFim.addEventListener('click',btnCalendario);
 
  function inicializar() {
         if ('<?= $_GET['acao'] ?>' == 'md_utl_adm_jornada_selecionar') {
@@ -146,6 +142,17 @@ var msg56 = '<?php MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_56);
     location.href="<?= $strUrlFechar ?>";
     }
 
-<?php if(0){ ?>
-<script>
-<?php } ?>
+    function btnCalendario( ele ){
+        let largTela = document.documentElement.scrollWidth;
+
+        if ( largTela < 576 ) {            
+            let posX  = ele.screenX;
+            let fator = 295;
+
+            $('#divInfraCalendario').css({
+                left: posX - fator
+            });
+        }
+    }
+
+</script>

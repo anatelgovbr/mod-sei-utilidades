@@ -168,6 +168,7 @@ class MdUtlControleDsmpDTO extends InfraDTO {
 
     // Tipo Controle Desempenho
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeTpControle', 'dsmp.nome','md_utl_adm_tp_ctrl_desemp dsmp');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmPrmGr', 'dsmp.id_md_utl_adm_prm_gr','md_utl_adm_tp_ctrl_desemp dsmp');
 
     //Atributos de Apoio
      $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'SinVerificarPermissao');

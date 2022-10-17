@@ -7,6 +7,7 @@
  */
 
 try {
+
     require_once dirname(__FILE__) . '/../../SEI.php';
 
     session_start();
@@ -25,14 +26,16 @@ try {
     $idProcedimento  = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
     $idContest       = array_key_exists('id_contest', $_GET) ? $_GET['id_contest'] : $_POST['hdnIdMdUtlContestRevisao'];
     $encaminhamentoRevisao = MdUtlHistControleDsmpINT::recuperarEncaminhamentoProcessoParaRevisao($idProcedimento);
-    
+
     if(is_null($idContest)){
         $idContest = 0;
     }
-        
-    $strTitulo       = 'Análise ';
 
-//Tipo de Controle e Procedimento
+    $strTitulo = 'Análise ';
+    $strAcao = $_GET['acao'];
+
+    //Tipo de Controle e Procedimento
+    $objException                = new InfraException();
     $objTriagemRN                = new MdUtlTriagemRN();
     $objRegrasGerais             = new MdUtlRegrasGeraisRN();
     $objTriagemDTO               = new MdUtlTriagemDTO();
@@ -48,43 +51,43 @@ try {
     $idContatoAtual              = null;
     $strNumeroProcesso           = null;
 
-    $isAnalise                 = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_analise_consultar';
+    $isAnalise                   = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_analise_consultar';
+    $isEdicao                    = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_triagem_cadastrar';
+    $selectFila                  = '';
+    $strTriagOuAnalise           = $isAnalise ? 'Analista' : 'Triador';
 
-    $isEdicao                  = $_GET['acao'] == 'md_utl_revisao_analise_cadastrar' || $_GET['acao'] == 'md_utl_revisao_triagem_cadastrar';
-    $idFilaAtiva               = $_GET['id_fila'];
-    $selectFila                = '';
-    
-    
-    $objControleDsmpDTO        = $objMdUtlControleDsmpRN->getObjControleDsmpAtivoRevisao(array($idProcedimento, $isAnalise));
-    $idContatoAtual            = $objControleDsmpDTO->getNumIdContato();
-    $strNumeroProcesso         = $objControleDsmpDTO->getStrProtocoloProcedimentoFormatado();
-    $idTipoControle            = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
-    $idRevisao                 = $objControleDsmpDTO->getNumIdMdUtlRevisao();
-    $idMdUtlAnalise            = $objControleDsmpDTO->getNumIdMdUtlAnalise();
-    $idMdUtlControleDsmp       = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
-    $valorTempoExecucao           = $objControleDsmpDTO->getNumTempoExecucao();
-    $idStatus                  = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
-    $strNomeFila               = $objControleDsmpDTO->getStrNomeFila();
-    $strNomeTpControle         = $objControleDsmpDTO->getStrNomeTpControle();
+    //Variaveis relacionadas a distribuiçao automatica após finalizar o fluxo, ou seja, do ultimo Triador ou Analista
+    $validaDistAutoTriagem       = false;
+    $idUsuarioDistrAuto          = null;
+    $strNomeUsuarioDistrAuto     = null;
 
-    $isUsuarioPertenceFila     = false;
-    $isConsultar               = false;
-    $isUsuarioDistribuido      = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUnidadeAtual();
-    $strAcao = $_GET['acao'];
+    $objControleDsmpDTO          = $objMdUtlControleDsmpRN->getObjControleDsmpAtivoRevisao(array($idProcedimento, $isAnalise));
+    $idContatoAtual              = $objControleDsmpDTO->getNumIdContato();
+    $strNumeroProcesso           = $objControleDsmpDTO->getStrProtocoloProcedimentoFormatado();
+    $idTipoControle              = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
+    $idFilaAtiva                 = $objControleDsmpDTO->getNumIdMdUtlAdmFila();
+    $idRevisao                   = $objControleDsmpDTO->getNumIdMdUtlRevisao();
+    $idMdUtlAnalise              = $objControleDsmpDTO->getNumIdMdUtlAnalise();
+    $idMdUtlControleDsmp         = $objControleDsmpDTO->getNumIdMdUtlControleDsmp();
+    $valorTempoExecucao          = $objControleDsmpDTO->getNumTempoExecucao();
+    $idStatus                    = $objControleDsmpDTO->getStrStaAtendimentoDsmp();
+    $strNomeFila                 = $objControleDsmpDTO->getStrNomeFila();
+    $strNomeTpControle           = $objControleDsmpDTO->getStrNomeTpControle();
 
-    if (strrpos($strAcao, 'consultar') && strrpos($strAcao, 'analise')) {
+    $isUsuarioPertenceFila        = false;
+    $isConsultar                  = false;
+    $isUsuarioDistribuido         = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUnidadeAtual();
 
-        $statusRevisaoConsultar = array(MdUtlControleDsmpRN::$EM_REVISAO);
+    //recupera o nome do usuario que realizou/realizara a avaliacao e quem fez as triagem e analise
+    $nm_usuario_avaliacao = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+        $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 6 ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp() : $objControleDsmpDTO->getNumIdMdUtlRevisao(),
+        $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+        MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO,
+        'V'
+    );
 
-        if (!$isUsuarioDistribuido && in_array($idStatus, $statusRevisaoConsultar)) {
-
-            $idMdUtlAnaliseAntigo = $objMdUtlHistControleDsmpRN->getIdAnaliseAnterior(array($idMdUtlAnalise, $idProcedimento));
-
-            if (!is_null($idMdUtlAnaliseAntigo)) {
-                $idMdUtlAnalise = $idMdUtlAnaliseAntigo;
-            }
-        }
-    }
+    $nm_usuario_triagem = null;
+    $nm_usuario_analise = null;
 
     $selRevisao      = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle);
     $selJustRevisao  = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle);
@@ -107,29 +110,48 @@ try {
     }
 
     $arrComandos    = array();
-
-    $strTitulo='Avaliação';
-
-    $tpAcaoAval = null;
+    $strTitulo      = 'Avaliação';
+    $tpAcaoAval     = null;
+    $strLinkValidaUsuarioPertenceAFila = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_usuario_pertence_fila');
 
     switch ($_GET['acao']) {
 
         case 'md_utl_revisao_analise_cadastrar':
-            $arrComandos[] = '<button type="button" accesskey="s" id="btnSalvar" value="salvar" onclick="salvar();" class="infraButton botaoSalvar">
-                                                <span class="infraTeclaAtalho">S</span>alvar</button>';
+
+            $arrComandos[] = '<button type="button" accesskey="s" id="btnSalvar" value="salvar" onclick="salvar();" class="infraButton botaoSalvar"><span class="infraTeclaAtalho">S</span>alvar</button>';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
 
+            $idObj = in_array(
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                [MdUtlControleDsmpRN::$EM_ANALISE,MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE]
+            )
+            ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+            : $objControleDsmpDTO->getNumIdMdUtlAnalise();
+
+            $nm_usuario_analise = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+                $idObj,
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE
+            );
+
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
 
             if(isset($_POST) && count($_POST) > 0){
+
                 $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
 
                 if($idContest == 0) {
                     $isProcessoConcluido = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
                     if ($isPgPadrao == 0) {
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                        if ( $isProcessoConcluido ){
+                            $strLink = "acao=arvore_visualizar&acao_origem=procedimento_visualizar&id_procedimento=$idProcedimento";
+                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?'.$strLink));
+                        } else {
+                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                        }
+
                     } else {
                         header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
                     }
@@ -141,24 +163,44 @@ try {
                 }
                 die;
             }
+
             break;
 
         case 'md_utl_revisao_triagem_cadastrar':
-            $arrComandos[] = '<button type="button" accesskey="s" id="btnSalvar" value="salvar" onclick="salvar();" class="infraButton botaoSalvar">
-                                                <span class="infraTeclaAtalho">S</span>alvar</button>';
+
+            $arrComandos[] = '<button type="button" accesskey="s" id="btnSalvar" value="salvar" onclick="salvar();" class="infraButton botaoSalvar"><span class="infraTeclaAtalho">S</span>alvar</button>';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_TRIAGEM;
 
+            $idObj = in_array(
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                [MdUtlControleDsmpRN::$EM_TRIAGEM,MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM]
+            )
+            ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+            : $objControleDsmpDTO->getNumIdMdUtlTriagem();
+
+            $nm_usuario_triagem = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+                $idObj,
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM
+            );
+
             require_once 'md_utl_revisao_triagem_cadastro_acoes.php';
 
-            if(isset($_POST) && count($_POST) >0){
+            if(isset($_POST) && count($_POST) > 0){
+
                 $objMdUtlRelRevisTrgAnlsRN = new MdUtlRelRevisTrgAnlsRN();
                 if ($idContest == 0)
                 {
                     $isProcessoConcluido = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
                     if ($isPgPadrao == 0) {
-                        header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                        if ( $isProcessoConcluido ){
+                            $strLink = "acao=arvore_visualizar&acao_origem=procedimento_visualizar&id_procedimento=$idProcedimento";
+                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?'.$strLink));
+                        } else {
+                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
+                        }
                     } else {
                         header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
                     }
@@ -170,33 +212,52 @@ try {
                 }
                 die;
             }
+
             break;
 
         case 'md_utl_revisao_analise_consultar':
+
             $isConsultar = true;
 
-            if($_GET['acao_origem']== 'md_utl_analise_alterar' || $_GET['acao_origem']== 'md_utl_triagem_alterar'){
-                $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.close();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
-            }else {
-                $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.history.back();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
-            }
+            $onClickCloseAction = in_array($_GET['acao_origem'], ['md_utl_analise_alterar', 'md_utl_triagem_alterar']) ? 'window.close();' : 'window.history.back();';
+            $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="'.$onClickCloseAction.'" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
+
+            $numId = $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE
+                ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+                : $objControleDsmpDTO->getNumIdMdUtlAnalise();
+
+            $nm_usuario_analise = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+                $numId,
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE,
+                'A'
+            );
 
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
 
             break;
 
         case 'md_utl_revisao_triagem_consultar':
+
             $isConsultar = true;
 
-            if($_GET['acao_origem']== 'md_utl_triagem_alterar'){
-                $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.close();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
-            }else {
-                $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="window.history.back();" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
-            }
+            $onClickCloseAction = $_GET['acao_origem'] == 'md_utl_triagem_alterar' ? 'window.close();' : 'window.history.back();';
+            $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="'.$onClickCloseAction.'" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_TRIAGEM;
+
+            $numId = $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM
+            ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+            : $objControleDsmpDTO->getNumIdMdUtlTriagem();
+
+            $nm_usuario_triagem = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+                $numId,
+                $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
+                MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM,
+                'T'
+            );
 
             require_once 'md_utl_revisao_triagem_cadastro_acoes.php';
 
@@ -212,6 +273,8 @@ try {
     PaginaSEI::getInstance()->processarExcecao($e);
 }
 
+$habDivDistAutoTriagem = $encaminhamentoRevisao['sta_encaminhamento'] == 'N';
+
 PaginaSEI::getInstance()->montarDocType();
 PaginaSEI::getInstance()->abrirHtml();
 PaginaSEI::getInstance()->abrirHead();
@@ -219,484 +282,238 @@ PaginaSEI::getInstance()->montarMeta();
 PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNomeSistema() . ' - ' . $strTitulo . ' ::');
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
-if(0){?><style><?}?>
-    textarea{
-        resize: none;
-    }
-
-    .inputObservacao{
-        width: 97%;
-    }
-
-    #divPrincipalEncaminhamento{
-        width: 100%;
-    }
-
-    #divEncaminhamentoAnl{
-        margin-top: 1.8%;
-        display: inline-block;
-    }
-
-    #divFila{
-        display: inline-block;
-        width: 260px;
-        margin-top: 1.8%
-    }
-
-    #selEncaminhamento{
-        width: 360px;
-    }
-
-    #selAssociarProcFila{
-        width: 260px;
-    }
-
-    #selFila{
-        width: 200px;
-    }
-
-    #selEncaminhamentoContest{
-        width: 200px;
-    }
-
-    #txaInformacaoComplementarAnlTri{
-        background-color: #dfdfdfdf;
-    }
-
-    <?if(0){?></style><?}
 PaginaSEI::getInstance()->fecharStyle();
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
-require_once ('md_utl_funcoes_js.php');
-require_once ('md_utl_geral_js.php');
-
-if(0){?><script type="text/javascript"><?}?>
-
-    var msg11Padrao     = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
-    var msg52           = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_52); ?>';
-    var msg53           = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_53); ?>';
-    var msg54           = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_54); ?>';
-    var vlFluxoFim      = '<?php echo MdUtlRevisaoRN::$FLUXO_FINALIZADO ?>';
-    var vlFluxoNovaFila = '<?php echo MdUtlRevisaoRN::$NOVA_FILA ?>';
-    var opcEncAvaliacao = "<?= MdUtlRevisaoINT::montarSelectEncaminhamentoString() ?>";
-    var opCurrentEncAval = null;
-    
-    function verificarJustificativa(sel) {
-
-        var val = sel.value;
-        var nameSel = sel.name;
-        var idSel = nameSel.split('_')[1];
-
-        if(val.split('_')[1] == 'S'){
-            infraGetElementById("selJust_"+idSel).style.display = "inherit";
-            infraGetElementById("selJust_"+idSel).style.width = "100%";
-            infraGetElementById("obs_"+idSel).style.display = "inherit";
-            infraGetElementById("selJust_"+idSel).value = "";
-            infraGetElementById("obs_"+idSel).value = "";
-        }else{
-            infraGetElementById("selJust_"+idSel).style.display = "none";
-            infraGetElementById("obs_"+idSel).style.display = "none";
-            infraGetElementById("selJust_"+idSel).value = "";
-            infraGetElementById("obs_"+idSel).value = "";
-        }
-    }
-
-    function salvar(){
-
-        var isContestacao = '<?=$idContest ?>';
-        var associarFila = '';
-
-        if(isContestacao == 0) {
-            var selectEncaminhamento = document.querySelector('#selEncaminhamento');
-            var option = selectEncaminhamento.children[selectEncaminhamento.selectedIndex];
-            var encaminhamentoDetalhe = option.textContent;
-        }
-
-        var selectFilaEscolhida = document.querySelector('#selFila');
-        var optionFila = selectFilaEscolhida.children[selectFilaEscolhida.selectedIndex];
-        var fila = optionFila.textContent;
-
-        var valido = true;
-
-        valido = validarSelects();
-        
-        if(valido) {
-            valido = validarObservacao();
-        }
-
-        if( document.getElementById('selAvalQualitativa').value == '' ){
-            alert( "<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11, 'Avaliação Qualitativa das Atividades Entregues')?>" );
-            document.getElementById('selAvalQualitativa').focus();
-            return false;
-        }
-
-        var txtInfoComplementar = document.getElementById('txaInformacaoComplementar');
-
-        if( !validaQtdCaracteres(txtInfoComplementar,500) ){
-            alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Justificativa da Avaliação Qualitativa', '500'))?>");
-            txtInfoComplementar.focus();
-            return false;
-        }  
-
-        var idEncaminhamento = isContestacao == 0 ? 'selEncaminhamento' : 'selEncaminhamentoContest';
-        var encaminhamento = infraGetElementById(idEncaminhamento).value;
-        var associarFilaSelect = infraGetElementById('selAssociarProcFila').value;
-        var selectFila = infraGetElementById('selFila').value;
-
-
-        if(valido) {
-            if (encaminhamento == '') {
-                valido = false;
-                var valor = isContestacao == 0 ? 'Encaminhamento da Avaliação' : 'Encaminhamento da Contestação';
-                var msg = setMensagemPersonalizada(msg11Padrao, [valor]);
-                alert(msg);
-            }
-        }
-
-        if(valido){
-            if(encaminhamento == vlFluxoFim){
-                associarFila = 'Não';
-                document.getElementById('selAssociarProcFila').value = 'N';
-            }
-        }
-
-        if(valido){
-            if(encaminhamento == vlFluxoNovaFila){
-                encaminhamento == vlFluxoFim;
-                associarFila = 'Sim';
-
-                //verifica se selecionou uma fila
-                if(selectFila == ''){
-                    valido = false;
-                    var msg = setMensagemPersonalizada(msg11Padrao, ['Fila']);
-                    alert(msg);
-                }
-                // alterar valores para fluxo padrão
-                if (valido){
-                    document.getElementById('selEncaminhamento').value = vlFluxoFim;
-                    document.getElementById('selAssociarProcFila').value = 'S';
-                }
-            }
-        }
-
-        if(valido){
-            var isPossuiFila = document.getElementById('selFila').value != '';
-
-            if(isPossuiFila) {
-                var nomeFila = document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText;
-                document.getElementById('hdnSelFila').value = nomeFila.trim();
-            }
-
-            bloquearBotaoSalvar();
-            if(isContestacao == 0) {
-                document.getElementById('hdnEncaminhamento').value = encaminhamentoDetalhe;
-            }
-
-            document.getElementById('hdnAssociarFila').value = associarFila;
-            document.getElementById('hdnFila').value = fila;
-            infraGetElementById('frmRevisaoCadastro').submit();
-        }
-    }
-
-    function validarObservacao() {
-        var inputs = document.getElementsByClassName('inputObservacao');
-
-        for(var i = 0; i < inputs.length; i++ ){
-            /*
-            if(isVisible(inputs[i]) ){
-                if( inputs[i].value.trim() == '' ){
-                    alert(msg52);
-                    return false;
-                }else if( !validaQtdCaracteres(inputs[i],250)){
-                    alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Observação', '250'))?>");
-                    inputs[i].focus();
-                    return false;
-                }
-            }
-            */
-            if( !validaQtdCaracteres(inputs[i],250)){
-                alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_06, array('Observação', '250'))?>");
-                inputs[i].focus();
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function exibirCampoObservacao(){
-        var inputs = document.getElementsByClassName('inputObservacao');
-        for(var i = 0; i < inputs.length; i++ ){
-            var input = inputs[i].id;
-
-            if(infraGetElementById(input).value == ""){
-                    inputs[i].style.display = 'none';
-
-            }
-        }
-    }
-
-    function inicializar(){
-       exibirCampoObservacao();      
-    }
-
-    function validarSelects() {
-
-        var arrSel = document.getElementsByTagName('Select');
-
-        for(var i = 0; i < arrSel.length; i++ ){
-            var idSel = arrSel[i].id;
-
-            if($('#'+idSel).is(':visible')){
-
-                if(infraGetElementById(idSel).value == ""){
-                    var campo = infraGetElementById(idSel).getAttribute('campo');
-
-                    if(campo != undefined) {
-                        if (campo == 'R') {
-                            alert(msg53);
-                        } else {
-                            alert(msg54)
-                        }
-
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    function encaminhamento(val){
-
-        if(val === 'N'){
-            document.getElementById('divFila').style.display = 'inline-block' ;
-            document.getElementById('selFila').innerHTML = '<?=$selFila?>';
-        }else{
-            document.getElementById('divFila').style.display='none';
-            document.getElementById('selFila').value = '';
-        }
-
-        if( val == 'F' || val == 'R'){
-            document.getElementById('txtAlertEncAvaliacao').style.display = 'block';
-        }else{
-            document.getElementById('txtAlertEncAvaliacao').style.display = 'none';
-        }
-    }
-
-    function avaliacaoQualitativa( e ){
-        if( e.value >= 0 && e.value <= 4 && e.value != '' ){
-            document.getElementById('txtAlertAvalQualitativa').style.display = 'block';
-            document.getElementById('divFila').style.display = 'none';
-
-            AddRemoveOptEncaminhamentoAnalise('rem');
-        }else if( e.options.selectedIndex == 0 || e.value > 4 ){
-            document.getElementById('txtAlertAvalQualitativa').style.display = 'none';
-            AddRemoveOptEncaminhamentoAnalise('add');
-        }        
-    }
-
-    function AddRemoveOptEncaminhamentoAnalise( acao ){
-        opCurrentEncAval = $('#selEncaminhamento').val();
-        $('#selEncaminhamento').empty();
-        $("#selEncaminhamento").append('<option value=""></option>');     
-        var arrOptions = opcEncAvaliacao.split('#');
-        for(var i = 0 ; i < arrOptions.length ; i++){
-            var arrItemOptions = arrOptions[i].split('_');
-            let selectedItem = opCurrentEncAval == arrItemOptions[0] ? ' selected ' : '';            
-            if( acao == 'rem' ){
-                if( arrItemOptions[0] == 'R' || arrItemOptions[0] == 'F' ){                    
-                    $("#selEncaminhamento").append('<option value="'+arrItemOptions[0]+'" '+ selectedItem +'>'+arrItemOptions[1]+'</option>');
-                }
-            }else{
-                $("#selEncaminhamento").append('<option value="'+arrItemOptions[0]+'" '+ selectedItem +'>'+arrItemOptions[1]+'</option>');
-            } 
-        }        
-    }
-
-    function realizarAvaliacaoProd( e ){
-        <?php if($tpAcaoAval == MdUtlControleDsmpRN::$EM_ANALISE ) { ?>
-            var arrIdxCol = new Array(5,6,7);
-        <?php } else { ?>
-            var arrIdxCol = new Array(2,3,4);
-        <?php } ?>
-
-        if ( e.checked ) {
-            arrIdxCol.forEach( function( e , i) {
-                mostraColumn( e );
-            });
-        }else{            
-            arrIdxCol.forEach( function( e , i) {
-                ocultaColumn( e );
-            });
-        }
-    }
-
-    function ocultaColumn (colIndex) {
-        var table = document.getElementById('tb_avaliacao');
-        for (var r = 0; r < table.rows.length; r++){
-            table.rows[r].cells[colIndex].style.display = 'none';
-        }
-    }
-
-    function mostraColumn (colIndex) {
-        var table = document.getElementById('tb_avaliacao');
-        for (var r = 0; r < table.rows.length; r++){
-            table.rows[r].cells[colIndex].style.display = '';
-        }
-    }
-
-    <?if(0){?></script><?}
 PaginaSEI::getInstance()->fecharJavaScript();
 PaginaSEI::getInstance()->fecharHead();
 PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
 
 //texto do tooltip
-$txtTooltipEncaminhamentoRevisao="Selecione a opção \"Associar em Fila após Finalizar Fluxo\" caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção \"Finalizar Fluxo\" para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção \"Retornar para Correção por outro Participante na mesma Fila\" caso identificada necessidade de correção que possa ser feita por qualquer Membro Participante da Fila. A Análise da Correção ainda demandará sua Distribuição manual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual. \n \n Selecione a opção \"Retornar para Correção pelo mesmo Participante\" caso identificada necessidade de correção e deseje que a Análise da Correção seja automaticamente distribuída para o Membro Participante que realizou a Análise atual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual.";
+$txtTooltipEncaminhamentoRevisao="Selecione a opção Associar em Fila após Finalizar Fluxo caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Finalizar Fluxo para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Retornar para Correção por outro Participante na mesma Fila caso identificada necessidade de correção que possa ser feita por qualquer Membro Participante da Fila. A Análise da Correção ainda demandará sua Distribuição manual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual. \n \n Selecione a opção Retornar para Correção pelo mesmo Participante caso identificada necessidade de correção e deseje que a Análise da Correção seja automaticamente distribuída para o Membro Participante que realizou a Análise atual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual.";
 
 ?>
+
     <form  id="frmRevisaoCadastro" method="post"
            action="<?= PaginaSEI::getInstance()->formatarXHTML(
                SessaoSEI::getInstance()->assinarLink('controlador.php?acao=' . $_GET['acao'] . '&acao_origem=' . $_GET['acao'])
            ) ?>">
 
-        <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);?>
-        
-        <?php if( $isPgPadrao != 0 ) { ?>
-            <label style='margin-bottom: .2em; font-weight: bold; line-height: 1.5em; color: black;'>
-                Número do Processo:
-            </label>
-            <label><?= $strNumeroProcesso ?> </label>
-            <div class="clear"></div>
-            <br><br>
-        <?php } ?>
-
-        <label id="lblTipoControle" for="selTipoControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label><br/>
-        <div class="clear"></div>
-        <input type="text" style="width:300px" id="txtTipoControle" name="txtTipoControle" class="infraText" value="<?= $strNomeTpControle ?>" disabled/><br/><br/>
-
-        <label id="lblFila" for="selFila" accesskey="" class="infraLabelOpcional">Fila:</label><br/>
-        <div class="clear"></div>
-        <input type="text" style="width:300px" id="txtNomeFila" name="txtNomeFila" class="infraText" value="<?= $strNomeFila ?>" disabled/><br/><br/>
-        
-
-        <label for="selAvalQualitativa" class="infraLabelObrigatorio">
-            Avaliação Qualitativa das Atividades Entregues:
-            <a <?=PaginaSEI::montarTitleTooltip("A Avaliação Qualitativa das Atividades Entregues ocorre com a atribuição de uma nota entre 0 e 10 para representar a qualidade do que foi entregue como um todo, onde 0 é a menor nota e 10 a maior nota. \n \n Ao selecionar nota entre 0 e 4 implica na reprovação das Atividades Entregues, sendo necessário o Retorno para Correção.")?>
-                tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                <img border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" 
-                     style="width: 16px;height: 16px;margin-bottom: -3px;"class="infraImg"/>
-            </a>
-        </label>
-        <br>
-        <div class="clear"></div>
-        <select name="selAvalQualitativa" id="selAvalQualitativa" class="infraSelect" <?=$disabled?> onchange="avaliacaoQualitativa( this )" style="width:308px;">
-            <option value=''></option>
-            <?php
-                $selSelQualitativa = range(0,10);               
-                foreach( $selSelQualitativa as $item ){                                        
-                    if( isset($vlrAvaliacaoQualitativa) && $vlrAvaliacaoQualitativa == $item && $vlrAvaliacaoQualitativa != ''){
-                        echo "<option value='$item' selected >$item</option>";
-                    }else{
-                        echo "<option value='$item'>$item</option>";
-                    }
-                }
-            ?>
-        </select>
-
-        <div id='txtAlertAvalQualitativa' style='color:red; font-size: 1.3em; margin: 2px 0px 3px 0px; display:none;'> 
-            <span style="font-weight: bold; color:red;">Atenção: </span> A nota selecionada implica na reprovação das Atividades Entregues. 
+        <div class="row">
+            <div class="col-md-12">
+            <?php PaginaSEI::getInstance()->montarBarraComandosSuperior($arrComandos);?>
+            </div>
         </div>
 
-        <br>
+        <?php if( $isPgPadrao != 0 ) { ?>
+        <div class="row mb-2">
+            <div class="col-12">
+                <label style='margin-bottom: .2em; font-weight: bold; line-height: 1.5em; color: black;'>
+                    Número do Processo:
+                </label>
+                <label><?= $strNumeroProcesso ?> </label>
+            </div>
+        </div>
+        <?php } ?>
 
-        <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelOpcional"
-                   tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-            Justificativa da Avaliação Qualitativa:
-        </label>
-        <a <?=PaginaSEI::montarTitleTooltip("A Justificativa da Avaliação Qualitativa não é obrigatória, contudo, pode ser útil para explicar detalhes sobre a nota atribuída e do que deve ser corrigido.")?>
-            tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-            <img border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" 
-                 style="width: 16px; height: 16px; margin-bottom: -3px;" class="infraImg"/>
-        </a>
-        <br/>
+        <div class="row">
+            <div class="col-sm-6 col-md-6 col-lg-6">
+                <div class="form-group">
+                    <label id="lblTipoControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
+                    <input type="text" id="txtTipoControle" name="txtTipoControle" class="form-control infraText" value="<?= $strNomeTpControle ?>" disabled="disabled"/>
+                </div>
+            </div>
 
-        <textarea style="width: 79%" id="txaInformacaoComplementar" <?=$disabled?> name="txaInformacaoComplementar" rows="3" class="infraTextArea" maxlength="500" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $isConsultar?$strInformCompRevisao:''?></textarea>
+            <div class="col-sm-6 col-md-6 col-lg-6">
+                <div class="form-group">
+                    <label id="lblFila" accesskey="" class="infraLabelOpcional">Fila:</label>
+                    <input type="text" id="txtNomeFila" name="txtNomeFila" class="form-control infraText" value="<?= $strNomeFila ?>" disabled/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm col-md col-lg">
+                <div class="form-group">
+                    <label class="infraLabelOpcional">Membro Responsável pela Avaliação:</label>
+                    <input type="text" value="<?= $nm_usuario_avaliacao ?>" readonly class="infraText form-control">
+                </div>
+            </div>
+            <?php if ( !is_null( $nm_usuario_triagem ) ) { ?>
+                <div class="col-sm col-md col-lg">
+                    <div class="form-group">
+                        <label class="infraLabelOpcional">Membro Responsável pela Triagem:</label>
+                        <input type="text" value="<?= $nm_usuario_triagem ?>" readonly class="infraText form-control">
+                    </div>
+                </div>
+            <?php } ?>
 
-        <br>
+            <?php if ( !is_null( $nm_usuario_analise ) ) { ?>
+                <div class="col-sm col-md col-lg">
+                    <div class="form-group">
+                        <label class="infraLabelOpcional">Membro Responsável pela Análise:</label>
+                        <input type="text" value="<?= $nm_usuario_analise ?>" readonly class="infraText form-control">
+                    </div>
+                </div>
+            <?php } ?>
+        </div>
 
-        <?
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-7 col-sm-12 col-xs-6">
+                <div class="form-group mb-0">
+                    <label for="selAvalQualitativa" class="infraLabelObrigatorio">
+                        Avaliação Qualitativa das Atividades Entregues:
+                        <img class="infraImg" name="ajuda" src="/infra_css/svg/ajuda.svg" onmouseover="return infraTooltipMostrar('A Avaliação Qualitativa das Atividades Entregues ocorre com a atribuição de uma nota entre 0 e 10 para representar a qualidade do que foi entregue como um todo, onde 0 é a menor nota e 10 a maior nota. \n \n Ao selecionar nota entre 0 e 4 implica na reprovação das Atividades Entregues, sendo necessário o Retorno para Correção.','Ajuda');" onmouseout="return infraTooltipOcultar();">
+                    </label>
+                </div>
+            </div>
+        </div>
 
-        $isConsultaContestacao = !is_null($objMdUtlRevisaoDTO) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) && $isConsultar;
-        if($idContest == 1 || $isConsultaContestacao){
-            $disabledContestacao = '';
-            if($isConsultar) {
-                $disabledContestacao = !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) ? 'disabled=disabled' : '';
-            }
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                <div class="form-group mb-3">
+                   <select name="selAvalQualitativa" id="selAvalQualitativa" class="form-control infraSelect" <?=$disabled?> onchange="avaliacaoQualitativa( this )">
+                        <option value=''></option>
+                        <?php
+                            $selSelQualitativa = range(0,10);
+                            foreach( $selSelQualitativa as $item ){
+                                if( isset($vlrAvaliacaoQualitativa) && $vlrAvaliacaoQualitativa == $item && $vlrAvaliacaoQualitativa != ''){
+                                    echo "<option value='$item' selected >$item</option>";
+                                }else{
+                                    echo "<option value='$item'>$item</option>";
+                                }
+                            }
+                        ?>
+                    </select>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div id='txtAlertAvalQualitativa' class="mb-3" style="display: none">
+                    <label class="infraLabelOpcional text-danger"><span style="font-weight: bold; font-size: 0.875rem;">Atenção:</span> A nota selecionada implica na reprovação das Atividades Entregues. </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="form-group">
+                    <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelOpcional"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        Justificativa da Avaliação Qualitativa:
+                    </label>
+                    <img class="infraImg" name="ajuda" src="/infra_css/svg/ajuda.svg" onmouseover="return infraTooltipMostrar('A Justificativa da Avaliação Qualitativa não é obrigatória, contudo, pode ser útil para explicar detalhes sobre a nota atribuída e do que deve ser corrigido.','Ajuda');" onmouseout="return infraTooltipOcultar();">
+                    <textarea id="txaInformacaoComplementar" <?=$disabled?> name="txaInformacaoComplementar" rows="3" class="form-control infraTextArea" maxlength="500" onkeypress="return infraMascaraTexto(this,event, 500);" tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>"><?= $isConsultar?$strInformCompRevisao:''?></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <?
+                $isConsultaContestacao = !is_null($objMdUtlRevisaoDTO) && !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) && $isConsultar;
+
+                if($idContest == 1 || $isConsultaContestacao){
+                    $disabledContestacao = '';
+
+                    if($isConsultar) {
+                        $disabledContestacao = !is_null($objMdUtlRevisaoDTO->getStrStaEncaminhamentoContestacao()) ? 'disabled=disabled' : '';
+                    }
             ?>
-            <div style="margin-top: 2%; display: inline-block;">
-                <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
-                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+
+            <div class="col-sm-12 col-md-6 col-lg-6">
+                <div class="form-group">
+                    <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
+                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                     Encaminhamento da Contestação:
                 </label>
                 <?php
-                $option = MdUtlRevisaoINT::montarSelectEncaminhamentoContestacao($encaminhamentoRevisao['sta_encaminhamento'], $idContest);
-                ?>
-                <select <?php echo $disabledContestacao; ?> class="infraSelect" name="selEncaminhamentoContest"  id="selEncaminhamentoContest" onchange="encaminhamento(this.value)">
-                    <?=$option?>
-                </select>
+                    $option = MdUtlRevisaoINT::montarSelectEncaminhamentoContestacao($encaminhamentoRevisao['sta_encaminhamento'], $idContest);
+                    ?>
+                    <select <?php echo $disabledContestacao; ?> class="form-control infraSelect" name="selEncaminhamentoContest"  id="selEncaminhamentoContest" onchange="encaminhamento(this.value)">
+                        <?= $option ?>
+                    </select>
+                </div>
             </div>
 
-        <? } else {
-            ?>
-            <div style="margin-top: 1.8%; display: inline-block;">
-                <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
-                       tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    Encaminhamento da Avaliação:
+            <? } else { ?>
+
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                <div class="form-group">
+                    <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelObrigatorio"
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        Encaminhamento da Avaliação:
+                    </label>
+
+                    <img class="infraImg" name="ajuda" src="/infra_css/svg/ajuda.svg" onmouseover="return infraTooltipMostrar('Selecione a opção Associar em Fila após Finalizar Fluxo caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Finalizar Fluxo para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Retornar para Correção por outro Participante na mesma Fila caso identificada necessidade de correção que possa ser feita por qualquer Membro Participante da Fila. A Análise da Correção ainda demandará sua Distribuição manual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual. \n \n Selecione a opção Retornar para Correção pelo mesmo Participante caso identificada necessidade de correção e deseje que a Análise da Correção seja automaticamente distribuída para o Membro Participante que realizou a Análise atual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual.','Ajuda');" onmouseout="return infraTooltipOcultar();">
+                    <?php $option = MdUtlRevisaoINT::montarSelectEncaminhamento($encaminhamentoRevisao['sta_encaminhamento'],$isConsultar); ?>
+                    <select class="form-control infraSelect" name="selEncaminhamento"  id="selEncaminhamento" <?=$disabled?> onchange="encaminhamento(this.value)">
+                        <?=$option?>
+                    </select>
+
+                </div>
+            </div>
+
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12" id="divFila" style="display: none;">
+                <div class="form-group">
+                    <div class="mt-2" style="width: 100%">
+                        <label id="lblFila" for="selFila" class="infraLabelObrigatorio">Fila:</label>
+                        <select id="selFila" name="selFila" <?= $disabled ?> class="form-control infraSelect" onchange="distribuicaoAutoParaMim(this, 1 , <?= $idUsuarioDistrAuto ?: 0 ?> , 'avaliacao')">
+                            <?= $selFila ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3" id="divDistAutoTriagAnalise" <?= $habDivDistAutoTriagem ? '' : 'style="display:none;"'?> >
+            <div class="col-12">
+                <div class="form-check-inline mb-0 infraCheckboxDiv">
+                    <input type="checkbox" name="ckbDistAutoTriagAnalise" id="ckbDistAutoTriagAnalise" class="infraCheckboxInput"
+                     <?= $chkDistAutoTriagem ? 'checked' : '' ?> value='S' <?= $disabled ?>>
+                    <label class="infraCheckboxLabel" for="ckbDistAutoTriagAnalise"></label>
+                </div>                
+                <label class="infraLabelOpcional" for="ckbDistAutoTriagAnalise" style="margin-left: -3px">
+                    Distribuir automaticamente a Triagem do próximo fluxo para o último <?= $strTriagOuAnalise ?>?
                 </label>
-                <a style="" id="btAjudaEncAnalise" <?=PaginaSEI::montarTitleTooltip($txtTooltipEncaminhamentoRevisao)?>
-                   tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                    <img border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif" 
-                         style="width: 16px; height: 16px; margin-bottom: -3px;" class="infraImg"/>
-                </a>
-                <?php
-                    $option = MdUtlRevisaoINT::montarSelectEncaminhamento($encaminhamentoRevisao['sta_encaminhamento'],$isConsultar);
-                ?>
-                <select class="infraSelect" name="selEncaminhamento"  id="selEncaminhamento" <?=$disabled?> onchange="encaminhamento(this.value)">
-                    <?=$option?>
-                </select>
             </div>
-
-            <div id='txtAlertEncAvaliacao' style='color:red; font-size: 1.3em; margin: 3px 0px 3px 0px; display:none;'> 
-                <span style="font-weight: bold; color:red;">Atenção: </span> O encaminhamento selecionado implica na reprovação das Atividades Entregues e o Tempo Executado pelo Participante correspondente será desconsiderado.
-            </div>
-        <?}?>
-
-        <div id="divFila" style="display: none; margin-left: 45px;">
-            <label id="lblFila" for="selFila" class="infraLabelObrigatorio">Fila:</label>
-            <select id="selFila" name="selFila" <?=$disabled?> class="infraSelect">
-                <?= $selFila ?>
-            </select>
-        </div>
-        
-        <div style="margin-left: -2px; margin-top: 12px;">
-            <input type="checkbox" name="cbkRealizarAvalProdAProd" id="cbkRealizarAvalProdAProd" <?=$disabled?> <?= $ckbRealizarAvalProdProd ?> onchange="realizarAvaliacaoProd( this )" value="S">
-            <label id="lblInformacaoComplementar" for="txaInformacaoComplementar" class="infraLabelOpcional"
-                    tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
-                    Realizar Avaliação Produto a Produto
-            </label>
-            <a <?=PaginaSEI::montarTitleTooltip("Marque a opção Realizar Avaliação Produto a Produto caso seja necessário avaliar, justificar e explicar detalhes da avaliação sobre cada Produto entregue.")?>
-                tabindex="<?=PaginaSEI::getInstance()->getProxTabDados()?>">
-                <img border="0" src="<?=PaginaSEI::getInstance()->getDiretorioImagensGlobal()?>/ajuda.gif"
-                     style="width: 16px; height: 16px; margin-bottom: -3px;" class="infraImg"/>
-            </a>
         </div>
 
-        <?php
-            PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistro);
-            PaginaSEI::getInstance()->abrirAreaDados('auto');
-            echo $divInfComplementar;
-        ?>
+        <div class="row">
+            <div class="col-12">
+                <div id='txtAlertEncAvaliacao' class="mb-3" style='display:none;'>
+                    <label class="infraLabelOpcional text-danger"> <span style="font-weight: bold; font-size: 0.875rem;">Atenção:</span> O encaminhamento selecionado implica na reprovação das Atividades Entregues e o Tempo Executado pelo Participante correspondente será desconsiderado. </label>
+                </div>
+            </div>
+            <? } ?>
+
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="form-check form-check-inline mb-0">
+                    <div class="form-check-inline infraCheckboxDiv">
+                        <input type="checkbox" name="cbkRealizarAvalProdAProd" id="cbkRealizarAvalProdAProd" class="infraCheckboxInput"
+                        <?= $ckbRealizarAvalProdProd . $disabled ?> value='S' onchange="realizarAvaliacaoProd( this ) ">
+                        <label class="infraCheckboxLabel" for="cbkRealizarAvalProdAProd"></label>
+                    </div>
+                    <label for="cbkRealizarAvalProdAProd" class="form-check-label infraLabelOpcional pt-1" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
+                        Realizar Avaliação Produto a Produto
+                    </label>
+                    <img class="infraImg ml-1" name="ajuda" src="/infra_css/svg/ajuda.svg" onmouseover="return infraTooltipMostrar('Marque a opção Realizar Avaliação Produto a Produto caso seja necessário avaliar, justificar e explicar detalhes da avaliação sobre cada Produto entregue.','Ajuda');" onmouseout="return infraTooltipOcultar();">
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistro); ?>
+        </div>
+        <?php PaginaSEI::getInstance()->abrirAreaDados('auto'); ?>
+        <div class="row">
+            <div class="col-12">
+                <?= $divInfComplementar ?>
+            </div>
+        </div>
 
         <input type="hidden" id="hdnTbRevisaoAnalise" name="hdnTbRevisaoAnalise"   value="<?=$hdnTbRevisaoAnalise?>"/>
         <input type="hidden" id="hdnIdProcedimento"   name="hdnIdProcedimento"     value="<?=$idProcedimento?>"/>
@@ -707,22 +524,34 @@ $txtTooltipEncaminhamentoRevisao="Selecione a opção \"Associar em Fila após Fina
         <input type="hidden" id="hdnAssociarFila" name="hdnAssociarFila" value="">
         <input type="hidden" id="selAssociarProcFila" name="selAssociarProcFila" value="">
         <input type="hidden" id="hdnFila" name="hdnFila" value="">
-        <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?php echo $isPgPadrao; ?>"/>
+        <input type="hidden" name="hdnIsPgPadrao" id="hdnIsPgPadrao" value="<?= $isPgPadrao; ?>"/>
         <input type="hidden" name="hdnSelFila" id="hdnSelFila" value=""/>
-        <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value="<?php echo $idContest ?>"/>
+        <input type="hidden" id="hdnIdMdUtlContestRevisao" name="hdnIdMdUtlContestRevisao" value="<?= $idContest ?>"/>
+        <input type="hidden" id="chkDistAutoTriagem" value="<?= $chkDistAutoTriagem ?: '' ?>">
+        <input type="hidden" id="validaDistAutoTriagem" value="<?= $validaDistAutoTriagem ? 'ok' : 'err' ?>">
+        <input type="hidden" name="hdnIdUsuarioDistrAuto" value="<?= $idUsuarioDistrAuto ?>">
+        <input type="hidden" name="hdnNmUsuarioDistrAuto" value="<?= $strNomeUsuarioDistrAuto ?>">
 
         <?php
-
-        PaginaSEI::getInstance()->fecharAreaDados();
-        PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
+            PaginaSEI::getInstance()->fecharAreaDados();
+            PaginaSEI::getInstance()->montarBarraComandosInferior($arrComandos);
         ?>
 
     </form>
-    <script>        
-        if(document.getElementById('selEncaminhamento').value === 'N' || document.getElementById('selEncaminhamentoContest').value === 'N'){
-            document.getElementById('divFila').style.display = 'inline-block' ;
-        }        
+    <script>
+        let cmpEncaminhamento     = document.getElementById('selEncaminhamento');
+        let cmpEncaminhamentoCont = document.getElementById('selEncaminhamentoContest');
+
+        if( ( cmpEncaminhamento !== null && cmpEncaminhamento.value === 'N' ) || ( cmpEncaminhamentoCont !== null && cmpEncaminhamentoCont.value === 'N' ) ){
+            let divFila = document.getElementById('divFila');
+            if( divFila !== null ) divFila.style.display = 'block' ;
+        }
     </script>
+
 <?php
+
+require_once "md_utl_geral_js.php";
+require_once "md_utl_funcoes_js.php";
+require_once "md_utl_revisao_cadastro_js.php";
 PaginaSEI::getInstance()->fecharBody();
 PaginaSEI::getInstance()->fecharHtml();

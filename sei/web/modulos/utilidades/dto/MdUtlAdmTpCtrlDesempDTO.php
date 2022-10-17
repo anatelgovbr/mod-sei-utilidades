@@ -42,16 +42,20 @@ class MdUtlAdmTpCtrlDesempDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinAtivo', 'sin_ativo');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdSerie', 'id_serie');
+
     $this->configurarPK('IdMdUtlAdmTpCtrlDesemp',InfraDTO::$TIPO_PK_NATIVA);
 
+    
     $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr mupr', 'mupr.id_md_utl_adm_prm_gr', $this->getParametroFk(), $this->getParametroFiltroFk());
+    $this->configurarFK('IdSerie', 'serie s', 's.id_serie', InfraDTO::$TIPO_FK_OPCIONAL);
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'IdMdUtlAdmFila', 'mupr.id_md_utl_adm_fila', 'md_utl_adm_prm_gr mupr');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'CargaPadrao', 'mupr.carga_padrao', 'md_utl_adm_prm_gr mupr');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'StaFrequencia', 'mupr.sta_frequencia', 'md_utl_adm_prm_gr mupr');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PercentualTeletrabalho', 'mupr.percentual_teletrabalho', 'md_utl_adm_prm_gr mupr');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'InicioPeriodoParametrizado', 'mupr.inicio_periodo', 'md_utl_adm_prm_gr mupr');
-      $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinUltimaFila', 'mupr.sin_retorno_ult_fila', 'md_utl_adm_prm_gr mupr');
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinUltimaFila', 'mupr.sin_retorno_ult_fila', 'md_utl_adm_prm_gr mupr');
 
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'RespTacitaDilacao', 'mupr.resp_tacita_dilacao', 'md_utl_adm_prm_gr mupr');
@@ -61,6 +65,7 @@ class MdUtlAdmTpCtrlDesempDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'PrazoMaxSuspensao', 'mupr.prazo_max_suspensao', 'md_utl_adm_prm_gr mupr');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'PrazoMaxInterrupcao', 'mupr.prazo_max_interrupcao', 'md_utl_adm_prm_gr mupr');
 
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeSerie','s.nome','serie s');
 
     $this->adicionarAtributo(InfraDTO::$PREFIXO_ARR, 'ObjRelTipoControleUtilidadesUsuarioDTO');
     $this->adicionarAtributo(InfraDTO::$PREFIXO_ARR, 'ObjRelTipoControleUtilidadesUnidadeDTO');

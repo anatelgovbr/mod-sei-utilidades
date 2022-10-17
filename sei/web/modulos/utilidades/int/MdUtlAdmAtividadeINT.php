@@ -53,6 +53,24 @@ class MdUtlAdmAtividadeINT extends InfraINT {
 
   }
 
+  public static function montarSelectTipoDocumentoIntAndExt($strValorItemSelecionado = null){
+
+    $serieDTO = new SerieDTO();
+    $serieRN = new SerieRN();
+
+    $serieDTO->setStrStaAplicabilidade(array(SerieRN::$TA_EXTERNO, SerieRN::$TA_INTERNO),InfraDTO::$OPER_IN);
+    $serieDTO->setStrSinAtivo('S');
+
+    $serieDTO->retNumIdSerie();
+    $serieDTO->retStrNome();
+    $serieDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+
+    $arrObjSerieDTO = $serieRN->listarRN0646($serieDTO);
+
+    return parent::montarSelectArrInfraDTO(0, " ", $strValorItemSelecionado, $arrObjSerieDTO, 'IdSerie', 'Nome');
+
+  }
+
 
     public static function montarSelectTipoDocumentoInterno($strValorItemSelecionado = null){
 
@@ -135,7 +153,7 @@ class MdUtlAdmAtividadeINT extends InfraINT {
         foreach($mdUtlAdmAtividade as $objDTO){
             $possuiAnalise = $objDTO->getStrSinAnalise();
             $vlAnalise     = $possuiAnalise == 'S' ? $objDTO->getNumTmpExecucaoAtv() : $objDTO->getNumTmpExecucaoRev();
-            $novoId = $objDTO->getNumIdMdUtlAdmAtividade().'_'.$possuiAnalise.'_'.$vlAnalise.'_'. MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()];
+            $novoId = $objDTO->getNumIdMdUtlAdmAtividade().'_'.$possuiAnalise.'_'.$vlAnalise.'_'. MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()].'_'.$objDTO->getStrSinNaoAplicarPercDsmp();
             $objDTO->setStrIdAutoComplete($novoId);
             $vlrUnidEsf = MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv() ?: '0');
             $nomeExibicao = $objDTO->getStrNome().' ('.MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ') - ' . trim($vlrUnidEsf);

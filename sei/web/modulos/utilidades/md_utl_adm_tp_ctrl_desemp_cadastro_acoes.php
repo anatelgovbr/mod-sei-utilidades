@@ -19,7 +19,7 @@ switch($_GET['acao']){
         $objTipoControleUtilidadesDTO->setNumIdMdUtlAdmTpCtrlDesemp(null);
         $objTipoControleUtilidadesDTO->setStrNome($_POST['txtNome']);
         $objTipoControleUtilidadesDTO->setStrDescricao($_POST['txtDescricao']);
- 
+        $objTipoControleUtilidadesDTO->setNumIdSerie($_POST['selTpDocumento']);
         
         if (isset($_POST['sbmCadastrarTipoControleUtilidades'])) {
 
@@ -141,7 +141,8 @@ switch($_GET['acao']){
             $objTipoControleUtilidadesDTO->setNumIdMdUtlAdmTpCtrlDesemp($_POST['hdnIdTipoControleUtilidades']);
             $objTipoControleUtilidadesDTO->setStrNome($_POST['txtNome']);
             $objTipoControleUtilidadesDTO->setStrDescricao($_POST['txtDescricao']);
-
+            $objTipoControleUtilidadesDTO->setNumIdSerie($_POST['selTpDocumento']);
+            
             $objTipoControleUtilidadesRN = new MdUtlAdmTpCtrlDesempRN();
 
             //consultar as unidades relacionadas
@@ -194,6 +195,7 @@ switch($_GET['acao']){
 
     case 'md_utl_adm_tp_ctrl_desemp_consultar':
         $strTitulo = 'Consultar Tipo de Controle de Desempenho';
+        $strDesabilitar = ' display:none; ';
         $arrComandos[] = '<button type="button" accesskey="c" name="btnFechar" value="Fechar" onclick="location.href=\''.PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].PaginaSEI::getInstance()->montarAncora($_GET['id_tipo_controle_utilidades']))).'\';" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
         $objTipoControleUtilidadesDTO->setNumIdMdUtlAdmTpCtrlDesemp($_GET['id_tipo_controle_utilidades']);
         $objTipoControleUtilidadesDTO->setBolExclusaoLogica(false);
@@ -212,6 +214,7 @@ switch($_GET['acao']){
         $objTipoControleUtilidadesUnidadeDTO->retTodos();
         $objTipoControleUtilidadesUnidadeDTO->setNumIdMdUtlAdmTpCtrlDesemp($_GET['id_tipo_controle_utilidades']);
         $objTipoControleUtilidadesUnidadeDTO->retStrSiglaUnidade();
+        $objTipoControleUtilidadesUnidadeDTO->retStrDescricaoUnidade();
         $objTipoControleUtilidadesUnidadeDTO->setOrdStrSiglaUnidade(InfraDTO::$TIPO_ORDENACAO_ASC);
 
         $objRelTipoControleUtilidadesUnidadeRN = new MdUtlAdmRelTpCtrlDesempUndRN();
@@ -222,7 +225,7 @@ switch($_GET['acao']){
         $objUnidadeRN = new UnidadeRN();
 
         for($x = 0;$x<count($arrUnidades);$x++){
-            $strItensSelUnidades .= "<option value='" . $arrUnidades[$x]->getNumIdUnidade() .  "'>" . $arrUnidades[$x]->getStrSiglaUnidade() . "</option>";
+            $strItensSelUnidades .= "<option value='" . $arrUnidades[$x]->getNumIdUnidade() .  "'>" . $arrUnidades[$x]->getStrSiglaUnidade() ." - " . $arrUnidades[$x]->getStrDescricaoUnidade() ."</option>";
         }
 
         //consultar os gestores relacionados
@@ -242,8 +245,6 @@ switch($_GET['acao']){
         for($x = 0;$x<count($arrGestoresDTO);$x++){
             $strItensSelGestores .= "<option value='" . $arrGestoresDTO[$x]->getNumIdUsuario() .  "'>" . $arrGestoresDTO[$x]->getStrNomeUsuario() . "</option>";
         }
-
-
 
         //============= FIM OBTER REGISTROS RELACIONADOS PARA EDIÇAO ===============================
 

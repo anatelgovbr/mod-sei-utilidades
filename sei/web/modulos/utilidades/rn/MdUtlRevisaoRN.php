@@ -141,6 +141,7 @@ class MdUtlRevisaoRN extends InfraRN {
 
       $objMdUtlRevisaoBD = new MdUtlRevisaoBD($this->getObjInfraIBanco());
       for($i=0;$i<count($arrObjMdUtlRevisaoDTO);$i++){
+        $arrObjMdUtlRevisaoDTO[$i]->setStrSinAtivo('N');
         $objMdUtlRevisaoBD->desativar($arrObjMdUtlRevisaoDTO[$i]);
       }
 
@@ -174,6 +175,7 @@ class MdUtlRevisaoRN extends InfraRN {
       $objRevisaoDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
       $objRevisaoDTO->setStrSinAssociarFila($_POST['selAssociarProcFila']);
       $objRevisaoDTO->setNumIdMdUtlAdmFila($_POST['selFila']);
+      $objRevisaoDTO->setStrDistAutoTriagAnalista( isset( $_POST['ckbDistAutoTriagAnalise'] ) ? $_POST['ckbDistAutoTriagAnalise'] : null );
 
       /* Novos campos */
       if(!isset($_POST['cbkRealizarAvalProdAProd'])){

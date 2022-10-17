@@ -56,7 +56,7 @@ if($idMdAdmGrpFila > 0) {
 $grupoAtividade             = isset($_POST['txtNome'])?$_POST['txtNome'] : $grupoAtividade;
 $descricaoGrupoAtividade    = isset($_POST['txaDescricao'])?$_POST['txaDescricao'] : $descricaoGrupoAtividade;
 $strItensFila               = isset($_POST['hdnFila'])? $_POST['hdnFila'] : $strItensFila;
-
+$isConsultar                = false;
 
 
 switch($_GET['acao']){
@@ -136,7 +136,7 @@ switch($_GET['acao']){
         break;
 
     case 'md_utl_adm_grp_fila_consultar':
-
+        $isConsultar = true;
         $strTitulo = 'Consultar Grupo de Atividade - '.$nomeTpCtrl;
         $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="location.href=\''.SessaoSEI::getInstance()->assinarLink('controlador.php?acao='.PaginaSEI::getInstance()->getAcaoRetorno().'&acao_origem='.$_GET['acao'].'&id_tipo_controle_utl='.$idTpCtrl).PaginaSEI::getInstance()->montarAncora($idMdAdmGrpFila).'\';" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 

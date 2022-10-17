@@ -267,5 +267,16 @@ class MdUtlAdmJustPrazoRN extends InfraRN {
 
   }
 
+  public function validarExclusao(){
+    $p = $_POST;
+    
+    $ajustePrazoRN  = new MdUtlAjustePrazoRN();
+    $ajustePrazoDTO = new MdUtlAjustePrazoDTO();
+
+    $ajustePrazoDTO->setNumIdMdUtlAdmJustPrazo( $p['id'] );
+
+    return $ajustePrazoRN->contar($ajustePrazoDTO) > 0;
+  }
+
 
 }
