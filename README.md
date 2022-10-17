@@ -1,7 +1,7 @@
-# SEI Desempenho e Utilidades
+# Módulo Utilidades
 
 ## Requisitos
-- SEI 4.0.6 instalado/atualizado (Não é compatível com o SEI 3.1.x)
+- SEI 4.0.7 instalado/atualizado (Não é compatível com o SEI 3.1.x)
    - Verificar valor da constante de versão do SEI no arquivo /sei/web/SEI.php ou, após logado no sistema, parando o mouse sobre a logo do SEI no canto superior esquerdo.
 - Antes de executar os scripts de instalação/atualização, o usuário de acesso aos bancos de dados do SEI e do SIP, constante nos arquivos ConfiguracaoSEI.php e ConfiguracaoSip.php, deverá ter permissão de acesso total ao banco de dados, permitindo, por exemplo, criação e exclusão de tabelas.
 - Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://github.com/anatelgovbr/mod-sei-utilidades/releases](https://github.com/anatelgovbr/mod-sei-utilidades/releases "Clique e acesse")
