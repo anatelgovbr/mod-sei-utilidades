@@ -424,80 +424,81 @@ class MdUtlAdmFilaRN extends InfraRN {
   }
 
   private function _filaIsControleProcesso($idFila, $isExcluir){
-      $acao = '';
-    $possuiVinculoHistorico    = false;
-    $objMdUtlControleDsmpRN  = new MdUtlControleDsmpRN();
-    $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
-    $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmFila($idFila);
-    $possuiVinculoControleDsmp = $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO) > 0;
-    $acao = $isExcluir ? 'excluir' : 'desativar';
+      $msg                    = '';
+      $possuiVinculoHistorico = false;
 
-    if($isExcluir) {
-        $objMdUtlHistControleDsmpRN  = new MdUtlHistControleDsmpRN();
-        $objMdUtlHistControleDsmpDTO  = new MdUtlHistControleDsmpDTO();
-        $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAdmFila($idFila);
-        $possuiVinculoHistorico = $objMdUtlHistControleDsmpRN->contar($objMdUtlHistControleDsmpDTO) > 0;
-    }
+      $objMdUtlControleDsmpRN  = new MdUtlControleDsmpRN();
+      $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+      $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmFila($idFila);
+      $possuiVinculoControleDsmp = $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO) > 0;
 
-    if($possuiVinculoControleDsmp || $possuiVinculoHistorico){
-      $objInfraException= new InfraException();
-      $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_21, array($acao));
-      $objInfraException->lancarValidacao($msg);
-      return true;
-    }
+      if($isExcluir) {
+          $objMdUtlHistControleDsmpRN  = new MdUtlHistControleDsmpRN();
+          $objMdUtlHistControleDsmpDTO  = new MdUtlHistControleDsmpDTO();
+          $objMdUtlHistControleDsmpDTO->setNumIdMdUtlAdmFila($idFila);
+          $possuiVinculoHistorico = $objMdUtlHistControleDsmpRN->contar($objMdUtlHistControleDsmpDTO) > 0;
+      }
 
-    return false;
-    
+      if ( $possuiVinculoControleDsmp || $possuiVinculoHistorico ) {
+          if( $isExcluir ){
+              $msg = 'Não é possível excluir a Fila, pois ela já foi utilizada em fluxo de atendimento.';
+          }else{
+              $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+              $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
+              $objMdUtlControleDsmpDTO->setNumMaxRegistrosRetorno(10);
+              $ret = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+              $msg = "Não é possível desativar a Fila, pois existem atividades em fluxo de atendimento em andamento: \n";
+
+              foreach ($ret as $k => $v) {
+                  $msg .= $v->getStrSiglaUnidade() . ": " . $v->getStrProtocoloProcedimentoFormatado() . "\n";
+              }
+              $msg .= "...";
+          }
+          $objInfraException = new InfraException();
+          $objInfraException->lancarValidacao($msg);
+          return true;
+      }
+      return false;
   }
 
-  protected  function validarExclusaoFilaConectado($arrPrm){
+  protected function validarExclusaoFilaConectado($arrPrm){
 
     $idFila         = array_key_exists(0, $arrPrm) ? $arrPrm[0] : null;
     $idTipoControle = array_key_exists(1, $arrPrm) ? $arrPrm[1] : null;
     $isExcluir      = array_key_exists(2, $arrPrm) ? $arrPrm[2] : null;
 
-    $isFilaPadrao         = $this->_filaIsFilaPadraoTipoControle($idFila, $idTipoControle, $isExcluir);
+    $isFilaGrupoAtividade = $this->_filaIsGrupoAtividade($idFila, $isExcluir);
 
-      if (!$isFilaPadrao) {
-          $isFilaGrupoAtividade = $this->_filaIsGrupoAtividade($idFila, $isExcluir);
+    if (!$isFilaGrupoAtividade) {
+        $isFilaDistribuicao = $this->_filaIsDistribuicao($idFila, $isExcluir);
 
-          if (!$isFilaGrupoAtividade) {
-              $isFilaDistribuicao = $this->_filaIsDistribuicao($idFila);
+        if (!$isFilaDistribuicao) {
+            $isFilaCtrlProcessos = $this->_filaIsControleProcesso($idFila, $isExcluir);
 
-              if (!$isFilaDistribuicao) {
-                  $isFilaCtrlProcessos = $this->_filaIsControleProcesso($idFila, $isExcluir);
+            if (!$isFilaCtrlProcessos && $isExcluir) {
+                $isFilaAssociadoAnalise = $this->_filaIsAnalise($idFila, $isExcluir);
 
-                  if (!$isFilaCtrlProcessos) {
-                      $isFilaAssociadoAnalise = $this->_filaIsAnalise($idFila);
-
-                      if (!$isFilaAssociadoAnalise) {
-                          $isFilaAssociadoTriagem = $this->_filaIsTriagem($idFila);
-
-                          if (!$isFilaAssociadoTriagem) {
-                              return true;
-                          }
-                      }
-
-                  }
-              }
-
-          }
-    }else{
-      return false;
+                if (!$isFilaAssociadoAnalise) {
+                    $this->_filaIsTriagem($idFila, $isExcluir);
+                }
+            }
+        }
     }
+    return true;
   }
 
-  private function _filaIsTriagem($idFila){
+  private function _filaIsTriagem($idFila, $isExcluir){
       $objTriagemDTO = new MdUtlTriagemDTO();
       $objTriagemDTO->setNumIdMdUtlAdmFila($idFila);
       $objTriagemDTO->retTodos();
 
        $objTriagemRN = new MdUtlTriagemRN();
        $isTriagem = $objTriagemRN->contar($objTriagemDTO) > 0;
+       $acao = $isExcluir ? 'excluir' : 'desativar';
 
       if($isTriagem){
           $objInfraException= new InfraException();
-          $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_81, array('excluir'));
+          $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_81, array($acao));
           $objInfraException->lancarValidacao($msg);
           return true;
       }
@@ -505,17 +506,18 @@ class MdUtlAdmFilaRN extends InfraRN {
       return $isTriagem;
   }
 
-  private function _filaIsAnalise($idFila){
+  private function _filaIsAnalise($idFila, $isExcluir){
       $objAnaliseDTO = new MdUtlAnaliseDTO();
       $objAnaliseDTO->setNumIdMdUtlAdmFila($idFila);
       $objAnaliseDTO->retTodos();
 
       $objAnaliseRN = new MdUtlAnaliseRN();
       $isAnalise = $objAnaliseRN->contar($objAnaliseDTO) > 0;
+      $acao = $isExcluir ? 'excluir' : 'desativar';
 
       if($isAnalise){
           $objInfraException= new InfraException();
-          $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_80, array('excluir'));
+          $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_80, array($acao));
           $objInfraException->lancarValidacao($msg);
           return true;
       }
@@ -750,22 +752,25 @@ class MdUtlAdmFilaRN extends InfraRN {
             throw new InfraException('Erro pesquisando Filas.',$e);
         }
     }
-    private function _filaIsDistribuicao($idFila){
+
+    private function _filaIsDistribuicao($idFila, $isExcluir){
         $objMdUtlAdmRelPrmDsFilaDTO = new  MdUtlAdmRelPrmDsFilaDTO();
         $objMdUtlAdmRelPrmDsFilaRN = new  MdUtlAdmRelPrmDsFilaRN();
 
         $objMdUtlAdmRelPrmDsFilaDTO->setNumIdMdUtlAdmFila($idFila);
-        $objMdUtlAdmRelPrmDsFilaDTO->retTodos();
+        $objMdUtlAdmRelPrmDsFilaDTO->setStrSinFilaDs('S');
+        $objMdUtlAdmRelPrmDsFilaDTO->retNumIdMdUtlAdmFila();
 
        $isDistribuicao = $objMdUtlAdmRelPrmDsFilaRN->contar($objMdUtlAdmRelPrmDsFilaDTO) > 0;
+       $acao = $isExcluir ? 'excluir' : 'desativar';
 
         if($isDistribuicao){
             $objInfraException= new InfraException();
-            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_109, array('excluir'));
+            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_109, array($acao));
             $objInfraException->lancarValidacao($msg);
             return true;
         }
 
-        return $objMdUtlAdmRelPrmDsFilaRN->contar($objMdUtlAdmRelPrmDsFilaDTO) > 0;
+        return false;
     }
 }

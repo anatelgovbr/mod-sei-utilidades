@@ -21,10 +21,13 @@ class MdUtlAdmRelPrmDsFilaDTO extends InfraDTO
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmParamDs', 'id_md_utl_adm_prm_ds', 'md_utl_adm_prm_ds');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFila', 'id_md_utl_adm_fila', 'md_utl_adm_fila');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFila', 'fl.nome', 'md_utl_adm_fila fl');
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinFilaDs','pd.sin_fila','md_utl_adm_prm_ds pd');
 
         $this->configurarPK('IdMdUtlAdmParamDs',InfraDTO::$TIPO_PK_INFORMADO);
         $this->configurarPK('IdMdUtlAdmFila',InfraDTO::$TIPO_PK_INFORMADO);
         $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila fl', 'fl.id_md_utl_adm_fila');
         $this->configurarFK('IdMdUtlAdmParamDs', 'md_utl_adm_prm_ds pd', 'pd.id_md_utl_adm_prm_ds');
+
+
     }
 }
