@@ -429,11 +429,6 @@ class MdUtlAdmTpCtrlDesempRN extends InfraRN
     $idTpCtrl = $params[0];
     $acao = $params[1];
 
-    $jornadaValido = $this->_validarJornada($idTpCtrl, $acao);
-    if (!$jornadaValido) {
-      return $jornadaValido;
-    }
-
     $filaValido = $this->_validarFila($idTpCtrl, $acao);
     if (!$filaValido) {
       return $filaValido;
