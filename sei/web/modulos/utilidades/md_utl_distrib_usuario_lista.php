@@ -88,15 +88,17 @@ if( !empty( $idsTpCtrlBuscaResp ) ) {
     $objRegrasGeraisRN     = new MdUtlRegrasGeraisRN();
     $idsUsuarioUnidadeResp = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
 
-    $objRespAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idsPrmGrResp, InfraDTO::$OPER_IN);
-    $objRespAdmPrmGrUsuDTO->setNumIdUsuario($idsUsuarioUnidadeResp,InfraDTO::$OPER_IN);
-    $objRespAdmPrmGrUsuDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
-    $objRespAdmPrmGrUsuDTO->setDistinct(true);
+    if ( !empty($idsUsuarioUnidadeResp) && !empty($idsPrmGrResp) ) {
+        $objRespAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idsPrmGrResp, InfraDTO::$OPER_IN);
+        $objRespAdmPrmGrUsuDTO->setNumIdUsuario($idsUsuarioUnidadeResp,InfraDTO::$OPER_IN);
+        $objRespAdmPrmGrUsuDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objRespAdmPrmGrUsuDTO->setDistinct(true);
 
-    $objRespAdmPrmGrUsuDTO->retNumIdUsuario();
-    $objRespAdmPrmGrUsuDTO->retStrNome();
+        $objRespAdmPrmGrUsuDTO->retNumIdUsuario();
+        $objRespAdmPrmGrUsuDTO->retStrNome();
 
-    $arrObjsResponsavelDTO = $objRespAdmPrmGrUsuRN->listar($objRespAdmPrmGrUsuDTO);
+        $arrObjsResponsavelDTO = $objRespAdmPrmGrUsuRN->listar($objRespAdmPrmGrUsuDTO);
+    }
 }
 
 /* FIM - Configuracao para retorno da combo Responsaveis */
