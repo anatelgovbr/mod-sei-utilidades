@@ -381,6 +381,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 // Texto do tooltip
 $txtTooltipEncaminhamentoTriagem = 'A depender das parametrizações em seu perfil ou sobre as Atividades entregues, o que for selecionado neste campo será meramente sugestivo ou será executado imediatamente.\n \n Selecione a opção "Associar em Fila após Finalizar Fluxo" caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual.\n \n Ou selecione a opção "Finalizar Fluxo" para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual.';
 
+$linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_triagem_cadastrar&id_procedimento=' . $idProcedimento . '');
+
+$strNumeroProcesso = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado();
+
 ?>
     <form onsubmit="return onSubmitForm();" id="frmUtlTriagemCadastro" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -395,9 +399,10 @@ $txtTooltipEncaminhamentoTriagem = 'A depender das parametrizações em seu perfil
         <?php if( $isPgPadrao != 0 ) { ?>
             <div class="row mb-3">
                 <div class="col-12">
-                    <label>
-                        <strong>Número do Processo:</strong> <?= $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado() ?>
-                    </label>
+                    <label class="marcar-label"> Número do Processo: </label>
+                    <a href="<?= $linkProcedimento ?>" target="_blank" alt="Acessar o processo: <?= $strNumeroProcesso ?>" title="Acessar o processo: <?= $strNumeroProcesso ?>" class="ancoraPadraoAzul">
+                      <?= $strNumeroProcesso ?>
+                    </a>
                 </div>
             </div>
         <?php } ?>

@@ -465,13 +465,14 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 
         $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesempDTO->getNumIdMdUtlAdmPrmGr());
         $objMdUtlAdmPrmGrDTO->setNumIdUsuario($idUsuario);
-        $objMdUtlAdmPrmGrDTO->setDistinct(true);
+        #$objMdUtlAdmPrmGrDTO->setDistinct(true);
         $objMdUtlAdmPrmGrDTO->retNumCargaPadrao();
         $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
         $objMdUtlAdmPrmGrDTO->retDblPercentualTeletrabalho();
         $objMdUtlAdmPrmGrDTO->retStrStaTipoPresenca();
         $objMdUtlAdmPrmGrDTO->retStrFatorDesempDiferenciado();
-        $objMdUtlAdmPrmGrDTO = $mdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+	      $objMdUtlAdmPrmGrDTO->setOrd('IdMdUtlAdmPrmGrUsu','desc');
+        $objMdUtlAdmPrmGrDTO = $mdUtlAdmPrmGrRN->listar($objMdUtlAdmPrmGrDTO)[0];
 
         $percentualDesempenho = 0;
 

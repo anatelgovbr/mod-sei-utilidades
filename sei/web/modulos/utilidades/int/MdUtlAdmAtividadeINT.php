@@ -58,7 +58,7 @@ class MdUtlAdmAtividadeINT extends InfraINT {
     $serieDTO = new SerieDTO();
     $serieRN = new SerieRN();
 
-    $serieDTO->setStrStaAplicabilidade(array(SerieRN::$TA_EXTERNO, SerieRN::$TA_INTERNO),InfraDTO::$OPER_IN);
+    $serieDTO->setStrStaAplicabilidade(array(SerieRN::$TA_EXTERNO, SerieRN::$TA_INTERNO,SerieRN::$TA_INTERNO_EXTERNO),InfraDTO::$OPER_IN);
     $serieDTO->setStrSinAtivo('S');
 
     $serieDTO->retNumIdSerie();

@@ -502,6 +502,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 //texto tooltip
 $txtTooltipEncaminhamentoAnalise = 'A depender das parametrizações em seu perfil ou sobre as Atividades entregues, o que for selecionado neste campo será meramente sugestivo ou será executado imediatamente.\n \n Selecione a opção "Associar em Fila após Finalizar Fluxo" caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual.\n \n Ou selecione a opção "Finalizar Fluxo" para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual.';
 
+$linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_analise_cadastrar&id_procedimento=' . $idProcedimento . '');
+
 ?>
     <form onsubmit="return onSubmitForm();" id="frmUtlAnaliseCadastro" method="post"
           action="<?= PaginaSEI::getInstance()->formatarXHTML(
@@ -533,12 +535,12 @@ $txtTooltipEncaminhamentoAnalise = 'A depender das parametrizações em seu perfil
         <input type="hidden" name="hdnNmUsuarioDistrAuto" value="<?= $strNmSiglaUsuario ?>">
         
         <?php if( $isPgPadrao != 0 ): ?>
-        <div class="row">
+        <div class="row mb-3">
             <div class="col-12">
-                <label id="lblStatus" for="txtStatus" class="infraLabelObrigatorio">
-                    Número do Processo:
-                </label>
-                <label><?= $numProcessoFormatado ?></label>
+                <label class="marcar-label"> Número do Processo: </label>
+                <a href="<?= $linkProcedimento ?>" target="_blank" alt="Acessar o processo: <?= $numProcessoFormatado ?>" title="Acessar o processo: <?= $numProcessoFormatado ?>" class="ancoraPadraoAzul">
+                  <?= $numProcessoFormatado ?>
+                </a>
             </div>
         </div>
         <?php endif ?>

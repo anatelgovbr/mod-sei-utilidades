@@ -1421,6 +1421,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->logar('Populado os registros legados.');
 
         $this->logar('Excluir coluna id_documento da tabela md_utl_rel_analise_produto.');
+	      $objInfraMetaBD->excluirIndice('md_utl_rel_analise_produto', 'fk5_md_utl_rel_analise_produto');
         $objInfraMetaBD->excluirColuna('md_utl_rel_analise_produto', 'id_documento');
         $this->logar('Coluna id_documento da tabela md_utl_rel_analise_produto excluída.');
 
@@ -1434,6 +1435,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->logar('Excluir coluna id_md_utl_adm_fila da tabela md_utl_adm_prm_gr.');
         $objInfraMetaBD->excluirChaveEstrangeira('md_utl_adm_prm_gr', 'fk1_md_utl_adm_prm_gr');
+	      $objInfraMetaBD->excluirIndice('md_utl_adm_prm_gr', 'fk1_md_utl_adm_prm_gr');
         $objInfraMetaBD->excluirColuna('md_utl_adm_prm_gr', 'id_md_utl_adm_fila');
         $this->logar('Coluna id_md_utl_adm_fila da tabela md_utl_adm_prm_gr excluída.');
 
