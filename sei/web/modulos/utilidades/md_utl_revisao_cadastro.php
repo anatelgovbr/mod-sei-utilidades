@@ -283,6 +283,7 @@ PaginaSEI::getInstance()->montarTitle(':: ' . PaginaSEI::getInstance()->getStrNo
 PaginaSEI::getInstance()->montarStyle();
 PaginaSEI::getInstance()->abrirStyle();
 PaginaSEI::getInstance()->fecharStyle();
+require_once "md_utl_geral_css.php";
 PaginaSEI::getInstance()->montarJavaScript();
 PaginaSEI::getInstance()->abrirJavaScript();
 PaginaSEI::getInstance()->fecharJavaScript();
@@ -291,6 +292,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,"onload='inicializar();'");
 
 //texto do tooltip
 $txtTooltipEncaminhamentoRevisao="Selecione a opção Associar em Fila após Finalizar Fluxo caso queira reiniciar o fluxo em alguma Fila imediatamente com a finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Finalizar Fluxo para concluir sem associar a qualquer Fila imediatamente na finalização do fluxo atual. Esta opção é listada somente se a Avaliação Qualitativa das Atividades Entregues for maior que 4. \n \n Selecione a opção Retornar para Correção por outro Participante na mesma Fila caso identificada necessidade de correção que possa ser feita por qualquer Membro Participante da Fila. A Análise da Correção ainda demandará sua Distribuição manual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual. \n \n Selecione a opção Retornar para Correção pelo mesmo Participante caso identificada necessidade de correção e deseje que a Análise da Correção seja automaticamente distribuída para o Membro Participante que realizou a Análise atual. Esta opção implica na perca do Tempo Executado pelo Membro Participante que fez a Análise atual.";
+
+$linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&acao_origem=md_utl_revisao_analise_cadastrar&id_procedimento=' . $idProcedimento . '');
 
 ?>
 
@@ -306,12 +309,12 @@ $txtTooltipEncaminhamentoRevisao="Selecione a opção Associar em Fila após Finali
         </div>
 
         <?php if( $isPgPadrao != 0 ) { ?>
-        <div class="row mb-2">
+        <div class="row mb-3">
             <div class="col-12">
-                <label style='margin-bottom: .2em; font-weight: bold; line-height: 1.5em; color: black;'>
-                    Número do Processo:
-                </label>
-                <label><?= $strNumeroProcesso ?> </label>
+                <label class="marcar-label"> Número do Processo: </label>
+                <a href="<?= $linkProcedimento ?>" target="_blank" alt="Acessar o processo: <?= $strNumeroProcesso ?>" title="Acessar o processo: <?= $strNumeroProcesso ?>" class="ancoraPadraoAzul">
+                  <?= $strNumeroProcesso ?>
+                </a>
             </div>
         </div>
         <?php } ?>

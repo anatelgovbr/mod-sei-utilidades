@@ -9,6 +9,14 @@
         width: 100%;
     }
 
+    .marcar-label{
+        margin-bottom: .2em;
+        font-weight: bold;
+        font-size: .875rem;
+        line-height: 1.5em;
+        color: black;'
+    }
+
     .position-lupa-remover{
         margin-left: -25px;
     }
