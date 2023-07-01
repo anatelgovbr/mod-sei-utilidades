@@ -5,10 +5,10 @@ class MdUtlAtualizadorSipRN extends InfraRN
 {
 
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '2.0.0';
+    private $versaoAtualDesteModulo = '2.1.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0');
 
     private $nomeGestorControleDesempenho = 'Gestor de Controle de Desempenho';
     private $descricaoGestorControleDesempenho = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
@@ -91,7 +91,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.603.5';
+            $numVersaoInfraRequerida = '1.612.3';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
@@ -127,12 +127,14 @@ class MdUtlAtualizadorSipRN extends InfraRN
                     $this->instalarv150();
                 case '1.5.0':
                     $this->instalarv200();
+                case '2.0.0':
+                    $this->instalarv210();
                     break;
                 default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
                     break;
-            
-			}
+
+            }
 
             $this->finalizar('FIM');
             InfraDebug::getInstance()->setBolDebugInfra(true);
@@ -1114,6 +1116,87 @@ class MdUtlAtualizadorSipRN extends InfraRN
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SIP');
     }
 
+    protected function instalarv210()
+    {
+	    $numIdSistemaSei = $this->_getIdSistema();
+	    $numIdMenuSei    = $this->_getIdMenu($numIdSistemaSei);
+        $numIdPerfilSeiBasico = $this->_getIdPerfil($numIdSistemaSei, 'Básico');
+	    $numIdAdm        = $this->_getIdPerfil($numIdSistemaSei, 'Administrador');
+	    $numIdAdmDsmp    = $this->_getIdPerfil($numIdSistemaSei, $this->nomeAdministradorControleDesempenho);
+	    $numIdGestorDsmp = $this->_getIdPerfil($numIdSistemaSei, $this->nomeGestorControleDesempenho);
+
+	    $this->logar("EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO {$this->nomeDesteModulo} NA BASE DO SIP");
+
+	    $arrRecursos = [
+		    'md_utl_adm_jornada_listar',
+		    'md_utl_adm_jornada_alterar','md_utl_adm_jornada_cadastrar','md_utl_adm_jornada_consultar',
+		    'md_utl_adm_jornada_desativar','md_utl_adm_jornada_excluir','md_utl_adm_jornada_reativar',
+		    'md_utl_adm_tp_ausencia_listar',
+		    'md_utl_adm_tp_ausencia_alterar','md_utl_adm_tp_ausencia_cadastrar','md_utl_adm_tp_ausencia_consultar',
+		    'md_utl_adm_tp_ausencia_desativar','md_utl_adm_tp_ausencia_excluir','md_utl_adm_tp_ausencia_reativar',
+		    'md_utl_adm_rel_jornada_usu_cadastrar','md_utl_adm_rel_jornada_usu_excluir','md_utl_adm_rel_jornada_usu_listar'
+	    ];
+
+	    $this->logar('REMOVENDO REGRAS DE AUDITORIA RELACIONADOS A JORNADA E TIPO DE AUSÊNCIA.');
+	    $this->_removerRelacaoRegraAuditoria( $numIdSistemaSei , 'Modulo_Utilidades' , $arrRecursos );
+	    $this->logar('REMOÇÃO DAS REGRAS DE AUDITORIA RELACIONADOS A JORNADA E TIPO DE AUSÊNCIA REALIZADA COM SUCESSO.');
+
+	    $this->logar('REMOVENDO RECURSOS RELATIVOS A JORNADA E TIPO DE AUSENCIA.');
+	    foreach( $arrRecursos as $recurso ){
+		    $this->removerRecurso( $numIdSistemaSei , $recurso );
+	    }
+	    $this->logar('REMOÇÃO DOS RECURSOS RELATIVOS A JORNADA E TIPO DE AUSENCIA REALIZADA COM SUCESSO.');
+
+	    $this->logar('CADASTRAR OS RECURSO RELACIONADOS AO MAPEAMENTO DE INTEGRAÇÃO E OS VÍNCULOS COM O PERFIL.');
+
+	    $arrIntegracoes      = ['md_utl_adm_integracao_' , 'md_utl_adm_integ_header_' , 'md_utl_adm_integ_param_'];
+	    $arrAcoesIntegracoes = ['listar','consultar','cadastrar','alterar','excluir','reativar','desativar'];
+
+	    $numIdItemMenuSeiContr = $this->_getIdItemMenuControleDesempenho($numIdSistemaSei, false);
+
+	    foreach ( $arrIntegracoes as $integracao ) {
+		    foreach ( $arrAcoesIntegracoes as $acao ) {
+			    $strIntegAcao = $integracao.$acao;
+			    $objRetorno   = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdAdm, $strIntegAcao);
+
+			    $arrRecursosGestorAdmDsmp = [
+				    'md_utl_adm_integracao_listar','md_utl_adm_integracao_consultar',
+				    'md_utl_adm_integ_header_listar','md_utl_adm_integ_header_consultar',
+				    'md_utl_adm_integ_param_listar','md_utl_adm_integ_param_consultar',
+			    ];
+
+			    if ( in_array($strIntegAcao,$arrRecursosGestorAdmDsmp) ) {
+				    $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdAdmDsmp, $strIntegAcao);
+				    $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdGestorDsmp, $strIntegAcao);
+			    }
+
+			    // caso recurso seja md_utl_adm_integracao_listar, cria menu vinculando o perfil Administrador a este recurso
+			    if( $strIntegAcao == 'md_utl_adm_integracao_listar' ) {
+				    $this->logar('CRIANDO e VINCULANDO RECURSO DE MENU A PERFIL - ADMINISTRADOR');
+				    $this->adicionarItemMenu(
+					    $numIdSistemaSei,
+					    $numIdAdm,
+					    $numIdMenuSei,
+					    $numIdItemMenuSeiContr,
+					    $objRetorno->getNumIdRecurso(),
+					    'Mapeamento das Integrações',
+					    20
+				    );
+			    }
+		    }
+	    }
+
+	    $this->logar('FIM DO CADASTRO DOS RECURSOS RELACIONADOS AO MAPEAMENTO DAS INTEGRAÇÕES E SEUS VÍNCULOS.');
+
+        $this->logar('VINCULANDO RECURSO JA EXISTENTE A PERFIL BASICO PARA FUNCIONAR SALVAR RASCUNHO - md_utl_controle_dsmp_alterar');
+        $RecursoDTO = $this->adicionarRecursoPerfil($numIdSistemaSei, $numIdPerfilSeiBasico, 'md_utl_controle_dsmp_alterar');
+
+	    $this->logar("ATUALIZANDO PARÂMETRO {$this->nomeParametroModulo} NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO");
+	    BancoSip::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+	    $this->logar("INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO {$this->nomeDesteModulo} REALIZADA COM SUCESSO NA BASE DO SIP");
+    }
+
     protected function cadastrarPerfilAdministradorControleDesempenho()
     {
         $numIdSistemaSei = $this->_getIdSistema();
@@ -1666,6 +1749,53 @@ class MdUtlAtualizadorSipRN extends InfraRN
 
         $objSistemaRN = new SistemaRN();
         $objSistemaRN->replicarRegraAuditoria($objReplicacaoRegraAuditoriaDTO);
+    }
+
+    private function _removerRelacaoRegraAuditoria( $idSistema , $descricao , $arrRecursos ){
+        // Retorna o id da regra da auditoria
+        $objRegraAuditoriaDTO = new RegraAuditoriaDTO();
+        $objRegraAuditoriaRN = new RegraAuditoriaRN();
+
+        $objRegraAuditoriaDTO->setNumIdSistema( $idSistema );
+        $objRegraAuditoriaDTO->setStrDescricao( $descricao );
+        $objRegraAuditoriaDTO->retNumIdRegraAuditoria();
+
+        $objRet = $objRegraAuditoriaRN->consultar($objRegraAuditoriaDTO)->getNumIdRegraAuditoria();
+
+        if( empty($objRet))
+            throw new InfraException('Não encontrado regra de auditoria do Utilidades para remoção.');
+
+        $idRegraAuditoria = $objRegraAuditoriaRN->consultar( $objRegraAuditoriaDTO )->getNumIdRegraAuditoria();
+
+        // Retorna dados dos recursos
+        $objRecursosDTO = new RecursoDTO();
+        $objRecursosRN = new RecursoRN();
+
+        $objRecursosDTO->setStrNome($arrRecursos , InfraDTO::$OPER_IN);
+        $objRecursosDTO->retNumIdRecurso();
+
+        if( $objRecursosRN->contar( $objRecursosDTO ) == 0 )
+            throw new InfraException('Não encontrado os recursos passados no parâmetro.');
+
+        $idsRecursos = InfraArray::converterArrInfraDTO( $objRecursosRN->listar( $objRecursosDTO ) , 'IdRecurso');
+
+        // Retorna a relacao Recurso x Regra para excluir
+        $objRelRegraAuditoriaRecursoDTO = new RelRegraAuditoriaRecursoDTO();
+        $objRelRegraAuditoriaRecursoRN = new RelRegraAuditoriaRecursoRN();
+
+        $objRelRegraAuditoriaRecursoDTO->setNumIdSistema( $idSistema );
+        $objRelRegraAuditoriaRecursoDTO->setNumIdRegraAuditoria( $idRegraAuditoria );
+        $objRelRegraAuditoriaRecursoDTO->setNumIdRecurso($idsRecursos , InfraDTO::$OPER_IN);
+        $objRelRegraAuditoriaRecursoDTO->retNumIdRegraAuditoria();
+        $objRelRegraAuditoriaRecursoDTO->retNumIdRecurso();
+        $objRelRegraAuditoriaRecursoDTO->retNumIdSistema();
+
+        if( $objRelRegraAuditoriaRecursoRN->contar( $objRelRegraAuditoriaRecursoDTO ) == 0 )
+            throw new InfraException('Não encontrado relação RegraAuditoria x Recurso.');
+
+        $objRelRegraAuditoriaRecursoRN->excluir( $objRelRegraAuditoriaRecursoRN->listar( $objRelRegraAuditoriaRecursoDTO ) );
+
+        return true;
     }
 
     private function _getIdSistema($nomeSistema = 'SEI')

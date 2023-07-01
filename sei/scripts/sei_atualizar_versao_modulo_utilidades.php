@@ -5,10 +5,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 {
 
 	private $numSeg = 0;
-    private $versaoAtualDesteModulo = '2.0.0';
+    private $versaoAtualDesteModulo = '2.1.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0');
 
     public function __construct()
     {
@@ -84,7 +84,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.603.5';
+            $numVersaoInfraRequerida = '1.612.3';
             $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
             $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
 
@@ -120,6 +120,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                     $this->instalarv150();
                 case '1.5.0':
                     $this->instalarv200();
+                case '2.0.0':
+                    $this->instalarv210();
                     break;
 
 				default:
@@ -1463,6 +1465,255 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.0.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
         $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
+
+    protected function instalarv210()
+    {
+	    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+	    $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+	    $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+
+        SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
+
+	    $this->logar('Inserindo a coluna chefia_imediata na Tabela md_utl_adm_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu', 'chefia_imediata', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+	    $this->logar('FIM da inserção da chefia_imediata na tabela md_utl_adm_prm_gr_usu');
+
+	    $this->logar('Inserindo a coluna chefia_imediata na Tabela md_utl_adm_hist_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_hist_prm_gr_usu', 'chefia_imediata', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+	    $this->logar('FIM da inserção da chefia_imediata md_utl_adm_hist_prm_gr_usu');
+
+	    //NOVAS COLUNAS: DATA INICIO E FIM PARTICIPACAO
+	    $this->logar('Inserindo a coluna dth_ini_participacao na Tabela md_utl_adm_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu', 'dth_ini_participacao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dth_ini_participacao');
+
+	    $this->logar('Inserindo a coluna dth_fim_participacao na Tabela md_utl_adm_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu', 'dth_fim_participacao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dth_fim_participacao');
+
+	    $this->logar('Inserindo a coluna dth_ini_participacao na Tabela md_utl_adm_hist_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_hist_prm_gr_usu', 'dth_ini_participacao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dth_ini_participacao');
+
+	    $this->logar('Inserindo a coluna dth_fim_participacao na Tabela md_utl_adm_hist_prm_gr_usu');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_hist_prm_gr_usu', 'dth_fim_participacao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dth_fim_participacao');
+
+	    $this->logar('MUDANÇAS RELACIONADAS A REMOÇÃO DO CRUD: JORNADA E TIPO DE AUSENCIA');
+	    $this->logar('DROP NAS TABELAS: md_utl_adm_rel_jornada_usu , md_utl_adm_jornada , seq_md_utl_adm_jornada , md_utl_adm_tp_ausencia , seq_md_utl_adm_tp_ausencia');
+	    if (BancoSEI::getInstance() instanceof InfraOracle) {
+		    BancoSEI::getInstance()->executarSql('drop sequence seq_md_utl_adm_jornada');
+		    BancoSEI::getInstance()->executarSql('drop sequence seq_md_utl_adm_tp_ausencia');
+	    } else {
+		    BancoSEI::getInstance()->executarSql('DROP TABLE seq_md_utl_adm_jornada');
+		    BancoSEI::getInstance()->executarSql('DROP TABLE seq_md_utl_adm_tp_ausencia');
+	    }
+
+	    BancoSEI::getInstance()->executarSql('DROP TABLE md_utl_adm_rel_jornada_usu');
+	    BancoSEI::getInstance()->executarSql('DROP TABLE md_utl_adm_jornada');
+	    BancoSEI::getInstance()->executarSql('DROP TABLE md_utl_adm_tp_ausencia');
+
+	    // CRIA ESTRUTURA DAS TABELAS RELACIONADAS AO MAPEAMENTO DE INTEGRACAO
+	    # ----------------------------------- INTEGRACAO ---------------------
+	    $this->logar('CRIANDO A TABELA md_utl_adm_integracao');
+	    BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_integracao (
+						id_md_utl_adm_integracao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+						nome ' . $objInfraMetaBD->tipoTextoVariavel(100) . ' NOT NULL,
+						funcionalidade ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+						tipo_integracao ' . $objInfraMetaBD->tipoTextoFixo(2) . ' NOT NULL,
+						metodo_autenticacao ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+						metodo_requisicao ' . $objInfraMetaBD->tipoNumero() . ' NULL,
+						formato_resposta ' . $objInfraMetaBD->tipoTextoVariavel(10) . ' NULL,
+						versao_soap ' . $objInfraMetaBD->tipoTextoVariavel(5) . ' NULL,
+						token_autenticacao ' . $objInfraMetaBD->tipoTextoVariavel(76) . ' NULL,
+						url_wsdl ' . $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL,
+						operacao_wsdl ' . $objInfraMetaBD->tipoTextoVariavel(250) . ' NULL,
+						sin_ativo ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL) '
+	    );
+
+	    $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_integracao', 'pk_md_utl_adm_integracao', array('id_md_utl_adm_integracao'));
+
+	    $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_integracao');
+	    BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_integracao', 1);
+
+	    # ----------------------------------- INTEGRACAO HEADER --------------------
+	    $this->logar('CRIANDO A TABELA md_utl_adm_integ_header');
+	    BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_integ_header (
+							id_md_utl_adm_integ_header ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+							id_md_utl_adm_integracao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+							atributo ' . $objInfraMetaBD->tipoTextoVariavel(100) . ' NOT NULL,
+							conteudo ' . $objInfraMetaBD->tipoTextoVariavel(200) . ' NOT NULL,
+							sin_dado_confidencial ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NULL) '
+	    );
+
+	    $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_integ_header', 'pk_md_utl_adm_integ_header', array('id_md_utl_adm_integ_header'));
+
+	    $objInfraMetaBD->adicionarChaveEstrangeira('fk1_md_utl_adm_integ_header', 'md_utl_adm_integ_header',
+		    array('id_md_utl_adm_integracao'), 'md_utl_adm_integracao', array('id_md_utl_adm_integracao'));
+
+	    $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_integ_header');
+	    BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_integ_header', 1);
+
+	    # ----------------------------------- INTEGRACAO PARAMETROS ENTRADA/SAIDA----------
+	    $this->logar('CRIANDO A TABELA md_utl_adm_integ_param');
+	    BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_integ_param (
+							id_md_utl_adm_integ_param ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+							id_md_utl_adm_integracao ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
+							nome ' . $objInfraMetaBD->tipoTextoVariavel(100) . ' NOT NULL,
+							tp_parametro ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
+							nome_campo ' . $objInfraMetaBD->tipoTextoVariavel(100) . ' NULL,
+							identificador '. $objInfraMetaBD->tipoTextoVariavel(100) . ' NULL)'
+	    );
+
+	    $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_integ_param', 'pk_md_utl_adm_integ_param', array('id_md_utl_adm_integ_param'));
+
+	    $objInfraMetaBD->adicionarChaveEstrangeira('fk1_id_md_utl_adm_integ_param', 'md_utl_adm_integ_param',
+		    array('id_md_utl_adm_integracao'), 'md_utl_adm_integracao', array('id_md_utl_adm_integracao'));
+
+	    $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_integ_param');
+	    BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_integ_param', 1);
+
+	    $this->logar('Inserindo a coluna dta_periodo_inicio na Tabela md_utl_analise');
+	    $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dta_periodo_inicio', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dta_periodo_inicio');
+
+	    $this->logar('Inserindo a coluna dta_periodo_fim na Tabela md_utl_analise');
+	    $objInfraMetaBD->adicionarColuna('md_utl_analise', 'dta_periodo_fim', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dta_periodo_fim');
+
+	    $this->logar('Inserindo a coluna sta_frequencia_adm_prm_gr na Tabela md_utl_analise');
+	    $objInfraMetaBD->adicionarColuna('md_utl_analise', 'sta_frequencia_adm_prm_gr', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+	    $this->logar('FIM da inserção da sta_frequencia_adm_prm_gr');
+
+	    $this->logar('Inserindo a coluna data_execucao na Tabela md_utl_rel_triagem_atv');
+	    $objInfraMetaBD->adicionarColuna('md_utl_rel_triagem_atv', 'data_execucao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da data_execucao');
+
+	    $this->logar('Inserindo a coluna sin_relatar_dia_dia na Tabela md_utl_analise');
+	    $objInfraMetaBD->adicionarColuna('md_utl_analise', 'sin_relatar_dia_dia', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+	    // REMOVER COLUNA fator_desemp_diferenciado DA TABELA md_utl_adm_prm_gr_usu
+	    $this->logar('Excluir coluna fator_desemp_diferenciado das tabelas [md_utl_adm_prm_gr_usu e md_utl_adm_hist_prm_gr_usu]');
+	    $objInfraMetaBD->excluirColuna('md_utl_adm_prm_gr_usu', 'fator_desemp_diferenciado');
+	    $objInfraMetaBD->excluirColuna('md_utl_adm_hist_prm_gr_usu', 'fator_desemp_diferenciado');
+
+	    $this->logar('Inserindo a coluna id_usuario_avaliacao na Tabela md_utl_analise');
+	    $objInfraMetaBD->adicionarColuna('md_utl_analise', 'id_usuario_avaliacao', $objInfraMetaBD->tipoNumero(), 'null');
+	    $this->logar('FIM da inserção da id_usuario_avaliacao');
+
+	    $this->logar('CRIANDO A TABELA md_utl_adm_prm_gr_usu_carg');
+	    BancoSEI::getInstance()->executarSql('CREATE TABLE md_utl_adm_prm_gr_usu_carg (
+                                id_md_utl_adm_prm_gr_usu_carg '. $objInfraMetaBD->tipoNumeroGrande() .' NOT NULL,
+                                id_md_utl_adm_prm_gr_usu '. $objInfraMetaBD->tipoNumero() .' NOT NULL,
+                                carga_horaria '. $objInfraMetaBD->tipoNumero() .' NOT NULL,
+                                periodo_inicial '. $objInfraMetaBD->tipoDataHora() .' NOT NULL,
+                                periodo_final '. $objInfraMetaBD->tipoDataHora() .' NOT NULL,
+                                sin_ativo '. $objInfraMetaBD->tipoTextoFixo(1) .' NOT NULL) ');
+
+	    $objInfraMetaBD->adicionarChavePrimaria('md_utl_adm_prm_gr_usu_carg', 'pk_md_utl_adm_prm_gr_usu_carg', array('id_md_utl_adm_prm_gr_usu_carg'));
+
+	    $this->logar('CRIANDO A SEQUENCE seq_md_utl_adm_prm_gr_usu_carg');
+	    BancoSEI::getInstance()->criarSequencialNativa('seq_md_utl_adm_prm_gr_usu_carg', 1);
+
+	    $this->logar('Inserindo a coluna dth_inclusao na Tabela md_utl_adm_prm_gr_usu_carg');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu_carg', 'dth_inclusao', $objInfraMetaBD->tipoDataHora(), 'null');
+	    $this->logar('FIM da inserção da dth_inclusao');
+
+	    $this->logar('Inserindo a coluna datas_ausencias na Tabela md_utl_adm_prm_gr_usu_carg');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu_carg', 'datas_ausencias', $objInfraMetaBD->tipoTextoVariavel(1000), 'null');
+	    $this->logar('FIM da inserção da datas_ausencias');
+
+	    $this->logar('Inserindo a coluna id_usuario na Tabela md_utl_adm_prm_gr_usu_carg');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu_carg', 'id_usuario', $objInfraMetaBD->tipoNumero(), 'not null');
+	    $this->logar('FIM da inserção da id_usuario');
+
+	    $this->logar('Inserindo a coluna id_md_utl_adm_prm_gr na Tabela md_utl_adm_prm_gr_usu_carg');
+	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu_carg', 'id_md_utl_adm_prm_gr', $objInfraMetaBD->tipoNumero(), 'not null');
+	    $this->logar('FIM da inserção da id_md_utl_adm_prm_gr');
+
+	    // REALIZA UPDATE NAS TABELAS ABAIXO
+	    $this->logar('ATUALIZADO OS DADOS DA COLUNA "inicio_periodo" DE ACORDO COM O NOVO PADRÃO DEFINIDO PELO P.O.');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_prm_gr SET inicio_periodo = \'1\' WHERE sta_frequencia = \'D\' ');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_prm_gr SET inicio_periodo = \'3\' WHERE sta_frequencia = \'S\' ');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_prm_gr SET inicio_periodo = \'4\' WHERE sta_frequencia = \'M\' ');
+
+	    $this->logar('INICIO do update na tabela: md_utl_adm_prm_gr_usu, coluna: chefia_imediata');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_prm_gr_usu SET chefia_imediata=\'N\' ');
+
+	    $this->logar('INICIO do update na tabela: md_utl_adm_hist_prm_gr_usu, coluna: chefia_imediata');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_adm_hist_prm_gr_usu SET chefia_imediata=\'N\' ');
+
+	    $this->logar('INICIO do update na tabela: md_utl_analise, coluna: sin_relatar_dia_dia');
+	    BancoSEI::getInstance()->executarSql('UPDATE md_utl_analise SET sin_relatar_dia_dia = \'N\' ');
+
+	    // CADASTRAR TRES NOVOS AGENDAMENTOS DO MODULO
+	    $infraAgendamentoRN = new InfraAgendamentoTarefaRN();
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+        $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+
+	    $this->logar('SCRIPT AGENDAMENTO ATUALIZAÇÃO DA CARGA HORARIA SOBRE AS AUSENCIAS DOS MEMBROS PARTICIPANTES');
+	    $infraAgendamentoDTO = new InfraAgendamentoTarefaDTO();
+        $infraAgendamentoDTO->retTodos();
+	    $infraAgendamentoDTO->setStrDescricao('Script responsável por atualizar a carga horária dos membros participantes, de acordo com suas ausências.');
+	    $infraAgendamentoDTO->setStrComando('MdUtlAgendamentoAutomaticoRN::listarAusenciasRh');
+	    $infraAgendamentoDTO->setStrSinAtivo('S');
+	    $infraAgendamentoDTO->setStrStaPeriodicidadeExecucao(InfraAgendamentoTarefaRN::$PERIODICIDADE_EXECUCAO_HORA);
+	    $infraAgendamentoDTO->setStrPeriodicidadeComplemento('0,9,15,22');
+	    $infraAgendamentoDTO->setStrParametro('mesesPassado=6');
+	    $infraAgendamentoDTO->setDthUltimaExecucao(null);
+	    $infraAgendamentoDTO->setDthUltimaConclusao(null);
+	    $infraAgendamentoDTO->setStrSinSucesso('S');
+	    $infraAgendamentoDTO->setStrEmailErro($objInfraParametro->getValor('SEI_EMAIL_ADMINISTRADOR'));
+
+	    $infraAgendamentoRN = new InfraAgendamentoTarefaRN();
+        //$infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+        $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+
+	    // CRIA AGENDAMENTO SOBRE CHEFIA IMEDIATA DOS USUARIOS
+	    $this->logar('SCRIPT AGENDAMENTO ATUALIZAÇÃO REFERENTE AOS MEMBROS NOS TIPOS DE CONTROLES RELACIONADOS A CHEFIA IMEDIATA');
+	    $infraAgendamentoDTO = new InfraAgendamentoTarefaDTO();
+        $infraAgendamentoDTO->retTodos();
+	    $infraAgendamentoDTO->setStrDescricao('Script responsável por atualizar dados dos membros participantes, relacionados à chefia imediata.');
+	    $infraAgendamentoDTO->setStrComando('MdUtlAgendamentoAutomaticoRN::listarChefiaImediata');
+	    $infraAgendamentoDTO->setStrSinAtivo('S');
+	    $infraAgendamentoDTO->setStrStaPeriodicidadeExecucao(InfraAgendamentoTarefaRN::$PERIODICIDADE_EXECUCAO_HORA);
+	    $infraAgendamentoDTO->setStrPeriodicidadeComplemento('10,16,23');
+	    $infraAgendamentoDTO->setStrParametro(null);
+	    $infraAgendamentoDTO->setDthUltimaExecucao(null);
+	    $infraAgendamentoDTO->setDthUltimaConclusao(null);
+	    $infraAgendamentoDTO->setStrSinSucesso('S');
+	    $infraAgendamentoDTO->setStrEmailErro($objInfraParametro->getValor('SEI_EMAIL_ADMINISTRADOR'));
+
+	    $infraAgendamentoRN = new InfraAgendamentoTarefaRN();
+        //$infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+        $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+
+	    // CRIA AGENDAMENTO PARA CADASTRAR O PERIODO DOS USUARIOS
+	    $this->logar('SCRIPT AGENDAMENTO CADASTRO INICIAL DA CARGA HORARIA DOS MEMBROS PARTICIPANTES');
+	    $infraAgendamentoDTO = new InfraAgendamentoTarefaDTO();
+        $infraAgendamentoDTO->retTodos();
+	    $infraAgendamentoDTO->setStrDescricao('Script responsável por cadastrar os novos períodos e a carga horária dos membros participantes.');
+	    $infraAgendamentoDTO->setStrComando('MdUtlAgendamentoAutomaticoRN::incluirPeriodo');
+	    $infraAgendamentoDTO->setStrSinAtivo('S');
+	    $infraAgendamentoDTO->setStrStaPeriodicidadeExecucao(InfraAgendamentoTarefaRN::$PERIODICIDADE_EXECUCAO_HORA);
+	    $infraAgendamentoDTO->setStrPeriodicidadeComplemento('0');
+	    $infraAgendamentoDTO->setStrParametro(null);
+	    $infraAgendamentoDTO->setDthUltimaExecucao(null);
+	    $infraAgendamentoDTO->setDthUltimaConclusao(null);
+	    $infraAgendamentoDTO->setStrSinSucesso('S');
+	    $infraAgendamentoDTO->setStrEmailErro($objInfraParametro->getValor('SEI_EMAIL_ADMINISTRADOR'));
+
+	    $infraAgendamentoRN = new InfraAgendamentoTarefaRN();
+        //$infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+        $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
+
+	    // ATUALIZACAO NA INFRA PARAMETRO
+	    $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+
+	    $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
 
     public function populaDadosLegadoDocumento(){
