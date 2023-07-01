@@ -143,4 +143,95 @@ class MdUtlAdmHistPrmGrUsuRN extends InfraRN {
         }
     }
 
+    public function configObjParams( $id_prm_gr ){
+        $objMdUtlAdmHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+
+        $objMdUtlAdmHistPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr( $id_prm_gr );
+
+        $objMdUtlAdmHistPrmGrUsuDTO->retNumIdMdUtlAdmHistPrmGrUsu();
+        $objMdUtlAdmHistPrmGrUsuDTO->retNumIdUsuario();
+        $objMdUtlAdmHistPrmGrUsuDTO->retDthFinal();
+        $objMdUtlAdmHistPrmGrUsuDTO->retStrNome();
+        $objMdUtlAdmHistPrmGrUsuDTO->retStrSigla();
+        $objMdUtlAdmHistPrmGrUsuDTO->retDthInicioParticipacao();
+        $objMdUtlAdmHistPrmGrUsuDTO->retDthFimParticipacao();
+        $objMdUtlAdmHistPrmGrUsuDTO->retDblIdDocumento();
+
+        $objMdUtlAdmHistPrmGrUsuDTO->setOrd('IdUsuario' , InfraDTO::$TIPO_ORDENACAO_ASC);
+        $objMdUtlAdmHistPrmGrUsuDTO->setOrd('IdMdUtlAdmHistPrmGrUsu' , InfraDTO::$TIPO_ORDENACAO_ASC);
+
+        return $objMdUtlAdmHistPrmGrUsuDTO;
+    }
+
+    public function getExParticipantesTipoCtrl( $id_prm_gr ){
+        $arrObjs = $this->listar( $this->configObjParams( $id_prm_gr ) );
+        $qtdReg = count($arrObjs);
+
+        if( $qtdReg == 0 ) return $arrObjs;
+
+        //retorna usuarios que estao com o campo dth_final preenchido, ou seja, nao faz mais parte do Tipo de Ctrl, em principio
+        $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+        for( $i = 0 ; $i < $qtdReg ; $i++ ){
+            $arrObjs[$i]->setDblIdDocumento( $objMdUtlAdmPrmGrUsuRN->getNumeroSeiPlanoTrabalho(
+                    $arrObjs[$i]->getDblIdDocumento()
+                )
+            );
+
+            if( array_key_exists($i + 1 , $arrObjs ) && $arrObjs[$i]->getNumIdUsuario() == $arrObjs[$i + 1]->getNumIdUsuario() ) {
+                unset($arrObjs[$i]);
+            }elseif( empty( $arrObjs[$i]->getDthFinal() ) ){
+                unset($arrObjs[$i]);
+            }
+        }
+
+        //se estiver vazio, retorna o proprio array de objetos vazio
+        if( empty( $arrObjs ) ) return $arrObjs;
+
+        //consulta usuarios que estao ativos no Tipo de Ctrl, filtrando a consulta com os dados de retorno acima
+        $arrIdsUsuarioHist = InfraArray::converterArrInfraDTO( $arrObjs , 'IdUsuario');
+
+        $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+        $objMdUtlAdmPrmGrUsuRN  = new MdUtlAdmPrmGrUsuRN();
+
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr( $id_prm_gr );
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario( $arrIdsUsuarioHist , InfraDTO::$OPER_IN );
+        $objMdUtlAdmPrmGrUsuDTO->retNumIdUsuario();
+
+        $arrObjsPrmGrUsu = $objMdUtlAdmPrmGrUsuRN->listar( $objMdUtlAdmPrmGrUsuDTO );
+
+        //se nao encontrou usuarios na parametrizacao, de fato, todos os usuarios encontrados no começo da função estão
+        //inativos, com isso, retorna os dados da primeira consulta
+        if( empty( $arrObjsPrmGrUsu ) ) return $arrObjs;
+
+        //caso tenha usuarios na parametrização e que estão com registros finalizados no historico, efetua uma limpeza
+        //nos dados da primeira consulta, removendo os usuarios que estão ativos
+        $arrIdsUsuario = InfraArray::converterArrInfraDTO($arrObjsPrmGrUsu,'IdUsuario');
+
+        foreach ( $arrObjs as $k => $v ){
+            if( in_array( $v->getNumIdUsuario() , $arrIdsUsuario ) ) unset( $arrObjs[$k] );
+        }
+
+        return $arrObjs;
+    }
+
+    public function atualizarRegistroHistControlado(){
+        try {
+            $objHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+            $objHistPrmGrUsuDTO->setNumIdMdUtlAdmHistPrmGrUsu( $_POST['hdnIdHistPrmGrUsu'] );
+
+            if (!empty($_POST['dthIniPart']))
+                $objHistPrmGrUsuDTO->setDthInicioParticipacao( $_POST['dthIniPart'] );
+
+            if (!empty($_POST['dthFimPart']))
+                $objHistPrmGrUsuDTO->setDthFimParticipacao( $_POST['dthFimPart'] );
+
+            if (!empty($_POST['planoTrab']))
+                $objHistPrmGrUsuDTO->setDblIdDocumento( ( new MdUtlAdmPrmGrRN() )->getObjDocumentoNumSei( $_POST['planoTrab'] ) );
+
+            $this->alterar( $objHistPrmGrUsuDTO );
+            return true;
+        }catch ( Exception $e ){
+            throw new InfraException('Erro ao atualizar registro do Histórico da Parametrização Geral do Usuário.',$e);
+        }
+    }
 }

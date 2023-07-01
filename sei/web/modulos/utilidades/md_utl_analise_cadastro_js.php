@@ -11,11 +11,6 @@
     var qtdAtividadesTriag = <?= count($idsAtividades) ?>;
     var isRetriagem = false;
 
-    $( document ).ready(function() {
-        verificarItemChecado();
-        addSelecionados();
-    });
-
     function addSelecionados(){
 
         var objs = $('input[name^=chkItem]');
@@ -57,19 +52,94 @@
 
     function inicializar(){
 
+        verificarItemChecado();
+        addSelecionados();
+
         bloquearDragDrop();
 
         if ('<?=$_GET['acao']?>'=='md_utl_analise_cadastrar'){
             document.getElementById('btnSalvar').focus();
+            $('#divCargaHrDistribExecRascunho').css("display", "block");
         } else if ('<?=$_GET['acao']?>'=='md_utl_analise_consultar'){
             isConsultar = true;
             infraDesabilitarCamposAreaDados();
             bloquearCheckbox();
 
             document.getElementById('btnFechar').focus();
+        } else {
+            $('#divCargaHrDistribExecRascunho').css("display", "block");
         }
         //  $('input[name^=chkItem]').trigger('click');
         carregarHiddenDominio();
+
+        const arrTpsCtrl = new Array();
+	    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
+            arrTpsCtrl.push(<?= $tpCtrl?>);
+	    <?php endforeach; ?>
+
+        getCargaHrDistribuida(arrTpsCtrl,<?= $idUsuarioResp ?>);
+        preencherNomeHidden();
+        $('input[type=checkbox]').on('change', function() {
+            var idCheckbox = this.id;
+            if(idCheckbox.indexOf("chkItem") != -1) {
+                var contIdCheckbox = idCheckbox.split('chkItem');
+                var idAtividade = $("[name=idRelTriagem_" + contIdCheckbox[1] + "]").val();
+                var tempoAlocadoAtividade = $("#complexidadeTarefa" + idAtividade).val();
+                var atividadesSelecionadas = $("#atividadesSelecionadas").val();
+                var tempoDecorrido = $("#spnCargaHrDistribRascunho").html();
+                tempoDecorrido = convertToMins(tempoDecorrido);
+                if (this.checked) {
+                    if (atividadesSelecionadas != "") {
+                        var arrayAtividadesSelecionadas = atividadesSelecionadas.split(',');
+                        $("#atividadesSelecionadas").val(atividadesSelecionadas + "," + idAtividade);
+                        if ($.inArray(idAtividade, arrayAtividadesSelecionadas) == -1) {
+                            var tempoSomado = parseInt(tempoDecorrido) + parseInt(tempoAlocadoAtividade);
+                            $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoSomado));
+                        }
+                    } else {
+                        $("#atividadesSelecionadas").val(idAtividade);
+                        var tempoSomado = parseInt(tempoDecorrido) + parseInt(tempoAlocadoAtividade);
+                        $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoSomado));
+                    }
+                } else {
+                    var arrayAtividadesSelecionadas = atividadesSelecionadas.split(',');
+                    arrayAtividadesSelecionadas.splice(arrayAtividadesSelecionadas.indexOf(idAtividade), 1);
+                    $("#atividadesSelecionadas").val(arrayAtividadesSelecionadas);
+                    if ($.inArray(idAtividade, arrayAtividadesSelecionadas) == -1) {
+                        var tempoSomado = parseInt(tempoDecorrido) - parseInt(tempoAlocadoAtividade);
+                        if(tempoSomado > 0) {
+                            $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoSomado));
+                        } else {
+                            $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoSomado));
+                        }
+                    }
+                }
+            }
+        });
+        <?php
+            if($_GET['acao'] == 'md_utl_analise_alterar') {
+                ?>
+            var tempoSomado = 0;
+            const atividadesSelecionadas = [];
+            $('input[type=checkbox]').each(function () {
+                var idCheckbox = this.id;
+                if(idCheckbox.indexOf("chkItem") != -1 && this.checked) {
+                    var contIdCheckbox = idCheckbox.split('chkItem');
+                    var idAtividade = $("[name=idRelTriagem_" + contIdCheckbox[1] + "]").val();
+                    var tempoAlocadoAtividade = $("#complexidadeTarefa" + idAtividade).val();
+                    if ($.inArray(idAtividade, atividadesSelecionadas) == -1) {
+                        tempoSomado = parseInt(tempoSomado) + parseInt(tempoAlocadoAtividade);
+                    }
+                    atividadesSelecionadas.push(idAtividade);
+                }
+            });
+            $("#atividadesSelecionadas").val(atividadesSelecionadas);
+            $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoSomado));
+        <?php
+            }
+        ?>
+
+        $('#divInfraAreaPaginacaoSuperior').remove();
     }
 
     function bloquearCheckbox(){
@@ -150,7 +220,7 @@
                 campoAtividade[0].removeAttribute('disabled');
                 campoNomeProduto[0].removeAttribute('disabled');
             }else{
-                <?php if ( !is_null( $idUsuarioFezAnalise ) && $idUsuarioFezAnalise == $idUsuarioDistrAnalise ): ?>
+                <?php if ( !is_null( $idUsuarioFezAnalise ) && $idUsuarioFezAnalise == $idUsuarioDistrAnalise && $rascunho != "1"): ?>
                     var it_checado = $( obj ).attr('checkado');
                     if( it_checado !== undefined && it_checado == 'S' ){
                         alert('Não é possível remover esta Atividade analisada que está em Correção de Análise pelo mesmo Membro Responsável pela Análise');
@@ -217,16 +287,8 @@
         });
     }
 
-
-
     function fechar() {
-        
-        if("<?= $isRetriagem ?>" == 1){
-           location.href = "<?=$strDetalhamento?>";
-        }else{
-            window.history.back();
-        }
-
+        location.href = "<?= $strCancelar ?>";
     }
     
     function Retriagem() {
@@ -302,7 +364,29 @@
 
         return todosPreenchidos;
     }
+    function validarCamposObrigatoriosDataDiaDia(){
+        var camposObrigatorios = document.getElementsByClassName('txtDtAnaliseAtividade');
+        var todosPreenchidos = true;
+        for(var i=0; i < camposObrigatorios.length; i++){
+            if(todosPreenchidos){
+                if( camposObrigatorios[i].value == ""){
+                    var idCampo = camposObrigatorios[i].id;
+                    var idAtividadeCampo = idCampo.split('txtDtAnaliseAtividade');
+                    var atividadesSelecionadas = $("#atividadesSelecionadas").val();
+                    if (atividadesSelecionadas != "") {
+                        var arrayAtividadesSelecionadas = atividadesSelecionadas.split(',');
+                        if ($.inArray(idAtividadeCampo[1], arrayAtividadesSelecionadas) != -1) {
+                            todosPreenchidos = false;
+                            alert("<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11, 'Data') ?>");
+                            camposObrigatorios[i].focus();
+                        }
+                    }
+                }
+            }
+        }
 
+        return todosPreenchidos;
+    }
     function validarUmPreenchido() {
         var checks       = document.getElementsByClassName('infraCheckboxInput');
         var contCheckBox = checks.length;
@@ -387,6 +471,24 @@
         if( !validarCamposObrigatoriosObservacao() ){
             return false;
         }
+        if($("#staFrequenciaAdmPrmGr").val() != "D") {
+            if($("#selPeriodo").val() == "") {
+                var msg = setMensagemPersonalizada(msg11Padrao, ['Período']);
+                alert(msg);
+                return false;
+            }
+        } else {
+            if($("#txtDtAnalise").val() == "") {
+                var msg = setMensagemPersonalizada(msg11Padrao, ['Data']);
+                alert(msg);
+                return false;
+            }
+        }
+        if($("#ckbRelatarDiaDia").prop("checked")) {
+            if(!validarCamposObrigatoriosDataDiaDia()) {
+                return false;
+            }
+        }
 
         if(!validarCamposObrigatoriosNumeroSEI()){
             var msg = setMensagemPersonalizada(msg11Padrao, ['Número SEI dos Produtos Esperados']);
@@ -423,11 +525,132 @@
         }        
 
         verificaSeRetriagem();
-        
+
         var nomeFila   = isParametrizadoProcesso == 1 ? document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText : '';
         document.getElementById('hdnSelFila').value = isParametrizadoProcesso == 1 ? nomeFila.trim() : '';
         bloquearBotaoSalvar();
+
         return true;
     }
-    
+    function salvarRascunho () {
+        if(!validarUmPreenchido()){
+            alert(msg51);
+            return false;
+        }
+
+        if(!validarCamposObrigatoriosNumeroSEI()){
+            var msg = setMensagemPersonalizada(msg11Padrao, ['Número SEI dos Produtos Esperados']);
+            alert(msg);
+            return false;
+        }
+        document.getElementById('hdnSalvarRascunho').value = '1';
+        var nomeFila   = isParametrizadoProcesso == 1 ? document.getElementById('selFila').options[document.getElementById('selFila').selectedIndex].innerText : '';
+        document.getElementById('hdnSelFila').value = isParametrizadoProcesso == 1 ? nomeFila.trim() : '';
+        bloquearBotaoSalvar();
+        document.getElementById("frmUtlAnaliseCadastro").submit();
+    }
+    function validaPeriodoData(data) {
+
+        let dataSelecionada = data.value;
+        const dataSelecionadaSplit = dataSelecionada.split('/');
+
+        const dia = dataSelecionadaSplit[0]; // 15
+        const mes = dataSelecionadaSplit[1]; // 04
+        const ano = dataSelecionadaSplit[2]; // 2019
+
+        dataSelecionada = new Date(ano, mes - 1, dia);
+        dataHoje = new Date();
+
+        dataCorte = new Date('<?= $selPeriodo[1] ?>');
+        if(dataSelecionada.getTime() > dataHoje.getTime()) {
+            alert("A data informada deve ser anterior a data atual.");
+            $("#txtDtCorte").val(dataAtualBr());
+            return false;
+        } else if(dataSelecionada.getTime() < dataCorte.getTime() && '<?= $selPeriodo[1] ?>' != "") {
+            alert("A data informada deve ser posterior a data de inicio de sua participação ou, caso não definida, deve ser posterior a Data de Corte parametrizada na administração do Tipo de Controle.");
+            $("#txtDtCorte").val(dataAtualBr());
+            return false;
+        }
+        validarFormatoData(this);
+    }
+    function dataAtualBr() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+
+        const formattedToday = dd + '/' + mm + '/' + yyyy;
+
+        return formattedToday;
+    }
+    function relatarDiaDia(checkbox) {
+        periodo = $("#selPeriodo").val();
+        if(periodo != "") {
+            if(checkbox.checked) {
+                $(".dataRelatarDiaDia").css("display", "block");
+            } else {
+                $(".dataRelatarDiaDia").css("display", "none");
+            }
+        } else {
+            $("#ckbRelatarDiaDia").prop("checked", false);
+            alert("Antes de relatar dia a dia do Período é necessário selecionar um período.");
+            $("#selPeriodo").focus();
+            return false;
+        }
+    }
+    $(".infraImg").click(function() {
+        $('.infraCalendario').css({
+            left: '',
+            right: 0
+        });
+    });
+    function validaPeriodoDataDiaADia(data) {
+
+        let dataSelecionada = data.value;
+        const dataSelecionadaSplit = dataSelecionada.split('/');
+
+        dia = dataSelecionadaSplit[0]; // 15
+        mes = dataSelecionadaSplit[1]; // 04
+        ano = dataSelecionadaSplit[2]; // 2019
+
+        dataSelecionada = new Date(ano, mes - 1, dia);
+
+        periodoSelecionado = $("#selPeriodo").val();
+        periodoSelecionadoExplodido = periodoSelecionado.split('|');
+
+        const dataInicialPeriodoSplit = periodoSelecionadoExplodido[0].split('/');
+
+        dia = dataInicialPeriodoSplit[0]; // 15
+        mes = dataInicialPeriodoSplit[1]; // 04
+        ano = dataInicialPeriodoSplit[2]; // 2019
+
+        dataPeriodoInicial = new Date(ano, mes - 1, dia);
+
+        const dataFinalPeriodoSplit = periodoSelecionadoExplodido[1].split('/');
+
+        dia = dataFinalPeriodoSplit[0]; // 15
+        mes = dataFinalPeriodoSplit[1]; // 04
+        ano = dataFinalPeriodoSplit[2]; // 2019
+
+        dataPeriodoFinal = new Date(ano, mes - 1, dia);
+
+        if(dataSelecionada.getTime() > dataPeriodoFinal.getTime() || dataSelecionada.getTime() < dataPeriodoInicial.getTime()) {
+            alert("A data informada deve estar de acordo com o período selecionado.");
+            $(data).val('<?= $dataExecucaoAtividade ?>');
+            return false;
+        }
+        validarFormatoData(this);
+    }
+    function preencherNomeHidden() {
+        $("#hdnNomeMembroResponsavelAvaliacao").val($("#selUsuarioResponsavelAvaliacao option:selected").html());
+    }
+    function limparCamposData() {
+        var camposDataDiaDia = document.getElementsByClassName('txtDtAnaliseAtividade');
+        for(var i=0; i < camposDataDiaDia.length; i++){
+            camposDataDiaDia[i].value = "";
+        }
+    }
 </script>

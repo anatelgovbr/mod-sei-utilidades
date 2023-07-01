@@ -92,6 +92,8 @@ class MdUtlAdmPrmDsRN extends InfraRN
                     $this->excluirPriorizacaoFilaControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
                 }
             }
+        }else{
+            $this->excluirPriorizacaoFilaControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
         }
     }
 
@@ -127,6 +129,8 @@ class MdUtlAdmPrmDsRN extends InfraRN
                     $this->excluirPriorizacaoStatusControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
                 }
             }
+        }else{
+            $this->excluirPriorizacaoStatusControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
         }
     }
 
@@ -163,6 +167,8 @@ class MdUtlAdmPrmDsRN extends InfraRN
                     $this->excluirPriorizacaoAtividadeControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
                 }
             }
+        }else{
+            $this->excluirPriorizacaoAtividadeControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
         }
     }
 
@@ -344,6 +350,8 @@ class MdUtlAdmPrmDsRN extends InfraRN
                     $this->excluirPriorizacaoTipoProcessoControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
                 }
             }
+        }else{
+            $this->excluirPriorizacaoTipoProcessoControlado($objMdUtlAdmPrmDsDTO->getNumIdMdUtlAdmPrmDs());
         }
     }
 

@@ -170,6 +170,12 @@
                     .prop('checked',false);
             }
         <?php endif; ?>
+
+        const arrTpsCtrl = new Array();
+	    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
+            arrTpsCtrl.push(<?= $tpCtrl?>);
+	    <?php endforeach; ?>
+        getCargaHrDistribuida(arrTpsCtrl, <?= $idUsuarioResp ?>);
     }
 
     function validarSelects() {
@@ -298,6 +304,10 @@
             $(".table-responsive .infraTable").css({"min-width": "1024px"});
         else
             $(".table-responsive .infraTable").css({"min-width": "0px"});
+    }
+
+    function fechar() {
+        location.href = "<?= $strCancelar ?>";
     }
 
 </script>

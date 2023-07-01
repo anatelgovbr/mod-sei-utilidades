@@ -169,6 +169,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
      $sinResponsavel     = array_key_exists(3, $arrParams) ? $arrParams[3] : 'N';
      $sinAcaoConcluida   = array_key_exists(4, $arrParams) ? $arrParams[4] : 'N';
      $idUnidade          = array_key_exists(5, $arrParams) ? $arrParams[5] : SessaoSEI::getInstance()->getNumIdUnidadeAtual();
+     $rascunho           = array_key_exists(6, $arrParams) ? $arrParams[6] : 0;
      $arrRetorno         = array();
 
       //Busca os objetos cadastrados para esses ids Procedimento
@@ -187,7 +188,11 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $objHistoricoDTO->setStrSinUltimoResponsavel($sinResponsavel);
                 $objHistoricoDTO->setStrSinAcaoConcluida($sinAcaoConcluida);
                 $objHistoricoDTO->setDthFinal(InfraData::getStrDataHoraAtual());
-                
+                if($objHistoricoDTO->getStrStaAtendimentoDsmp() == "15") {
+                    $objHistoricoDTO->setStrStaAtendimentoDsmp("4");
+                } elseif($objHistoricoDTO->getStrStaAtendimentoDsmp() == "16") {
+                    $objHistoricoDTO->setStrStaAtendimentoDsmp("10");
+                }
                 $idProc = $objHistoricoDTO->getDblIdProcedimento();
                 $arrRetorno[$idProc]['TEMPO_EXECUCAO'] = $objHistoricoDTO->getNumTempoExecucao();
                 $arrRetorno[$idProc]['ID_TRIAGEM'] = $objHistoricoDTO->getNumIdMdUtlTriagem();
@@ -201,8 +206,9 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                 $arrRetorno[$idProc]['DTH_PRAZO_TAREFA'] = $objHistoricoDTO->getDthPrazoTarefa();
                 $arrRetorno[$idProc]['ID_TIPO_CONTROLE'] = $objHistoricoDTO->getNumIdMdUtlAdmTpCtrlDesemp();
                 $arrRetorno[$idProc]['ID_CONTESTACAO'] = $objHistoricoDTO->getNumIdMdUtlContestRevisao();
-           
-                $this->cadastrar($objHistoricoDTO);
+                if($rascunho != "1") {
+                    $this->cadastrar($objHistoricoDTO);
+                }
             }
       }
 
@@ -937,7 +943,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
         $numUnidEsforcoHist    = 0;
         $dtInicio = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtInicio);
         $dtFim = MdUtlControleDsmpINT::formatarDatasComDoisDigitos($dtFim);
-        
+
         if(!is_null($idUsuarioParticipante) && !is_null($idTipoControle)) {
 
             $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
@@ -978,15 +984,14 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                     }
                 }
 
-                foreach( $arrObjsDados as $k => $obj ){  
+                foreach( $arrObjsDados as $k => $obj ){
                     $calculado        = true;
-
                     if(
                         !is_null($arrInfoCtrl) 
                         && array_key_exists( $obj->getDblIdProcedimento() , $arrInfoCtrl )
                         && $obj->getNumIdAtendimento() == $arrInfoCtrl[$obj->getDblIdProcedimento()]['id_atend']
                         && $obj->getNumIdMdUtlTriagem() < $arrInfoCtrl[$obj->getDblIdProcedimento()]['id_triag']
-                        && ( $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE )
+                        && ( $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE  || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$RASCUNHO_ANALISE  || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE)
                     ){
                         $numUnidEsforcoHist += 0;
                         $calculado = false;
@@ -997,7 +1002,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                         && array_key_exists( $obj->getDblIdProcedimento() , $arrDadosHistCtrl )
                         && $obj->getNumIdAtendimento() == $arrDadosHistCtrl[$obj->getDblIdProcedimento()]['id_atend']
                         && $obj->getNumIdMdUtlTriagem() < $arrDadosHistCtrl[$obj->getDblIdProcedimento()]['id_triag']
-                        && ( $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE )
+                        && ( $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_ANALISE || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE  || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$RASCUNHO_ANALISE  || $obj->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE)
                     ){
                         $numUnidEsforcoHist += 0;
                         $calculado = false;

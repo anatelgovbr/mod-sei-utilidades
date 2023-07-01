@@ -365,7 +365,17 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
                                                 }
 
                                                 //monta o parametro para associar o processo a fila configurada
-                                                $arrParams = array($idProcedimento, $idFilaCompleto, $idTipoControle, MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, $idUnidade, $TmpExecucao, null, null, null, null, $nomeFilaCompleto, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO, $idAtendimentoNovo, null, null, date('d/m/Y H:i:s', strtotime('+3 second')));
+                                                $arrParams = array();
+                                                $arrParams['dblIdProcedimento'] = $idProcedimento;
+                                                $arrParams['intIdFila'] = $idFilaCompleto;
+                                                $arrParams['intIdTpCtrl'] = $idTipoControle;
+                                                $arrParams['strStatus'] = MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM;
+                                                $arrParams['intIdUnidade'] = $idUnidade;
+                                                $arrParams['intTempoExecucao'] = $TmpExecucao;
+                                                $arrParams['strDetalhe'] = $nomeFilaCompleto;
+                                                $arrParams['tipoAcao'] = MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO;
+                                                $arrParams['idAtendimentoNovo'] = $idAtendimentoNovo;
+                                                $arrParams['dtHora'] =  date('d/m/Y H:i:s', strtotime('+3 second'));
                                                 $objControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
                                             }
                                         }
@@ -430,4 +440,475 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
         return $arrRetorno;
     }
 
+	/**
+	 * Funcao acionada pelo Agendamento
+	 */
+		protected function incluirPeriodoControlado(){
+			$dadosChefia      = null;
+			$arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
+
+			// verifica se o serviço esta cadastrado e ativo
+			if (!empty($arrObjIntegracao) && $arrObjIntegracao['integracao']->getStrTipoIntegracao() == 'RE'){
+				$arrParams = ['loginUsuario' => ''];
+				$arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParams )];
+				$dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParams['parametros'] );
+			}
+
+			// instancia objetos da classe RN
+			$objUtlAdmPrmGrUsuRN        = new MdUtlAdmPrmGrUsuRN();
+			$objMdUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+			$objUtlAdmTpCtrlRN          = new MdUtlAdmTpCtrlDesempRN();
+
+			// retorna os tipos de controles com o alguns dados da parametrizacao
+			$objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+
+			$objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
+			$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0,InfraDTO::$OPER_MAIOR);
+			#$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
+
+			$objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+			$objUtlAdmTpCtrlDTO->retNumCargaPadrao();
+			$objUtlAdmTpCtrlDTO->retStrStaFrequencia();
+
+			$arrObjs = $objUtlAdmTpCtrlRN->listar( $objUtlAdmTpCtrlDTO );
+
+			// efetua loop em cada Tipo de Controle
+			foreach ( $arrObjs as $objPrmGr ) {
+
+				// retorna dados da parametrizacao do usuario + alguns dados da parametrizacao do Tipo de Controle
+				$arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro( $objPrmGr->getNumIdMdUtlAdmPrmGr() );
+
+				$continua = $this->validarStaFrequencia($arrUsuarios[0]['frequencia']);
+
+				if ( $continua ) {
+					foreach ($arrUsuarios as $usuario) {
+						// variavel a ser usado no final para qualquer insert ou update
+						$cargaHoraria                = 0;
+						$strDatasAusenciasUtilizadas = null;
+
+						$arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true , $dadosChefia);
+
+						$objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
+
+						$objMdUtlAdmPrmGrUsuCargaDTO->setNumCargaHoraria($cargaHoraria);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial($arrPeriodos['dtInicial']);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal($arrPeriodos['dtFinal']);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($usuario['idPrmGrUsu']);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setStrDatasAusencias($strDatasAusenciasUtilizadas);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
+						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr($usuario['idPrmGr']);
+						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($usuario['idUsuario']);
+
+						$objMdUtlAdmPrmGrUsuCargaRN->cadastrar($objMdUtlAdmPrmGrUsuCargaDTO);
+					}
+				}
+			}
+		}
+
+		private function trataTempoMembroComAusenciasEChefia($usuario, &$cargaHoraria, &$strDatasAusenciasUtilizadas, $retornaPeriodo = false , $dadosChefia){
+
+			$fatorPres    = $usuario['tipoJornada'] == 'R' ? $usuario['fatorJornada'] : null;
+			$arrPeriodo   = (new MdUtlAdmPrmGrUsuRN())->getDiasUteisNoPeriodo([$usuario['frequencia'],false]);
+			$cargaHoraria = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria($fatorPres, $arrPeriodo['numFrequencia'], $usuario['cargaPadrao']);
+			$arrDiasAusencias = [];
+
+			$arrParams = [
+				'idUsuario'     => $usuario['idUsuario'],
+				'siglaUsuario'  => $usuario['siglaUsuario'],
+				'cargaPadrao'   => $usuario['cargaPadrao'],
+				'fatorPresenca' => $fatorPres,
+				'dtInicialPer'  => implode('-',array_reverse(explode('/',$arrPeriodo['dtInicial']))),
+				'dtFinalPer'    => implode('-',array_reverse(explode('/',$arrPeriodo['dtFinal']))),
+			];
+
+			// tratar o tempo descontando os dias de chefia
+			$this->tratarInclusaoPeriodoChefia($cargaHoraria,$arrParams,$dadosChefia,$arrDiasAusencias);
+
+			if ( $cargaHoraria > 0 ) {
+				// tratar o tempo descontando as ausencias
+				$this->tratarInclusaoPeriodoAusencias($cargaHoraria,$arrDiasAusencias,$arrParams);
+				$strDatasAusenciasUtilizadas = !empty( $arrDiasAusencias )
+					? MdUtlAdmPrmGrUsuCargaINT::montaDatasAusenciasBanco($arrDiasAusencias)
+					: null;
+			}
+
+			if( $retornaPeriodo ) return $arrPeriodo;
+		}
+
+		private function validarStaFrequencia($staFrequencia){
+			$diaSemana = InfraData::obterDescricaoDiaSemana(date("d/m/Y"));
+			switch ($staFrequencia) {
+				case 'D':
+					$arrSemanaNaoPermitida = ['sábado','domingo'];
+					return in_array($diaSemana,$arrSemanaNaoPermitida) ? false : true;
+					break;
+
+				case 'S':
+					return $diaSemana == 'segunda-feira';
+					break;
+
+				case 'M':
+					return date('d') == '01';
+					break;
+
+				default:
+					return false;
+					break;
+			}
+		}
+
+		/*
+		 * $arrParams = [idUsuario, siglaUsuario, cargaPadrao, fatorPresenca,  dtInicialPer, dtFinalPer]
+		 */
+		private function tratarInclusaoPeriodoAusencias(&$cargaHoraria,&$arrDiasAusencias,$arrParams){
+			$arrObjIntegracao = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$AUSENCIA);
+
+			// verifica se o serviço esta cadastrado, ativo e Tipo de Integracao igual a REST
+			if( !empty( $arrObjIntegracao ) && $arrObjIntegracao['integracao']->getStrTipoIntegracao() == 'RE'){
+
+				$arrParamsAus = [
+					'loginUsuario' => $arrParams['siglaUsuario'],
+					'dataInicial'  => $arrParams['dtInicialPer'],
+					'dataFinal'    => $arrParams['dtFinalPer'],
+				];
+				$arrParamsAus = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParamsAus )];
+				$dadosAusencia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParamsAus['parametros'] );
+
+				if ( !empty( $dadosAusencia ) ) {
+					$arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
+					foreach ( $dadosAusencia as $ausencia ) {
+						$arrRangeDiasAusencia = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($ausencia->{$arrIdentificador['dataInicial']},$ausencia->{$arrIdentificador['dataFinal']});
+						foreach ( $arrRangeDiasAusencia as $dtAusencia ) {
+							if(
+								strtotime($dtAusencia) >= strtotime($arrParams['dtInicialPer']) &&
+								strtotime($dtAusencia) <= strtotime($arrParams['dtFinalPer']) &&
+								!in_array($dtAusencia,$arrDiasAusencias)
+							){
+								$tmpParcial = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria( $arrParams['fatorPresenca'], 1, $arrParams['cargaPadrao'] );
+								$tmpParcial = $ausencia->{$arrIdentificador['meioExpediente']} == 'N' ? $tmpParcial : intval($tmpParcial / 2);
+								$cargaHoraria -= $tmpParcial;
+								array_push($arrDiasAusencias,$dtAusencia);
+							}
+						}
+					}
+				}
+			} else { // usa a tabela de Feriados do SEI
+				$arrRangeDiasPeriodo = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($arrParams['dtInicialPer'] , $arrParams['dtFinalPer']);
+
+				foreach ( $arrRangeDiasPeriodo as $dia ) {
+					$diaPT_BR = ( new DateTime($dia) )->format('d/m/Y');
+					if( ! ( new MdUtlPrazoRN() )->verificaDiaUtil($diaPT_BR, $diaPT_BR, true ) ) {
+						$tmpParcial = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria( $arrParams['fatorPresenca'], 1, $arrParams['cargaPadrao'] );
+						$cargaHoraria -= $tmpParcial;
+						array_push($arrDiasAusencias,$dia);
+					}
+				}
+			}
+		}
+
+		private function tratarInclusaoPeriodoChefia(&$cargaHoraria, $arrParams, $dadosChefia, &$arrDiasAusencias){
+			if ( $dadosChefia ) {
+				$objMdUtlAdmIntegDTO = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
+				$arrIdentificador    = MdUtlAdmIntegracaoINT::montaParametrosSaida($objMdUtlAdmIntegDTO['parametros-integracao']);
+				foreach ($dadosChefia as $chefia) {
+					if ($arrParams['siglaUsuario'] == $chefia->{$arrIdentificador['loginUsuario']}) {
+						// Chefe Titular
+						if (intval($chefia->{$arrIdentificador['tipoEmpregado']}) == 1) {
+							$cargaHoraria = 0;
+							break;
+						} else { // Chefe Substituto
+							$arrRangeDiasChefia = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($chefia->{$arrIdentificador['dataInicial']},$chefia->{$arrIdentificador['dataFinal']});
+							foreach ($arrRangeDiasChefia as $diaChefia) {
+								if (
+									strtotime($diaChefia) >= strtotime($arrParams['dtInicialPer']) &&
+									strtotime($diaChefia) <= strtotime($arrParams['dtFinalPer'])
+								) {
+									array_push($arrDiasAusencias, $diaChefia);
+									$tmpParcial = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria($arrParams['fatorPresenca'], 1, $arrParams['cargaPadrao']);
+									$cargaHoraria -= $tmpParcial;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/**
+		 * Funcao acionada pelo Agendamento
+		 */
+    protected function listarChefiaImediataControlado(){
+	    try {
+		    // busca a integracao da Funcionalidade: listar chefia imediata
+		    $arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
+
+		    if ( empty($arrObjIntegracao) ) return false;
+
+		    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) return false;
+
+		    $arrParams = ['loginUsuario' => ''];
+		    $arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParams )];
+
+		    $dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParams['parametros'] );
+
+		    if ( empty($dadosChefia) ) return false;
+
+		    $arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
+
+		    // retorna os tipos de controles com o ID da parametrizacao
+		    $objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+		    $objUtlAdmTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
+
+		    $objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
+		    $objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0,InfraDTO::$OPER_MAIOR);
+		    #$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
+		    $objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+
+		    $arrObjsTpCtrlDTO = $objUtlAdmTpCtrlRN->listar( $objUtlAdmTpCtrlDTO );
+
+		    if( empty( $arrObjsTpCtrlDTO ) ) throw new InfraException('Não encontrado Tipo de Controle Ativo.');
+
+		    $objUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+		    $objUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+
+		    foreach ( $arrObjsTpCtrlDTO as $objPrmGr ) {
+			    // busca usuarios membros da parametrizacao atual
+			    $arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro($objPrmGr->getNumIdMdUtlAdmPrmGr());
+
+			    foreach ($arrUsuarios as $usuario) {
+				    // retorna dados da carga horaria e ausencias por default
+				    $cargaHoraria                = 0;
+				    $strDatasAusenciasUtilizadas = null;
+				    $arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true, $dadosChefia);
+
+				    $params = [
+					    'idPrmGrUsu' => $usuario['idPrmGrUsu'],
+					    'periodoIni' => $arrPeriodos['dtInicial'],
+					    'periodoFin' => $arrPeriodos['dtFinal']
+				    ];
+
+				    // retorna o ultimo registro ativo da carga horaria do membro atual
+				    $objMdUtlPrmGrUsuCarga = $objUtlAdmPrmGrUsuCargaRN->buscaPeriodoParaAvaliacao($params);
+
+				    if ( !is_null($objMdUtlPrmGrUsuCarga)) {
+					    $bolEncontrou = false;
+					    foreach ($dadosChefia as $usuarioChefiaImediata) {
+						    if ( $usuario['siglaUsuario'] == $usuarioChefiaImediata->{$arrIdentificador['loginUsuario']} ) {
+							    $bolEncontrou = true;
+							    break;
+						    }
+					    }
+
+					    if ($bolEncontrou) {
+						    //atualiza registro da parametrizacao do usuario
+						    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata($usuarioChefiaImediata, $usuario);
+
+						    // se teve mudança para menos no tempo da carga cadastrada no periodo, desativa o atual e insere um novo
+						    if ($cargaHoraria < $objMdUtlPrmGrUsuCarga->getNumCargaHoraria()) {
+							    //desativa o registro atual
+							    $objMdUtlPrmGrUsuCarga->setStrSinAtivo('N');
+							    $objUtlAdmPrmGrUsuCargaRN->alterar($objMdUtlPrmGrUsuCarga);
+
+							    //cadastra um novo registro
+							    $this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
+						    }
+					    } else {
+						    $isAtualizado = false;
+						    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata(null, $usuario, $isAtualizado);
+						    if ( $isAtualizado ) $this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
+					    }
+				    }
+			    }
+		    }
+	    }catch ( Exception $e ){
+		    throw new InfraException('Erro na execução do Agendamento da Chefia Imediata.',$e);
+	    }
+    }
+
+    private function insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga,$carga,$ausencias){
+	    $objUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+
+	    $objMdUtlPrmGrUsuCarga->setNumIdMdUtlAdmPrmGrUsuCarga(null);
+	    $objMdUtlPrmGrUsuCarga->setNumCargaHoraria($carga);
+	    $objMdUtlPrmGrUsuCarga->setStrDatasAusencias($ausencias);
+	    $objMdUtlPrmGrUsuCarga->setStrSinAtivo('S');
+
+	    $objUtlAdmPrmGrUsuCargaRN->cadastrar($objMdUtlPrmGrUsuCarga);
+    }
+
+		/**
+		 * Funcao acionada pelo Agendamento
+		 */
+    protected function listarAusenciasRhControlado(){
+
+	    $REF_PARAMETRO = 'mesesPassado';
+
+	    try {
+		    $objAgendamentoDTO = new InfraAgendamentoTarefaDTO();
+		    $objAgendamentoDTO->setStrComando('MdUtlAgendamentoAutomaticoRN::listarAusenciasRh');
+		    $objAgendamentoDTO->retTodos();
+		    $objAgendamentoDTO = ( new InfraAgendamentoTarefaRN() )->consultar( $objAgendamentoDTO );
+
+		    if( empty( $objAgendamentoDTO->getStrParametro() ) ) throw new InfraException('Não foi cadastrado dados sobre o campo Parâmetros.');
+
+		    $arrStrParametros = explode(',' , $objAgendamentoDTO->getStrParametro() );
+
+		    if( strpos( $arrStrParametros[0] , $REF_PARAMETRO.'=' ) === false ) throw new InfraException('Não foi encontrado o Parâmetro:'. $REF_PARAMETRO .'=');
+
+				$arrParam = explode( '=' , $arrStrParametros[0] );
+
+				if( !array_key_exists( 1 , $arrParam ) ) throw new InfraException('Não foi informado o valor do parâmetro: ' . $REF_PARAMETRO .'.' );
+
+				if( empty( $arrParam[1] ) ) throw new InfraException('O valor do parâmetro: "' . $REF_PARAMETRO .'" está vazio ou igual a Zero.');
+
+		    if( !is_numeric( $arrParam[1] ) ) throw new InfraException('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor numérico.');
+
+		    if( $arrParam[1] < 0 ) throw new InfraException('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor maior que Zero.');
+
+				// apos validacoes anteriores, aciona o metodo que executara as atualizacoes das ausencias dos membros nos tipos de controle
+		    $this->executaAtualizacaoAusencias( $arrParam );
+
+	    } catch ( Exception $e){
+		    throw new InfraException('Erro na atualização das ausências dos membros nos Tipos de Controle.',$e);
+	    }
+    }
+
+    private function executaAtualizacaoAusencias( $arrParam ){
+	    $dti = date('Y-m-d' , strtotime( "- {$arrParam[1]} months") );
+	    $dtf = date('Y-m-d');
+
+	    $arrObjIntegracao = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$AUSENCIA);
+
+	    if( empty( $arrObjIntegracao) ) return false;
+
+	    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) return false;
+
+	    $arrParamsAus  = ['dataInicial' => $dti , 'dataFinal' => $dtf];
+	    $arrParamsAus  = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParamsAus )];
+	    $dadosAusencia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParamsAus['parametros'] );
+
+	    if ( empty( $dadosAusencia ) ) return false;
+
+			$arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
+
+	    $objMdUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+	    $objMdUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+
+	    // loop em cada ausencia retornada pelo SARH, podendo ter o mesmo usuario mais de uma vez
+	    foreach( $dadosAusencia as $k => $ausencia ) {
+	    	// busca os tipos de ctrl/parametrizacao que o usuario faz parte
+		    $objUsuarioDTO = new MdUtlAdmPrmGrUsuDTO();
+		    $objUsuarioDTO->setStrSigla( $ausencia->{$arrIdentificador['loginUsuario']} );
+		    #$objUsuarioDTO->setNumIdMdUtlAdmPrmGr([43,36],InfraDTO::$OPER_IN); //teste
+		    $objUsuarioDTO->retStrSigla();
+		    $objUsuarioDTO->retNumIdMdUtlAdmPrmGrUsu();
+		    $objUsuarioDTO->retNumIdMdUtlAdmPrmGr();
+		    $objUsuarioDTO->retNumIdUsuario();
+		    $objUsuarioDTO->retStrStaTipoJornada();
+		    $objUsuarioDTO->retNumFatorReducaoJornada();
+		    $objUsuarioDTO->retNumCargaPadraoParametrizacao();
+		    $objUsuarioDTO->retStrStaFrequenciaParametrizacao();
+
+		    $arrObjUsuarioDTO = ( new MdUtlAdmPrmGrUsuRN() )->listar( $objUsuarioDTO );
+
+		    $objUsuarioDTO = null;
+
+		    if (!empty($arrObjUsuarioDTO)) {
+		    	foreach( $arrObjUsuarioDTO as $objUsuarioDTO ) {
+
+				    // retorna registros relacionados a parametrizacao do usuario x carga horaria
+				    $objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
+				    $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($objUsuarioDTO->getNumIdUsuario());
+				    $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($objUsuarioDTO->getNumIdMdUtlAdmPrmGrUsu());
+				    $objMdUtlAdmPrmGrUsuCargaDTO->retNumIdMdUtlAdmPrmGrUsu();
+				    $objMdUtlAdmPrmGrUsuCargaDTO->retTodos();
+
+				    $arrUsuCargaDTO = $objMdUtlAdmPrmGrUsuCargaRN->listar($objMdUtlAdmPrmGrUsuCargaDTO);
+
+				    if ( !empty($arrUsuCargaDTO) ) {
+
+					    foreach ($arrUsuCargaDTO as $item) { // loop em cada periodo cadastrado do usuario
+						    $arrParams = [
+							    'idPrmGrUsu' => $item->getNumIdMdUtlAdmPrmGrUsu(),
+							    'periodoIni' => $item->getDtaPeriodoInicial(),
+							    'periodoFin' => $item->getDtaPeriodoFinal(),
+						    ];
+
+						    // retorna dados de carga horaria e periodos de acordo com as datas informadas no array acima
+						    $objUltRegPeriodo = $objMdUtlAdmPrmGrUsuCargaRN->buscaPeriodoParaAvaliacao( $arrParams );
+
+						    // calculo de qtos dias uteis o usuario terá no intervalo de seu periodo inicial/final
+						    $qtdDiasUteis = ( new MdUtlPrazoRN() )->retornaQtdDiaUtil($item->getDtaPeriodoInicial(),$item->getDtaPeriodoFinal(),false,false);
+
+						    $fatorPres = $objUsuarioDTO->getStrStaTipoJornada() == 'R'
+							    ? $objUsuarioDTO->getNumFatorReducaoJornada()
+							    : null;
+
+						    $cargaTotal = $objMdUtlAdmPrmGrUsuCargaRN->geraTempoCargaHoraria( $fatorPres, $qtdDiasUteis, $objUsuarioDTO->getNumCargaPadraoParametrizacao() );
+
+						    if ( !empty( $objUltRegPeriodo ) ) {
+						    	$difTempo = $cargaTotal - $objUltRegPeriodo->getNumCargaHoraria();
+							    $cargaTotal -= $difTempo;
+						    }
+
+						    // gera os dias ja utilizados/salvos no banco
+						    $arrDiasAusenciasUtilizados = MdUtlAdmPrmGrUsuCargaINT::criaDiasAusenciasUtilizados($objUltRegPeriodo->getStrDatasAusencias());
+						    $dtPerInicial               = implode('-',array_reverse(explode('/',$item->getDtaPeriodoInicial())));
+						    $dtPerFinal                 = implode('-',array_reverse(explode('/',$item->getDtaPeriodoFinal())));
+
+						    // para cada dia de ausencia, faz o controle se esta dentro do periodo
+						    $arrDatasDeAusenciaLoop = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($ausencia->{$arrIdentificador['dataInicial']},$ausencia->{$arrIdentificador['dataFinal']});
+
+						    $isAlterarPeriodo = false;
+
+						    foreach($arrDatasDeAusenciaLoop as $dtAus){
+							    // dia referencia da ausencia a ser avaliada
+							    $dtRefAusencia = $dtAus;
+
+							    if (strtotime($dtRefAusencia) >= strtotime($dtPerInicial) && strtotime($dtRefAusencia) <= strtotime($dtPerFinal) && !in_array($dtRefAusencia, $arrDiasAusenciasUtilizados) ) {
+								    array_push($arrDiasAusenciasUtilizados, $dtRefAusencia);
+								    $tmpParcial = $objMdUtlAdmPrmGrUsuCargaRN->geraTempoCargaHoraria( $fatorPres, 1, $objUsuarioDTO->getNumCargaPadraoParametrizacao() );
+								    $tmpParcial = $ausencia->{$arrIdentificador['meioExpediente']} == 'N' ? $tmpParcial : intval($tmpParcial / 2);
+								    $cargaTotal -= $tmpParcial;
+								    $isAlterarPeriodo = true;
+							    }
+						    }
+
+						    if(
+						    	$isAlterarPeriodo &&
+							    $item->getNumIdMdUtlAdmPrmGrUsuCarga() == $objUltRegPeriodo->getNumIdMdUtlAdmPrmGrUsuCarga() &&
+							    $cargaTotal < $item->getNumCargaHoraria()
+						    )
+						    {
+							    $strDatasAusenciasUtilizadas = MdUtlAdmPrmGrUsuCargaINT::montaDatasAusenciasBanco($arrDiasAusenciasUtilizados);
+
+							    // Verificar se é o periodo atual, caso sim, desativa-lo e criar um novo registro do periodo com o novo
+							    // tempo de carga
+							    if ($item->getStrSinAtivo() == 'S'){
+							      // altera a flag ativo como 'N'
+								    $item->setStrSinAtivo('N');
+								    $objMdUtlAdmPrmGrUsuCargaRN->alterar($item);
+
+								    // cadastra um novo periodo com os novos dados
+								    $item->setNumIdMdUtlAdmPrmGrUsuCarga(null);
+								    $item->setStrSinAtivo('S');
+								    $item->setNumCargaHoraria($cargaTotal);
+								    $item->setStrDatasAusencias($strDatasAusenciasUtilizadas);
+								    $objMdUtlAdmPrmGrUsuCargaRN->cadastrar($item);
+
+							    } else {
+								    // altera a coluna com os novos registros das datas de ausencias
+								    $item->setNumIdMdUtlAdmPrmGrUsuCarga(null);
+								    $item->setNumCargaHoraria($cargaTotal);
+								    $item->setStrSinAtivo('S');
+								    $item->setStrDatasAusencias($strDatasAusenciasUtilizadas);
+								    $objMdUtlAdmPrmGrUsuCargaRN->cadastrar($item);
+							    }
+						    }
+					    }
+				    }
+			    }
+		    }
+	    }
+    }
 }

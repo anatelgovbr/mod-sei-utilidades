@@ -48,6 +48,10 @@
         .position-lupa-remover{
             width: 10%;
         }
+
+        .div-check-dia{
+            padding-top: 0.5rem!important;
+        }
     }
 
     @media screen and (max-width: 370px) {

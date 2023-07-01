@@ -148,7 +148,8 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
   protected function cadastrarRevisaoTriagemAnaliseControlado($objControleDsmpDTO){
       try {
       $objHistoricoRN           = new MdUtlHistControleDsmpRN();
-      $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+      $objMdUtlControleDsmpRN   = new MdUtlControleDsmpRN();
+      $objMdUtlAdmPrmGrUsuRN    = new MdUtlAdmPrmGrUsuRN();
 
       $isProcessoConcluido  = 0;
       $idProcedimento       = $_POST['hdnIdProcedimento'];
@@ -164,12 +165,16 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
       $objRevisao         	= $objMdUtlRevisaoRN->salvarObjRevisao();
       $idRevisao      		= $objRevisao->getNumIdMdUtlRevisao();
       $ckbDistAutoParaMim = isset( $_POST['ckbDistAutoParaMim'] ) ? $_POST['ckbDistAutoParaMim'] : null;
-
+      $isChefiaImediata     = false;
       $objRNGerais        	= new MdUtlRegrasGeraisRN();
       
       if( isset($_POST['cbkRealizarAvalProdAProd']) || isset($_POST['chkItemcbkRealizarAvalProdAProd']) ){
         $this->_salvarObjsRelacionadosRevisao($idRevisao, $isAnalise);
       }
+
+      $idPrmGr = ( new MdUtlAdmTpCtrlDesempRN() )->_getIdsParamsTpControle( [$idTpCtrl] )[0];
+      $arrParams = [ [ $idPrmGr ] , SessaoSEI::getInstance()->getNumIdUsuario() ];
+      if ( !empty($objMdUtlAdmPrmGrUsuRN->validaUsuarioIsChefiaImediata( $arrParams ) ) ) $isChefiaImediata = true;
 
       switch ($idEncaminhamento){
 
@@ -196,14 +201,26 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                   $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
                   $idAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
 
+                  $arrParams = array();
+                  $arrParams['dblIdProcedimento'] = $idProcedimento;
+                  $arrParams['intIdFila'] = $idFila;
+                  $arrParams['intIdTpCtrl'] = $idTpCtrl;
+                  $arrParams['strStatus'] = $strNovoStatus;
+                  $arrParams['intTempoExecucao'] = $TmpExecucao;
+                  $arrParams['idTriagem'] = $idTriagem;
+                  $arrParams['idAnalise'] = $idAnalise;
+                  $arrParams['idRevisao'] = $idRevisao;
+                  $arrParams['strDetalhe'] = $strDetalheRev;
+                  $arrParams['tipoAcao'] = MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO;
+
                   //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-                  $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $TmpExecucao, null, $idTriagem, $idAnalise, $idRevisao, $strDetalheRev, MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO));
+                  $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
 
                   $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
                   $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
               }
 
-              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb);
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb, $isChefiaImediata);
 
               break;
 
@@ -231,7 +248,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                       $isProcessoConcluido = 1;
                   }
               }
-              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb);
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioAtb, $isChefiaImediata);
 
               break;
 
@@ -281,9 +298,22 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
               //Cadastrar Histórico - Solicitação Negocial
               $objHistoricoRN->salvarObjHistoricoRevisao(array($idProcedimento, $arrRetorno, $idRevisao, $strDetalheRev, $strNovoStatus, $idUsuarioDistr, $idFila));
 
+              $arrParams = array();
+              $arrParams['dblIdProcedimento'] = $idProcedimento;
+              $arrParams['intIdFila'] = $idFila;
+              $arrParams['intIdTpCtrl'] = $idTpCtrl;
+              $arrParams['strStatus'] = $strNovoStatus;
+              $arrParams['intTempoExecucao'] = 0;
+              $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+              $arrParams['idTriagem'] = $idTriagem;
+              $arrParams['idAnalise'] = $idAnalise;
+              $arrParams['idRevisao'] = $idRevisao;
+              $arrParams['strDetalhe'] = $strDetalheDistr;
+              $arrParams['tipoAcao'] = MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO;
+
               //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-              $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , 0, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheDistr, MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO));
-              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioDistr);
+              $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
+              $this->_atualizaObjRevisao($idProcedimento, $objRevisao, $idTpCtrl, $idUsuarioDistr, $isChefiaImediata);
               break;
       }
 
@@ -295,7 +325,7 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
 
   }
 
-    private function _atualizaObjRevisao($idProcedimento, $objMdUtlRevisaoDTO, $idTpCtrl, $idUsuarioAtb) {
+    private function _atualizaObjRevisao($idProcedimento, $objMdUtlRevisaoDTO, $idTpCtrl, $idUsuarioAtb, $isChefiaImediata = false) {
 
         $objMdUtlRevisaoRN = new MdUtlRevisaoRN();
         $objMdUtlRevisao = new MdUtlRevisaoDTO();
@@ -313,6 +343,12 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             $objMdUtlRevisao->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
             $objMdUtlRevisao->setNumTempoExecucaoAtribuido($arrDadosPercentualDesempenho['numTempoExecucao']);
             $objMdUtlRevisao->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+
+            if( $isChefiaImediata ){
+                $objMdUtlRevisao->setNumTempoExecucao( 0 );
+                $objMdUtlRevisao->setNumTempoExecucaoAtribuido( null );
+            }
+
             $objMdUrltRevisaoRN = new MdUtlRevisaoRN();
             $objMdUrltRevisaoRN->alterar($objMdUtlRevisao);
 
@@ -330,6 +366,11 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
             $objMdUtlRevisaoDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
             $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido($arrParams['tempoExecucaoAtribuido']);
             $objMdUtlRevisaoDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+
+            if( $isChefiaImediata ){
+                $objMdUtlRevisaoDTO->setNumTempoExecucao( 0 );
+                $objMdUtlRevisaoDTO->setNumTempoExecucaoAtribuido( null );
+            }
 
             $objMdUrltRevisaoRN = new MdUtlRevisaoRN();
             return $objMdUrltRevisaoRN->alterar($objMdUtlRevisaoDTO);
@@ -375,8 +416,21 @@ class MdUtlRelRevisTrgAnlsRN extends InfraRN {
                     $idTpCtrl  = $arrRetorno[$idProcedimento]['ID_TIPO_CONTROLE'];
                     $idUsuarioDistr = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
 
+                    $arrParams = array();
+                    $arrParams['dblIdProcedimento'] = $idProcedimento;
+                    $arrParams['intIdFila'] = $idFila;
+                    $arrParams['intIdTpCtrl'] = $idTpCtrl;
+                    $arrParams['strStatus'] = $strStatus;
+                    $arrParams['intTempoExecucao'] = 0;
+                    $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+                    $arrParams['idTriagem'] = $idTriagem;
+                    $arrParams['idAnalise'] = $idAnalise;
+                    $arrParams['idRevisao'] = $idNovaRevisao;
+                    $arrParams['strDetalhe'] = MdUtlContestacaoRN::$STR_APROVADA;
+                    $arrParams['tipoAcao'] = MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO;
+
                     //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-                   $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strStatus, null, 0,$idUsuarioDistr, $idTriagem, $idAnalise, $idNovaRevisao,MdUtlContestacaoRN::$STR_APROVADA,  MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO));
+                   $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
                 break;
                 case MdUtlRevisaoRN::$FLUXO_FINALIZADO:
 

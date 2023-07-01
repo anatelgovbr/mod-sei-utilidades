@@ -192,7 +192,6 @@ $selStatus = !is_null($idsStatusPermitido) || $isGestorSipSei ? MdUtlControleDsm
 $arrObjsTpProcesso = $objMdUtlControleDsmpRN->getTiposProcessoTipoControleAssociarFila( !is_null($idTipoControle) ? array($idTipoControle => $idTipoControle) : $arrListaTpCtrl );
 $selTipoProcesso = $isPermiteAssociacao ? InfraINT::montarSelectArrInfraDTO(null, null, $selTipoProcessoCampo, $arrObjsTpProcesso, 'IdTipoProcedimento', 'NomeProcedimento') : '';
 
-
 $strTitulo = 'Distribuição';
 
 switch ($_GET['acao']) {
@@ -327,7 +326,6 @@ if ($isParametrizado) {
     } else {
         $selAtividade = '';
     }
-
     //Fim da Combo de Atividade
 
     if (!is_null($objDTO)) {
@@ -478,7 +476,7 @@ if ($isParametrizado) {
                 $strResultado .= PaginaSEI::tratarHTML($strFila);
                 $strResultado .= '</td>';
 
-                $tmpExecucaoExibir = $tempoExecucaoAtrib ?: $tempoExecucao;
+                $tmpExecucaoExibir = !is_null($tempoExecucaoAtrib) ? $tempoExecucaoAtrib : $tempoExecucao;
                 $tmpExecucaoExibir = MdUtlAdmPrmGrINT::convertToHoursMins( $tmpExecucaoExibir );
 
                 //Linha Tempo de Execução
@@ -653,6 +651,16 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
             </div>
         </div>
 
+        <div class="row mb-3" id="divMsgChefiaImediata" style="display: none;">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <label class="infraLabelOpcional">
+                        O Tempo de Execução sobre as atividades realizadas não será contabilizado, pois o usuário selecionado está parametrizado como Chefia Imediata.
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <?php $col_def_labels = "col-12 col-sm-10 col-md-10 col-lg-8 col-xl-6"; ?>
 
         <div class="row">
@@ -759,12 +767,12 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
         document.getElementById('spnTotalUnidade').innerHTML = convertToHoursMins(totalUnidade);
 
-            // traz a carga distribuida periodo
-            let selTpCtrl = document.getElementById('selTpControle').value;
-            let selResp   = document.getElementById('selResponsavelUtlDist').value;
-            
-            if( selResp != '' || selTpCtrl != '' ){
-                let todosValoresTpCtrl = new Array();
+        // traz a carga distribuida periodo
+        let selTpCtrl = document.getElementById('selTpControle').value;
+        let selResp   = document.getElementById('selResponsavelUtlDist').value;
+
+        if( selResp != '' || selTpCtrl != '' ){
+            let todosValoresTpCtrl = new Array();
 
             if( selTpCtrl != '' ){
                 todosValoresTpCtrl.push( selTpCtrl );
@@ -773,8 +781,8 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
                     if( $( this ).val() != '' ) todosValoresTpCtrl.push( $( this ).val() );
                 });
             }
-
-            getCargaHrDistribuida( todosValoresTpCtrl );
+            let idUsuarioPesq = document.querySelector('#selResponsavelUtlDist').value;
+            getCargaHrDistribuida( todosValoresTpCtrl , idUsuarioPesq, 'distribuicao-listar' );
         }
 
         addEnter();
@@ -1088,34 +1096,6 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
         }
 
     }
-
-    function getCargaHrDistribuida( idsTpCtrl ){
-        var params = {
-            idUsuarioParticipante: document.getElementById('selResponsavelUtlDist').value,
-            idTipoControle: idsTpCtrl
-        };
-
-        $.ajax({
-            url: "<?= $strUrlBuscarDadosCarga ?>",
-            type: 'POST',
-            data: params,
-            dataType: 'XML',
-            success: function (r) {
-                var cargaDisti = $(r).find('ValorUndEs').text();
-                var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
-                var cargaPadrao = $(r).find('ValorCarga').text();
-                document.getElementById('divCargaHrDistrib').style.display = 'block';
-                document.getElementById('divCargaHrDistribExec').style.display = 'block';
-                document.getElementById('spnCargaHrDistrib').innerHTML = String(convertToHoursMins(cargaDisti));
-                document.getElementById('spnCargaHrDistribExec').innerHTML = String(convertToHoursMins(cargaDistiExe));
-                document.getElementById('spnCargaHrPadrao').innerHTML = String(convertToHoursMins(cargaPadrao));
-            },
-            error: function (e) {
-                console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
-            }
-        });
-    }
-
 </script>
 
 <?php

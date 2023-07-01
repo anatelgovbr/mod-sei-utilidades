@@ -168,13 +168,25 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         $objMdUtlAjustePrazoRN->alterar($objAjustPrazoDTO);
         $objMdUtlAjustePrazoRN->desativar(array($objAjustPrazoDTO));
 
-
+        $arrParams = array();
+        $arrParams['dblIdProcedimento'] = $idProcedimento;
+        $arrParams['intIdFila'] = $idFila;
+        $arrParams['intIdTpCtrl'] = $idTpCtrl;
+        $arrParams['strStatus'] = $strNovoStatus;
+        $arrParams['idTriagem'] = $idTriagem;
+        $arrParams['intIdUnidade'] = $idUnidade;
+        $arrParams['idAnalise'] = $idAnalise;
+        $arrParams['idRevisao'] = $idRevisao;
+        $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+        $arrParams['intTempoExecucao'] = $tempoExecucao;
+        $arrParams['strDetalhe'] = $strDetalheAjust;
+        $arrParams['tipoAcao'] = $strTipoAcao;
+        $arrParams['dtPrazo'] = $dthPrazo;
         //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-        if ($objAjustPrazoDTO->getStrStaTipoSolicitacao() == MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
-            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo));
-        } else {
-            $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $idAjustePrazo, $dthPrazo));
+        if ($objAjustPrazoDTO->getStrStaTipoSolicitacao() != MdUtlControleDsmpRN::$TP_SOLICITACAO_DILACAO) {
+            $arrParams['idAjustePrazo'] = $idAjustePrazo;
         }
+        $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
     }
 
     protected function reprovarSolicitacaoControlado($objControleDsmpDTO)
@@ -292,8 +304,21 @@ class MdUtlGestaoAjustPrazoRN extends InfraRN
         }
 
         $objMdUtlControleDsmpRN->excluir(array($objControleDsmpDTO));
-        $arrSituacao = array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, $idUnidade, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, null, $dthPrazo);
-        $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrSituacao);
+        $arrParams = array();
+        $arrParams['dblIdProcedimento'] = $idProcedimento;
+        $arrParams['intIdFila'] = $idFila;
+        $arrParams['intIdTpCtrl'] = $idTpCtrl;
+        $arrParams['strStatus'] = $strNovoStatus;
+        $arrParams['intIdUnidade'] = $idUnidade;
+        $arrParams['intTempoExecucao'] = $tempoExecucao;
+        $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+        $arrParams['idTriagem'] = $idTriagem;
+        $arrParams['idAnalise'] = $idAnalise;
+        $arrParams['idRevisao'] = $idRevisao;
+        $arrParams['strDetalhe'] = $strDetalheAjust;
+        $arrParams['tipoAcao'] = $strTipoAcao;
+        $arrParams['dtPrazo'] = $dthPrazo;
+        $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
     }
 
 

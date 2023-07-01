@@ -7,8 +7,6 @@ SessaoSEI::getInstance()->validarPermissao($_GET['acao']);
 PaginaSEI::getInstance()->salvarCamposPost(array('selStaFrequencia', 'selMdUtlAdmFila'));
 
 // Consulta tipo de controle
-
-
 $idTipoControleUtl = isset($_GET['id_tipo_controle_utl'])?$_GET['id_tipo_controle_utl']:$_POST['hdnIdTipoControleUtl'];
 $objMdUtlAdmTpCtrlDesempRN = new MdUtlAdmTpCtrlDesempRN();
 $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
@@ -28,6 +26,8 @@ $strLupaTpProcesso  = '';
 $heigthAreaDados    = 45;
 $qtdUsuario         = 0;
 $idMdUtlAdmPrmGr    = 0;
+
+$bolTemIntegracaoWS = false;
 
 // Parâmetros
 if($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() > 0) {
@@ -52,6 +52,12 @@ if($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() > 0) {
 
     $mdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
 
+    /* Trata registros de usuarios membros que sejam chefes imediatos */
+    $arrUsuarios = $mdUtlAdmPrmGrUsuRN->getDadosUsuarioMembro( $idMdUtlAdmPrmGr );
+
+    $bolTemIntegracaoWS = $mdUtlAdmPrmGrUsuRN->trataUsuariosChefiaImediata( $arrUsuarios );
+    /* Fim do tratamento */
+
     $strUsuarioPart = $mdUtlAdmPrmGrUsuRN->montarArrUsuarioParticipante($idMdUtlAdmPrmGr);
     $arrUsuarioParticipante = $strUsuarioPart['itensTabela'];
 
@@ -62,7 +68,6 @@ if($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() > 0) {
 
     $mdUtlAdmRelPrmGrProcRN = new MdUtlAdmRelPrmGrProcRN();
     $strLupaTpProcesso   = $mdUtlAdmRelPrmGrProcRN->montarArrTpProcesso($idMdUtlAdmPrmGr);
-
 }
 
 $arrLupaTpProcessoOrigin   = PaginaSEI::getInstance()->getArrItensTabelaDinamica($strLupaTpProcesso);
@@ -86,14 +91,14 @@ switch ($_GET['acao']) {
         $strStaFrequencia = $_POST['selStaFrequencia'];
         if ($strStaFrequencia != '' || $strStaFrequencia != 0 ) {
             $objMdUtlAdmPrmGrDTO->setStrStaFrequencia($strStaFrequencia);
+            if($strStaFrequencia == "D") {
+                $inicioPeriodo = MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO;
+            } elseif($strStaFrequencia == "S") {
+                $inicioPeriodo = MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA;
+            } elseif($strStaFrequencia == "M") {
+                $inicioPeriodo = MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES;
+            }
         }
-
-        /*
-        if(isset($_POST['selFilaPadrao']) && $_POST['selFilaPadrao']!= $selFilaPadrao){
-            $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmFila($_POST['selFilaPadrao']);
-        }
-        */
-
 
         $objMdUtlAdmPrmGrDTO->setDblPercentualTeletrabalho($_POST['txtPercentualTeletrabalho']);
         $sinRetornoUltimaFila = $_POST['selRetorno'] != '' ? $_POST['selRetorno'] : null;
@@ -107,7 +112,7 @@ switch ($_GET['acao']) {
         $objMdUtlAdmPrmGrDTO->setNumPrazoMaxSuspensao($_POST['przSuspensao']);
         $objMdUtlAdmPrmGrDTO->setStrRespTacitaInterrupcao($_POST['selInterrupcao']);
         $objMdUtlAdmPrmGrDTO->setNumPrazoMaxInterrupcao($_POST['przInterrupcao']);
-        $objMdUtlAdmPrmGrDTO->setNumInicioPeriodo($_POST['selInicioPeriodo']);
+        $objMdUtlAdmPrmGrDTO->setNumInicioPeriodo($inicioPeriodo);
         $objMdUtlAdmPrmGrDTO->setDtaDataCorte($_POST['txtDtCorte']);
 
         if (!empty($_POST)) {

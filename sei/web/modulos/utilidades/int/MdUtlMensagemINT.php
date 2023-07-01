@@ -73,7 +73,7 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_58 = 'Selecione um Status para realizar a Distribuição.';
     public static $MSG_UTL_59 = 'Selecione ao menos um Processo para realizar a Distribuição.';
     public static $MSG_UTL_60 = 'Não é possível excluir este documento, pois o mesmo esta sendo utilizado no Controle de Desempenho.';
-    public static $MSG_UTL_61 = 'O processo @VALOR1@ está aberto no Controle de Desempenho e não pode ser excluído.';
+    public static $MSG_UTL_61 = 'Este processo está associado a histórico de Controle de Desempenho e não pode ser excluído.';
     public static $MSG_UTL_62 = 'Os Usuários listados abaixo já possuem uma Jornada Específica cadastrada para este período:';
     public static $MSG_UTL_63 = 'Já existe uma Jornada Geral cadastrada para este período neste Tipo de Controle.';
     public static $MSG_UTL_64 = 'O Tipo de Controle selecionado não está parametrizado. Realize a parametrização do mesmo para incluir uma Jornada.';
@@ -137,6 +137,15 @@ class MdUtlMensagemINT extends InfraINT {
     public static $MSG_UTL_122 = 'Não foi possível recuperar o nome do Usuário Participante. Por favor, tente mais tarde ou feche o sistema e entre novamente.';
     public static $MSG_UTL_123 = 'Para acessar a Gestão de Solicitações é necessário que o Usuário Logado esteja definido como Gestor do Controle de Desempenho na Administração > Controle de Desempenho > Tipo de Controle de Desempenho > Editar ou Avaliador em uma das Filas dos Tipos de Controle de Desempenho parametrizado para esta Unidade.';
     public static $MSG_UTL_124 = 'Usuário não vinculado à Fila ou está Desativado, com isso, o campo que sinaliza a Distribuição automática para o Novo Fluxo do processo foi desmarcado.';
+    public static $MSG_UTL_125 = 'Antes de Salvar, acione o botão Editar sobre um determinado Ex-Participante e altere as informações.';
+    public static $MSG_UTL_126 = 'Ao menos um campo precisa estar preenchido para realizar à atualização.';
+		public static $MSG_UTL_127 = 'O Tipo de Integração "SOAP" ainda não está disponível nesta versão.';
+		public static $MSG_UTL_128 = 'Indique como Dado Restrito a chave de autenticação definida no Header.';
+		public static $MSG_UTL_129 = 'O Conteúdo de Autenticação é de preenchimento obrigatório.';
+		public static $MSG_UTL_130 = 'Para remover este membro, antes é necessário preencher a Data Fim de Participação';
+		public static $MSG_UTL_131 = 'Não é permitido solicitar ajuste de prazo, pois em nenhuma das atividades selecionadas deste processo possuem prazo definido.';
+		public static $MSG_UTL_132 = 'Não foi possível distribuir processos para o usuário logado, pois nenhum processo foi encontrado considerando as parametrizações da Distribuição.';
+
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;

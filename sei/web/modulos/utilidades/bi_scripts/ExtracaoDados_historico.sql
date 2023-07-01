@@ -29,7 +29,7 @@ SELECT
     tempo_de_execucao_atribuido,
     percentual_desempenho,
     sta_tipo_presenca_participacao,
-    fator_desemp_diferenciado,
+    #fator_desemp_diferenciado,
     sta_tipo_jornada,
     fator_reducao_jornada,
     sum(pontos_ganhos) as pontos_ganhos,
@@ -82,7 +82,7 @@ SELECT DISTINCT
     
     #Participação
     adm_hist_prm_gr_usu.sta_tipo_presenca as sta_tipo_presenca_participacao,
-    adm_hist_prm_gr_usu.fator_desemp_diferenciado,
+    #adm_hist_prm_gr_usu.fator_desemp_diferenciado,
     adm_hist_prm_gr_usu.sta_tipo_jornada,
     adm_hist_prm_gr_usu.fator_reducao_jornada,
     
@@ -161,7 +161,7 @@ SELECT DISTINCT
     
     #Participação
     adm_hist_prm_gr_usu.sta_tipo_presenca,
-    adm_hist_prm_gr_usu.fator_desemp_diferenciado,
+    #adm_hist_prm_gr_usu.fator_desemp_diferenciado,
     adm_hist_prm_gr_usu.sta_tipo_jornada,
     adm_hist_prm_gr_usu.fator_reducao_jornada,
     
@@ -221,7 +221,7 @@ GROUP BY
     tempo_de_execucao_atribuido,
     percentual_desempenho,
     sta_tipo_presenca_participacao,
-    fator_desemp_diferenciado,
+    #fator_desemp_diferenciado,
     sta_tipo_jornada,
     fator_reducao_jornada,
     tipo_historico

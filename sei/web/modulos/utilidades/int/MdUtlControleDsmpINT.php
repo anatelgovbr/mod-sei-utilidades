@@ -51,6 +51,8 @@ class MdUtlControleDsmpINT extends InfraINT
         $arrRetorno[MdUtlControleDsmpRN::$REMOCAO_FILA] = MdUtlControleDsmpRN::$STR_REMOCAO_FILA;
         $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO] = MdUtlControleDsmpRN::$STR_SUSPENSO;
         $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO] = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
+        $arrRetorno[MdUtlControleDsmpRN::$RASCUNHO_ANALISE] = MdUtlControleDsmpRN::$STR_RASCUNHO_ANALISE;
+        $arrRetorno[MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_RASCUNHO_CORRECAO_ANALISE;
 
         return $arrRetorno;
     }
@@ -192,6 +194,7 @@ class MdUtlControleDsmpINT extends InfraINT
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_ANALISE:
                 $arrVisualizacao['ASSOCIACAO'] = $isTipoProcessoParametrizado;
                 $arrVisualizacao['TRIAGEM'] = true;
                 $arrVisualizacao['ANALISE'] = true;
@@ -222,6 +225,7 @@ class MdUtlControleDsmpINT extends InfraINT
             case MdUtlControleDsmpRN::$EM_REVISAO:
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE:
                 $arrVisualizacao['ASSOCIACAO'] = false;
                 $arrVisualizacao['TRIAGEM'] = true;
                 $arrVisualizacao['ANALISE'] = $isPossuiAnalise;
@@ -307,6 +311,8 @@ class MdUtlControleDsmpINT extends InfraINT
                 break;
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE:
                 $arrUrls['TRIAGEM'] = $replaceUrl('md_utl_triagem_consultar');
                 $arrUrls['ANALISE'] = $replaceUrl('md_utl_analise_alterar');
                 $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_analise_consultar');
@@ -325,7 +331,6 @@ class MdUtlControleDsmpINT extends InfraINT
                 $arrUrls['REVISAO'] = $replaceUrl('md_utl_revisao_triagem_consultar');
                 $arrUrls['ATRIBUICAO'] = $replaceUrl('md_utl_atribuicao_automatica');
                 break;
-
         }
 
         return $arrUrls;
@@ -360,6 +365,14 @@ class MdUtlControleDsmpINT extends InfraINT
                 $idRetorno = MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE;
                 break;
 
+            case MdUtlControleDsmpRN::$RASCUNHO_ANALISE:
+                $idRetorno = MdUtlControleDsmpRN::$RASCUNHO_ANALISE;
+                break;
+
+            case MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE:
+                $idRetorno = MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE;
+                break;
+
             default:
                 $idRetorno = null;
 
@@ -382,6 +395,100 @@ class MdUtlControleDsmpINT extends InfraINT
         return $select;
     }
 
+    public static function montarSelectMembroResponsavelAvaliacao($vlSelecionado = null, $arrayBuscarUsuarios)
+    {
+
+        $arrParametros = self::retornaSelectMembroResponsavelAvaliacao($arrayBuscarUsuarios);
+        $select = '<option value=""></option>';
+        if(!is_null($arrParametros)) {
+            foreach ($arrParametros as$parametros) {
+                $strSelected = $vlSelecionado != null && $parametros->getNumIdUsuario() == $vlSelecionado ? 'selected=selected' : '';
+                $select .= '<option ' . $strSelected . ' value="' . $parametros->getNumIdUsuario() . '">' . $parametros->getStrNome() . '</option>';
+            }
+        }
+        return $select;
+    }
+
+    public static function montarSelectPeriodoAnalise($idTipoControleDesempenho, $idUsuarioAtribuicao, $periodoInicialSelecionado = NULL, $periodoFinalSelecionado = NULL, $frequenciaAnalise = NULL)
+    {
+        $objMdUtlAdmTpCtrlDesempRN  = new MdUtlAdmTpCtrlDesempRN();
+        $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleDesempenho);
+        $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+        $objMdUtlAdmTpCtrlDesemp = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
+
+        $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+        $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+        $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr( $objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() );
+        $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
+        $objMdUtlAdmPrmGrDTO->retNumInicioPeriodo();
+        $objMdUtlAdmPrmGrDTO->retDtaDataCorte();
+        $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+
+        $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+        $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+        $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario($idUsuarioAtribuicao);
+        $objMdUtlAdmPrmGrUsuDTO->setNumMaxRegistrosRetorno(1);
+        $objMdUtlAdmPrmGrUsuDTO->retDthInicioParticipacao();
+        $objMdUtlAdmPrmGrUsuDTO = $objMdUtlAdmPrmGrUsuRN->consultar($objMdUtlAdmPrmGrUsuDTO);
+
+        if(!is_null($objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao())) {
+            $dataInicioPeriodo = $objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao();
+            $dataInicioPeriodo = explode(" ", $dataInicioPeriodo);
+            $dataInicioPeriodo = $dataInicioPeriodo[0];
+        } elseif($objMdUtlAdmPrmGr->getDtaDataCorte()) {
+            $dataInicioPeriodo = $objMdUtlAdmPrmGr->getDtaDataCorte();
+        } else {
+            $dataInicioPeriodo = date("Y-m-d");
+        }
+        $dataInicioPeriodo = implode('-', array_reverse(explode('/', $dataInicioPeriodo)));
+        $periodo = array();
+        if($frequenciaAnalise != NULL) {
+            $frequencia = $frequenciaAnalise;
+        } else {
+            $frequencia = $objMdUtlAdmPrmGr->getStrStaFrequencia();
+        }
+
+        if($frequencia == "S") {
+            $inicioSemana = date('Y-m-d', strtotime("Monday this week"));
+            $periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday")).") - Atual";
+            $i = -1;
+            while(strtotime($inicioSemana) >  strtotime($dataInicioPeriodo)) {
+                $inicioSemana = date("Y-m-d", strtotime($i." week", strtotime($inicioSemana)));
+                $periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday", strtotime($inicioSemana))).")";
+            }
+        } elseif($frequencia == "M") {
+                $inicioMes = date('Y-m-01');
+                $periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y").") - Atual";
+                $i = -1;
+                while(strtotime($inicioMes) >  strtotime($dataInicioPeriodo)) {
+                    $inicioMes = date("Y-m-01", strtotime($i." month"));
+                    $periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y", strtotime($inicioMes)).")";
+                    $i--;
+                }
+        } else {
+            return array("D", $dataInicioPeriodo);
+        }
+        $select = '<option value=""></option>';
+        $vlSelecionado = $periodoInicialSelecionado."|".$periodoFinalSelecionado;
+				$numLimitador = 15;
+        foreach ($periodo as $key => $parametros) {
+            $periodoExplodido = explode("(", $parametros);
+            $periodoInicialExplodido = explode(" ", $periodoExplodido[1]);
+            $periodoInicial = $periodoInicialExplodido[0];
+            $periodoFinalExplodido = explode(")", $periodoInicialExplodido[2]);
+            $periodoFinal = $periodoFinalExplodido[0];
+            $chave = $periodoInicial . '|' . $periodoFinal;
+            $strSelected = $vlSelecionado != null && $chave == $vlSelecionado ? 'selected=selected' : '';
+            $select .= '<option ' . $strSelected . ' value="' . $chave.'">' . $parametros . '</option>';
+            $numLimitador--;
+            if( $numLimitador == 0 ) break;
+        }
+        return array($frequencia, $select);
+    }
+
     public static function retornaSelectEncaminhamentoAnaliseTriagem()
     {
         $arrParametros = array();
@@ -392,11 +499,158 @@ class MdUtlControleDsmpINT extends InfraINT
 
     }
 
+    public static function retornaSelectMembroResponsavelAvaliacao($arrayBuscarUsuarios)
+    {
+        $idTipoControle    = $arrayBuscarUsuarios["id_tipo_controle_utl"];
+        $idParams          = null;
+        $isBolDistribuicao = $arrayBuscarUsuarios["is_bol_distribuicao"];
+        $tpSelecao         = $arrayBuscarUsuarios["tipo_selecao"];
+        $idFila            = $arrayBuscarUsuarios["id_fila"];
+        $idStatus          = $arrayBuscarUsuarios["id_status"];
+        $arrProcedimentos  = $arrayBuscarUsuarios["arr_procedimentos"];
+        $possuiRegistrosDist = false;
+        $arrObjUsuarioDTO  = null;
+        $isVazioUsers      = false;
+
+        $urlPadrao = 'controlador.php?acao=md_utl_adm_usuario_selecionar';
+
+        if(!is_null($isBolDistribuicao) && $isBolDistribuicao == '1'){
+            $tpSelecao = 1;
+            $isBolUsuario = 1;
+            $isBolUsuarioDTO = 1;
+            $urlPadrao .= '&is_bol_distribuicao='.$isBolDistribuicao;
+        }
+
+        if(!is_null($tpSelecao)){
+            $urlPadrao .= '&tipo_selecao='.$tpSelecao;
+        }
+
+        if(!is_null($idFila)){
+            $urlPadrao .= '&id_fila='.$idFila;
+        }
+
+        if(!is_null($idStatus)){
+            $urlPadrao .= '&id_status='.$idStatus;
+        }
+
+        if(!is_null($idTipoControle)){
+            $urlPadrao .= '&id_tipo_controle_utl='.$idTipoControle;
+        }
+
+        if(!is_null($isBolUsuario) && $isBolUsuario == '1'){
+            $urlPadrao .= '&is_bol_usuario='.$isBolUsuario;
+        }
+
+        if(!is_null($isBolUsuarioDTO) && $isBolUsuarioDTO == '1'){
+            $urlPadrao .= '&is_bol_usu_dto='.$isBolUsuarioDTO;
+        }
+
+        if(!is_null($idTipoControle) && $idTipoControle !=''){
+            $objMdUtlAdmTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
+
+            $objMdUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+            $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+            $objMdUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+            $objMdUtlAdmTpCtrlDTO->setNumTotalRegistros(1);
+
+            $objMdUtlAdmTpCtrlDTO = $objMdUtlAdmTpCtrlRN->consultar($objMdUtlAdmTpCtrlDTO);
+
+            $idParams = $objMdUtlAdmTpCtrlDTO->getNumIdMdUtlAdmPrmGr();
+        }
+        if(!is_null($isBolUsuarioDTO) && $isBolUsuarioDTO == 1 && is_null($idParams)) {
+            $objUsuarioDTO = new UsuarioDTO();
+        }else {
+            $objUsuarioDTO = new MdUtlAdmPrmGrUsuDTO();
+            $objUsuarioDTO->retNumIdMdUtlAdmPrmGrUsu();
+        }
+
+
+        if (!is_null($isBolDistribuicao) && $isBolDistribuicao == '1') {
+            $strPapelUsuario = MdUtlAdmFilaINT::getPapeisDeUsuario($idStatus);
+
+            if (!is_null($strPapelUsuario)) {
+                $arrDTO = null;
+                $objRegrasGeraisRN = new MdUtlRegrasGeraisRN();
+                $idsUsuarioUnidade = $objRegrasGeraisRN->getIdsUsuariosUnidadeLogada();
+
+                if(count($idsUsuarioUnidade) > 0) {
+                    $objMdUtlAdmFilaPrmUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
+                    $arrDTO = $objMdUtlAdmFilaPrmUsuRN->getUsuarioPorPapel(array($strPapelUsuario, $idFila, $idsUsuarioUnidade));
+                }
+
+                if (is_null($arrDTO)) {
+                    $isVazioUsers = true;
+                }else{
+                    $idsUsuario = InfraArray::converterArrInfraDTO($arrDTO, 'IdUsuario');
+
+                    // se tiver informado o procedimento, não retorna pessoas que possam ser avaliadoras dela mesma.
+                    $moduloAutoAvaliacaoLiberado = MdUtlAdmPrmGrUsuINT::verificaModoluloLiberarAutoAvaliacaoAtivado();
+                    $arrProcedimentos = explode(",", trim($arrProcedimentos));
+
+                    if (!$moduloAutoAvaliacaoLiberado && count($arrProcedimentos)>0){
+                        $arrIdsPessoasQueNaoPodeDistribuir = MdUtlAdmPrmGrUsuINT::buscarArrayPessoasNaoPodeDistribuir($arrProcedimentos, true);
+                        $idsUsuario = array_diff($idsUsuario, $arrIdsPessoasQueNaoPodeDistribuir);
+                    }
+                    $possuiRegistrosDist = count($idsUsuario) > 0;
+                    if (count($idsUsuario) > 0) {
+                        $objUsuarioDTO->setNumIdUsuario($idsUsuario, InfraDTO::$OPER_IN);
+                    }
+                }
+            }
+        }
+
+        $objUsuarioDTO->retNumIdUsuario();
+        $objUsuarioDTO->retNumIdOrgao();
+        $objUsuarioDTO->retStrSiglaOrgao();
+        $objUsuarioDTO->retStrDescricaoOrgao();
+        $objUsuarioDTO->retStrSigla();
+        $objUsuarioDTO->retStrNome();
+        if( (!is_null($idParams) || !is_null($isBolUsuarioDTO)) && !$isVazioUsers) {
+
+            if (!is_null($idParams)) {
+                $objUsuarioDTO->setNumIdMdUtlAdmPrmGr($idParams);
+            }
+
+            $objUsuarioDTO->setStrStaTipo(UsuarioRN::$TU_SIP);
+
+            PaginaSEI::getInstance()->prepararOrdenacao($objUsuarioDTO, 'Nome', InfraDTO::$TIPO_ORDENACAO_ASC);
+
+            PaginaSEI::getInstance()->prepararPaginacao($objUsuarioDTO);
+
+            if (!is_null($isBolUsuarioDTO) && $isBolUsuarioDTO == 1 && is_null($idParams) && $isBolDistribuicao != 1) {
+                $objUsuarioRN = new UsuarioRN();
+                $arrObjUsuarioDTO = $objUsuarioRN->pesquisar($objUsuarioDTO);
+            }
+
+            // Para a Fila
+            if (!is_null($idParams) && is_null($isBolUsuarioDTO)) {
+                $objUsuarioRN = new MdUtlAdmPrmGrUsuRN();
+                $arrObjUsuarioDTO = $objUsuarioRN->pesquisarUsuarioParametros($objUsuarioDTO);
+            }
+
+            //Para a Distribuição
+            if ($isBolDistribuicao == '1' && $possuiRegistrosDist) {
+
+                $objUsuarioRN = new MdUtlAdmPrmGrUsuRN();
+                $arrObjUsuarioDTO = $objUsuarioRN->pesquisarUsuarioParametros($objUsuarioDTO);
+            }
+
+            if (!is_null($arrObjUsuarioDTO)) {
+                $arrObjUsuarioDTO = InfraArray::distinctArrInfraDTO($arrObjUsuarioDTO, 'IdUsuario');
+            }
+
+            PaginaSEI::getInstance()->processarPaginacao($objUsuarioDTO);
+
+            return $arrObjUsuarioDTO;
+        }
+
+    }
+
     public static function retornaLinkStatus($arrCtrlUrls, $idStatus)
     {
 
         $arrStatusTriagem = array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
-        $arrStatusAnalise = array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
+        $arrStatusAnalise = array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE);
         $arrStatusRevisao = array(MdUtlControleDsmpRN::$EM_REVISAO);
         $arrStatusEspera = array(MdUtlControleDsmpRN::$SUSPENSO, MdUtlControleDsmpRN::$INTERROMPIDO);
 
@@ -458,7 +712,7 @@ class MdUtlControleDsmpINT extends InfraINT
         return $arr;
     }
 
-    public static function getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $idPrazoExistente, $staSolicitacao, $numIdControleDsmp, $isDadosParametrizados, $strIdProcedimento, $statusAnterior, $prazoResposta, $bolHabAjustePrazoAtv)
+    public static function getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $idPrazoExistente, $staSolicitacao, $numIdControleDsmp, $isDadosParametrizados, $strIdProcedimento, $statusAnterior, $prazoResposta, $bolHabAjustePrazoAtv, $dataPrazoFormatada)
 
     {
         $strResultado = '';
@@ -472,12 +726,14 @@ class MdUtlControleDsmpINT extends InfraINT
             if ($isDadosParametrizados) {
                 if (is_null($idPrazoExistente)) {
                     if ($isDataPermitida) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                    	  $link = PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0'));
+                        $strResultado .= '<a onclick="validarDataPrazo(\''.$dataPrazoFormatada.'\',\''.$link.'\')" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                     }
                 } else {
 
                     if ($staSolicitacao == MdUtlAjustePrazoRN::$PENDENTE_RESPOSTA && $isDataPermitida) {
-                        $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_alteracao.svg?11" width="24" height="24" title="Alterar Ajuste de Prazo" alt="Alterar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                    	  $link = PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_alterar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0'));
+                        $strResultado .= '<a onclick="validarDataPrazo(\''.$dataPrazoFormatada.'\',\''.$link.'\')" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_alteracao.svg?11" width="24" height="24" title="Alterar Ajuste de Prazo" alt="Alterar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                     }
 
                     if ($strStatus == MdUtlControleDsmpRN::$SUSPENSO || $strStatus == MdUtlControleDsmpRN::$INTERROMPIDO && !is_null($statusAnterior)) {
@@ -494,7 +750,8 @@ class MdUtlControleDsmpINT extends InfraINT
                     } else {
                         if ($staSolicitacao == MdUtlAjustePrazoRN::$APROVADA || $staSolicitacao == MdUtlAjustePrazoRN::$REPROVADA) {
                             if ($isDataPermitida) {
-                                $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24"" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
+                            	  $link = PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0'));
+                                $strResultado .= '<a onclick="validarDataPrazo(\''.$dataPrazoFormatada.'\',\''.$link.'\')" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_cadastro.svg?11" width="24" height="24"" title="Solicitar Ajuste de Prazo" alt="Solicitar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                             }
                             $strResultado .= '<a href="' . PaginaSEI::getInstance()->formatarXHTML(SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_ajuste_prazo_consultar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao'] . '&id_ajuste_prazo=' . $idPrazoExistente . '&id_controle_desempenho=' . $numIdControleDsmp . '&is_gerir=0')) . '" tabindex="' . PaginaSEI::getInstance()->getProxTabTabela() . '"><img src="modulos/utilidades/imagens/svg/ajuste_prazo_consulta.svg?11" width="24" height="24"" title="Consultar Ajuste de Prazo" alt="Consultar Ajuste de Prazo" class="infraImg" /></a>&nbsp;';
                         }
@@ -815,6 +1072,8 @@ class MdUtlControleDsmpINT extends InfraINT
                     break;
                 case 4:
                 case 10:
+                case 15:
+                case 16:
                     $nmBtn = str_replace( '#mudar' , MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE , $nmBase2 );
                     break;
                 case 6:
@@ -872,7 +1131,8 @@ class MdUtlControleDsmpINT extends InfraINT
                 break;
             
             case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE: //Analise
-                if ( in_array( $strSitAtendimento , [MdUtlControleDsmpRN::$EM_ANALISE , MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] ) ) {
+
+                if ( in_array( $strSitAtendimento , [MdUtlControleDsmpRN::$EM_ANALISE , MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE] ) ) {
                     $objInfo = self::getUsuarioTriagemAnaliseAvaliacao( $numId , $arrLetraIni['C'] );
                 }                
                 else{
@@ -893,7 +1153,7 @@ class MdUtlControleDsmpINT extends InfraINT
             default:  break;
         }
 
-        return !is_null( $objInfo ) ? $objInfo->getStrNome() : null;        
+        return $objInfo;
     }
 
     public static function getUsuarioTriagemAnaliseAvaliacao( $id , $table ){
@@ -902,11 +1162,11 @@ class MdUtlControleDsmpINT extends InfraINT
             case 'T': // md_utl_triagem               
                 $objComumDTO = new MdUtlTriagemDTO();
                 $objComumRN  = new MdUtlTriagemRN();
-    
+
                 $objComumDTO->setNumIdMdUtlTriagem( $id );
                 $objComumDTO->retNumIdUsuario();
                 $objComumDTO = $objComumRN->consultar( $objComumDTO );
-    
+
                 $id_usuario = $objComumDTO->getNumIdUsuario();
                
                 break;
@@ -926,11 +1186,11 @@ class MdUtlControleDsmpINT extends InfraINT
             case 'V': // md_utl_revisao(avaliacao)
                 $objComumDTO = new MdUtlRevisaoDTO();
                 $objComumRN  = new MdUtlRevisaoRN();
-    
+
                 $objComumDTO->setNumIdMdUtlRevisao( $id );
                 $objComumDTO->retNumIdUsuario();
                 $objComumDTO = $objComumRN->consultar( $objComumDTO );
-    
+
                 $id_usuario = $objComumDTO->getNumIdUsuario();
                 
                 break;
@@ -946,14 +1206,16 @@ class MdUtlControleDsmpINT extends InfraINT
                 $id_usuario = $objComumDTO->getNumIdUsuarioDistribuicao();
             break;
         }
-        
+
         $objUsuarioDTO = new UsuarioDTO();
         $objUsuarioRN  = new UsuarioRN();
 
         $objUsuarioDTO->setNumIdUsuario( $id_usuario );
+        $objUsuarioDTO->setBolExclusaoLogica(false);
         $objUsuarioDTO->retStrNome();
+        $objUsuarioDTO->retNumIdUsuario();
         $objUsuarioDTO = $objUsuarioRN->consultarRN0489( $objUsuarioDTO );
-    
+
         return $objUsuarioDTO;
     }
 

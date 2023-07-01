@@ -46,7 +46,6 @@ class MdUtlAdmPrmGrDTO extends InfraDTO
         $this->configurarFK('IdMdUtlAdmPrmGr', 'md_utl_adm_prm_gr_usu muprusu', 'muprusu.id_md_utl_adm_prm_gr');
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaTipoPresenca', 'muprusu.sta_tipo_presenca', 'md_utl_adm_prm_gr_usu muprusu');
-        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'FatorDesempDiferenciado', 'muprusu.fator_desemp_diferenciado', 'md_utl_adm_prm_gr_usu muprusu');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdUsuario', 'muprusu.id_usuario', 'md_utl_adm_prm_gr_usu muprusu');
 	      $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmPrmGrUsu', 'muprusu.id_md_utl_adm_prm_gr_usu', 'md_utl_adm_prm_gr_usu muprusu');
 

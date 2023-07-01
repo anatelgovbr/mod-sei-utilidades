@@ -216,7 +216,21 @@ class MdUtlContestacaoRN extends InfraRN
         $strTipoAcao = MdUtlControleDsmpRN::$STR_TIPO_CONTESTACAO_REVISAO;
 
         //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null , $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheContest, $strTipoAcao, null, null, $dthPrazo, null, $idContestacao));
+        $arrParams = array();
+        $arrParams['dblIdProcedimento'] = $idProcedimento;
+        $arrParams['intIdFila'] = $idFila;
+        $arrParams['intIdTpCtrl'] = $idTpCtrl;
+        $arrParams['strStatus'] = $strNovoStatus;
+        $arrParams['intTempoExecucao'] = $tempoExecucao;
+        $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+        $arrParams['idTriagem'] = $idTriagem;
+        $arrParams['idAnalise'] = $idAnalise;
+        $arrParams['idRevisao'] = $idRevisao;
+        $arrParams['strDetalhe'] = $strDetalheContest;
+        $arrParams['tipoAcao'] = $strTipoAcao;
+        $arrParams['dtPrazo'] = $dthPrazo;
+        $arrParams['idContestacao'] = $idContestacao;
+        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
 
         $tipoControleDsmpRN = new MdUtlAdmTpCtrlDesempRN();
         $tipoControleDsmpDTO = new MdUtlAdmTpCtrlDesempDTO();

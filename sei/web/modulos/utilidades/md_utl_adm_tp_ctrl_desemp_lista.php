@@ -32,6 +32,7 @@ $strUrlReativar     = SessaoSEI::getInstance()->assinarLink($strUrl . 'reativar&
 $strUrlExcluir      = SessaoSEI::getInstance()->assinarLink($strUrl . 'excluir&acao_origem=' . $_GET['acao']);
 $strUrlPesquisar    = SessaoSEI::getInstance()->assinarLink($strUrl . 'listar&acao_origem=' . $_GET['acao']);
 $strUrlNovo         = $isAdmUsuario ? SessaoSEI::getInstance()->assinarLink($strUrl . 'cadastrar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao']) : '';
+$strUrlIntegracao   = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_adm_integracao_listar&acao_origem=' . $_GET['acao'] . '&acao_retorno=' . $_GET['acao']);
 $strUrlFechar       = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acao_origem=' . $_GET['acao']);
 $tpsCtrlUsuario     = $objMdUtlAdmTpCtrlDesempUsuRN->usuarioLogadoIsGestorTpControle();
 
@@ -454,7 +455,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     function fechar(){
         location.href="<?= $strUrlFechar ?>";
     }
-
 </script>
 
 <script type="text/javascript">

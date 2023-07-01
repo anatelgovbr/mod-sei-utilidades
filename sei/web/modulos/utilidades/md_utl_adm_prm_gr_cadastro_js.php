@@ -6,10 +6,12 @@
     var objLupaUsuario  = null;
     var objAutoCompletarUsuario = null;
     var objTabelaDinamicaUsuario= null;
-    var bolFatorDesempenho = false;
     var bolFatorReducao = false;
     var isBolAlterar = false;
     var heigthTamanhoDivAreaPart = null ;
+    var objPlanoTrabalhoValidado = { valido: false , msg: '' };
+    var bolTemIntegracao = document.querySelector('#hdnTemIntegracao').value;
+
     var msg11 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
     var msg14 = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_14); ?>';
     var msg11Padrao = '<?php echo MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_11); ?>';
@@ -33,11 +35,17 @@
         };
 
         objAutoCompletarUsuario.processarResultado = function(id,descricao,complemento){
-
             if ( id != '' ){
+                let arrUsuario = descricao.split(' ');
+                let lastItem = arrUsuario.pop().replace('(','').replace(')','');
+
                 document.getElementById('hdnIdUsuario').value = id;
                 document.getElementById('txtUsuario').value   = descricao;
+
+                document.getElementById('hdnSiglaUsuario').value = lastItem;
                 document.getElementById('txtUsuario').focus();
+
+                verificaMembroParticipante();
             }
         };
 
@@ -145,9 +153,6 @@
 
     function validarCadastro() {
         var dtaCorte    = document.getElementById('txtDtCorte').value;
-        var cargaPadrao = document.getElementById('txtCargaPadrao').value;
-        var tpProcesso  = document.getElementById('hdnTpProcesso').value;
-        var tbUsuario   = document.getElementById('tbUsuario');
         var cargaPadrao        = document.getElementById('txtCargaPadrao').value;
         var tpProcesso         = document.getElementById('hdnTpProcesso').value;
         var retornoUltFila     = document.getElementById('selRetorno').selectedIndex;
@@ -161,7 +166,6 @@
         var przInterrupcao     = document.getElementById('przInterrupcao').value;
         var msg = '';
         var selFrequencia = document.getElementById('selStaFrequencia').value;
-        var inicioPeriodo = document.getElementById('selInicioPeriodo').value;
 
         if(dtaCorte == ''){
             var msg = setMensagemPersonalizada(msg11, ['Data de Corte']);
@@ -181,13 +185,6 @@
             var msg = setMensagemPersonalizada(msg11, ['Frequência de distribuição']);
             alert(msg);
             document.getElementById('selStaFrequencia').focus();
-            return false;
-        }
-
-        if(inicioPeriodo == '' || inicioPeriodo == 0){
-            var msg = setMensagemPersonalizada(msg11, ['Início do Período']);
-            alert(msg);
-            document.getElementById('selInicioPeriodo').focus();
             return false;
         }
 
@@ -270,13 +267,12 @@
 
 
     function verificarVinculoUsuario(idUsuario,idVinculo){
-        //se idVinculo = 0, novo usuario não cadastrado ainda , que foi excluido
-        if(idVinculo != 0) {
+        //se idVinculo = 0, novo usuario não cadastrado ainda
 
+        if(idVinculo != 0) {
             $.ajax({
                 type: "POST",
                 url: "<?= $strLinkAjaxVincUsuFila?>",
-                //dataType: "json",
                 dataType: "xml",
                 data: {
                     idUsuario: idUsuario,
@@ -289,6 +285,8 @@
                         alert(msg);
                         return false;
                     } else {
+                        if( ! validaPreenchimentoDatasParticipacao(idUsuario) ) return false;
+
                         if(isBolAlterar) {
                             var usuario = infraGetElementById('hdnUsuario').value;
                             usuario = usuario.split('±')[0];
@@ -309,7 +307,7 @@
 
                         var row = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
                         objTabelaDinamicaUsuario.removerLinha(row);
-
+                        removeRegistroHdnTbUsuario( idUsuario ); //forca a remocao do usuario caso nao tenha ocorrido
                         verificaTabela(1);
                     }
                 },
@@ -325,6 +323,25 @@
             atualizarUsuariosHndTabela( idUsuario );
             verificaTabela(1);
         }
+    }
+
+    function validaPreenchimentoDatasParticipacao(idUsuario){
+        let valid = true;
+        let arrUsuarios = objTabelaDinamicaUsuario.obterItens();
+        arrUsuarios.forEach( (user,idx) => {
+            if( user[0] == idUsuario ) {
+                if ( user[13] == '' || user[13] === null ) {
+                    alert('<?= MdUtlMensagemINT::$MSG_UTL_130 ?>');
+                    valid = false;
+                } else {
+                    let strUserRemover  = user[9] +'±'+ idUsuario +'±'+ user[13];
+                    let strItensRemover = document.querySelector('#hdnTbUsuarioRemove').value;
+                    strItensRemover = strItensRemover == '' ? strUserRemover : strItensRemover.concat('¥' + strUserRemover);
+                    document.querySelector('#hdnTbUsuarioRemove').value = strItensRemover;
+                }
+            }
+        });
+        return valid;
     }
 
     function iniciarTabelaDinamicaUsuario() {
@@ -377,10 +394,11 @@
             for (i = 1; i < qtd; i++) {
                 linha = document.getElementById('tbUsuario').rows[i];
                 var valorLinha = $.trim(linha.cells[0].innerText);
+                var nm_user    = $.trim(linha.cells[1].innerText);
                 id = $.trim(id);
 
                 if (valorLinha == id) {
-                    return true;
+                    return nm_user;
                 }
             }
             return false;
@@ -441,11 +459,10 @@
             infraGetElementById('hdnTbUsuario').value = arrUsuario;
             infraGetElementById('hdnTbUsuarioRemove').value = hdnTbUsuarioRemove;
         };
-
-        //debug();
     }
 
     function editarUsuarioPart(idUsuario,idVinculo){
+        configOriginalMembroParticipante(true);
 
         objTabelaDinamicaUsuario.flagAlterar = true;
         var dadosUsuario = null;
@@ -470,24 +487,26 @@
         document.getElementById('selTpPresenca').value = dadosUsuario[3];
 
         document.getElementById('txtPlanoTrabalho').value = removerTags( dadosUsuario[4] );
-        
-        // Remove o simbolo de porcentagem com o split
-        document.getElementById('txtFtDesemp').value = dadosUsuario[5] != "null"?dadosUsuario[5].split('%')[0] : "";
-        
-        // ftDesemp = ftDesemp != '' ? ftDesemp+'%':'';
+
         document.getElementById('selTpJornada').value = dadosUsuario[7] ;
         
         // Remove o simbolo de porcentagem com o split
         document.getElementById('txtFtReduc').value = dadosUsuario[8]!= "null" ?dadosUsuario[8].split('%')[0] : "";
 
-        if(dadosUsuario[3] == 'D') {
-            document.getElementById('divFtDesemp').style.display = 'inline-block';
-            bolFatorDesempenho = true;
-        }
         if(dadosUsuario[7] == 'R') {
             document.getElementById('divRedJornada').style.display = 'inline-block';
             bolFatorReducao = true;
         }
+
+        if( dadosUsuario[11] == 'Sim') $('#ckbChefiaImediata').click();
+
+        if( dadosUsuario[12] != '' ) document.querySelector('#txtIniParticipacao').value = dadosUsuario[12];
+
+        if( dadosUsuario[13] != '' ) document.querySelector('#txtFimParticipacao').value = dadosUsuario[13];
+
+        document.querySelector('#hdnCargaHoraria').value = dadosUsuario[14];
+
+        if( dadosUsuario[4] != '' ) objPlanoTrabalhoValidado.valido = true;
 
         infraGetElementById('txtUsuario').disabled = true;
         infraGetElementById('divOpcoesUsuario').hidden = true;
@@ -529,16 +548,6 @@
             return false;
         }
 
-        if(bolFatorDesempenho){
-            var ftDesempenho = document.getElementById('txtFtDesemp').value;
-            if(ftDesempenho == '' || ftDesempenho== 0){
-                var msg = setMensagemPersonalizada(msg11Padrao, ['Fator de Desempenho Diferenciado']);
-                alert(msg);
-                document.getElementById('txtFtDesemp').focus();
-                return false;
-            }
-        }
-
         if(bolFatorReducao){
             var ftReducao = document.getElementById('txtFtReduc').value;
             if(ftReducao == '' || ftReducao== 0){
@@ -553,14 +562,11 @@
     }
 
     function buscarNomeUsuario(){
-        var planoTrab = document.getElementById('txtPlanoTrabalho');
-
-        if( planoTrab.value != '' ) {
-            var valid = validaPlanoTrabalho( document.getElementById('txtPlanoTrabalho') );        
-            if( !valid[0] ) return false;
-            planoTrab = valid[1];
-        }else{
-            planoTrab = null;
+        //valida se foi selecionado algum usuario
+        if( document.getElementById('hdnIdUsuario').value == '' ){
+            alert( setMensagemPersonalizada(msg11Padrao, ['Usuário Participante']) );
+            document.getElementById('txtUsuario').focus();
+            return false;
         }
 
         var arrIds = new Array( document.getElementById('hdnIdUsuario').value );
@@ -575,7 +581,7 @@
             data: params,
             dataType: 'XML',
             success: function (r) {
-                adicionarRegistroTabelaUsuario(r,planoTrab);
+                adicionarRegistroTabelaUsuario( r , objPlanoTrabalhoValidado.msg );
             },
             error: function (e) {
                 console.error('Erro ao buscar o nome do usuário: ' + e.responseText);
@@ -583,8 +589,46 @@
         });
     }
 
+    function validaPreenchimentoCampos(){
+
+        let planoTrab = document.getElementById('txtPlanoTrabalho');
+
+        //se nao foi marcado o checkbox "chefia imediata", verifica se o Plano de Trabalho já foi validado
+        if( !document.querySelector('[name="ckbChefiaImediata"]').checked ) {
+            if( !objPlanoTrabalhoValidado.valido ) {
+                alert("Não foi validado o Plano de Trabalho.\nPor favor, caso não tenha informado o Plano de Trablho, preenchê-lo e clicar no botão Validar.");
+                planoTrab.focus();
+                return false;
+            }
+        }
+
+        // se preenchido o Plano de Trabalho e validado, verifica preenchimento do campo Inicio Participacao, pois será obrigatório
+        //if( planoTrab.value && objPlanoTrabalhoValidado.valido ){}
+        if( ! document.querySelector('#txtIniParticipacao').value ){
+            alert( setMensagemPersonalizada(msg11Padrao, ['Início Participação']) );
+            document.querySelector('#txtIniParticipacao').focus();
+            return false;
+        }
+
+        //valida preenchimento dos campos de data
+        if( document.querySelector('#txtIniParticipacao').value && document.querySelector('#txtFimParticipacao').value ){
+
+            let dti = returnDateTime( document.querySelector('#txtIniParticipacao').value );
+            let dtf = returnDateTime( document.querySelector('#txtFimParticipacao').value );
+
+            if ( dtf <= dti ){
+                alert('A data informada no campo "Fim Participação" não pode ser menor ou igual ao campo "Início Participação"');
+                return false;
+            }
+        }
+
+        return true;
+    }
     
     function adicionarRegistroTabelaUsuario(retornoAjax,linkNumSei){
+        //executa algumas validacoes antes
+        if(! validaPreenchimentoCampos() ) return false;
+        
         var msg ='';
 
         if(isBolAlterar){
@@ -592,20 +636,15 @@
         }else {
           msg  = validarDuplicidade();
         }
+
         if(msg!='') {
             if(validarFatorObrigatorio()) {
-                var arrUsuarios = new Array( document.getElementById('hdnIdUsuario').value ); //document.getElementById('selUsuario').options;
+
+                var arrUsuarios = new Array( document.getElementById('hdnIdUsuario').value );
 
                 var indexPresenca = document.getElementById('selTpPresenca').selectedIndex;
                 var valPresenca = document.getElementById('selTpPresenca').value;
                 var txtPresenca = document.getElementById('selTpPresenca').options[indexPresenca].text;
-
-                var ftDesemp = "";
-                if(valPresenca == 'D') {
-                    ftDesemp = infraGetElementById('txtFtDesemp').value;
-                    ftDesemp = ftDesemp != '' ? ftDesemp + '%' : '';
-                }
-
                 var indexTpJornada = document.getElementById('selTpJornada').selectedIndex;
                 var valTpJornada = document.getElementById('selTpJornada').value;
                 var txtTpJornada = document.getElementById('selTpJornada').options[indexTpJornada].text;
@@ -623,7 +662,12 @@
                     ftReduc = ftReduc != '' ? ftReduc + '%' : '';
                 }
 
+                let chkChefiaImediata = 'Não';
+                if( document.querySelector('[name="ckbChefiaImediata"]').checked ) chkChefiaImediata = 'Sim';
 
+                let dt_ini_part = document.querySelector('#txtIniParticipacao').value;
+                let dt_fim_part = document.querySelector('#txtFimParticipacao').value;
+                let cargHr      = document.querySelector('#hdnCargaHoraria').value;
 
                 for (var i = 0; i < arrUsuarios.length; i++) {
                     var idUsuario = arrUsuarios[i];
@@ -638,12 +682,16 @@
                         txtPresenca,
                         valPresenca,
                         planoTrab,
-                        ftDesemp,
+                        "",
                         txtTpJornada,
                         valTpJornada,
                         ftReduc,
                         idMdUtlAdmPrmGrUsu,
-                        nomeSigla
+                        nomeSigla,
+                        chkChefiaImediata,
+                        dt_ini_part,
+                        dt_fim_part,
+                        cargHr
                     ];
 
 
@@ -656,30 +704,36 @@
                         }else{
                             heigthTamanhoDivAreaPart +=2;
                         }
-
                     }
+
+                    let pathIconeAlt = "<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg' ?>";
+                    let pathIconeExc = "<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg' ?>";
+                    let btnAlterar   = '';
+                    let btnRemover   = '';
 
                     if(isBolAlterar){
 
                         var row = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
                         objTabelaDinamicaUsuario.removerLinha(row);
+
+                        //forçar a exclusao da linha no input hidden hdnTbUsuario, caso não tenha ocorrido
+                        removeRegistroHdnTbUsuario( idUsuario );
                     
                         isBolAlterar = false;
-                        flag=false;
 
                         infraGetElementById('txtUsuario').disabled = false;
                         infraGetElementById('divOpcoesUsuario').hidden = false;
 
                         objTabelaDinamicaUsuario.flagAlterar = false;
+
+                        btnAlterar = "<img onclick=\"editarUsuarioPart(" + idUsuario + "," + idMdUtlAdmPrmGrUsu + ")\"" + " title='Alterar Usuário Participante' alt='Alterar Usuário Participante' src='"+pathIconeAlt+"' class='infraImg'/> ";
+                        btnRemover = "<img onclick=\"verificarVinculoUsuario(" + idUsuario + "," + idMdUtlAdmPrmGrUsu + ")\"" + " title='Remover Usuário Participante' alt='Remover Usuário Participante' src='"+pathIconeExc+"' class='infraImg'/> ";
+                    } else {
+                        btnAlterar = "<img onclick=\"editarUsuarioPart(" + idUsuario + "," + 0 + ")\"" + " title='Alterar Usuário Participante' alt='Alterar Usuário Participante' src='"+pathIconeAlt+"' class='infraImg'/> ";
+                        btnRemover = "<img onclick=\"verificarVinculoUsuario(" + idUsuario + "," + 0 + ")\"" + " title='Remover Usuário Participante' alt='Remover Usuário Participante' src='"+pathIconeExc+"' class='infraImg'/> ";
                     }
 
                     objTabelaDinamicaUsuario.adicionar(arrLinha);
-
-                    var pathIconeAlt = "<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/alterar.svg' ?>";
-                    var pathIconeExc = "<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/excluir.svg' ?>";
-
-                    var btnAlterar = "<img onclick=\"editarUsuarioPart(" + idUsuario + "," + 0 + ")\"" + " title='Alterar Usuário Participante' alt='Alterar Usuário Participante' src='"+pathIconeAlt+"' class='infraImg'/> ";
-                    var btnRemover = "<img onclick=\"verificarVinculoUsuario(" + idUsuario + "," + 0 + ")\"" + " title='Remover Usuário Participante' alt='Remover Usuário Participante' src='"+pathIconeExc+"' class='infraImg'/> ";
 
                     objTabelaDinamicaUsuario.adicionarAcoes(idUsuario,btnAlterar + btnRemover, false, false);
 
@@ -687,13 +741,10 @@
                     var row = objTabelaDinamicaUsuario.procuraLinha(idUsuario);
 
                     document.getElementById('tbUsuario').rows[row].cells[1].innerHTML = htmlNomeUsu;
-                    //infraGetElementById('divInfraAreaDados1').style.height=heigthTamanhoDivAreaPart+'em';
                 }
-
-                limparCamposControleParticipante();                   
+                limparCamposControleParticipante();
             }
         }
-        //debug();
     }
 
     function limparCamposControleParticipante(){
@@ -718,16 +769,13 @@
             }
         }
 
-        // remove os campos de fatores
-        if(bolFatorDesempenho) {
-            document.getElementById('divFtDesemp').style.display = 'none';
-            bolFatorDesempenho = false;
-        }
-
         if(bolFatorReducao) {
             document.getElementById('divRedJornada').style.display = 'none';
             bolFatorReducao = false;
         }
+
+        document.querySelector('#hdnCargaHoraria').value = '';
+        configOriginalMembroParticipante(true);
     }
 
     function verificaTabela(qtdLinha) {
@@ -748,9 +796,10 @@
         var msg         = '';
 
         for (var i = 0; i < arrUsuarios.length; i++) {
-            if(objTabelaDinamicaUsuario.existeIdUsuario(arrUsuarios[i])){
+            let result = objTabelaDinamicaUsuario.existeIdUsuario(arrUsuarios[i]);
+            if( result ){
                 valido = false;
-                msg += '-'+ arrUsuarios[i].innerHTML.split(' ')[0];
+                msg += '- ' + result;
                 msg += '\n';
             }
         }
@@ -776,17 +825,6 @@
             return false;
         }
 
-    }
-
-    function validarTpPresenca(val){
-        if(val == 'D'){
-            document.getElementById('divFtDesemp').style.display='inline-block';
-            bolFatorDesempenho = true;
-        }else{
-            document.getElementById('divFtDesemp').style.display='none';
-            if(bolFatorDesempenho)
-                bolFatorDesempenho = false;
-        }
     }
 
     function validarTpJornada(val){
@@ -825,72 +863,41 @@
         return true;
     }
 
-    function montarPeriodo(){
-        var frequencia = document.getElementById('selStaFrequencia').value;
-        var inicioPeriodo = document.getElementById('selInicioPeriodo');
-        var fimPeriodo = document.getElementById('selFimPeriodo');
-        fimPeriodo.value = '0';
-        inicioPeriodo.disabled = false;
+    function validarMembroOutroTpCtrl(){
+        let ret = { suc: true , msg: '' };
 
-        if(frequencia == '0'){
-            inicioPeriodo.value = '0';
-            inicioPeriodo.disabled = true;
-            fimPeriodo.value = '0';
-            fimPeriodo.disabled = true;
-        }
+        $.ajax({
+            url: '<?= $strLinkValidaMembroOutroTpCtrl ?>',
+            type: 'post',
+            dataType: 'xml',
+            async: false,
+            data: {
+                id_usuario: document.querySelector('#hdnIdUsuario').value,
+                id_prm_gr: <?= $objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() ?: 0 ?>,
+                tp_presenca: document.querySelector('#selTpPresenca').value,
+                tp_jornada: document.querySelector('#selTpJornada').value,
+                fator_jornada_red: document.querySelector('#txtFtReduc').value
+            },
+            beforeSend: function () {
+                infraExibirAviso( false );
+            },
+            success: function ( rs ) {
+                let data = $( rs ).find('Validado').text();
 
-        if(frequencia != '0'){
-
-            if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO?>'){
-                inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO)?>';
+                if( data == 'N' ) {
+                    ret.suc = false;
+                    ret.msg = $( rs ).find('Msg').text();
+                }
+            },
+            error: function ( xhr ) {
+                ret.suc = false;
+                ret.msg = xhr.responseText;
+            },
+            complete: function () {
+                infraAvisoCancelar();
             }
-
-            if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL?>'){
-                inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL)?>';
-            }
-
-            if(frequencia == '<?= MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL?>'){
-                inicioPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectInicioPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL)?>';
-            }
-        }
-        montarFimPeriodo();
-    }
-
-    function montarFimPeriodo(){
-        var inicioPeriodo = document.getElementById('selInicioPeriodo');
-        var indexInicioPeriodo = document.getElementById('selInicioPeriodo').selectedIndex;
-        var valInicioPeriodo = document.getElementById('selInicioPeriodo').options[indexInicioPeriodo].value;
-        var fimPeriodo = document.getElementById('selFimPeriodo');
-
-        if(inicioPeriodo.value == '0'){
-            fimPeriodo.value = '0';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_DIARIO)?>';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_DOMINGO)?>';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_INICIO_SEMANAL_SEGUNDA)?>';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_MES)?>';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRO_DIA_UTIL_MES)?>';
-        }
-
-        if(valInicioPeriodo == '<?=MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES?>'){
-            fimPeriodo.innerHTML = '<?= MdUtlAdmPrmGrINT::montarSelectFimPeriodo(MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL_PRIMEIRA_SEGUNDA_MES)?>';
-        }
-
-        fimPeriodo.disabled = true;
+        });
+        return ret;
     }
 
     function verificarVinculoTpProcesso(obj){
@@ -901,7 +908,6 @@
             $.ajax({
                 type: "POST",
                 url: "<?= $strLinkAjaxVincDesProc ?>",
-                //dataType: "json",
                 dataType: "xml",
                 data: {
                     idControle: idControle,
@@ -925,8 +931,7 @@
             return retorno;
     }
     
-    function validaPlanoTrabalho( input ){
-        var ret = new Array(true,'');
+    function validaPlanoTrabalho( input , exec_loading = false ){
         $.ajax({
             type: "post",
             url: "<?= $strLinkAjaxValidaNumPlanoTrab ?>",
@@ -934,42 +939,169 @@
             dataType: "xml",
             data: {
                 id_serie: <?= $objMdUtlAdmTpCtrlDesemp->getNumIdSerie() ?: 0 ?>,
-                num_sei: input.value
+                num_sei: input.value,
+                id_usuario: document.querySelector('#hdnIdUsuario').value,
+                id_prm_gr: <?= $objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() ?: 0 ?>,
+                sigla_usuario: document.querySelector('#hdnSiglaUsuario').value
             },
-            success: function( result ) {
-                var erro = $( result ).find('Erro').text();
+            beforeSend: () => {
+                if( exec_loading ) infraExibirAviso( false );
+            },
+            success: ( result ) => {
 
-                if( erro == '1' ){                
-                    alert( $( result ).find('Msg').text() );
-                    ret[0] = false;
-                }else{
-                    ret[1] = $( result ).find('Msg').text();
-                }            
+                if ( $( result ).find('Erro').text() != '1' ) {
+                    objPlanoTrabalhoValidado.valido = true;
+                } else {
+                    objPlanoTrabalhoValidado.valido = false;
+                    objPlanoTrabalhoValidado.msg    = $( result ).find('Msg').text();
+                }
             },
-            error: function( msgError ) {
-                console.error( msgError );
+            error: ( msgError ) => {
+                console.error( msgError.responseText );
+            },
+            complete: () => {
+                infraAvisoCancelar();
             }
         });
-        return ret;
     }
 
     function atualizarUsuariosHndTabela( idUsuario ){
-        let it = document.getElementById('hdnTbUsuario').value;
+        let it  = document.getElementById('hdnTbUsuario').value;
         let arr = it.split('¥'); // quebra em array o que seria as linhas da tabela
         let novaListaUsuario = new Array();
 
         if( arr.length > 0 ){
-
             // percorre cada linha para excluir do input hidden o usuario selecionado
             for( i in arr ){ 
-
                 // quebra em array o que seria as colunas da cada linha da tabela
                 let arrColunas = arr[i].split('±');
-               
+
                 // arrColunas[0] => id do usuario               
                 if( idUsuario != arrColunas[0] ) novaListaUsuario.push( arr[i] );
             }
             document.getElementById('hdnTbUsuario').value = novaListaUsuario.join('¥');
         }
+    }
+
+    function removeRegistroHdnTbUsuario( idUsuario ){        
+        atualizarUsuariosHndTabela( idUsuario );
+    }
+
+    function acionaValidacaoPlanoTrab(){
+        let user = document.querySelector('#hdnIdUsuario');
+        if( user.value == '' ){
+            alert( setMensagemPersonalizada(msg11Padrao, ['Usuário Participante']) );
+            document.querySelector('#txtUsuario').focus();
+            return false;
+        }
+
+        let planoTrab = document.querySelector('#txtPlanoTrabalho');
+        if ( !document.querySelector('#ckbChefiaImediata').checked ) {
+            if (planoTrab.value == '') {
+                alert(setMensagemPersonalizada(msg11Padrao, ['Plano de Trabalho (Número SEI)']));
+                planoTrab.focus();
+                return false;
+            }
+        }
+
+        validaPlanoTrabalho( planoTrab , true );
+
+        if( objPlanoTrabalhoValidado.valido === false )
+            alert( objPlanoTrabalhoValidado.msg );
+        else
+            alert('Plano de Trabalho validado.');
+    }
+
+    function addRemoveObrigatoriedade( input ){
+        if( input.target.checked )
+            $('.labelPlanoTrab').removeClass('infraLabelObrigatorio').addClass('infraLabelOpcional');
+        else
+            $('.labelPlanoTrab').removeClass('infraLabelOpcional').addClass('infraLabelObrigatorio');
+    }
+
+    $('.acionaCalendario').click( function (){
+        let largTela = document.documentElement.scrollWidth;
+        let largRef  = $(this).data('param') == 'Ini' ? 576 : 992;
+
+        if( largTela <= largRef )
+        {
+            $('#divInfraCalendario').css({
+                left: '',
+                right: 0
+            });
+        }
+        else
+        {
+            $('#divInfraCalendario').css({
+                width: 290
+            });
+        }
+    });
+
+    function openModalUsuariosInativos(){
+        infraAbrirJanelaModal("<?= $strUrlUsuariosInativos ?>" , 1000 , 800 );
+    }
+
+    function configOriginalMembroParticipante(clearPart = false){
+        $('#ckbChefiaImediata')
+            .prop('disabled',false)
+            .prop('checked',false);
+
+        $('.labelPlanoTrab')
+            .addClass('infraLabelObrigatorio')
+            .removeClass('infraLabelOpcional');
+
+        if ( clearPart ){
+            $('#txtFimParticipacao').val('');
+            $('#txtIniParticipacao').val('');
+        }
+    }
+
+    function verificaMembroParticipante(){
+        $.ajax({
+            type: "post",
+            url: "<?= $strLinkVerificaMembroPart ?>",
+            dataType: "xml",
+            data: {
+                id_usuario: document.querySelector('#hdnIdUsuario').value,
+                login_usuario: document.querySelector('#hdnSiglaUsuario').value
+            },
+            beforeSend: () => {
+               infraExibirAviso( false );
+            },
+            success: ( result ) => {
+              let strChefe    = $( result ).find('ChefiaImediata').text();
+              let isEditChefe = $( result ).find('isEditavelChefe').text();
+
+              if ( isEditChefe == 'N' ) {
+                  if( strChefe.length > 0 ) $('#ckbChefiaImediata').click();
+                  $('#ckbChefiaImediata').prop('disabled',true);
+              } else if ( isEditChefe == 'S' ) {
+                  $('#ckbChefiaImediata').prop('disabled',false);
+              }
+            },
+            error: ( msgError ) => {
+                alert( msgError.responseText );
+                console.error( msgError.responseText );
+            },
+            complete: () => {
+                infraAvisoCancelar();
+            }
+        });
+    }
+
+    function validarCheckChefia( el ){
+        if( el.checked ){
+            document.querySelector('.labelPlanoTrab').classList.remove('infraLabelObrigatorio');
+            document.querySelector('.labelPlanoTrab').classList.add('infraLabelOpcional');
+        } else {
+            configOriginalMembroParticipante();
+        }
+    }
+
+    function debugTable(){
+        let tb = document.querySelector('#hdnTbUsuario').value;
+        let arrLinhas = tb.split('¥');
+        console.log(arrLinhas);
     }
 </script>

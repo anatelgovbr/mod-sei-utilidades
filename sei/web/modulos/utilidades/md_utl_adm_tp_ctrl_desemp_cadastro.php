@@ -39,6 +39,7 @@ try {
 
 } catch(Exception $e){
     PaginaSEI::getInstance()->processarExcecao($e);
+
 }
 
 PaginaSEI::getInstance()->montarDocType();

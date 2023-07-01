@@ -22,7 +22,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     public function getVersao()
     {
 
-        return '2.0.0';
+        return '2.1.0';
     }
 
     public function getInstituicao()
@@ -311,6 +311,23 @@ class UtilidadesIntegracao extends SeiIntegracao
             case 'md_utl_distribuir_para_mim':
                 require_once dirname(__FILE__) . '/md_utl_meus_processos_dist_mim.php';
                 return true;
+
+            case 'md_utl_adm_prm_gr_ex_participantes':
+                require_once dirname(__FILE__) . '/md_utl_adm_prm_gr_ex_participantes.php';
+                return true;
+
+            case 'md_utl_adm_integracao_cadastrar':
+            case 'md_utl_adm_integracao_alterar':
+            case 'md_utl_adm_integracao_consultar':
+                require_once dirname(__FILE__) . '/md_utl_adm_integracao_cadastro.php';
+                return true;
+
+            case 'md_utl_adm_integracao_listar':
+            case 'md_utl_adm_integracao_excluir':
+            case 'md_utl_adm_integracao_desativar':
+            case 'md_utl_adm_integracao_reativar':
+                require_once dirname(__FILE__) . '/md_utl_adm_integracao_lista.php';
+                return true;
         }
 
 
@@ -515,6 +532,48 @@ class UtilidadesIntegracao extends SeiIntegracao
                 $xml .= '<Resultado>'. $rs .'</Resultado>';
                 $xml .= '</Documento>';
                 break;
+
+            case 'md_utl_integracao_busca_operacao':
+                if ( $_POST['tipoWs'] == 'SOAP' )
+                    $xml = MdUtlAdmIntegracaoINT::montarOperacaoSOAP($_POST);
+                else
+                    $xml = MdUtlAdmIntegracaoINT::montarOperacaoREST($_POST);
+                break;
+
+            case 'md_utl_adm_prm_verifica_membro_part':
+                // busca se eh chefia imediata
+                $dados           = ( new MdUtlAdmPrmGrUsuRN() )->buscaUsuarioChefiaImediata( $_POST['login_usuario'] );
+                $isEditavelChefe = 'S';
+                if ( is_array($dados) && $dados['comIntegracao'] === true ) {
+                   $isEditavelChefe = 'N';
+                   $retorno         = empty( $dados['retorno'] ) ? '' : json_encode( $dados['retorno'] );
+                }
+
+                $xml = '<Documento><isEditavelChefe>'.$isEditavelChefe.'</isEditavelChefe><ChefiaImediata>'.$retorno.'</ChefiaImediata></Documento>';
+                break;
+
+            case 'md_utl_adm_membro_part_outro_tpCtrl':
+                $validado = null;
+                $msg      = '';
+                $retorno  = ( new MdUtlAdmPrmGrUsuRN() )->validaRegraParticipacaoEmOutroTpCtrl( $_POST );
+
+                switch ( gettype($retorno) ){
+                    case 'array':
+                            $validado = 'N';
+                            $msg      = $retorno['msg'];
+                        break;
+                    case 'boolean':
+                            $validado = 'S';
+                        break;
+                    default:
+                        $validado = 'N';
+                        $msg      = 'Tipo de retorno inválido.';
+                }
+                $xml = "<Documento>
+                            <Validado>$validado</Validado>
+                            <Msg>$msg</Msg>
+                        </Documento>";
+                break;
         }
 
         return $xml;
@@ -590,6 +649,17 @@ class UtilidadesIntegracao extends SeiIntegracao
         }
 
         return $arrBotoes;
+    }
+
+    public function montarBotaoDocumento(ProcedimentoAPI $objProcedimentoAPI, $arrObjDocumentoAPI)
+    {
+        $arrBtn = [];
+        $strBtn = $this->montarBotaoProcesso( $objProcedimentoAPI );
+        foreach ( $arrObjDocumentoAPI as $objDocumento ) {
+            $idDoc = $objDocumento->getIdDocumento();
+            $arrBtn[$idDoc] = $strBtn;
+        }
+        return $arrBtn;
     }
 
     public function excluirUsuario($arrObjUsuarioAPI)

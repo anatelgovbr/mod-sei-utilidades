@@ -2,13 +2,14 @@
 /**
 * TRIBUNAL REGIONAL FEDERAL DA 4ª REGIÃO
 *
-* 24/07/2018 - criado por jaqueline.mendes
+* 20/01/2023 - criado por gustavos.colab
 *
+* Versão do Gerador de Código: 1.43.2
 */
 
 require_once dirname(__FILE__).'/../../../SEI.php';
 
-class MdUtlAdmRelJornadaUsuBD extends InfraBD {
+class MdUtlAdmPrmGrUsuCargaBD extends InfraBD {
 
   public function __construct(InfraIBanco $objInfraIBanco){
   	 parent::__construct($objInfraIBanco);

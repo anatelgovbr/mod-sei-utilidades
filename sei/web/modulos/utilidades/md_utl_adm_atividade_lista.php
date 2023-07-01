@@ -173,6 +173,7 @@ try {
   $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoAtv();
   $objMdUtlAdmAtividadeDTO->retNumTmpExecucaoRev();
   $objMdUtlAdmAtividadeDTO->retStrSinAnalise();
+  $objMdUtlAdmAtividadeDTO->retStrSinAtvRevAmostragem();
   $objMdUtlAdmAtividadeDTO->retStrSinNaoAplicarPercDsmp();
 
   if($bolAcaoReativar) {
@@ -201,7 +202,6 @@ try {
 
   $objMdUtlAdmAtividadeRN = new MdUtlAdmAtividadeRN();
   $arrObjMdUtlAdmAtividadeDTO = $objMdUtlAdmAtividadeRN->listar($objMdUtlAdmAtividadeDTO);
-
   PaginaSEI::getInstance()->processarPaginacao($objMdUtlAdmAtividadeDTO);
   $numRegistros = count($arrObjMdUtlAdmAtividadeDTO);
 
@@ -311,7 +311,7 @@ try {
         {
           if($isSemAnalise)
           {
-            $vlTriagem = 'N_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoRev();
+            $vlTriagem = 'N_'.$arrObjMdUtlAdmAtividadeDTO[$i]->getNumTmpExecucaoRev()."_".$arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAtvRevAmostragem();
           }
           if($isComAnalise)
           {
@@ -324,6 +324,7 @@ try {
         {
           $idSelecao = $arrObjMdUtlAdmAtividadeDTO[$i]->getNumIdMdUtlAdmAtividade();
         }
+
         $strResultado .= '<td valign="top" style="vertical-align:middle;'.$displayNone.'">'.PaginaSEI::getInstance()->getTrCheck($i,$idSelecao,$strNomeFilaChecked).'</td>';
      }
 
@@ -373,7 +374,9 @@ try {
         }
       }
 
-      $strResultado .= '</td></tr>'."\n";
+      $strResultado .= '</td>';
+      $strResultado .= '<td style="display: none">'.PaginaSEI::tratarHTML($arrObjMdUtlAdmAtividadeDTO[$i]->getStrSinAtvRevAmostragem()).'</td>';
+      $strResultado .= ' </tr>'."\n";
     }
     $strResultado .= '</table>';
   }
@@ -446,6 +449,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
   <input type="hidden" id="hdnObjLupaAtividade" name="hdnObjLupaAtividade" value="<?php echo $objLupaAtividade; ?>"/>
   <input type="hidden" id="hdnObjLupaAtividadeUnica" name="hdnObjLupaAtividadeUnica" value="<?php echo $objLupaAtividadeUnica; ?>"/>
   <input type="hidden" id="hdnIsPrmDistrib" name="hdnIsPrmDistrib" value="<?php echo $vlisPrmDistrib; ?>"/>
+    <input type="hidden" id="hdnIsHabilitarAtividadeAvaliacao" name="hdnIsHabilitarAtividadeAvaliacao" value="<?php echo $habilitarAtividadeAvaliacao; ?>"/>
 
   <div class="row">
     <div class="col-12">

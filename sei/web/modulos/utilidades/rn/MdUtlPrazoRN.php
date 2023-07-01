@@ -62,58 +62,65 @@ class MdUtlPrazoRN extends InfraRN
         return $strData;
     }
 
-    public function retornaQtdDiaUtil($dtPrazoInicial, $dtPrazoFinal, $isSomarDia = true)
-    {
+		public function retornaQtdDiaUtil($dtPrazoInicial, $dtPrazoFinal, $isSomarDia = true, $isFeriadoSEI = true)
+		{
 
-      $this->_removerTimeDate($dtPrazoInicial);
-      $this->_removerTimeDate($dtPrazoFinal);
+			$this->_removerTimeDate($dtPrazoInicial);
+			$this->_removerTimeDate($dtPrazoFinal);
 
-      $qtdDiasNormais = InfraData::compararDatas($dtPrazoInicial, $dtPrazoFinal);
-      $arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
+			$qtdDiasNormais = InfraData::compararDatas($dtPrazoInicial, $dtPrazoFinal);
+			$arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
 
-      $qtdDiasUteis = 0;
+			$qtdDiasUteis = 0;
 
-       while (InfraData::compararDatasSimples($dtPrazoInicial, $dtPrazoFinal) != 0) {
+			while (InfraData::compararDatasSimples($dtPrazoInicial, $dtPrazoFinal) != 0) {
 
-           if($isSomarDia) {
-               $dtPrazoInicial = InfraData::calcularData(1, InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $dtPrazoInicial);
-           }
+				if($isSomarDia) {
+					$dtPrazoInicial = InfraData::calcularData(1, InfraData::$UNIDADE_DIAS, InfraData::$SENTIDO_ADIANTE, $dtPrazoInicial);
+				}
 
-            if (InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'sábado' &&
-                InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'domingo' &&
-                !in_array($dtPrazoInicial, $arrFeriados)
-            ) {
-                $qtdDiasUteis++;
-            }
+				$diaSemana = InfraData::obterDescricaoDiaSemana($dtPrazoInicial);
 
-           $isSomarDia = true;
+				if ( $diaSemana != 'sábado' && $diaSemana != 'domingo' ) {
+					if( $isFeriadoSEI ) {
+						if ( !in_array($dtPrazoInicial, $arrFeriados) ) {
+							$qtdDiasUteis++;
+						}
+					} else {
+						$qtdDiasUteis++;
+					}
+				}
 
-           if($qtdDiasUteis == $qtdDiasNormais){
-                break;
-            }
-        }
+				$isSomarDia = true;
 
+				if($qtdDiasUteis == $qtdDiasNormais){
+					break;
+				}
+			}
 
-        return $qtdDiasUteis;
-    }
+			return $qtdDiasUteis;
+		}
 
-    public function verificaDiaUtil($dtPrazoInicial, $dtPrazoFinal)
-    {
+		public function verificaDiaUtil($dtPrazoInicial, $dtPrazoFinal, $isFeriadoSEI = true)
+		{
 
-        $this->_removerTimeDate($dtPrazoInicial);
-        $this->_removerTimeDate($dtPrazoFinal);
+			$this->_removerTimeDate($dtPrazoInicial);
+			$this->_removerTimeDate($dtPrazoFinal);
 
-        $arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
+			$arrFeriados    = $this->recuperarFeriados($dtPrazoInicial, $dtPrazoFinal);
 
-        if (InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'sábado' &&
-            InfraData::obterDescricaoDiaSemana($dtPrazoInicial) != 'domingo' &&
-            $dtPrazoInicial != current($arrFeriados)
-        ) {
-            return true;
-        }
+			$diaSemana = InfraData::obterDescricaoDiaSemana($dtPrazoInicial);
 
-        return false;
-    }
+			if ( $diaSemana != 'sábado' && $diaSemana != 'domingo' ) {
+				if ( $isFeriadoSEI ) {
+					if ($dtPrazoInicial != current($arrFeriados)) return true;
+				} else {
+					return true;
+				}
+			}
+
+			return false;
+		}
 
     private function _somarMes($numMes, $strData)
     {
@@ -323,6 +330,20 @@ class MdUtlPrazoRN extends InfraRN
         return $arrRetorno;
     }
 
+		public function getDatasPeriodoAtual($idPrmGr){
+    	$objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+			$objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
 
+			$objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idPrmGr);
+			$objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
 
+			$objMdUtlAdmPrmGrDTO = $objMdUtlAdmPrmGrRN->consultar( $objMdUtlAdmPrmGrDTO );
+
+			$arrPeriodo = ( new MdUtlAdmPrmGrUsuRN() )->getDiasUteisNoPeriodo( [$objMdUtlAdmPrmGrDTO->getStrStaFrequencia(),false] );
+
+			return [
+				'DT_INICIAL' => $arrPeriodo['dtInicial'] . ' 00:00:00',
+				'DT_FINAL'   => $arrPeriodo['dtFinal'] . ' 23:59:59'
+			];
+		}
 }

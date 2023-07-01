@@ -300,8 +300,12 @@
 
     function desmarcarCkbDistAutoTriagem(){
         $('#ckbDistAutoTriagAnalise')
-            .attr('disabled',true)
             .prop('checked',false);
+    }
+
+    function ocultarColunaAcoes(idTable){
+        let tbl = document.querySelector('#' + idTable);
+        [tbl.rows].map( row => $( row ).find('th:last , td:last').css('display','none') )
     }
 
     function debugTableGeral(){

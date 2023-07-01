@@ -113,6 +113,7 @@ class MdUtlHistControleDsmpINT extends InfraINT {
 
 
             for ($i = 0; $i < $numRegistros; $i++) {
+	              $flagExibirLinha = true;
                 $tmpExec = null;
                 if ( in_array( $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao() , $arrTpAcoes ) ) {
                     $id_user_dist = $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdUsuarioAtual();
@@ -124,9 +125,9 @@ class MdUtlHistControleDsmpINT extends InfraINT {
                             break;
 
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE:
-                            $tmpExec = $objMdUtlHistControleDsmpRN->getTempoExecucaoAnalise(
-                                $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdMdUtlAnalise() , $id_user_dist
-                            );
+	                        $tmpExec = $objMdUtlHistControleDsmpRN->getTempoExecucaoAnalise(
+		                        $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdMdUtlAnalise() , $id_user_dist
+	                        );
                             break;
 
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO:
@@ -139,61 +140,63 @@ class MdUtlHistControleDsmpINT extends InfraINT {
                     $tmpExec = $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumTempoExecucaoAtribuido();
                 }
 
-                $strNomeUsu          = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeUsuario();
-                $strStatus           = trim($arrObjsMdUtlHistControleDsmpDTO[$i]->getStrStaAtendimentoDsmp());
-                $data                = $arrObjsMdUtlHistControleDsmpDTO[$i]->getDthAtual();
-                $strDetalhe          = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrDetalhe();
-                $strSiglaUsu         = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrSiglaUsuario();
-                $strNomeTipoControle = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeTpControle();
-                $strTipoAcao         = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao();
-                $dataFormatada       = MdUtlHistControleDsmpINT::formatarDataHora($data);
+                if( $flagExibirLinha ) {
+	                $strNomeUsu = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeUsuario();
+	                $strStatus = trim($arrObjsMdUtlHistControleDsmpDTO[$i]->getStrStaAtendimentoDsmp());
+	                $data = $arrObjsMdUtlHistControleDsmpDTO[$i]->getDthAtual();
+	                $strDetalhe = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrDetalhe();
+	                $strSiglaUsu = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrSiglaUsuario();
+	                $strNomeTipoControle = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrNomeTpControle();
+	                $strTipoAcao = $arrObjsMdUtlHistControleDsmpDTO[$i]->getStrTipoAcao();
+	                $dataFormatada = MdUtlHistControleDsmpINT::formatarDataHora($data);
 
-                $idAtendimentoAnterior = 0;
-                if($i > 0){
-                    $posicaoAnterior = $i - 1;
-                    $idAtendimentoAnterior = $arrObjsMdUtlHistControleDsmpDTO[$posicaoAnterior]->getNumIdAtendimento();
-                    if($idAtendimentoAnterior != $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdAtendimento()){
-                        $strCssTr = ($strCssTr == '<tr class="infraTrClara">') ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">';
-                    }
+	                $idAtendimentoAnterior = 0;
+	                if ($i > 0) {
+		                $posicaoAnterior = $i - 1;
+		                $idAtendimentoAnterior = $arrObjsMdUtlHistControleDsmpDTO[$posicaoAnterior]->getNumIdAtendimento();
+		                if ($idAtendimentoAnterior != $arrObjsMdUtlHistControleDsmpDTO[$i]->getNumIdAtendimento()) {
+			                $strCssTr = ($strCssTr == '<tr class="infraTrClara">') ? '<tr class="infraTrEscura">' : '<tr class="infraTrClara">';
+		                }
+	                }
+
+	                $strResultado .= $strCssTr;
+	                //Linha Data/Hora
+	                $strResultado .= '<td class="tdDataHora" style="text-align: center">';
+	                $strResultado .= PaginaSEI::tratarHTML($dataFormatada);
+	                $strResultado .= '</td>';
+
+	                //Linha Usuário ação
+	                $strResultado .= '<td class="tdNomeUsuario" style="text-align: center">';
+	                $strResultado .= '<a class="ancoraSigla" href="javascript:void(0);" alt="' . PaginaSEI::tratarHTML($strNomeUsu) . '" title="' . PaginaSEI::tratarHTML($strNomeUsu) . '">' . PaginaSEI::tratarHTML($strSiglaUsu) . '</a>';
+	                $strResultado .= '</td>';
+
+	                //Linha Tipo de controle
+	                $strResultado .= '<td class="tdTipoControle" style="text-align: center">';
+	                $strResultado .= PaginaSEI::tratarHTML($strNomeTipoControle);
+	                $strResultado .= '</td>';
+
+	                //Linha Tipo de ação
+	                $strResultado .= '<td class="tdTipoAcao" style="text-align: center">';
+	                $strResultado .= PaginaSEI::tratarHTML($strTipoAcao);
+	                $strResultado .= '</td>';
+
+	                //Tempo Executado
+	                $strResultado .= '<td class="tdTmpExec" style="text-align: center">';
+	                $strResultado .= !is_null($tmpExec) ? MdUtlAdmPrmGrINT::convertToHoursMins($tmpExec) : '-';
+	                $strResultado .= '</td>';
+
+	                //Linha Detalhe
+	                $strResultado .= '<td class="tdDetalhe" style="text-align: center">';
+	                $strResultado .= $strDetalhe;
+	                $strResultado .= '</td>';
+
+	                //Linha Fila Status
+	                $strResultado .= '<td class="tdStatusProcesso" style="text-align: center">';
+	                $strResultado .= !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
+	                $strResultado .= '</td>';
+
+	                $strResultado .= '</tr>';
                 }
-
-                $strResultado .= $strCssTr;
-                //Linha Data/Hora
-                $strResultado .= '<td class="tdDataHora" style="text-align: center">';
-                $strResultado .= PaginaSEI::tratarHTML($dataFormatada);
-                $strResultado .= '</td>';
-
-                //Linha Usuário ação
-                $strResultado .= '<td class="tdNomeUsuario" style="text-align: center">';
-                $strResultado .=             '<a class="ancoraSigla" href="javascript:void(0);" alt="' . PaginaSEI::tratarHTML($strNomeUsu) . '" title="' . PaginaSEI::tratarHTML($strNomeUsu) . '">' . PaginaSEI::tratarHTML($strSiglaUsu) . '</a>';
-                $strResultado .= '</td>';
-
-                //Linha Tipo de controle
-                $strResultado .= '<td class="tdTipoControle" style="text-align: center">';
-                $strResultado .= PaginaSEI::tratarHTML($strNomeTipoControle);
-                $strResultado .= '</td>';
-
-                //Linha Tipo de ação
-                $strResultado .= '<td class="tdTipoAcao" style="text-align: center">';
-                $strResultado .= PaginaSEI::tratarHTML($strTipoAcao);
-                $strResultado .= '</td>';
-
-                //Tempo Executado
-                $strResultado .= '<td class="tdTmpExec" style="text-align: center">';
-                $strResultado .= !is_null( $tmpExec ) ? MdUtlAdmPrmGrINT::convertToHoursMins( $tmpExec ) : '-';
-                $strResultado .= '</td>';
-
-                //Linha Detalhe
-                $strResultado .= '<td class="tdDetalhe" style="text-align: center">';
-                $strResultado .= $strDetalhe;
-                $strResultado .= '</td>';
-
-                //Linha Fila Status
-                $strResultado .= '<td class="tdStatusProcesso" style="text-align: center">';
-                $strResultado .= !is_null($strStatus) ? PaginaSEI::tratarHTML($arrSituacao[$strStatus]) : PaginaSEI::tratarHTML($arrSituacao[0]);
-                $strResultado .= '</td>';
-
-                $strResultado .= '</tr>';
             }
             $strResultado .= '</table>';
         }

@@ -22,6 +22,7 @@ class MdUtlRelTriagemAtvDTO extends InfraDTO {
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmAtividade', 'id_md_utl_adm_atividade');
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucao', 'tempo_execucao');
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoAtribuido', 'tempo_execucao_atribuido');
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTA, 'DataExecucao', 'data_execucao');
 
     $this->configurarPK('IdMdUtlRelTriagemAtv', InfraDTO::$TIPO_PK_NATIVA);
 

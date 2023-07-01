@@ -108,6 +108,8 @@ class MdUtlAdmFilaINT extends InfraINT {
             case MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE:
             case MdUtlControleDsmpRN::$EM_ANALISE:
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE:
                 $valor = MdUtlAdmFilaRN::$ANALISTA;        
                 break;
 

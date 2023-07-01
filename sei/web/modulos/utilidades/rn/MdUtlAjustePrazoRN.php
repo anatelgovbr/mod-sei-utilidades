@@ -265,7 +265,21 @@ class MdUtlAjustePrazoRN extends InfraRN {
 
         $strTipoAcao = $isAlterar ? MdUtlControleDsmpRN::$STR_TIPO_ACAO_ALT_AJUSTE_PRAZO : MdUtlControleDsmpRN::$STR_TIPO_ACAO_CAD_AJUSTE_PRAZO;
         //Cadastrando para essa fila, e esse procedimento e unidade o novo status
-        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso(array($idProcedimento, $idFila, $idTpCtrl, $strNovoStatus, null, $tempoExecucao, $idUsuarioDistr, $idTriagem, $idAnalise, $idRevisao, $strDetalheAjust, $strTipoAcao, null, $objDTO->getNumIdMdUtlAjustePrazo(), $dthPrazo));
+        $arrParams = array();
+        $arrParams['dblIdProcedimento'] = $idProcedimento;
+        $arrParams['intIdFila'] = $idFila;
+        $arrParams['intIdTpCtrl'] = $idTpCtrl;
+        $arrParams['strStatus'] = $strNovoStatus;
+        $arrParams['idTriagem'] = $idTriagem;
+        $arrParams['idAnalise'] = $idAnalise;
+        $arrParams['idRevisao'] = $idRevisao;
+        $arrParams['idUsuarioDistrib'] = $idUsuarioDistr;
+        $arrParams['intTempoExecucao'] = $tempoExecucao;
+        $arrParams['strDetalhe'] = $strDetalheAjust;
+        $arrParams['tipoAcao'] = $strTipoAcao;
+        $arrParams['idAjustePrazo'] = $objDTO->getNumIdMdUtlAjustePrazo();
+        $arrParams['dtPrazo'] = $dthPrazo;
+        $objControleDesempenhoNovoDTO = $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
 
         $tipoControleDsmpRN = new MdUtlAdmTpCtrlDesempRN();
         $tipoControleDsmpDTO = new MdUtlAdmTpCtrlDesempDTO();

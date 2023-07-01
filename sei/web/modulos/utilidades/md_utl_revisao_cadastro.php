@@ -31,6 +31,10 @@ try {
         $idContest = 0;
     }
 
+	$linkCancelar = "controlador.php?acao=".($isMeusProcessos ? $_GET['acao_origem'] : 'md_utl_processo_listar');
+	$linkCancelar .= $isMeusProcessos == false ? "&id_procedimento=$idProcedimento" : "";
+	$strCancelar  = SessaoSEI::getInstance()->assinarLink($linkCancelar);
+
     $strTitulo = 'Análise ';
     $strAcao = $_GET['acao'];
 
@@ -78,23 +82,42 @@ try {
     $isConsultar                  = false;
     $isUsuarioDistribuido         = $objControleDsmpDTO->getNumIdUsuarioDistribuicao() == SessaoSEI::getInstance()->getNumIdUnidadeAtual();
 
+
     //recupera o nome do usuario que realizou/realizara a avaliacao e quem fez as triagem e analise
-    $nm_usuario_avaliacao = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+    $UsuarioRespTriagAnaliseAval = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
         $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 6 ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp() : $objControleDsmpDTO->getNumIdMdUtlRevisao(),
         $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
         MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO,
         'V'
     );
+	$nm_usuario_avaliacao = $UsuarioRespTriagAnaliseAval->getStrNome();
+    $id_usuario_avaliacao = $UsuarioRespTriagAnaliseAval->getNumIdUsuario();
 
-    $nm_usuario_triagem = null;
-    $nm_usuario_analise = null;
+	//monta um array com o tipo de controle do processo pra ser usado na busca das labels que retornam o tempo de execucao, distribuidas, etc
+	$arrIdsTpCtrls = [$idTipoControle];
 
     $selRevisao      = MdUtlAdmTpRevisaoINT::montarSelectTpRevisao($idTipoControle);
     $selJustRevisao  = MdUtlAdmTpJustRevisaoINT::montarSelectJustRevisao($idTipoControle);
     $arrObjsFilaDTO  = $objFilaRN->getFilasVinculadosUsuario( $idTipoControle );
     $selFila         = MdUtlAdmFilaINT::montarSelectFilas($selFila, $arrObjsFilaDTO, null, true);
     $optionAssociar  = MdUtlRevisaoINT::montarSelectSinRetorno();
-
+    if(!is_null($idMdUtlAnalise)){
+        $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+        $objMdUtlAnaliseRN  = new MdUtlAnaliseRN();
+        $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($idMdUtlAnalise);
+        $objMdUtlAnaliseDTO->retTodos();
+        $objMdUtlAnaliseDTO = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
+        $dataPeriodoInicioAnalise = $objMdUtlAnaliseDTO->getDtaPeriodoInicio();
+        $dataPeriodoFimAnalise = $objMdUtlAnaliseDTO->getDtaPeriodoFim();
+        $selPeriodo = MdUtlControleDsmpINT::montarSelectPeriodoAnalise($objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), $objControleDsmpDTO->getNumIdUsuarioDistribuicao(), $dataPeriodoInicioAnalise, $dataPeriodoFimAnalise, $objMdUtlAnaliseDTO->getStrStaFrequenciaAdmPrmGr());
+        $ckbRelatarDiaDia = !is_null($objMdUtlAnaliseDTO) ? $objMdUtlAnaliseDTO->getStrSinRelatarDiaDia() : null;
+        $dataAnalise = $dataPeriodoInicioAnalise;
+        if($ckbRelatarDiaDia == "S") {
+            $displayDatas = "block";
+        } else {
+            $displayDatas = "none";
+        }
+    }
     if($idContest == 0) {
         if ($idMdUtlAnalise != '' || !is_null($idMdUtlAnalise)) {
             $selAssocFila = $objControleDsmpDTO->getNumIdMdUtlAdmFilaEncAnalise() != null ? 'S' : 'N';
@@ -113,13 +136,15 @@ try {
     $strTitulo      = 'Avaliação';
     $tpAcaoAval     = null;
     $strLinkValidaUsuarioPertenceAFila = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_usuario_pertence_fila');
+	$strUrlBuscarDadosCarga = SessaoSEI::getInstance()->assinarLink('controlador_ajax.php?acao_ajax=md_utl_buscar_dados_carga_usuario_todos_tpctrl');
 
     switch ($_GET['acao']) {
 
         case 'md_utl_revisao_analise_cadastrar':
 
             $arrComandos[] = '<button type="button" accesskey="s" id="btnSalvar" value="salvar" onclick="salvar();" class="infraButton botaoSalvar"><span class="infraTeclaAtalho">S</span>alvar</button>';
-            $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
+            //$arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
+	        $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="fechar();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
 
@@ -130,11 +155,14 @@ try {
             ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
             : $objControleDsmpDTO->getNumIdMdUtlAnalise();
 
-            $nm_usuario_analise = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+            $UsuarioRespTriagAnaliseAval = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
                 $idObj,
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
                 MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE
             );
+            $nm_usuario_analise = $UsuarioRespTriagAnaliseAval->getStrNome();
+            $id_usuario_analise = $UsuarioRespTriagAnaliseAval->getNumIdUsuario();
+	        $idUsuarioResp      = $id_usuario_analise;
 
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
 
@@ -145,12 +173,9 @@ try {
                 if($idContest == 0) {
                     $isProcessoConcluido = $objMdUtlRelRevisTrgAnlsRN->cadastrarRevisaoTriagemAnalise($objControleDsmpDTO);
                     if ($isPgPadrao == 0) {
-                        if ( $isProcessoConcluido ){
-                            $strLink = "acao=arvore_visualizar&acao_origem=procedimento_visualizar&id_procedimento=$idProcedimento";
-                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?'.$strLink));
-                        } else {
-                            header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
-                        }
+                        $link = "controlador.php?acao=md_utl_processo_listar&id_procedimento=$idProcedimento";
+                        if ( $isProcessoConcluido ) $link .= "&is_processo_concluido=$isProcessoConcluido";
+                        header('Location: ' . SessaoSEI::getInstance()->assinarLink($link));
 
                     } else {
                         header('Location: ' . SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_meus_processos_dsmp_listar&id_procedimento=' . $idProcedimento . '&is_processo_concluido=' . $isProcessoConcluido));
@@ -180,11 +205,14 @@ try {
             ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
             : $objControleDsmpDTO->getNumIdMdUtlTriagem();
 
-            $nm_usuario_triagem = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+            $UsuarioRespTriagAnaliseAval =  MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
                 $idObj,
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
                 MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM
             );
+            $nm_usuario_triagem = $UsuarioRespTriagAnaliseAval->getStrNome();
+            $id_usuario_triagem = $UsuarioRespTriagAnaliseAval->getNumIdUsuario();
+	        $idUsuarioResp      = $id_usuario_triagem;
 
             require_once 'md_utl_revisao_triagem_cadastro_acoes.php';
 
@@ -228,12 +256,16 @@ try {
                 ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
                 : $objControleDsmpDTO->getNumIdMdUtlAnalise();
 
-            $nm_usuario_analise = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+            $UsuarioRespTriagAnaliseAval = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
                 $numId,
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
                 MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE,
                 'A'
             );
+
+            $nm_usuario_analise = $UsuarioRespTriagAnaliseAval->getStrNome();
+            $id_usuario_analise = $UsuarioRespTriagAnaliseAval->getNumIdUsuario();
+	        $idUsuarioResp      = $id_usuario_analise;
 
             require_once 'md_utl_revisao_analise_cadastro_acoes.php';
 
@@ -252,12 +284,16 @@ try {
             ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
             : $objControleDsmpDTO->getNumIdMdUtlTriagem();
 
-            $nm_usuario_triagem = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
+            $UsuarioRespTriagAnaliseAval = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
                 $numId,
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
                 MdUtlControleDsmpRN::$STR_TIPO_ACAO_TRIAGEM,
                 'T'
             );
+
+            $nm_usuario_triagem = $UsuarioRespTriagAnaliseAval->getStrNome();
+            $id_usuario_triagem = $UsuarioRespTriagAnaliseAval->getNumIdUsuario();
+	        $idUsuarioResp      = $id_usuario_triagem;
 
             require_once 'md_utl_revisao_triagem_cadastro_acoes.php';
 
@@ -359,6 +395,8 @@ $linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=
                 </div>
             <?php } ?>
         </div>
+
+	    <?php require_once 'md_utl_triag_analise_rev_calculo_tempo.php' ?>
 
         <div class="row">
             <div class="col-xl-6 col-lg-6 col-md-7 col-sm-12 col-xs-6">
@@ -492,13 +530,53 @@ $linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=
             <? } ?>
 
         </div>
-
+        <div class="row">
+            <?php
+            if($selPeriodo[0] != "D") {
+                ?>
+                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 col-xs-10">
+                    <label id="lblPeriodo" for="selPeriodo"  class="infraLabelObrigatorio">Período:</label>
+                    <select id="selPeriodo" name="selPeriodo" class="infraSelect padraoSelect form-control" disabled
+                            tabindex="<?= PaginaSEI::getInstance()->getProxTabDados()?>">
+                        <?php echo $selPeriodo[1] ?>
+                    </select>
+                </div>
+                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 col-xs-10">
+                    <label>&nbsp;</label><br>
+                    <div class="infraCheckboxDiv">
+                        <input type="checkbox" name="ckbRelatarDiaDia" id="ckbRelatarDiaDia" class="form-check-input infraCheckboxInput"
+                            <?= $ckbRelatarDiaDia == 'S' ? 'checked' : '' ?> value="S" onchange="relatarDiaDia(this)" disabled>
+                        <label class="infraCheckboxLabel" for="ckbRelatarDiaDia"></label>
+                    </div>
+                    <label class="infraLabelChec infraLabelOpcional" for="ckbRelatarDiaDia">
+                        Relatar dia a dia do Período
+                    </label>
+                </div>
+                <?php
+            } else {
+                ?>
+                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 col-xs-10 mb-3">
+                    <label id="lblDtAnalise" for="txtDtAnalise"  class="infraLabelObrigatorio">Data:</label>
+                    <div class="input-group mb-3">
+                        <input type="text" id="txtDtAnalise" name="txtDtAnalise" onchange="return validaPeriodoData(this);"
+                               onkeypress="return infraMascara(this, event,'##/##/####')" class="infraText form-control"
+                               value="<?= PaginaSEI::tratarHTML($dataAnalise); ?>"
+                               tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>" disabled>
+                        <img src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/calendario.svg' ?>" id="imgCalDthAnalise"
+                             title="Selecionar Data/Hora Inicial" alt="Selecionar Data de Análise" class="infraImg"
+                             onclick="infraCalendario('txtDtAnalise',this,false,'<?= $dataAnalise ?>');">
+                    </div>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
         <div class="row">
             <div class="col-12">
                 <div class="form-check form-check-inline mb-0">
                     <div class="form-check-inline infraCheckboxDiv">
                         <input type="checkbox" name="cbkRealizarAvalProdAProd" id="cbkRealizarAvalProdAProd" class="infraCheckboxInput"
-                        <?= $ckbRealizarAvalProdProd . $disabled ?> value='S' onchange="realizarAvaliacaoProd( this ) ">
+                            <?= $ckbRealizarAvalProdProd . $disabled ?> value='S' onchange="realizarAvaliacaoProd( this ) ">
                         <label class="infraCheckboxLabel" for="cbkRealizarAvalProdAProd"></label>
                     </div>
                     <label for="cbkRealizarAvalProdAProd" class="form-check-label infraLabelOpcional pt-1" tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
@@ -508,7 +586,7 @@ $linkProcedimento = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=
                 </div>
             </div>
         </div>
-        <div class="table-responsive">
+        <div class="table">
             <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistro); ?>
         </div>
         <?php PaginaSEI::getInstance()->abrirAreaDados('auto'); ?>

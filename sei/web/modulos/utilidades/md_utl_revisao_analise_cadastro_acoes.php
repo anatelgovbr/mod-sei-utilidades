@@ -51,6 +51,7 @@ $objMdUtlRelAnaliseProdutoDTO->retStrSinAtivoAnalise();
 $objMdUtlRelAnaliseProdutoDTO->retNumTempoExecucao();
 $objMdUtlRelAnaliseProdutoDTO->retNumTempoExecucaoAtribuido();
 $objMdUtlRelAnaliseProdutoDTO->retStrSinObjPreenchido();
+$objMdUtlRelAnaliseProdutoDTO->retDtaDataExecucao();
 
 $arrMdUtlRelAnaliseProduto   = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
 
@@ -213,7 +214,27 @@ if($numRegistro > 0) {
             $ctrlNmAtividade = $arrMdUtlRelAnaliseProduto[$i]->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrMdUtlRelAnaliseProduto[$i]->getNumComplexidadeAtividade()] . ') - ' . $vlrUnidEsf;
             
             if( $idCtrlIdAtv != $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv() ){
-                $rowNmAtv = "<tr style='height: 50px;' class='table-success'><td colspan='".$numColsPan."'> $ctrlNmAtividade </td></tr>";
+                if($arrMdUtlRelAnaliseProduto[$i]->getDtaDataExecucao() != "") {
+                    $dataExecucaoAtividade = $arrMdUtlRelAnaliseProduto[$i]->getDtaDataExecucao();
+                }
+                $rowNmAtv = '<tr style="height: 50px;" class="table-success">
+                    <td colspan="'.$numColsPan.'">
+                        <div class="row">
+                            <div class="col-10">'.$ctrlNmAtividade.'</div>
+                            <div class="col-2 dataRelatarDiaDia" style="display: '.$displayDatas.'"> 
+                                <div class="float-right input-group mb-3" style="margin-bottom: 0 !important">
+                                    <label id="lblDtAnaliseAtividade" for="txtDtAnaliseAtividade'.$arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv().'"  class="infraLabelObrigatorio" style="margin-bottom: 0; line-height: 2">Data: </label>
+                                    <input type="text" id="txtDtAnaliseAtividade'.$arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv().'" name="txtDtAnaliseAtividade'.$arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv().'" onchange="return validaPeriodoDataDiaADia(this);"
+                                    onkeypress="return infraMascara(this, event,\'##/##/####\')" class="infraText form-control txtDtAnaliseAtividade"
+                                    value="'.PaginaSEI::tratarHTML($dataExecucaoAtividade).'" tabindex="'.PaginaSEI::getInstance()->getProxTabDados().'" disabled>
+                                    <img src="'.PaginaSEI::getInstance()->getDiretorioSvgGlobal() .'/calendario.svg" id="imgCalDthCorte"
+                                    title="Selecionar Data/Hora Inicial" alt="Selecionar Data de Corte" class="infraImg"
+                                    onclick="infraCalendario(\'txtDtAnaliseAtividade'.$arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv().'\',this,false,\''.$dataExecucaoAtividade.'\');">
+                                </div>
+                            </div>
+                        </div> 
+                    </td>
+                </tr>';
                 $idCtrlIdAtv = $arrMdUtlRelAnaliseProduto[$i]->getNumIdMdUtlRelTriagemAtv();
             }
 

@@ -204,10 +204,6 @@ class MdUtlRegrasGeraisRN extends InfraRN
         if ($msg != '') {
             return $msg;
         }
-
-        //Validar Usuario Participante na Jornada
-        $msg = $this->_validarUsuarioParticipanteJornada($arrIds, $acao);
-        return $msg;
     }
 
     private function _validarUsuarioParticipanteParametrizacao($arrIds, $acao)
@@ -587,6 +583,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                 break;
 
             case MdUtlControleDsmpRN::$EM_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_ANALISE:
                 $arrRetorno['IMG'] = $imgAzul;
                 $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
                 break;
@@ -609,6 +606,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
             case MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM:
             case MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE:
+            case MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE:
                 $arrRetorno['IMG'] = $imgVermelha;
                 $arrRetorno['TOOLTIP'] = 'Fila: ' . $strFila . '\nStatus: ' . $strNomeStatus . '\nData do Status: ' . $dthStatus[0];
                 break;
@@ -702,12 +700,13 @@ class MdUtlRegrasGeraisRN extends InfraRN
         } else {
             $objMdUtlHistControleDsmpDto->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_DESC);
         }
+
         $objMdUtlHistControleDsmpDto->retTodos();
 
         return $objMdUtlHistControleDsmpRn->listar($objMdUtlHistControleDsmpDto);
     }
 
-    public function regraAcaoTriagem($objHistControleDesmp, $idProcedimento)
+    public function regraAcaoTriagem($objHistControleDesmp, $idProcedimento, $isChefiaImediata)
     {
         $params['dataInicio'] = '';
         $params['dataPrazo'] = '';
@@ -738,6 +737,10 @@ class MdUtlRegrasGeraisRN extends InfraRN
             case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO:
 
                 $this->extrairParamsHistTriagem($objHistControleDesmp, $params);
+                if( $isChefiaImediata ) {
+                    $params['tempoExecucaoAtribuido'] = null;
+                    $params['tempoExecucao']          = 0;
+                }
                 break;
 
             case MdUtlControleDsmpRN::$STR_TIPO_ACAO_RETRIAGEM:
@@ -832,8 +835,8 @@ class MdUtlRegrasGeraisRN extends InfraRN
             $status = $historico->getStrStaAtendimentoDsmp();
 
             if ($acao == MdUtlControleDsmpRN::$STR_TIPO_ACAO_DISTRIBUICAO &&
-                in_array($status, array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO))) {
-
+	              in_array($status, array(MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO))
+            ) {
                 if (empty($dataDistribuicao)) {
                     $dataDistribuicao = DateTime::createFromFormat('d/m/Y H:i:s', $historico->getDthAtual());
                     if ($dataDistribuicao > $dataRetornoStatus) {
@@ -1385,7 +1388,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
             $objDTO = $mdUtlControleDsmpRN->getObjDTOParametrizadoDistrib(array($arrObjsFilaUsuDTO, false, $idTipoControle, array()));
 
             if (is_null( $objDTO )) {
-                throw new Exception("Objeto Parametrizado retornou nulo.");
+                throw new Exception(MdUtlMensagemINT::$MSG_UTL_132);
             }
 
             $objDTO->setOrdDthAtual(InfraDTO::$TIPO_ORDENACAO_ASC);
@@ -1839,6 +1842,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
     {
         if( empty( $arrPost ) ) return ['msg' => 'Dados Incompletos!', 'erro' => true];
 
+        // valida se existe o documento informado e se o tipo de documento esta configurado no Tipo de Ctrl
         $objDocumentoDTO = new DocumentoDTO();
         
         $objDocumentoDTO->setStrProtocoloDocumentoFormatado( $arrPost['num_sei'] );
@@ -1854,8 +1858,9 @@ class MdUtlRegrasGeraisRN extends InfraRN
         
         if( is_null( $objDocumentoDTO ) ) return ['msg' => MdUtlMensagemINT::$MSG_UTL_29 , 'erro' => true];
         
-        if( $objDocumentoDTO->getNumIdSerie() != $arrPost['id_serie'] ) return ['msg' => 'Tipo de Documento Inválido.' , 'erro' => true];
-        
+        if( $objDocumentoDTO->getNumIdSerie() != $arrPost['id_serie'] ) return ['msg' => MdUtlMensagemINT::$MSG_UTL_31 , 'erro' => true];
+
+        // valida se está assinado
         $objAssinaturaDTO = new AssinaturaDTO();
         $objAssinaturaDTO->setDblIdDocumento( $objDocumentoDTO->getDblIdDocumento() );
         $objAssinaturaDTO->retDthAberturaAtividade();
@@ -1867,11 +1872,44 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
         $isPossuiAssinatura = $countAss > 0;
 
-        if( !$isPossuiAssinatura ) return ['msg' => 'Documento não assinado.' , 'erro' => true];
+        if( !$isPossuiAssinatura ) return ['msg' => 'O Plano de Trabalho (Número SEI) informado não está assinado.' , 'erro' => true];
+
+        // valida se o documento informado já foi utilizado em outra parametrizacao
+        $objHistPrmGrUsuDTO = new MdUtlAdmHistPrmGrUsuDTO();
+        $objHistPrmGrUsuRN  = new MdUtlAdmHistPrmGrUsuRN();
+
+        $objHistPrmGrUsuDTO->setStrProtocoloFormatadoDocumento( $arrPost['num_sei'] );
+        $objHistPrmGrUsuDTO->retDblIdDocumento();
+        $objHistPrmGrUsuDTO->retNumIdMdUtlAdmPrmGr();
+
+        $arrHistPrmGrUsu = $objHistPrmGrUsuRN->listar( $objHistPrmGrUsuDTO );
+
+        if ( !empty( $arrHistPrmGrUsu ) ){
+            $idsPrmGr     = InfraArray::converterArrInfraDTO( $arrHistPrmGrUsu ,'IdMdUtlAdmPrmGr' );
+            $objTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+            $objTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
+
+            $objTpCtrlDTO->setNumIdMdUtlAdmPrmGr( $idsPrmGr , InfraDTO::$OPER_IN );
+            $objTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+            $objTpCtrlDTO->retNumIdMdUtlAdmTpCtrlDesemp();
+            $objTpCtrlDTO->retStrNome();
+
+            $arrTpCtrl = InfraArray::converterArrInfraDTO( $objTpCtrlRN->listar( $objTpCtrlDTO ) ,'Nome' , 'IdMdUtlAdmPrmGr' ) ;
+
+            $msg_ret = "O Plano de Trabalho (Número SEI) já foi utilizado";
+
+            if( ! array_key_exists( $arrPost['id_prm_gr'] , $arrTpCtrl ) ){
+                $msg_ret .= " no seguinte Tipo de Controle:\n";
+                foreach ( $arrTpCtrl as $nome ) $msg_ret .= "- " . $nome . "\n";
+            }else{
+                $msg_ret .= '.';
+            }
+            return ['msg' => $msg_ret , 'erro' => true];
+        }
 
         $msg = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_trabalhar&id_documento=' . $objDocumentoDTO->getDblIdDocumento());
 
-        return ['erro' => false , 'msg' => $msg];
+        return ['msg' => $msg , 'erro' => false];
     }    
 }
 

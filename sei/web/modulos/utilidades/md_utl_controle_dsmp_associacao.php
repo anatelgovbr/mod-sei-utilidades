@@ -167,14 +167,19 @@ try {
                     $objRN = new MdUtlControleDsmpRN();
                     $objRN->associarFila();
                 }
-                
+                $arrHref = [
+                    "acao=procedimento_visualizar",
+                    "acao_origem={$_GET['acao']}",
+                    "montar_visualizacao=0",
+                    "id_procedimento=$idProcedimento"
+                ];
+                $link = SessaoSEI::getInstance()->assinarLink("controlador.php?".implode('&',$arrHref));
                 echo "<script>";
-                echo "window.opener.location.reload();";
-                //echo " window.opener.focus();";
-                echo "window.close();";
+                    echo "window.opener.parent.document.querySelector('#ifrArvore').src = '$link';";
+	                echo "window.opener.location.reload();";
+	                echo "window.close();";
                 echo "</script>";
                 die;
-                
             }  
             break;
 

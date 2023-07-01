@@ -113,133 +113,159 @@ class MdUtlAnaliseRN extends InfraRN {
 
   protected function cadastrarDadosAnaliseControlado($arrParams){
       try {
-          $isProcessoConcluido       = 0;
-          $dados                     = $arrParams[0];
-          $isTpProcParametrizado     = $arrParams[1];
-          $isAlterar                 = $arrParams[2];
-          $idFila                    = $dados['hdnIdFilaAtiva'];
-          $objMdUtlFilaPrmUsuRN      = new MdUtlAdmFilaPrmGrUsuRN();
-          $objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
-          $objHistoricoRN            = new MdUtlHistControleDsmpRN();
-          $objMdUtlTriagemRN         = new MdUtlTriagemRN();
+           $isProcessoConcluido       = 0;
+           $dados                     = $arrParams[0];
+           $isTpProcParametrizado     = $arrParams[1];
+           $isAlterar                 = $arrParams[2];
+           $idFila                    = $dados['hdnIdFilaAtiva'];
+           $objMdUtlFilaPrmUsuRN      = new MdUtlAdmFilaPrmGrUsuRN();
+           $objMdUtlControleDsmpRN    = new MdUtlControleDsmpRN();
+           $objHistoricoRN            = new MdUtlHistControleDsmpRN();
+           $objMdUtlTriagemRN         = new MdUtlTriagemRN();
+           $objMdUtlAdmPrmGrUsuRN     = new MdUtlAdmPrmGrUsuRN();
 
-          $idProcedimento            = $dados['hdnIdProcedimento'];
-          $vlEncaminhamento          = $dados['selEncaminhamentoAnl'];
-          $idTpCtrl                  = $dados['hdnIdTpCtrl'];
+           $idProcedimento            = $dados['hdnIdProcedimento'];
+           $vlEncaminhamento          = $dados['selEncaminhamentoAnl'];
+           $idTpCtrl                  = $dados['hdnIdTpCtrl'];
+           $isChefiaImediata          = false;
 
-          // Sanitizando Itens Selecionados:
-          $dados['hdnItensSelecionados'] = implode(',', array_unique(explode(',',$dados['hdnItensSelecionados'])));
+           // Sanitizando Itens Selecionados:
+           $dados['hdnItensSelecionados'] = implode(',', array_unique(explode(',',$dados['hdnItensSelecionados'])));
 
-          $arrStrIdsSel              = explode(',',$dados['hdnItensSelecionados']);
+           $arrStrIdsSel              = explode(',',$dados['hdnItensSelecionados']);
 
-          //Cadastrando o obj de analise com base no relacionamento do novo status
-          $strDetalhe = '';
-          $id = null;
+           //Cadastrando o obj de analise com base no relacionamento do novo status
+           $strDetalhe = '';
+           $id = null;
 
-          $formatarDetalhe = function ($value, $key) use (&$strDetalhe, $arrStrIdsSel, &$id, $dados){
-              $arrStr = explode('_', $key);
-              //$id     = count($arrStr) > 0 && $arrStr[0] == 'idSerieProd' ? $value : $id;
-              if(count($arrStr) > 0 && $arrStr[0] == 'nomeProduto') {
-                  $idSelecionado = array_key_exists('1', $arrStr) ? $arrStr[1] : null;
-                  if(!is_null($idSelecionado)) {
-                      if (in_array($idSelecionado, $arrStrIdsSel)) {
-                          $temChave = 'numeroSEI_'.$arrStr[1];
-                          $numSei = array_key_exists( $temChave , $dados ) ? ' ' . $dados[$temChave] : '';
-                          $strDetalhe .= $strDetalhe != '' ? ', ' : '';
-                          $strDetalhe .= $value . $numSei;
-                      }
-                  }
-              }
-          };
+           $formatarDetalhe = function ($value, $key) use (&$strDetalhe, $arrStrIdsSel, &$id, $dados){
+               $arrStr = explode('_', $key);
+               //$id     = count($arrStr) > 0 && $arrStr[0] == 'idSerieProd' ? $value : $id;
+               if(count($arrStr) > 0 && $arrStr[0] == 'nomeProduto') {
+                   $idSelecionado = array_key_exists('1', $arrStr) ? $arrStr[1] : null;
+                   if(!is_null($idSelecionado)) {
+                       if (in_array($idSelecionado, $arrStrIdsSel)) {
+                           $temChave = 'numeroSEI_'.$arrStr[1];
+                           $numSei = array_key_exists( $temChave , $dados ) ? ' ' . $dados[$temChave] : '';
+                           $strDetalhe .= $strDetalhe != '' ? ', ' : '';
+                           $strDetalhe .= $value . $numSei;
+                       }
+                   }
+               }
+           };
 
-          array_walk( $dados, $formatarDetalhe);
+           array_walk( $dados, $formatarDetalhe);
 
-          $objAnalise    = $this->_salvaObjAnalise($dados, $isTpProcParametrizado);
-          $tipoRevisao   = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
-          $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
+           $objAnalise    = $this->_salvaObjAnalise($dados, $isTpProcParametrizado);
+           $tipoRevisao   = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
+           $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
 
           if (!is_null($arrObjsAtuais)) {
 
               $arrIdsProcedimentos = array($idProcedimento);
+              if($dados["hdnSalvarRascunho"] != "1") {
+                  $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdsProcedimentos, 'N', 'S', 'S', null, $dados["hdnSalvarRascunho"]));
 
-              $arrRetorno = $objHistoricoRN->controlarHistoricoDesempenho(array($arrObjsAtuais, $arrIdsProcedimentos, 'N', 'S', 'S'));
+                  $idPrmGr = ( new MdUtlAdmTpCtrlDesempRN() )->_getIdsParamsTpControle( [$idTpCtrl] )[0];
+                  $arrParams = [ [ $idPrmGr ] , SessaoSEI::getInstance()->getNumIdUsuario() ];
+                  if ( !empty($objMdUtlAdmPrmGrUsuRN->validaUsuarioIsChefiaImediata( $arrParams ) ) ) $isChefiaImediata = true;
+                  switch ($tipoRevisao) {
+                      case MdUtlAdmFilaRN::$TOTAL:
 
-              switch ($tipoRevisao) {
-                  case MdUtlAdmFilaRN::$TOTAL:
+                          $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO);
+                          if ($isAlterar) {
+                              $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                          }
 
-                      $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO);
-                      if($isAlterar) {
-                          $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
-                      }
+                          $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+                          $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
 
-                      $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
-                      $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
-
-                      $this->_continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno);
-                      break;
-                  case MdUtlAdmFilaRN::$POR_ATIVIDADE:
-                      $idTriagem =  $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
-                      $isHabilitar = $objMdUtlTriagemRN->verificaHabilitarAtvParaRevisao($idTriagem);
-
-                      $nextStatus = $isHabilitar ? MdUtlControleDsmpRN::$AGUARDANDO_REVISAO : MdUtlControleDsmpRN::$FLUXO_FINALIZADO;
-                      $arrDados = array($arrIdsProcedimentos, $nextStatus);
-                      $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
-                      if($isAlterar) {
-                          $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
-                      }
-
-                      $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
-
-                      if ($isHabilitar) {
                           $this->_continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno);
-                      } else {
+                          break;
+                      case MdUtlAdmFilaRN::$POR_ATIVIDADE:
+                          $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
+                          $isHabilitar = $objMdUtlTriagemRN->verificaHabilitarAtvParaRevisao($idTriagem);
+
+                          $nextStatus = $isHabilitar ? MdUtlControleDsmpRN::$AGUARDANDO_REVISAO : MdUtlControleDsmpRN::$FLUXO_FINALIZADO;
+                          $arrDados = array($arrIdsProcedimentos, $nextStatus);
+                          $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+                          if ($isAlterar) {
+                              $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                          }
+
+                          $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+
+                          if ($isHabilitar) {
+                              $this->_continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno);
+                          } else {
+                              $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_ANALISE, $objAnalise->getNumIdMdUtlAnalise(), $strDetalhe));
+
+                              if ($vlEncaminhamento == MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA) {
+                                  $idNovaFila = $dados['selFila'];
+                                  $objMdUtlControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idNovaFila, $idTpCtrl, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO));
+
+                                  //distribui, após finalizar/associar a Fila, para o ultimo analista
+                                  if (isset($_POST['ckbDistAutoParaMim'])) {
+                                      $objMdUtlControleDsmpRN->distrAutoAposFinalizar();
+                                  }
+                              } else {
+                                  $isProcessoConcluido = 1;
+                              }
+                          }
+
+                          break;
+                      case MdUtlAdmFilaRN::$SEM_REVISAO:
+                          $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$FLUXO_FINALIZADO);
+                          $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+
+                          if ($isAlterar) {
+                              $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
+                          }
+
+                          $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
+
                           $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_ANALISE, $objAnalise->getNumIdMdUtlAnalise(), $strDetalhe));
 
                           if ($vlEncaminhamento == MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA) {
                               $idNovaFila = $dados['selFila'];
                               $objMdUtlControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idNovaFila, $idTpCtrl, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO));
-                              
+
                               //distribui, após finalizar/associar a Fila, para o ultimo analista
-                              if ( isset( $_POST['ckbDistAutoParaMim'] ) ) {
-                                $objMdUtlControleDsmpRN->distrAutoAposFinalizar();
+                              if (isset($_POST['ckbDistAutoParaMim'])) {
+                                  $objMdUtlControleDsmpRN->distrAutoAposFinalizar();
                               }
-                          }else{
+                          } else {
                               $isProcessoConcluido = 1;
                           }
-                      }
+                          break;
 
-                      break;
-                  case MdUtlAdmFilaRN::$SEM_REVISAO:
-                      $arrDados = array($arrIdsProcedimentos, MdUtlControleDsmpRN::$FLUXO_FINALIZADO);
-                      $objMdUtlControleDsmpRN->controlarAjustePrazo($arrDados);
+                  }
+                  if ($_POST['selUsuarioResponsavelAvaliacao'] != "") {
+                      $_POST["hdnTbProcesso"] = $idProcedimento;
+                      $_POST["hdnIdUsuarioParticipanteLupa"] = $_POST['selUsuarioResponsavelAvaliacao'];
+                      $_POST["hdnIdTipoControleUtl"] = $_POST["hdnIdTpCtrl"];
+                      $_POST["hdnIdFila"] = $_POST["hdnIdFilaAtiva"];
+                      $_POST["hdnSelParticipante"] = $_POST["hdnNomeMembroResponsavelAvaliacao"];
+                      $_POST["hdnIsTelaProcesso"] = 1;
 
-                      if ($isAlterar) {
-                           $objMdUtlControleDsmpRN->controlarContestacao($arrDados);
-                       }
-
-                      $objMdUtlControleDsmpRN->excluir($arrObjsAtuais);
-
-                      $objHistoricoRN->concluirControleDsmp(array($idProcedimento, $arrRetorno, MdUtlControleDsmpRN::$CONCLUIR_ANALISE, $objAnalise->getNumIdMdUtlAnalise(), $strDetalhe));
-
-                      if ($vlEncaminhamento == MdUtlControleDsmpRN::$ENC_ASSOCIAR_EM_FILA) {
-                          $idNovaFila = $dados['selFila'];
-                          $objMdUtlControleDsmpRN->associarFilaAnaliseTriagem(array($idProcedimento, $idNovaFila, $idTpCtrl, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ASSOCIACAO));
-
-                          //distribui, após finalizar/associar a Fila, para o ultimo analista
-                          if ( isset( $_POST['ckbDistAutoParaMim'] ) ) {
-                            $objMdUtlControleDsmpRN->distrAutoAposFinalizar();
-                          }
-                      }else{
-                          $isProcessoConcluido = 1;
-                      }
-                      break;
-
+                      $objMdUtlControleDsmpRN->incluirNovaDistribuicao("5");
+                  }
+              } else {
+                  $objControleDsmpDTOAntigo  = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimento);
+                  $this->salvarRascunhoControleDesempenho($objControleDsmpDTOAntigo, $objAnalise->getNumIdMdUtlAnalise());
               }
-
               $objRNGerais = new MdUtlRegrasGeraisRN();
               $idUsuarioAtb = $arrRetorno[$idProcedimento]['ID_USUARIO_ATRIBUICAO'];
               $objRNGerais->controlarAtribuicao($idProcedimento, $idUsuarioAtb);
-              $this->_atualizaObjAnalise($idProcedimento, $objAnalise, $idTpCtrl, $idUsuarioAtb);
+              $this->_atualizaObjAnalise($idProcedimento, $objAnalise, $idTpCtrl, $idUsuarioAtb, $isChefiaImediata, $dados["hdnSalvarRascunho"]);
+              if($dados['selPeriodo'] != "") {
+                  foreach(array_keys($dados) as $chaveArray) {
+                      if(mb_strpos($chaveArray, 'txtDtAnaliseAtividade') !== false) {
+                          $objMdUtlRelTriagemAtvRN = new MdUtlRelTriagemAtvRN();
+                          $objMdUtlRelTriagemAtvRN->atualizaDataExecucao($dados[$chaveArray], $chaveArray);
+                      }
+                  }
+              }
           }
 
           return $isProcessoConcluido;
@@ -248,7 +274,7 @@ class MdUtlAnaliseRN extends InfraRN {
       }
   }
 
-    private function _atualizaObjAnalise($idProcedimento, $objMdUtlAnaliseDTO, $idTpCtrl, $idUsuarioAtb)
+    private function _atualizaObjAnalise($idProcedimento, $objMdUtlAnaliseDTO, $idTpCtrl, $idUsuarioAtb, $isChefiaImediata = false, $rascunho = 0)
     {
         $regrasGerais = new MdUtlRegrasGeraisRN();
         $objTodosHistDesmp = $regrasGerais->recuperarObjHistorico($idProcedimento);
@@ -257,18 +283,35 @@ class MdUtlAnaliseRN extends InfraRN {
 
         $objMdUtlAnaliseDTO->setDthInicio($arrParams['dataInicio'] ? $arrParams['dataInicio'] : '');
         $objMdUtlAnaliseDTO->setDthPrazo($arrParams['dataPrazo'] ? $arrParams['dataPrazo'] : '');
-        $objMdUtlAnaliseDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
-
         $objMdUtlAnaliseDTO->setStrStaTipoPresenca($arrDadosPercentualDesempenho['strStaTipoPresenca']);
-        $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido($arrParams['tempoExecucaoAtribuido'] ?: '');
         $objMdUtlAnaliseDTO->setNumPercentualDesempenho($arrDadosPercentualDesempenho['numPercentualDesempenho']);
+        $objMdUtlAnaliseDTO->setNumTempoExecucao(isset($arrParams['tempoExecucao']) ? $arrParams['tempoExecucao'] : '');
+        $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido($arrParams['tempoExecucaoAtribuido'] ?: '');
+
+        if( $isChefiaImediata || $rascunho == 1){
+            $objMdUtlAnaliseDTO->setNumTempoExecucao( 0 );
+            $objMdUtlAnaliseDTO->setNumTempoExecucaoAtribuido( null );
+        }
 
         return $this->alterar($objMdUtlAnaliseDTO);
     }
 
+    private function salvarRascunhoControleDesempenho($objControleDsmpDTOAntigo, $idAnalise) {
+      $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+      $objMdUtlControleDsmpDTO = $objControleDsmpDTOAntigo;
+      $objMdUtlControleDsmpDTO->setNumIdMdUtlAnalise($idAnalise);
+        if($objControleDsmpDTOAntigo->getStrStaAtendimentoDsmp() == "10" || $objControleDsmpDTOAntigo->getStrStaAtendimentoDsmp() == "16") {
+            $objMdUtlControleDsmpDTO->setStrStaAtendimentoDsmp(MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE);
+        } else {
+            $objMdUtlControleDsmpDTO->setStrStaAtendimentoDsmp(MdUtlControleDsmpRN::$RASCUNHO_ANALISE);
+        }
+
+      $objMdUtlControleDsmpRN->alterar($objMdUtlControleDsmpDTO);
+    }
   private function _continuarFluxoAnalise($dados, $objAnalise, $strDetalhe, $arrRetorno)
     {
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
+        $objMdUtlAdmPrmGrUsuRN     = new MdUtlAdmPrmGrUsuRN();
         $idProcedimento         = $dados['hdnIdProcedimento'];
         $idFila                 = $dados['hdnIdFilaAtiva'];
         $tempoExecucao             = $this->_getTempoExecucaoAnalise($dados);
@@ -277,12 +320,28 @@ class MdUtlAnaliseRN extends InfraRN {
 
         $idTriagem = $arrRetorno[$idProcedimento]['ID_TRIAGEM'];
         $idAntigaAnalise = $arrRetorno[$idProcedimento]['ID_ANALISE'];
+        $isChefiaImediata = false;
+
+
+        $idPrmGr = ( new MdUtlAdmTpCtrlDesempRN() )->_getIdsParamsTpControle( [$idTpCtrl] )[0];
+        $arrParams = [ [ $idPrmGr ] , SessaoSEI::getInstance()->getNumIdUsuario() ];
+        if ( !empty($objMdUtlAdmPrmGrUsuRN->validaUsuarioIsChefiaImediata( $arrParams ) ) ) $isChefiaImediata = true;
 
         if (!is_null($idAntigaAnalise)) {
             $this->desativarPorIds(array($idAntigaAnalise));
         }
-
-        $arrParams = array($idProcedimento, $idFila, $idTpCtrl, MdUtlControleDsmpRN::$AGUARDANDO_REVISAO, null, $tempoExecucao, null, $idTriagem, $objAnalise->getNumIdMdUtlAnalise(), $idRevisao, $strDetalhe, MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE);
+        $arrParams = array();
+        $arrParams['dblIdProcedimento'] = $idProcedimento;
+        $arrParams['intIdFila'] = $idFila;
+        $arrParams['intIdTpCtrl'] = $idTpCtrl;
+        $arrParams['isChefiaImediata'] = $isChefiaImediata;
+        $arrParams['strStatus'] = MdUtlControleDsmpRN::$AGUARDANDO_REVISAO;
+        $arrParams['intTempoExecucao'] = $tempoExecucao;
+        $arrParams['idTriagem'] = $idTriagem;
+        $arrParams['idAnalise'] = $objAnalise->getNumIdMdUtlAnalise();
+        $arrParams['idRevisao'] = $idRevisao;
+        $arrParams['strDetalhe'] = $strDetalhe;
+        $arrParams['tipoAcao'] = MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE;
         $objMdUtlControleDsmpRN->cadastrarNovaSituacaoProcesso($arrParams);
     }
 
@@ -321,17 +380,35 @@ class MdUtlAnaliseRN extends InfraRN {
     $objMdUtlAnaliseDTO->setStrSinAtivo('S');
     $objMdUtlAnaliseDTO->setDthAtual(InfraData::getStrDataHoraAtual());
     $objMdUtlAnaliseDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
+    if($dados['selPeriodo'] != "") {
+        $periodoExplodido = explode("|", $dados['selPeriodo']);
+        $periodoInicial = $periodoExplodido[0];
+        $periodoFinal = $periodoExplodido[1];
+    } elseif($dados['txtDtAnalise'] != "") {
+        $periodoInicial = $dados['txtDtAnalise'];
+        $periodoFinal = $dados['txtDtAnalise'];
+    }
+    $objMdUtlAnaliseDTO->setDtaPeriodoInicio($periodoInicial);
+    $objMdUtlAnaliseDTO->setDtaPeriodoFim($periodoFinal);
+    $objMdUtlAnaliseDTO->setStrStaFrequenciaAdmPrmGr($dados['staFrequenciaAdmPrmGr']);
 
     if (isset($dados['ckbDistAutoParaMim'])) $objMdUtlAnaliseDTO->setStrDistAutoParaMim( $dados['ckbDistAutoParaMim'] );
     else $objMdUtlAnaliseDTO->setStrDistAutoParaMim( null );
 
+      if (isset($dados['ckbRelatarDiaDia'])) $objMdUtlAnaliseDTO->setStrSinRelatarDiaDia( $dados['ckbRelatarDiaDia'] );
+      else $objMdUtlAnaliseDTO->setStrSinRelatarDiaDia( "N" );
+
+      if (isset($_POST['selUsuarioResponsavelAvaliacao'])) {
+          $objMdUtlAnaliseDTO->setNumIdUsuarioAvaliacao( $dados['selUsuarioResponsavelAvaliacao'] );
+      } else {
+          $objMdUtlAnaliseDTO->setNumIdUsuarioAvaliacao( null );
+      }
     if($isTpProcParametrizado) {
         $objMdUtlAnaliseDTO->setStrStaEncaminhamentoAnalise($idEncaminhamentoAnl);
         $objMdUtlAnaliseDTO->setNumIdMdUtlAdmFila($idFilaEncaminhamento);
     }
 
     $objMdUtlAnaliseDTO->retTodos();
-
     $objMdUtlAnaliseDTO   = $this->cadastrar($objMdUtlAnaliseDTO);
     if(!is_null($objMdUtlAnaliseDTO)) {
         $this->_cadastrarRelacionamentosAnaliseProduto($arrStrIdsSel, $dados, $objMdUtlAnaliseDTO->getNumIdMdUtlAnalise());
@@ -346,7 +423,6 @@ class MdUtlAnaliseRN extends InfraRN {
       $objDocumentoRN       = new DocumentoRN();
       $objRelSerieAnaliseRN = new MdUtlRelAnaliseProdutoRN();
       $idProcedimento       = $dados['hdnIdProcedimento'];
-
       for ($i = 0; $i < count($arrStrIdsSel); $i++) {
 
           $objRelAnaliseProduto = new MdUtlRelAnaliseProdutoDTO();

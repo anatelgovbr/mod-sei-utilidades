@@ -57,6 +57,7 @@ class MdUtlRelAnaliseProdutoDTO extends InfraDTO
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PrazoExecucaoAtividade', 'mat.prz_execucao_atv', 'md_utl_adm_atividade mat');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM,'PrazoRevisaoAtividade', 'mat.prz_revisao_atv', 'md_utl_adm_atividade mat');
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR,'SinAtvRevAmostragem','mat.sin_atv_rev_amostragem','md_utl_adm_atividade mat');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeSerie','s.nome','serie s');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeProduto','tp.nome','md_utl_adm_tp_produto tp');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'ComplexidadeAtividade','mat.complexidade','md_utl_adm_atividade mat');
@@ -67,6 +68,7 @@ class MdUtlRelAnaliseProdutoDTO extends InfraDTO
 
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'TempoExecucao','mrt.tempo_execucao','md_utl_rel_triagem_atv mrt');
         $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'TempoExecucaoAtribuido','mrt.tempo_execucao_atribuido','md_utl_rel_triagem_atv mrt');
+        $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTA, 'DataExecucao','mrt.data_execucao','md_utl_rel_triagem_atv mrt');
 
         $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'SinObjPreenchido');
         $this->adicionarAtributo(InfraDTO::$PREFIXO_STR, 'SinVerificarPermissao');

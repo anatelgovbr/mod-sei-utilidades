@@ -462,4 +462,29 @@ class MdUtlAdmPrmGrINT extends InfraINT {
         return 'A Carga Horria Distribuda no Perodo somente ser exibida depois que for aplicado o filtro "Responsvel".\n \n A Carga total abrange todo e qualquer tempo que foi distribudo para o responsvel no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
     }
 
+    public static function retornaTipoPeriodo($idTipoControle)
+    {
+      $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+      $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+      $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idTipoControle);
+      $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
+      $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+
+      $retorno = '';
+      switch($objMdUtlAdmPrmGr->getStrStaFrequencia()){
+        case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
+          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_DIARIO;
+          break;
+
+        case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
+          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_SEMANAL;
+          break;
+
+        case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
+          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_MENSAL;
+          break;
+      }
+      return $retorno;
+    }
+
 }

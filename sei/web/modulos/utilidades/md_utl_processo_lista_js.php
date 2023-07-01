@@ -28,8 +28,23 @@ function inicializar() {
     } else {
         infraEfeitoTabelas();
     }
+
+    <?php if (
+                isset( $_GET['is_processo_concluido'] ) ||
+                (
+                  isset($_GET['acao_origem']) && in_array( $_GET['acao_origem'],['md_utl_distrib_usuario_cadastrar','md_utl_atribuicao_automatica'] ) &&
+                  !isset($_GET['isFechar'])
+                )
+        ):
+    ?>
+        atualizaUtilidadesArvore();
+    <?php endif; ?>
 }
 
+function atualizaUtilidadesArvore(){
+    let link = "<?= SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_visualizar&acao_origem='.$_GET['acao'].'&montar_visualizacao=0&id_procedimento='.$idProcedimento) ?>";
+    parent.document.querySelector('#ifrArvore').src = link;
+}
 
 function associarFila(){
       infraAbrirJanela('<?=$strLinkAssociarFila?>', 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');

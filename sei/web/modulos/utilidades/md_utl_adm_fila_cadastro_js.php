@@ -17,6 +17,9 @@
     var idVinculoControleAlt = 0;
 
     var isAlterar   = false;
+    var objRemoverLinha = {
+        sim: false
+    };
 
     function inicializar() {
         if ('<?=$_GET['acao']?>'=='md_utl_adm_fila_cadastrar'){
@@ -46,27 +49,12 @@
         objTabelaDinamicaUsuParticipante.gerarEfeitoTabela = true;
 
         objTabelaDinamicaUsuParticipante.remover = function(r){
-            var isVinculoControleDsmp = r[10] == 1;
-
-            if(isVinculoControleDsmp){
-               alert(msgPadrao83);
-            }else{
-                var qtd = document.getElementById('tbUsuarioParticipante').rows.length;
-                 if(qtd == 2){
-                 document.getElementById('divTabelaUsuarioParticipante').style.display = 'none';
-                 }
-
-                return true;
-            }
-
-
+            return validarExclusao(r[0]);
         }
-
 
         objTabelaDinamicaUsuParticipante.alterar = function(dados){
             editarUsuarioPart(dados);
         }
-
 
         objTabelaDinamicaUsuParticipante.existeIdUsuario = function (id, posicaoTabela) {
             var qtd;
@@ -120,30 +108,31 @@
         };
     }
 
-    function validarExclusao(dados){
-
+    function validarExclusao(idVinculo){
         $.ajax({
-            type: "POST",
-            url: "<?=$strUrlValidarVinculoUsuario?>",
+            type: "post",
+            url: "<?= $strUrlValidarVinculoUsuario ?>",
             dataType: "xml",
+            async: false,
             data: {
-                idVinculo: dados,
+                idVinculo: idVinculo,
                 idFila   : document.getElementById('hdnIdFila').value
             },
             success: function (result) {
-                check = result.getElementsByTagName('sucesso')[0].innerHTML;
-                if(check == 0){
-                    alert(msgPadrao97);
-                    return false;
+                check = $( result ).find('sucesso').text();
+                if (check == 0) {
+                    objRemoverLinha.sim = false;
+                    alert( $( result ).find('msg').text() );
                 } else {
-                    removerLinhaUsuarioParticipante(dados);
+                    objRemoverLinha.sim = true;
                 }
-
             },
             error: function (msgError) {
+                objRemoverLinha.sim = false;
                 alert('Erro ao buscar o nome do usuário: ' + msgError.responseText);
             }
         });
+        return objRemoverLinha.sim;
     }
     
     function limparCamposMembrosPart() {

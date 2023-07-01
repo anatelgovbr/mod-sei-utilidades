@@ -89,9 +89,16 @@ if ( !empty($arrTpControleUsuMembroUnid) ) {
     $objTpCtrlDTO->setOrdStrNome(InfraDTO::$TIPO_ORDENACAO_ASC);
     $objTpCtrlDTO->retNumIdMdUtlAdmTpCtrlDesemp();
     $objTpCtrlDTO->retStrNome();
+    $objTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
 
     $arrObjTpControle = $objTpCtrlRN->listar( $objTpCtrlDTO );
 }
+
+$objChefiaImediata = null;
+if( !empty( $arrObjTpControle ) )
+    $objChefiaImediata = ( new MdUtlAdmPrmGrUsuRN() )->validaUsuarioIsChefiaImediata(
+            [InfraArray::converterArrInfraDTO($arrObjTpControle,'IdMdUtlAdmPrmGr')]
+    );
 
 $selTpControle = is_null($arrObjTpControle) ? array() : MdUtlAdmFilaINT::montarSelectTpControle($arrObjTpControle,'NumIdMdUtlAdmTpCtrlDesemp', 'StrNome',$_POST['selTpControle']);
 
@@ -477,8 +484,7 @@ if ($isParametrizado) {
                 $strResultado .= '</td>';
 
                 $strResultado .= '<td style="text-align: center">';
-
-                $strResultado .= !$numIdContestRevisao ? MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strId, $statusAnterior, $prazoResposta, !is_null($numIdTriagem) ? $arrHabAjustePrazoAti[$numIdTriagem] : null ) : '';
+                $strResultado .= !$numIdContestRevisao ? MdUtlControleDsmpINT::getIconePadronizadoAjustePrazo($strStatus, $isDataPermitida, $arrObjs[$i]->getNumIdMdUtlAjustePrazo(), $arrObjs[$i]->getStrStaSolicitacaoAjustePrazo(), $numIdControleDsmp, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strId, $statusAnterior, $prazoResposta, !is_null($numIdTriagem) ? $arrHabAjustePrazoAti[$numIdTriagem] : null, $dataPrazoFormatada ?? ''  ) : '';
                 $strResultado .= !$numIdAjustePrazo ? MdUtlControleDsmpINT::getIconePadronizadoContestacao($strStatus, $numIdControleDsmp, $arrObjs[$i], $numIdTriagem, $isDadosParametrizados[$arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp()], $strSituacao) : '';
                 $strResultado .= '</td>';
 
@@ -584,7 +590,19 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
                     <?= $selAtividade ?>
                 </select>
             </div>
-        </div>        
+        </div>
+
+        <?php if ( !empty( $objChefiaImediata ) ): ?>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <label class="infraLabelOpcional">
+                            O Tempo de Execução sobre as atividades realizadas não será contabilizado, pois o usuário logado está parametrizado como Chefia Imediata.
+                        </label>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         
         <input type="hidden" id="hdnSubmit" name="hdnSubmit" value="<?php echo $vlControlePost; ?>"/>
         <input type="hidden" id="hdnValidaTipoControleUtl" name="hdnValidaTipoControleUtl"
@@ -813,31 +831,12 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
         });
     }
 
-    function getCargaHrDistribuida( idsTpCtrl ){
-        var params = {
-            idUsuarioParticipante: "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>",
-            idTipoControle: idsTpCtrl
-        };
-        
-        $.ajax({
-            url: "<?= $strUrlBuscarDadosCarga ?>",
-            type: 'POST',
-            data: params,
-            dataType: 'XML',
-            success: function (r) {
-                var cargaDisti    = $(r).find('ValorUndEs').text();
-                var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
-                var cargaPadrao = $(r).find('ValorCarga').text();
-                document.getElementById('divCargaHrDistrib').style.display = 'block';
-                document.getElementById('divCargaHrDistribExec').style.display = 'block';
-                document.getElementById('spnCargaHrDistrib').innerHTML = String(convertToHoursMins(cargaDisti));
-                document.getElementById('spnCargaHrDistribExec').innerHTML = String(convertToHoursMins(cargaDistiExe));
-                document.getElementById('spnCargaHrPadrao').innerHTML = String(convertToHoursMins(cargaPadrao));
-            },
-            error: function (e) {
-                console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
-            }
-        });
+    function validarDataPrazo(data,link){
+        if ( data == '' || data == null ) {
+            alert("<?= MdUtlMensagemINT::$MSG_UTL_131 ?>");
+            return false;
+        }
+        window.location.href = link;
     }
 </script>
 

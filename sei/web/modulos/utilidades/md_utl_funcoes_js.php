@@ -11,7 +11,7 @@
                 format = minutes + 'min';
             } else {
                 if(minutes == 0)
-                    format = hours + 'h ';
+                    format = hours + 'h';
                 else
                     format = hours + 'h ' + minutes + 'min';
             }
@@ -49,5 +49,54 @@
 
     function retornaCalculoPercentual(tmp, perc){
         return Math.trunc(tmp / (1 + (perc / 100)));
+    }
+
+    function getCargaHrDistribuida( idsTpCtrl , idUsuario = null, tela = '' ){
+        var params = {
+            idUsuarioParticipante: idUsuario === null ? "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>" : idUsuario,
+            idTipoControle: idsTpCtrl
+        };
+        $.ajax({
+            url: "<?= $strUrlBuscarDadosCarga ?>",
+            type: 'post',
+            data: params,
+            dataType: 'xml',
+            success: function (r) {
+                var cargaDisti = $(r).find('ValorUndEs').text();
+                var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
+                var cargaPadrao = $(r).find('ValorCarga').text();
+                var tmpPendente = $(r).find('ValorTempoPendenteExecucao').text();
+                var tpPeriodo = $(r).find('TipoPeriodo').text();
+
+                var nomeTipoDePeriodo = '';
+                if (tpPeriodo) {
+                    nomeTipoDePeriodo = ' - ' + tpPeriodo;
+                }
+
+                document.getElementById('divCargaHrDistrib').style.display = 'block';
+                document.getElementById('divCargaHrDistribExec').style.display = 'block';
+
+                document.getElementById('spnCargaHrDistrib').innerHTML = String(convertToHoursMins(cargaDisti));
+                document.getElementById('spnCargaHrDistribExec').innerHTML = String(convertToHoursMins(cargaDistiExe));
+                document.getElementById('spnCargaHrPadrao').innerHTML = String(convertToHoursMins(cargaPadrao) + nomeTipoDePeriodo);
+
+                if (document.getElementById('spnTempoPendente') !== null) {
+                    document.getElementById('spnTempoPendente').innerHTML = String(convertToHoursMins(tmpPendente));
+                }
+                if ($("#spnCargaHrDistribRascunho").length) {
+                    var totalTempoExecutadoPeriodo = $("#spnCargaHrDistribExec").html();
+                    var tempoDecorrido = $("#spnCargaHrDistribRascunho").html();
+                    tempoDecorrido = parseInt(convertToMins(tempoDecorrido)) + parseInt(convertToMins(totalTempoExecutadoPeriodo));
+                    $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoDecorrido));
+                }
+
+                if ( tela == 'distribuicao-listar' ) {
+                    if ( $(r).find('ChefeImediato').length > 0 ) $('#divMsgChefiaImediata').show();
+                }
+            },
+            error: function (e) {
+                console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
+            }
+        });
     }
 </script>

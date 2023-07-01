@@ -29,18 +29,19 @@ function validarFormatoDataTriagem(obj){
         obj.value = '';
     }
 
-    var dataResposta = returnDateTime(document.getElementById('txtPrazoResposta').value, false);
-    var dataAtual    = new Date();
-    dataAtual.setHours('00', '00', '00', '00');
-    var valido = (dataResposta.getTime() >= dataAtual.getTime());
+    if ( document.getElementById('txtPrazoResposta').value ) {
+        var dataResposta = returnDateTime(document.getElementById('txtPrazoResposta').value, false);
+        var dataAtual = new Date();
+        dataAtual.setHours('00', '00', '00', '00');
+        var valido = (dataResposta.getTime() >= dataAtual.getTime());
 
-    if(!valido) {
-        document.getElementById('txtPrazoResposta').value = '';
-        document.getElementById('txtPrazoResposta').focus();
-        alert(msg47);
-        return false;
+        if (!valido) {
+            document.getElementById('txtPrazoResposta').value = '';
+            document.getElementById('txtPrazoResposta').focus();
+            alert(msg47);
+            return false;
+        }
     }
-    
 }
 
 function inicializar(){
@@ -57,6 +58,12 @@ function inicializar(){
     carregarComponenteGrupoAtividade();
     inicializarTabelaDinamicaAtividade(consultar);
     carregarHiddenDominio();
+
+    const arrTpsCtrl = new Array();
+    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
+        arrTpsCtrl.push(<?= $tpCtrl?>);
+    <?php endforeach; ?>
+    getCargaHrDistribuida(arrTpsCtrl , <?= $idUsuarioResp ?>);
 }
 
 function carregarHiddenDominio(){
@@ -234,7 +241,21 @@ function inicializarTabelaDinamicaAtividade(consultar){
 function controlarExibicaoEncaminhamento(){
     var isExibeEnc = isParametrizadoProcesso == 1 ? objTabelaDinamicaAtividade.verificaExibicaoEncaminhamento() : false;
     var displayEnc = isExibeEnc ? '' : 'none';
-    document.getElementById('divPrincipalEncaminhamento').style.display = displayEnc;    
+    document.getElementById('divPrincipalEncaminhamento').style.display = displayEnc;
+    if(<?= $tipoRevisao ?>  == "3") {
+        document.getElementById('membroResponsavelAvaliacaoRow').style.display = "none";
+    } else if(<?= $tipoRevisao ?>  == "1") {
+        document.getElementById('membroResponsavelAvaliacaoRow').style.display = displayEnc;
+    }  else {
+        document.getElementById('membroResponsavelAvaliacaoRow').style.display = "none";
+        var arrValTbAtividade       = $("#hdnTbAtividade").val().split('¥');
+        arrValTbAtividade.forEach(function(atividade) {
+            var arrValTbAtividade2       = atividade.split('±');
+            if(arrValTbAtividade2[8] == "true") {
+                document.getElementById('membroResponsavelAvaliacaoRow').style.display = displayEnc;
+            }
+        });
+    }
 
     if(isExibeEnc) {
         document.getElementById('selEncaminhamentoTriagem').setAttribute('utlCampoObrigatorio', 'o');
@@ -248,12 +269,7 @@ function controlarExibicaoEncaminhamento(){
 }
 
 function fechar() {
-
-    if("<?=$isRtgAnlCorrecao?>" == 1){
-        location.href = "<?=$strDetalhamento?>";
-    }else{
-        window.history.back();
-    }
+    location.href = "<?= $strLinkCancelar ?>";
 }
 
 function selecionarAtividade(){
@@ -414,7 +430,8 @@ function adicionarRegistroTabelaAtividade(){
     var atvSemAnalise = false;
 
     for (var i = 0; i < arrAtividades.length; i++) {       
-        var idsAtividade       = arrAtividades[i].value;        
+        var idsAtividade       = arrAtividades[i].value;
+
         var nomeAtividadeTexto = arrAtividades[i].text;
         nomeAtividadeAux       = nomeAtividadeTexto.split('');
         var qtdCaracter        = nomeAtividadeAux.length;
@@ -434,6 +451,10 @@ function adicionarRegistroTabelaAtividade(){
         var sinTipoAnalise  = arrIdsAtv[1] == 'S';
         var strTipoAnalise  = sinTipoAnalise ? 'Sim' : 'Não';
         var vlAtvComAnalise = null;
+
+        if(!sinTipoAnalise) {
+            var sinAvaliacaoHabilitada  = arrIdsAtv[3] == 'S';
+        }
 
         // Caso esteja Em Analise > Retriagem, verifica se a atividade eh ou nao para aplicar o percentual de desempenho
         <?php if( $objControleDsmpDTO->getStrStaAtendimentoDsmp() == 4  || 
@@ -470,7 +491,8 @@ function adicionarRegistroTabelaAtividade(){
             arrIdsAtv[1],
             strTipoAnalise,
             arrIdsAtv[2],
-            vlAtvComAnalise
+            vlAtvComAnalise,
+            sinAvaliacaoHabilitada
         ]
 
         objTabelaDinamicaAtividade.adicionar(arrLinha);
@@ -681,5 +703,7 @@ function abrirGrupoAtividade(){
     //objLupaGrupoAtividade.selecionar(700, 500);
     infraAbrirJanela('<?=$strLinkGrupoAtividadeSelecao?>','Selecionar Grupo de Atividade',900,650);
 }
-
+function preencherNomeHidden() {
+    $("#hdnNomeMembroResponsavelAvaliacao").val($("#selUsuarioResponsavelAvaliacao option:selected").html());
+}
 </script>

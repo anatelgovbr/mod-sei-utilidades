@@ -43,7 +43,7 @@ try {
         $isStrStatus = $arrStatus[$idStatus];
         $idFila = array_key_exists('id_fila', $_GET) && $_GET['id_fila'] != '' ? trim($_GET['id_fila']) : trim($_POST['hdnIdFila']);
         $idProcedimentoTelaProc = array_key_exists('id_procedimento', $_GET) ? trim($_GET['id_procedimento']) : trim($_POST['hdnIdProcedimentoTelaProc']);
-        $strLinkCancelar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimentoTelaProc);
+        $strLinkCancelar = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_utl_processo_listar&acao_origem=' . $_GET['acao'] . '&id_procedimento=' . $idProcedimentoTelaProc . '&isFechar=S');
         $objControleDsmpDTO = $objMdUtlControleDsmpRN->getObjControleDsmpAtivo($idProcedimentoTelaProc);
         $idTipoControle = $objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp();
         $exibirColAcao = false;
@@ -76,7 +76,7 @@ try {
         case 'md_utl_distrib_usuario_cadastrar':
 
             $arrTriagem = array(MdUtlControleDsmpRN::$AGUARDANDO_TRIAGEM, MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM);
-            $arrAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE);
+            $arrAnalise = array(MdUtlControleDsmpRN::$AGUARDANDO_ANALISE, MdUtlControleDsmpRN::$EM_ANALISE, MdUtlControleDsmpRN::$AGUARDANDO_CORRECAO_ANALISE, MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_ANALISE, MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE);
             $plural = !is_null($idsDistribuicao) && count($idsDistribuicao) > 1 ? 's' : '';
 
             if (in_array($idStatus, $arrTriagem)) {
@@ -93,6 +93,7 @@ try {
             $objMdUtlControleDsmpDTO->setNumIdMdUtlControleDsmp($idsDistribuicao, InfraDTO::$OPER_IN);
             $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
             $objMdUtlControleDsmpDTO->retNumTempoExecucao();
+            $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmPrmGr();
             $objMdUtlControleDsmpDTO->retNumIdMdUtlAdmTpCtrlDesemp();
             $objMdUtlControleDsmpDTO->retStrNomeTpControle();
             $objMdUtlControleDsmpDTO->retStrNomeFila();
@@ -159,6 +160,7 @@ try {
             $strCargaPadrao             = $arrCalcTempo['strCargaPadrao'];
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['txtUsuarioParticipante'] != '') {
+
                 $objMdUtlControleDsmpRN->incluirNovaDistribuicao($idStatus);
                 $isTelaProcesso = $_POST['hdnIsTelaProcesso'] == 1;
 
@@ -269,27 +271,13 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             </div>
         </div>
 
-        <div class="row">
-            <div class="<?= $col_default ?>" id="divCargaPadrao">
-                <div class="form-group">
-                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
-
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao,'Ajuda') ?> />
-
-                    <input type="text" id="txtCargaPadrao" name="txtCargaPadrao" class="infraText form-control" disabled
-                        value="<?= $strCargaPadrao ?>" />
-                </div>
-            </div>
-
-            <div class="<?= $col_default ?>" id="divDistribuidaMes">
-                <div class="form-group">
-                    <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional">Carga Horária Distribuída no Período:</label>
-
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
-
-                    <input type="text" id="txtDistribuida" name="txtDistribuida" class="infraText form-control" disabled/>
+        <div class="row mb-3" id="dvChefiaImediata" style="display: none;">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <label class="infraLabelOpcional">
+                        O Tempo de Execução sobre as atividades realizadas a partir de <label id="lblChefiaImediata" style="font-weight: bold"></label>
+                        não foi contabilizado abaixo, pois o usuário logado está parametrizado como Chefia Imediata.
+                    </label>
                 </div>
             </div>
         </div>
@@ -301,12 +289,47 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                         Total de Tempo Pendente de Execução:
                     </label>
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
+                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
 
-                    <input type="text" id="txtTotalTempoPendenteExecucao" name="txtCargaPadrao" class="infraText form-control" disabled/>
+                    <span id="txtTotalTempoPendenteExecucao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
                 </div>
             </div>
+            <div class="<?= $col_default ?>" id="divTotalExePeriodo">
+                <div class="form-group">
+                    <label id="lblTotalExePeriodo" for="txtTotalExePeriodo" class="infraLabelOpcional">
+                        Total de Tempo Executado no Período:
+                    </label>
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
 
+                    <span id="txtTotalExePeriodo" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="<?= $col_default ?>" id="divCargaPadrao">
+                <div class="form-group">
+                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
+
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao,'Ajuda') ?> />
+
+                    <span id="txtCargaPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                </div>
+            </div>
+            <div class="<?= $col_default ?>" id="divDistribuidaMes">
+                <div class="form-group">
+                    <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional">Carga Horária Distribuída no Período:</label>
+
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
+
+                    <span id="txtDistribuida" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
             <div class="<?= $col_default ?>" id="divSelecionadaDist">
                 <div class="form-group">
                     <label id="lblSelecionadaDist" for="txtSelecionadaDist" class="infraLabelOpcional">
@@ -315,33 +338,20 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaSelecionadaDistribuicao,'Ajuda') ?> />
 
-                    <input type="text" id="txtSelecionadaDist" name="txtSelecionadaDist" class="infraText form-control"
-                        value="<?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>" disabled/>
+                    <span id="txtSelecionadaDist" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
+                      <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
+                    </span>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="<?= $col_default ?>" id="divTotalExePeriodo">
-                <div class="form-group">
-                    <label id="lblTotalExePeriodo" for="txtTotalExePeriodo" class="infraLabelOpcional">
-                        Total de Tempo Executado no Período:
-                    </label>
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
-
-                    <input type="text" id="txtTotalExePeriodo" name="txtTotalExePeriodo" class="infraText form-control" disabled/>
-                </div>
-            </div>
-
             <div class="<?= $col_default ?>" id="divTotalUniEsforco">
                 <div class="form-group">
                     <label id="lblTotalUniEsforco" for="txtTotalUniEsforco" class="infraLabelOpcional">Carga Horária Total:</label>
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaTotal,'Ajuda') ?> />
 
-                    <input type="text" id="txtTotalUniEsforco" name="txtTotalUniEsforco" class="infraText form-control"
-                        value="<?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>" disabled/>
+                    <span id="txtTotalUniEsforco" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
+                      <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -500,16 +510,16 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
     function controlarExibicaoCargaDistribuida(tempoExecucao) {
         tempoExecucao = parseInt(tempoExecucao);
-        var cargaSelecDistri = $.trim(document.getElementById('txtSelecionadaDist').value);
-        var totalTmpExecucao = $.trim(document.getElementById('txtTotalUniEsforco').value);
+        var cargaSelecDistri = $.trim(document.getElementById('txtSelecionadaDist').innerHTML);
+        var totalTmpExecucao = $.trim(document.getElementById('txtTotalUniEsforco').innerHTML);
 
         cargaSelecDistri = parseInt(cargaSelecDistri);
         totalTmpExecucao = parseInt(totalTmpExecucao);
 
         var somaTmpExecucao = cargaSelecDistri - tempoExecucao;
         var totalTmpExecucao = totalTmpExecucao - tempoExecucao;
-        document.getElementById('txtSelecionadaDist').value = $.trim(somaTmpExecucao);
-        document.getElementById('txtTotalUniEsforco').value = $.trim(totalTmpExecucao);
+        document.getElementById('txtSelecionadaDist').innerHTML = $.trim(somaTmpExecucao);
+        document.getElementById('txtTotalUniEsforco').innerHTML = $.trim(totalTmpExecucao);
     }
 
     function realizarDistribuicao() {
@@ -584,17 +594,18 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     }
 
     function limparCampos() {
-        document.getElementById('txtTotalUniEsforco').value = convertToHoursMins('<?=$somaTempoExecucao?>');
-        document.getElementById('txtSelecionadaDist').value = convertToHoursMins('<?=$somaTempoExecucao?>');
-        document.getElementById('txtDistribuida').value = '';
-        document.getElementById('txtCargaPadrao').value = '<?=$strCargaPadrao?>';
-        document.getElementById('txtTotalTempoPendenteExecucao').value = '';
-        document.getElementById('txtTotalExePeriodo').value = '';
-        document.getElementById('txtTotalTempoPendenteExecucao').value = '0min'; //novo
+        document.getElementById('txtTotalUniEsforco').innerHTML = convertToHoursMins('<?=$somaTempoExecucao?>');
+        document.getElementById('txtSelecionadaDist').innerHTML = convertToHoursMins('<?=$somaTempoExecucao?>');
+        document.getElementById('txtDistribuida').innerHTML = '0min';
+        document.getElementById('txtCargaPadrao').innerHTML = '<?=$strCargaPadrao?>';
+        document.getElementById('txtTotalExePeriodo').innerHTML = '0min';
+        document.getElementById('txtTotalTempoPendenteExecucao').innerHTML = '0min';
+        document.getElementById('dvChefiaImediata').style.display = 'none';
         resetarTempoExecucaoTabelaDistribuicao();
     }
 
     function realizarAjaxDadosCarga() {
+        let isChefiaImediata = false;
 
         var params = {
             idUsuarioParticipante: document.getElementById('hdnIdUsuarioParticipanteLupa').value,
@@ -603,34 +614,41 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             numPercentualTele: numPercentualTele,
             staFrequencia: staFrequencia,
             inicioPeriodo: inicioPeriodo,
-            idTipoControle: <?php echo $idTipoControle ?>
+            idTipoControle: <?= $idTipoControle ?>
         };
 
         $.ajax({
             url: '<?=$strUrlBuscarDadosCarga?>',
             type: 'POST',
             data: params,
+            async: true,
             dataType: 'XML',
             success: function (r) {
+                let chefiaImediata = $( r ).find('ChefiaImediata').text();
+                isChefiaImediata   = chefiaImediata.length > 0;
+
+                if( isChefiaImediata ) {
+                    $('#dvChefiaImediata').show();
+                    $('#lblChefiaImediata').text( chefiaImediata );
+                }
 
                 //Carga Padrão
                 var valorCarga = $(r).find('ValorCarga').text();
                 var cargaPadrao = $.trim(convertToHoursMins(valorCarga)) + ' - ' + strStaFrequencia;
-                document.getElementById('txtCargaPadrao').value = cargaPadrao;
+                document.getElementById('txtCargaPadrao').innerHTML = cargaPadrao;
 
                 var valorUndEs = $(r).find('ValorUndEs').text();
                 var cargaDisti = valorUndEs;
-                document.getElementById('txtDistribuida').value = convertToHoursMins(cargaDisti);
+                document.getElementById('txtDistribuida').innerHTML = convertToHoursMins(cargaDisti);
 
                 var valorUndEsExec = $(r).find('ValorUndEsExecutado').text();
-                document.getElementById('txtTotalExePeriodo').value = convertToHoursMins(valorUndEsExec);
+                document.getElementById('txtTotalExePeriodo').innerHTML = convertToHoursMins(valorUndEsExec);
 
                 var valorUndEsExec = $(r).find('ValorTempoPendenteExecucao').text();
-                document.getElementById('txtTotalTempoPendenteExecucao').value = convertToHoursMins(valorUndEsExec);
+                document.getElementById('txtTotalTempoPendenteExecucao').innerHTML = convertToHoursMins(valorUndEsExec);
 
                 totalUniesforco = parseInt(cargaDisti) + parseInt(selecionadaDist);
                 calculaCargaHorariaTotal();
-
             },
             error: function (e) {
                 console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
@@ -640,19 +658,19 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         var params2 = {
             idUsuarioParticipante: document.getElementById('hdnIdUsuarioParticipanteLupa').value,
             nunEsforco: selecionadaDist,
-            idTipoControle: <?php echo $idTipoControle ?>
+            idTipoControle: <?= $idTipoControle ?>
         };
 
         $.ajax({
             url: '<?=$strUrlBuscarDadosRegimeTrabalho?>',
             type: 'POST',
             data: params2,
+            async: true,
             dataType: 'XML',
             success: function (r) {
-
-                // //Carga Padrão
-                var valorDistribuicao = $(r).find('ValorDistribuicao').text();
-                document.getElementById('txtSelecionadaDist').value = convertToHoursMins($.trim(valorDistribuicao));
+                //Carga Padrão
+                var valorDistribuicao = isChefiaImediata ? '0' : $( r ).find('ValorDistribuicao').text();
+                document.getElementById('txtSelecionadaDist').innerHTML = convertToHoursMins($.trim(valorDistribuicao));
                 calculaCargaHorariaTotal();
                 atualizarTempoExecucaoTabelaDistribuicao(valorDistribuicao);
             },
@@ -660,7 +678,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                 console.error('Erro ao buscar URL de Tipo de Controle: ' + e.responseText);
             }
         });
-
     }
 
     function montarLinkParaBuscarUsuarioParaDistribuicao(){
@@ -700,7 +717,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     function atualizarTempoExecucaoTabelaDistribuicao(valorDistribuicao){
         Array.from(document.querySelectorAll('#tbProcesso tr')).forEach(tr => {
             Array.from(tr.querySelectorAll('td')).forEach((td, index, todas_td) => {
-                if (index === 4 && td.innerText === '') {
+                if ( ( index === 4 && td.innerText === '' ) || valorDistribuicao == '0' ) {
                     let qtde = document.querySelectorAll('#tbProcesso tr').length;
                     let tempo = parseInt(convertToMins(valorDistribuicao.trim())) / (qtde - 1);
                     todas_td[3].innerText = convertToHoursMins(parseInt(tempo));
@@ -713,7 +730,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     function resetarTempoExecucaoTabelaDistribuicao(){
         Array.from(document.querySelectorAll('#tbProcesso tr')).forEach(tr => {
             Array.from(tr.querySelectorAll('td')).forEach((td, index, todas_td) => {
-                if (index === 4 && td.innerText === '') {
+                if ( ( index === 4 && td.innerText === '' ) || ( index === 3 && td.innerText === '0min' ) ) {
                     let qtde = document.querySelectorAll('#tbProcesso tr').length;
                     let tempo = parseInt('<?=$somaTempoExecucao?>') / (qtde - 1);
                     todas_td[3].innerText = convertToHoursMins(parseInt(tempo));
@@ -724,10 +741,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     }
 
     function calculaCargaHorariaTotal(){
-        var txtDistribuida = convertToMins($.trim(document.getElementById('txtDistribuida').value));
-        var valorDistribuicao = document.getElementById('txtSelecionadaDist').value
-        var valorDistribuicaoMinuto = convertToMins(valorDistribuicao.trim());
-        document.getElementById('txtTotalUniEsforco').value = convertToHoursMins(valorDistribuicaoMinuto + txtDistribuida);
+        var txtDistribuida          = convertToMins($.trim(document.getElementById('txtDistribuida').innerHTML));
+        var valorDistribuicaoMinuto = convertToMins($.trim(document.getElementById('txtSelecionadaDist').innerHTML));
+        document.getElementById('txtTotalUniEsforco').innerHTML = convertToHoursMins(valorDistribuicaoMinuto + txtDistribuida);
     }
 
 

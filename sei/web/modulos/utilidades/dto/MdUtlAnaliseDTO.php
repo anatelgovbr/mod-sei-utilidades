@@ -45,6 +45,16 @@ class MdUtlAnaliseDTO extends InfraDTO {
 
     $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'DistAutoParaMim', 'sin_dist_auto_para_mim');
 
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTA, 'PeriodoInicio', 'dta_periodo_inicio');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_DTA, 'PeriodoFim', 'dta_periodo_fim');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'StaFrequenciaAdmPrmGr', 'sta_frequencia_adm_prm_gr');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_STR, 'SinRelatarDiaDia', 'sin_relatar_dia_dia');
+
+    $this->adicionarAtributoTabela(InfraDTO::$PREFIXO_NUM, 'IdUsuarioAvaliacao', 'id_usuario_avaliacao');
+
     $this->configurarPK('IdMdUtlAnalise',InfraDTO::$TIPO_PK_NATIVA);
 
     $this->configurarFK('IdMdUtlAdmFila', 'md_utl_adm_fila', 'id_md_utl_adm_fila', InfraDTO::$TIPO_FK_OPCIONAL);
