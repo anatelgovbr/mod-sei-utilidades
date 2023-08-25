@@ -673,7 +673,16 @@
                     var idUsuario = arrUsuarios[i];
 
                     var nomeCampAjx = 'IdUsuario' + idUsuario;
-                    var htmlNomeUsu = '<div style="text-align:center;">'+$(retornoAjax).find(nomeCampAjx).text()+'</div>';                    
+                    let nmAuxUsuario = $(retornoAjax).find(nomeCampAjx).text();
+                    let htmlNomeUsu  = '<div style="text-align:center;">#TEXTO</div>';
+
+                    if( nmAuxUsuario == '' || nmAuxUsuario === null ) {
+                        let rowUser = buscaItemUsuario(idUsuario);
+                        htmlNomeUsu = htmlNomeUsu.replace('#TEXTO',rowUser[1]);
+                    } else {
+                        htmlNomeUsu = htmlNomeUsu.replace('#TEXTO',nmAuxUsuario);
+                    }
+
                     var nomeSigla   = $.trim(document.getElementById('txtUsuario').value);
 
                     var arrLinha = [
@@ -745,6 +754,23 @@
                 limparCamposControleParticipante();
             }
         }
+    }
+
+    function buscaItemUsuario(idUsuario){
+        let dadosUsuario         = null;
+        let hdnListaUsuariosPart = objTabelaDinamicaUsuario.hdn.value;
+        let arrListaUsuariosPart = hdnListaUsuariosPart.split('¥');
+
+        for (i = 0; i < arrListaUsuariosPart.length; i++) {
+
+            let hdnListaUsuPart = arrListaUsuariosPart[i].split('±');
+
+            if( hdnListaUsuPart[0] == idUsuario ){
+                dadosUsuario = hdnListaUsuPart;
+                break;
+            }
+        }
+        return dadosUsuario;
     }
 
     function limparCamposControleParticipante(){

@@ -444,64 +444,86 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 	 * Funcao acionada pelo Agendamento
 	 */
 		protected function incluirPeriodoControlado(){
-			$dadosChefia      = null;
-			$arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
+			try {
+				$this->initDadosDebug();
 
-			// verifica se o serviço esta cadastrado e ativo
-			if (!empty($arrObjIntegracao) && $arrObjIntegracao['integracao']->getStrTipoIntegracao() == 'RE'){
-				$arrParams = ['loginUsuario' => ''];
-				$arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParams )];
-				$dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParams['parametros'] );
-			}
+				$numSeg = InfraUtil::verificarTempoProcessamento();
+				InfraDebug::getInstance()->gravar('INCLUINDO A CARGA DOS USUÁRIOS COM TRATAMENTO RELACIONADO À CHEFIA IMEDIATA E AUSÊNCIAS');
 
-			// instancia objetos da classe RN
-			$objUtlAdmPrmGrUsuRN        = new MdUtlAdmPrmGrUsuRN();
-			$objMdUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
-			$objUtlAdmTpCtrlRN          = new MdUtlAdmTpCtrlDesempRN();
+				$dadosChefia = null;
+				$arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
 
-			// retorna os tipos de controles com o alguns dados da parametrizacao
-			$objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+				// verifica se o serviço esta cadastrado e ativo
+				if (!empty($arrObjIntegracao) && $arrObjIntegracao['integracao']->getStrTipoIntegracao() == 'RE') {
+					$arrParams = ['loginUsuario' => ''];
+					$arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada($arrObjIntegracao, $arrParams)];
+					$dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST($arrObjIntegracao, $arrParams['parametros']);
+				}
 
-			$objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
-			$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0,InfraDTO::$OPER_MAIOR);
-			#$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
+				// instancia objetos da classe RN
+				$objUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+				$objMdUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+				$objUtlAdmTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
 
-			$objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
-			$objUtlAdmTpCtrlDTO->retNumCargaPadrao();
-			$objUtlAdmTpCtrlDTO->retStrStaFrequencia();
+				// retorna os tipos de controles com o alguns dados da parametrizacao
+				$objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
 
-			$arrObjs = $objUtlAdmTpCtrlRN->listar( $objUtlAdmTpCtrlDTO );
+				$objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
+				$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0, InfraDTO::$OPER_MAIOR);
+				#$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
 
-			// efetua loop em cada Tipo de Controle
-			foreach ( $arrObjs as $objPrmGr ) {
+				$objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+				$objUtlAdmTpCtrlDTO->retNumCargaPadrao();
+				$objUtlAdmTpCtrlDTO->retStrStaFrequencia();
 
-				// retorna dados da parametrizacao do usuario + alguns dados da parametrizacao do Tipo de Controle
-				$arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro( $objPrmGr->getNumIdMdUtlAdmPrmGr() );
+				$arrObjs = $objUtlAdmTpCtrlRN->listar($objUtlAdmTpCtrlDTO);
 
-				$continua = $this->validarStaFrequencia($arrUsuarios[0]['frequencia']);
+				// efetua loop em cada Tipo de Controle
+				foreach ($arrObjs as $objPrmGr) {
 
-				if ( $continua ) {
-					foreach ($arrUsuarios as $usuario) {
-						// variavel a ser usado no final para qualquer insert ou update
-						$cargaHoraria                = 0;
-						$strDatasAusenciasUtilizadas = null;
+					// retorna dados da parametrizacao do usuario + alguns dados da parametrizacao do Tipo de Controle
+					$arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro($objPrmGr->getNumIdMdUtlAdmPrmGr());
 
-						$arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true , $dadosChefia);
+					$continua = $this->validarStaFrequencia($arrUsuarios[0]['frequencia']);
 
-						$objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
+					if ($continua) {
+						foreach ($arrUsuarios as $usuario) {
+							// variavel a ser usado no final para qualquer insert ou update
+							$cargaHoraria = 0;
+							$strDatasAusenciasUtilizadas = null;
 
-						$objMdUtlAdmPrmGrUsuCargaDTO->setNumCargaHoraria($cargaHoraria);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial($arrPeriodos['dtInicial']);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal($arrPeriodos['dtFinal']);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($usuario['idPrmGrUsu']);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setStrDatasAusencias($strDatasAusenciasUtilizadas);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
-						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr($usuario['idPrmGr']);
-						$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($usuario['idUsuario']);
+							$arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true, $dadosChefia);
 
-						$objMdUtlAdmPrmGrUsuCargaRN->cadastrar($objMdUtlAdmPrmGrUsuCargaDTO);
+							$objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
+
+							$cargaHoraria = $cargaHoraria < 0 ? 0 : $cargaHoraria;
+
+							$objMdUtlAdmPrmGrUsuCargaDTO->setNumCargaHoraria($cargaHoraria);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial($arrPeriodos['dtInicial']);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal($arrPeriodos['dtFinal']);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($usuario['idPrmGrUsu']);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setStrDatasAusencias($strDatasAusenciasUtilizadas);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
+							$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr($usuario['idPrmGr']);
+							$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($usuario['idUsuario']);
+
+							$objMdUtlAdmPrmGrUsuCargaRN->cadastrar($objMdUtlAdmPrmGrUsuCargaDTO);
+						}
 					}
 				}
+
+				$numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
+				InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
+				InfraDebug::getInstance()->gravar('FIM');
+
+				LogSEI::getInstance()->gravar(InfraDebug::getInstance()->getStrDebug(), InfraLog::$INFORMACAO);
+				$this->limpaDadosDebug();
+
+			} catch ( Exception $e ) {
+				$exception = $this->trataException($e);
+				LogSEI::getInstance()->gravar( $exception , InfraLog::$INFORMACAO );
+				$this->limpaDadosDebug();
+				throw new InfraException('Falha no agendamento incluirPeriodo',$e);
 			}
 		}
 
@@ -639,89 +661,122 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 		 */
     protected function listarChefiaImediataControlado(){
 	    try {
-		    // busca a integracao da Funcionalidade: listar chefia imediata
-		    $arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
+		    $this->initDadosDebug();
 
-		    if ( empty($arrObjIntegracao) ) return false;
+		    $numSeg = InfraUtil::verificarTempoProcessamento();
+		    InfraDebug::getInstance()->gravar('ATUALIZANDO REGISTROS DE USUÁRIOS - CHEFIA IMEDIATA');
 
-		    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) return false;
+		    // EXECUTA A FUNCAO DE ATUALIZACAO DOS USUARIOS - CHEFIA IMEDIATA
+		    $this->executaAtualizacaoChefiaImediata();
 
-		    $arrParams = ['loginUsuario' => ''];
-		    $arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParams )];
+		    $numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
+		    InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
+		    InfraDebug::getInstance()->gravar('FIM');
 
-		    $dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParams['parametros'] );
+		    LogSEI::getInstance()->gravar(InfraDebug::getInstance()->getStrDebug(), InfraLog::$INFORMACAO);
+		    $this->limpaDadosDebug();
 
-		    if ( empty($dadosChefia) ) return false;
+	    } catch ( Exception $e ){
+		    $exception = $this->trataException($e);
+		    LogSEI::getInstance()->gravar( $exception , InfraLog::$INFORMACAO );
+		    $this->limpaDadosDebug();
+		    throw new InfraException('Falha no agendamento listarChefiaImediata',$e);
+	    }
+    }
 
-		    $arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
+    private function executaAtualizacaoChefiaImediata(){
+	    $strDefMap = 'MdUtlAgendamentoAutomaticoRN::listarChefiaImediata => Mapeamento de Integração \'Chefia Imediata\'';
 
-		    // retorna os tipos de controles com o ID da parametrizacao
-		    $objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
-		    $objUtlAdmTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
+	    // busca a integracao da Funcionalidade: listar chefia imediata
+	    $arrObjIntegracao = (new MdUtlAdmIntegracaoRN())->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$CHEFIA);
 
-		    $objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
-		    $objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0,InfraDTO::$OPER_MAIOR);
-		    #$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
-		    $objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
+	    if ( empty($arrObjIntegracao) ) throw new Exception("$strDefMap não existe ou está inativa");
 
-		    $arrObjsTpCtrlDTO = $objUtlAdmTpCtrlRN->listar( $objUtlAdmTpCtrlDTO );
+	    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) throw new Exception("$strDefMap aceita somente o Tipo de Integração REST");
 
-		    if( empty( $arrObjsTpCtrlDTO ) ) throw new InfraException('Não encontrado Tipo de Controle Ativo.');
+	    $arrParams = ['loginUsuario' => ''];
+	    $arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParams )];
 
-		    $objUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
-		    $objUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+	    $dadosChefia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParams['parametros'] );
 
-		    foreach ( $arrObjsTpCtrlDTO as $objPrmGr ) {
-			    // busca usuarios membros da parametrizacao atual
-			    $arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro($objPrmGr->getNumIdMdUtlAdmPrmGr());
+	    if ( empty($dadosChefia) ) throw new Exception("Não foram encontrados registros relacionados a Chefia Imediata");
 
-			    foreach ($arrUsuarios as $usuario) {
-				    // retorna dados da carga horaria e ausencias por default
-				    $cargaHoraria                = 0;
-				    $strDatasAusenciasUtilizadas = null;
-				    $arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true, $dadosChefia);
+	    $arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
 
-				    $params = [
-					    'idPrmGrUsu' => $usuario['idPrmGrUsu'],
-					    'periodoIni' => $arrPeriodos['dtInicial'],
-					    'periodoFin' => $arrPeriodos['dtFinal']
-				    ];
+	    // retorna os tipos de controles com o ID da parametrizacao
+	    $objUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+	    $objUtlAdmTpCtrlRN  = new MdUtlAdmTpCtrlDesempRN();
 
-				    // retorna o ultimo registro ativo da carga horaria do membro atual
-				    $objMdUtlPrmGrUsuCarga = $objUtlAdmPrmGrUsuCargaRN->buscaPeriodoParaAvaliacao($params);
+	    $objUtlAdmTpCtrlDTO->setStrSinAtivo('S');
+	    $objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr(0,InfraDTO::$OPER_MAIOR);
+	    #$objUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr([43],InfraDTO::$OPER_IN); //teste
+	    $objUtlAdmTpCtrlDTO->retNumIdMdUtlAdmPrmGr();
 
-				    if ( !is_null($objMdUtlPrmGrUsuCarga)) {
-					    $bolEncontrou = false;
-					    foreach ($dadosChefia as $usuarioChefiaImediata) {
-						    if ( $usuario['siglaUsuario'] == $usuarioChefiaImediata->{$arrIdentificador['loginUsuario']} ) {
-							    $bolEncontrou = true;
-							    break;
-						    }
+	    $arrObjsTpCtrlDTO = $objUtlAdmTpCtrlRN->listar( $objUtlAdmTpCtrlDTO );
+
+	    if( empty( $arrObjsTpCtrlDTO ) ) throw new InfraException('Não foi encontrado nenhum Tipo de Controle de Desempenho Ativo.');
+
+	    $objUtlAdmPrmGrUsuRN      = new MdUtlAdmPrmGrUsuRN();
+	    $objUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
+
+	    foreach ( $arrObjsTpCtrlDTO as $objPrmGr ) {
+		    // busca usuarios membros da parametrizacao atual
+		    $arrUsuarios = $objUtlAdmPrmGrUsuRN->getDadosUsuarioMembro($objPrmGr->getNumIdMdUtlAdmPrmGr());
+
+		    foreach ($arrUsuarios as $usuario) {
+			    // retorna dados da carga horaria e ausencias por default
+			    $cargaHoraria                = 0;
+			    $strDatasAusenciasUtilizadas = null;
+			    $arrPeriodos = $this->trataTempoMembroComAusenciasEChefia($usuario, $cargaHoraria, $strDatasAusenciasUtilizadas, true, $dadosChefia);
+
+			    $params = [
+				    'idPrmGrUsu' => $usuario['idPrmGrUsu'],
+				    'periodoIni' => $arrPeriodos['dtInicial'],
+				    'periodoFin' => $arrPeriodos['dtFinal']
+			    ];
+
+			    // retorna o ultimo registro ativo da carga horaria do membro atual
+			    $objMdUtlPrmGrUsuCarga = $objUtlAdmPrmGrUsuCargaRN->buscaPeriodoParaAvaliacao($params);
+
+			    if ( !is_null($objMdUtlPrmGrUsuCarga)) {
+				    $bolEncontrou      = false;
+				    $objDadosUsuChefia = null;
+				    foreach ($dadosChefia as $usuarioChefiaImediata) {
+					    if ( $usuario['siglaUsuario'] == $usuarioChefiaImediata->{$arrIdentificador['loginUsuario']} ) {
+						    $objDadosUsuChefia = $usuarioChefiaImediata;
+						    $bolEncontrou = true;
+						    break;
 					    }
+				    }
 
-					    if ($bolEncontrou) {
-						    //atualiza registro da parametrizacao do usuario
-						    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata($usuarioChefiaImediata, $usuario);
+				    if ($bolEncontrou) {
+					    //atualiza registro da parametrizacao do usuario
+					    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata($objDadosUsuChefia, $usuario);
 
-						    // se teve mudança para menos no tempo da carga cadastrada no periodo, desativa o atual e insere um novo
-						    if ($cargaHoraria < $objMdUtlPrmGrUsuCarga->getNumCargaHoraria()) {
-							    //desativa o registro atual
-							    $objMdUtlPrmGrUsuCarga->setStrSinAtivo('N');
-							    $objUtlAdmPrmGrUsuCargaRN->alterar($objMdUtlPrmGrUsuCarga);
+					    // se teve mudança para menos no tempo da carga cadastrada no periodo, desativa o atual e insere um novo
+					    if ($cargaHoraria < $objMdUtlPrmGrUsuCarga->getNumCargaHoraria()) {
+						    //desativa o registro atual
+						    $objMdUtlPrmGrUsuCarga->setStrSinAtivo('N');
+						    $objUtlAdmPrmGrUsuCargaRN->alterar($objMdUtlPrmGrUsuCarga);
 
-							    //cadastra um novo registro
-							    $this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
-						    }
-					    } else {
-						    $isAtualizado = false;
-						    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata(null, $usuario, $isAtualizado);
-						    if ( $isAtualizado ) $this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
+						    //cadastra um novo registro
+						    $this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
+					    }
+				    } else {
+					    $isAtualizado = false;
+					    $objUtlAdmPrmGrUsuRN->atualizarInfoChefiaImediata(null, $usuario, $isAtualizado);
+					    if ( $isAtualizado ) {
+
+						    //desativa o registro atual
+						    $objMdUtlPrmGrUsuCarga->setStrSinAtivo('N');
+						    $objUtlAdmPrmGrUsuCargaRN->alterar($objMdUtlPrmGrUsuCarga);
+
+						    //cadastra um novo registro
+					    	$this->insertSimplesCargaMembro($objMdUtlPrmGrUsuCarga, $cargaHoraria, $strDatasAusenciasUtilizadas);
 					    }
 				    }
 			    }
 		    }
-	    }catch ( Exception $e ){
-		    throw new InfraException('Erro na execução do Agendamento da Chefia Imediata.',$e);
 	    }
     }
 
@@ -740,54 +795,69 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 		 * Funcao acionada pelo Agendamento
 		 */
     protected function listarAusenciasRhControlado(){
-
-	    $REF_PARAMETRO = 'mesesPassado';
-
 	    try {
+		    $this->initDadosDebug();
+
+		    $numSeg = InfraUtil::verificarTempoProcessamento();
+		    InfraDebug::getInstance()->gravar('ATUALIZANDO REGISTROS DE USUÁRIOS - AUSÊNCIAS');
+
+		    $REF_PARAMETRO = 'mesesPassado';
+
 		    $objAgendamentoDTO = new InfraAgendamentoTarefaDTO();
 		    $objAgendamentoDTO->setStrComando('MdUtlAgendamentoAutomaticoRN::listarAusenciasRh');
 		    $objAgendamentoDTO->retTodos();
 		    $objAgendamentoDTO = ( new InfraAgendamentoTarefaRN() )->consultar( $objAgendamentoDTO );
 
-		    if( empty( $objAgendamentoDTO->getStrParametro() ) ) throw new InfraException('Não foi cadastrado dados sobre o campo Parâmetros.');
+		    if( empty( $objAgendamentoDTO->getStrParametro() ) ) throw new Exception('Não foi cadastrado dados sobre o campo Parâmetros.');
 
 		    $arrStrParametros = explode(',' , $objAgendamentoDTO->getStrParametro() );
 
-		    if( strpos( $arrStrParametros[0] , $REF_PARAMETRO.'=' ) === false ) throw new InfraException('Não foi encontrado o Parâmetro:'. $REF_PARAMETRO .'=');
+		    if( strpos( $arrStrParametros[0] , $REF_PARAMETRO.'=' ) === false ) throw new Exception('Não foi encontrado o Parâmetro:'. $REF_PARAMETRO .'=');
 
 				$arrParam = explode( '=' , $arrStrParametros[0] );
 
-				if( !array_key_exists( 1 , $arrParam ) ) throw new InfraException('Não foi informado o valor do parâmetro: ' . $REF_PARAMETRO .'.' );
+				if( !array_key_exists( 1 , $arrParam ) ) throw new Exception('Não foi informado o valor do parâmetro: ' . $REF_PARAMETRO .'.' );
 
-				if( empty( $arrParam[1] ) ) throw new InfraException('O valor do parâmetro: "' . $REF_PARAMETRO .'" está vazio ou igual a Zero.');
+				if( empty( $arrParam[1] ) ) throw new Exception('O valor do parâmetro: "' . $REF_PARAMETRO .'" está vazio ou igual a Zero.');
 
-		    if( !is_numeric( $arrParam[1] ) ) throw new InfraException('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor numérico.');
+		    if( !is_numeric( $arrParam[1] ) ) throw new Exception('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor numérico.');
 
-		    if( $arrParam[1] < 0 ) throw new InfraException('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor maior que Zero.');
+		    if( $arrParam[1] < 0 ) throw new Exception('O valor do parâmetro: ' . $REF_PARAMETRO .' deve ser um valor maior que Zero.');
 
 				// apos validacoes anteriores, aciona o metodo que executara as atualizacoes das ausencias dos membros nos tipos de controle
 		    $this->executaAtualizacaoAusencias( $arrParam );
 
-	    } catch ( Exception $e){
-		    throw new InfraException('Erro na atualização das ausências dos membros nos Tipos de Controle.',$e);
+		    $numSeg = InfraUtil::verificarTempoProcessamento($numSeg);
+		    InfraDebug::getInstance()->gravar('TEMPO TOTAL DE EXECUCAO: ' . $numSeg . ' s');
+		    InfraDebug::getInstance()->gravar('FIM');
+
+		    LogSEI::getInstance()->gravar(InfraDebug::getInstance()->getStrDebug(), InfraLog::$INFORMACAO);
+		    $this->limpaDadosDebug();
+
+	    } catch ( Exception $e ){
+	    	$exception = $this->trataException($e);
+		    LogSEI::getInstance()->gravar( $exception , InfraLog::$INFORMACAO );
+		    $this->limpaDadosDebug();
+		    throw new InfraException('Falha no agendamento listarAusenciasRh',$e);
 	    }
     }
 
     private function executaAtualizacaoAusencias( $arrParam ){
 	    $dti = date('Y-m-d' , strtotime( "- {$arrParam[1]} months") );
 	    $dtf = date('Y-m-d');
+	    $strDefMap = 'MdUtlAgendamentoAutomaticoRN::listarAusenciasRh => Mapeamento de Integração \'Ausências Servidores\'';
 
 	    $arrObjIntegracao = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$AUSENCIA);
 
-	    if( empty( $arrObjIntegracao) ) return false;
+	    if( empty( $arrObjIntegracao) ) throw new Exception("$strDefMap não existe ou está inativa");
 
-	    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) return false;
+	    if( $arrObjIntegracao['integracao']->getStrTipoIntegracao() != 'RE' ) throw new Exception("$strDefMap aceita somente o Tipo de Integração REST");
 
 	    $arrParamsAus  = ['dataInicial' => $dti , 'dataFinal' => $dtf];
 	    $arrParamsAus  = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $arrObjIntegracao, $arrParamsAus )];
 	    $dadosAusencia = MdUtlAdmIntegracaoINT::executarConsultaREST( $arrObjIntegracao , $arrParamsAus['parametros'] );
 
-	    if ( empty( $dadosAusencia ) ) return false;
+	    if ( empty( $dadosAusencia ) ) throw new Exception("Não foram encontrados registros relacionados à Ausência de Servidores");
 
 			$arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($arrObjIntegracao['parametros-integracao']);
 
@@ -820,6 +890,9 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 				    $objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
 				    $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($objUsuarioDTO->getNumIdUsuario());
 				    $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($objUsuarioDTO->getNumIdMdUtlAdmPrmGrUsu());
+				    $objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
+				    $objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal(date('d/m/Y',strtotime($dti)),InfraDTO::$OPER_MAIOR_IGUAL);
+
 				    $objMdUtlAdmPrmGrUsuCargaDTO->retNumIdMdUtlAdmPrmGrUsu();
 				    $objMdUtlAdmPrmGrUsuCargaDTO->retTodos();
 
@@ -828,14 +901,6 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 				    if ( !empty($arrUsuCargaDTO) ) {
 
 					    foreach ($arrUsuCargaDTO as $item) { // loop em cada periodo cadastrado do usuario
-						    $arrParams = [
-							    'idPrmGrUsu' => $item->getNumIdMdUtlAdmPrmGrUsu(),
-							    'periodoIni' => $item->getDtaPeriodoInicial(),
-							    'periodoFin' => $item->getDtaPeriodoFinal(),
-						    ];
-
-						    // retorna dados de carga horaria e periodos de acordo com as datas informadas no array acima
-						    $objUltRegPeriodo = $objMdUtlAdmPrmGrUsuCargaRN->buscaPeriodoParaAvaliacao( $arrParams );
 
 						    // calculo de qtos dias uteis o usuario terá no intervalo de seu periodo inicial/final
 						    $qtdDiasUteis = ( new MdUtlPrazoRN() )->retornaQtdDiaUtil($item->getDtaPeriodoInicial(),$item->getDtaPeriodoFinal(),false,false);
@@ -846,25 +911,18 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
 						    $cargaTotal = $objMdUtlAdmPrmGrUsuCargaRN->geraTempoCargaHoraria( $fatorPres, $qtdDiasUteis, $objUsuarioDTO->getNumCargaPadraoParametrizacao() );
 
-						    if ( !empty( $objUltRegPeriodo ) ) {
-						    	$difTempo = $cargaTotal - $objUltRegPeriodo->getNumCargaHoraria();
-							    $cargaTotal -= $difTempo;
-						    }
-
 						    // gera os dias ja utilizados/salvos no banco
-						    $arrDiasAusenciasUtilizados = MdUtlAdmPrmGrUsuCargaINT::criaDiasAusenciasUtilizados($objUltRegPeriodo->getStrDatasAusencias());
+						    $arrDiasAusenciasUtilizados = MdUtlAdmPrmGrUsuCargaINT::criaDiasAusenciasUtilizados($item->getStrDatasAusencias());
 						    $dtPerInicial               = implode('-',array_reverse(explode('/',$item->getDtaPeriodoInicial())));
 						    $dtPerFinal                 = implode('-',array_reverse(explode('/',$item->getDtaPeriodoFinal())));
+						    $isAlterarPeriodo           = false;
+						    $arrDatasDeAusenciaLoop     = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias(
+						    	                              $ausencia->{$arrIdentificador['dataInicial']},
+							                                  $ausencia->{$arrIdentificador['dataFinal']}
+							                                );
 
-						    // para cada dia de ausencia, faz o controle se esta dentro do periodo
-						    $arrDatasDeAusenciaLoop = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($ausencia->{$arrIdentificador['dataInicial']},$ausencia->{$arrIdentificador['dataFinal']});
-
-						    $isAlterarPeriodo = false;
-
-						    foreach($arrDatasDeAusenciaLoop as $dtAus){
-							    // dia referencia da ausencia a ser avaliada
-							    $dtRefAusencia = $dtAus;
-
+								// para cada dia de ausencia, faz o controle se esta dentro do periodo
+						    foreach($arrDatasDeAusenciaLoop as $dtRefAusencia){
 							    if (strtotime($dtRefAusencia) >= strtotime($dtPerInicial) && strtotime($dtRefAusencia) <= strtotime($dtPerFinal) && !in_array($dtRefAusencia, $arrDiasAusenciasUtilizados) ) {
 								    array_push($arrDiasAusenciasUtilizados, $dtRefAusencia);
 								    $tmpParcial = $objMdUtlAdmPrmGrUsuCargaRN->geraTempoCargaHoraria( $fatorPres, 1, $objUsuarioDTO->getNumCargaPadraoParametrizacao() );
@@ -876,34 +934,23 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 
 						    if(
 						    	$isAlterarPeriodo &&
-							    $item->getNumIdMdUtlAdmPrmGrUsuCarga() == $objUltRegPeriodo->getNumIdMdUtlAdmPrmGrUsuCarga() &&
+							    $item->getNumCargaHoraria() != 0 &&
 							    $cargaTotal < $item->getNumCargaHoraria()
 						    )
 						    {
+							    $cargaTotal                  = $cargaTotal < 0 ? 0 : $cargaTotal;
 							    $strDatasAusenciasUtilizadas = MdUtlAdmPrmGrUsuCargaINT::montaDatasAusenciasBanco($arrDiasAusenciasUtilizados);
 
-							    // Verificar se é o periodo atual, caso sim, desativa-lo e criar um novo registro do periodo com o novo
-							    // tempo de carga
-							    if ($item->getStrSinAtivo() == 'S'){
-							      // altera a flag ativo como 'N'
-								    $item->setStrSinAtivo('N');
-								    $objMdUtlAdmPrmGrUsuCargaRN->alterar($item);
+							    // altera a flag ativo como 'N'
+							    $item->setStrSinAtivo('N');
+							    $objMdUtlAdmPrmGrUsuCargaRN->alterar($item);
 
-								    // cadastra um novo periodo com os novos dados
-								    $item->setNumIdMdUtlAdmPrmGrUsuCarga(null);
-								    $item->setStrSinAtivo('S');
-								    $item->setNumCargaHoraria($cargaTotal);
-								    $item->setStrDatasAusencias($strDatasAusenciasUtilizadas);
-								    $objMdUtlAdmPrmGrUsuCargaRN->cadastrar($item);
-
-							    } else {
-								    // altera a coluna com os novos registros das datas de ausencias
-								    $item->setNumIdMdUtlAdmPrmGrUsuCarga(null);
-								    $item->setNumCargaHoraria($cargaTotal);
-								    $item->setStrSinAtivo('S');
-								    $item->setStrDatasAusencias($strDatasAusenciasUtilizadas);
-								    $objMdUtlAdmPrmGrUsuCargaRN->cadastrar($item);
-							    }
+							    // cadastra um novo periodo com os novos dados
+							    $item->setNumIdMdUtlAdmPrmGrUsuCarga(null);
+							    $item->setStrSinAtivo('S');
+							    $item->setNumCargaHoraria($cargaTotal);
+							    $item->setStrDatasAusencias($strDatasAusenciasUtilizadas);
+							    $objMdUtlAdmPrmGrUsuCargaRN->cadastrar($item);
 						    }
 					    }
 				    }
@@ -911,4 +958,27 @@ class MdUtlAgendamentoAutomaticoRN extends InfraRN
 		    }
 	    }
     }
+
+    private function trataException( $e ){
+	    $strErro = $e->getMessage() . "\n";
+	    $strErro .= "====================================================== \n\n";
+	    return $strErro;
+		}
+
+		private function initDadosDebug(){
+      ini_set('max_execution_time', '0');
+	    ini_set('memory_limit', '1024M');
+
+	    InfraDebug::getInstance()->setBolLigado(true);
+	    InfraDebug::getInstance()->setBolDebugInfra(false);
+	    InfraDebug::getInstance()->setBolEcho(false);
+	    InfraDebug::getInstance()->limpar();
+    }
+
+		private function limpaDadosDebug(){
+			InfraDebug::getInstance()->setBolLigado(false);
+			InfraDebug::getInstance()->setBolDebugInfra(false);
+			InfraDebug::getInstance()->setBolEcho(false);
+			InfraDebug::getInstance()->limpar();
+		}
 }

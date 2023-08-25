@@ -679,7 +679,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
             </div>
 
             <div class="<?= $col_def_labels ?> mb-2 justify-content-center align-self-center" id="divCargaHrPadrao">
-                <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
+                <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Exigível no Período Atual:</label>
                 <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                     name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
 

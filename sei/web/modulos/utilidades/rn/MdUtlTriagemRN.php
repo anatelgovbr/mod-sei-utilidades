@@ -170,9 +170,8 @@ class MdUtlTriagemRN extends InfraRN
     protected function cadastrarDadosTriagemControlado($dados)
     {
         try {
-
             $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
-            $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
+            //$objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
             $objRelAtvTriagemRN = new MdUtlRelTriagemAtvRN();
             $objMdUtlFilaPrmUsuRN = new MdUtlAdmFilaPrmGrUsuRN;
             $objHistoricoRN = new MdUtlHistControleDsmpRN();
@@ -203,11 +202,24 @@ class MdUtlTriagemRN extends InfraRN
                 $vlrUndEsf = empty($objControleDsmpDTO->getNumTempoExecucao()) ? null : $objControleDsmpDTO->getNumTempoExecucao();
             }
 
-
             $objTriagem = $this->_salvaObjTriagem($dados, $dados['hdnIsPossuiAnalise'], $isTpProcParametrizado, $vlrUndEsf);
-            $idTriagem = $objTriagem->getNumIdMdUtlTriagem();
-            $arrObjs = $objRelAtvTriagemRN->cadastrarObjsTriagem(array($dados, $objTriagem));
+            $idTriagem  = $objTriagem->getNumIdMdUtlTriagem();
+            $arrObjs    = $objRelAtvTriagemRN->cadastrarObjsTriagem(array($dados, $objTriagem));
 
+            // se veio da Tela de Analise e não foram todas as atividades analisadas, ocorre retriagem automatica, ocorrendo a necessidade
+	          // de atualizar o idRelTriagem que esta no $_POST ( variavel $dados )
+	          if ( $isRetriagem && (isset($dados['isOrigemTelaAnalise']) && $dados['isOrigemTelaAnalise'] === true ) ) {
+		          $arrItens = explode( ',' , $dados['hdnItensSelecionados'] );
+	          	foreach ( $arrItens as $itemSelecionado ) {
+			          foreach ( $arrObjs['itensRelTriagemParaAtualizar'] as $itemRelTriag ) {
+				          if ( (int) $_POST['idRelTriagem_'.$itemSelecionado] == (int) $itemRelTriag['idRelTriagAtv'] ) {
+					          $dados['idRelTriagem_'.$itemSelecionado] = $itemRelTriag['novoIdRelTriagAtv'];
+					          $_POST['idRelTriagem_'.$itemSelecionado] = $itemRelTriag['novoIdRelTriagAtv'];
+					          $_POST['txtDtAnaliseAtividade'.$itemRelTriag['novoIdRelTriagAtv']] = $_POST['txtDtAnaliseAtividade'.$itemRelTriag['idRelTriagAtv']];
+				          }
+		            }
+		          }
+	          }
 
             $arrObjsAtuais = $objMdUtlControleDsmpRN->getObjsAtivosPorProcedimento(array($idProcedimento));
             $tipoRevisao = $objMdUtlFilaPrmUsuRN->getPercentualTriagemAnalisePorFila($idFila);
@@ -599,6 +611,12 @@ class MdUtlTriagemRN extends InfraRN
         $objRelTriagemAtvDTO->retDtaDataExecucao();
         $objRelTriagemAtvDTO->retStrSinAtvRevAmostragem();
 
+	      $objRelTriagemAtvDTO->setOrd('DataExecucao',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objRelTriagemAtvDTO->setOrd('IdMdUtlRelTriagemAtv',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objRelTriagemAtvDTO->setOrd('NomeAtividade',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objRelTriagemAtvDTO->setOrd('NomeProduto',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objRelTriagemAtvDTO->setOrd('NomeSerie',InfraDTO::$TIPO_ORDENACAO_ASC);
+
         return $objRelTriagemAtvDTO;
     }
 
@@ -708,7 +726,6 @@ class MdUtlTriagemRN extends InfraRN
 
     public function cadastroRetriagem($objTriagemDTO, $objControleDsmpDTO)
     {
-
         //Desativar Relacionamentos
         $this->desativar(array($objTriagemDTO));
 
@@ -720,8 +737,7 @@ class MdUtlTriagemRN extends InfraRN
             $objRevisaoRN->desativar(array($objRevisaoDTO));
         }
 
-        $dados = $_POST;
-        $dados['isCorrecaoTriagem'] = true;
-        return $this->cadastrarDadosTriagem($dados);
+        $_POST['isCorrecaoTriagem'] = true;
+        return $this->cadastrarDadosTriagem($_POST);
     }
 }

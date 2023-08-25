@@ -58,12 +58,6 @@ function inicializar(){
     carregarComponenteGrupoAtividade();
     inicializarTabelaDinamicaAtividade(consultar);
     carregarHiddenDominio();
-
-    const arrTpsCtrl = new Array();
-    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
-        arrTpsCtrl.push(<?= $tpCtrl?>);
-    <?php endforeach; ?>
-    getCargaHrDistribuida(arrTpsCtrl , <?= $idUsuarioResp ?>);
 }
 
 function carregarHiddenDominio(){
@@ -483,6 +477,11 @@ function adicionarRegistroTabelaAtividade(){
 
         var complexidade = arrIdsAtv.length > 3 ? ' ('+ arrIdsAtv[3] + ')' : '';
 
+        /*
+            No index 8, do array abaixo, sinaliza registro da data de execucao e o id da triagem x atividade
+            mas como eh um novo item, o valor por default eh igual a _#_
+        */
+
         idMain = idMain.trim();
         var arrLinha = [ idMain,
             arrIdsAtv[0],
@@ -492,7 +491,8 @@ function adicionarRegistroTabelaAtividade(){
             strTipoAnalise,
             arrIdsAtv[2],
             vlAtvComAnalise,
-            sinAvaliacaoHabilitada
+            '_#_'
+            //sinAvaliacaoHabilitada,
         ]
 
         objTabelaDinamicaAtividade.adicionar(arrLinha);

@@ -38,6 +38,7 @@ $isCadastrar       = false;
 $disabledConsultar = "";
 $disabled          = 'disabled="disabled"';
 $strTitulo         = 'Análise ';
+$strTela           = trim($strTitulo);
 $displayFila       = "display:none";
 $isRetriagem       = array_key_exists('id_retriagem', $_GET) ? $_GET['id_retriagem'] : $_POST['hdnIdRetriagem'];
 $isProcessoConcluido = 0;
@@ -210,6 +211,9 @@ $isTpProcParametrizado   = $objMdUtlAdmPrmGrRN->verificaTipoProcessoParametrizad
 
 $isJsTpProcParametrizado = $isTpProcParametrizado ? '1' : '0';
 
+//Retorna os tempos calculados: Executado, Pendente, Distribuido e Carga Padrao
+$arrParams = ['idTipoControle' => $arrIdsTpCtrls , 'idUsuarioParticipante' => $idUsuarioResp , 'isRetornoXML' => false];
+$arrTempos = MdUtlAdmPrmGrUsuINT::buscarDadosCargaUsuarioCompleto( $arrParams );
 
 //Configuração da Paginação
 switch (true) {
@@ -236,16 +240,25 @@ switch (true) {
                 $objInfraException->lancarValidacoes();
 
                 if( $_POST['hdnIdRetriagem'] == 1 && $_POST["hdnSalvarRascunho"] != "1"){
+	                $_POST['isOrigemTelaAnalise'] = true;
 
-                    $objMdUtlAdmAtividadeRN         = new MdUtlAdmAtividadeRN();
-                    $dados                          = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem( $_POST['idsAtividades'] );
+	                // retorna os itens que foram marcados na Tela de analise para a busca dos registros de
+                    // RelTriagem corretos para a retriagem automatica
+	                $arrItens       = explode( ',' , $_POST['hdnItensSelecionados'] );
+	                $arrIdsRelTriag = [];
+	                foreach ( $arrItens as $item ) {
+		                array_push($arrIdsRelTriag,$_POST['idRelTriagem_'.$item]);
+	                }
 
-                    $_POST['hdnTbAtividade']        = $dados['itensTable'];
-                    $_POST['hdnTmpExecucao']        = $dados['tmpExecucao'];
-                    $_POST['hdnIsPossuiAnalise']    = 'S';
-                    $objTriagemDTO                  = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
-                    $isRetriagemConcluida           = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
-
+	                //simula a geraçao da grid, como se estivesse na tela de Retriagem
+	                $arrObjsRelTriag             = $objMdUtlRelTriagemAtvRN->getObjsRelTriagemAtividade($arrIdsRelTriag);
+	                $objMdUtlAdmAtividadeRN      = new MdUtlAdmAtividadeRN();
+	                $arrItensRelTriagem          = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem($arrObjsRelTriag);
+	                $_POST['hdnTbAtividade']     = $arrItensRelTriagem['itensTable'];
+	                $_POST['hdnTmpExecucao']     = $arrItensRelTriagem['tmpExecucao'];
+	                $_POST['hdnIsPossuiAnalise'] = 'S';
+	                $objTriagemDTO               = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
+	                $isRetriagemConcluida        = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
                 }
 
                 $objRn = new MdUtlAnaliseRN();
@@ -334,17 +347,18 @@ switch (true) {
                     $isProdutoIgual        = !is_null($idTpProdutoPreenchido) && $idTpProdutoAtividade == $idTpProdutoPreenchido;
                     $isSerieIgual          = !is_null($idSerieAtual) && $idSerieAtiv == $idSerieAtual;
                     $isProdGeralIgual      = $isSerieIgual || $isProdutoIgual;
+                    $isProdMarcado         = $arrObjs[$key1]->getNumIdMdUtlRelTriagemAtv() == $objPreenchidoDTO->getNumIdMdUtlRelTriagemAtv();
 
                     if(
                         $isProdGeralIgual &&
                         $isAtividadeIgual &&
                         $objPreenchidoDTO->getStrSinObjPreenchido() == 'N' &&
                         $arrObjs[$key1]->getStrSinAnalisado() == 'N'
+                        && $isProdMarcado
                     ){
                         $arrObjs[$key1]->setStrSinAnalisado('S');
                         $arrObjs[$key1]->setStrObservacaoAnalise($objPreenchidoDTO->getStrObservacaoAnalise());
                         $arrObjs[$key1]->setStrProtocoloFormatado($objPreenchidoDTO->getStrProtocoloFormatado());
-                        //$arrObjs[$key1]->setStrDocumentoFormatado($objPreenchidoDTO->getStrDocumentoFormatado());
                         $arrObjsPreenchidos[$key2]->setStrSinObjPreenchido('S');
                     }
                 }
@@ -381,13 +395,25 @@ switch (true) {
                 $objMdUtlAnaliseRN->desativar(array($objMdUtlAnaliseDTO));
 
                 if( $_POST['hdnIdRetriagem'] == 1 ){
-                    $objMdUtlAdmAtividadeRN      = new MdUtlAdmAtividadeRN();
-                    $dados = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem( $_POST['idsAtividades'] );
-                    $_POST['hdnTbAtividade'] = $dados['itensTable'];
-                    $_POST['hdnTmpExecucao'] = $dados['tmpExecucao'];
-                    $_POST['hdnIsPossuiAnalise'] = 'S';
-                    $objTriagemDTO = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
-                    $isRetriagemConcluida = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
+	                $_POST['isOrigemTelaAnalise'] = true;
+
+	                // retorna os itens que foram marcados na Tela de analise para a busca dos registros de
+	                // RelTriagem corretos para a retriagem automatica
+	                $arrItens       = explode( ',' , $_POST['hdnItensSelecionados'] );
+	                $arrIdsRelTriag = [];
+	                foreach ( $arrItens as $item ) {
+		                array_push($arrIdsRelTriag,$_POST['idRelTriagem_'.$item]);
+	                }
+
+	                //simula a geraçao da grid, como se estivesse na tela de Retriagem
+	                $arrObjsRelTriag             = $objMdUtlRelTriagemAtvRN->getObjsRelTriagemAtividade($arrIdsRelTriag);
+	                $objMdUtlAdmAtividadeRN      = new MdUtlAdmAtividadeRN();
+	                $arrItensRelTriagem          = $objMdUtlAdmAtividadeRN->getAtividadesParaRetriagem($arrObjsRelTriag);
+	                $_POST['hdnTbAtividade']     = $arrItensRelTriagem['itensTable'];
+	                $_POST['hdnTmpExecucao']     = $arrItensRelTriagem['tmpExecucao'];
+	                $_POST['hdnIsPossuiAnalise'] = 'S';
+	                $objTriagemDTO               = $objTriagemRN->buscarObjTriagemPorId($idTriagem);
+	                $isRetriagemConcluida        = $objTriagemRN->cadastroRetriagem($objTriagemDTO,$objControleDsmpDTO);
                 }
 
                 $isProcessoConcluido = $objMdUtlAnaliseRN->cadastrarDadosAnalise(array($_POST, $isTpProcParametrizado, true));
@@ -449,6 +475,7 @@ if ($numRegistros > 0) {
         $idRelTriagem   = "";
         $strValor       = 'N';
         $rowNmAtv       = '';
+	    $strId          = $i;
 
         // Controle para tratar os dados: Tempo de Execucao e Nome da Atividade
         $vlrUnidEsf      = !is_null($arrObjs[$i]->getNumTempoExecucaoAtribuido()) ? $arrObjs[$i]->getNumTempoExecucaoAtribuido() : 0;
@@ -458,6 +485,7 @@ if ($numRegistros > 0) {
         $ctrlNmAtividade = PaginaSEI::tratarHTML($arrObjs[$i]->getStrNomeAtividade().' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$arrObjs[$i]->getNumComplexidadeAtividade()]) . ') - ' . $vlrUnidEsf;
 
         if( $idRelTriagem2 != $arrObjs[$i]->getNumIdMdUtlRelTriagemAtv() ){
+	        $dataExecucaoAtividade = '';
             if($arrObjs[$i]->getDtaDataExecucao() != "") {
                 $dataExecucaoAtividade = $arrObjs[$i]->getDtaDataExecucao();
             }
@@ -471,8 +499,8 @@ if ($numRegistros > 0) {
             $rowNmAtv = '<tr style="height: 50px;" class="table-success">
                 <td colspan="5">
                     <div class="row">
-                        <div class="col-10">'.$ctrlNmAtividade.'</div>
-                        <div class="col-2 dataRelatarDiaDia" style="display: '.$displayDatas.'"> 
+                        <div class="col-sm-8 col-md-9">'.$ctrlNmAtividade.'</div>
+                        <div class="col-5 col-sm-4 col-md-3 dataRelatarDiaDia" style="display: '.$displayDatas.'"> 
                             <div class="float-right input-group mb-3" style="margin-bottom: 0 !important">
                                 <label id="lblDtAnaliseAtividade" for="txtDtAnaliseAtividade'.$arrObjs[$i]->getNumIdMdUtlRelTriagemAtv().'"  class="infraLabelObrigatorio" style="margin-bottom: 0; line-height: 2">Data: </label>
                                 <input type="text" id="txtDtAnaliseAtividade'.$arrObjs[$i]->getNumIdMdUtlRelTriagemAtv().'" name="txtDtAnaliseAtividade'.$arrObjs[$i]->getNumIdMdUtlRelTriagemAtv().'" onchange="return validaPeriodoDataDiaADia(this);"
@@ -491,7 +519,6 @@ if ($numRegistros > 0) {
 
         $idRelTriagem2  = $arrObjs[$i]->getNumIdMdUtlRelTriagemAtv();
         $idRelTriagem   = $idRelTriagem2;
-        $strId          = $i;
         $strIdSerieProd = $isCadastrar ? $arrObjs[$i]->getNumIdMdUtlAdmAtvSerieProd() : null;
         $TmpExecucao    = $isCadastrar || $isAlterar ? $arrObjs[$i]->getNumTempoExecucaoProduto() : 0;
         $idSerieAtual   = $isCadastrar || $isAlterar ? $arrObjs[$i]->getNumIdSerieRel() : $arrObjs[$i]->getNumIdSerie();

@@ -381,6 +381,33 @@
         });
     }
 
+    /*
+    * Função acionada pelo clique do botao # Mapear #
+    * */
+    function validarMapear(){
+        if (infraTrim(document.querySelector('#txtUrlDefServico').value) == '') {
+            alert(setMensagemPersonalizada(msgDef, ['URL Definição do Serviço']));
+            document.querySelector('#txtUrlDefServico').focus();
+            return false;
+        }
+
+        if (infraTrim(document.querySelector('#txtUrlServico').value) == '') {
+            alert(setMensagemPersonalizada(msgDef, ['URL do Endpoint da Operação']));
+            document.querySelector('#txtUrlServico').focus();
+            return false;
+        }
+
+        let tpFuncionalidade = document.querySelector('#selFuncionalidade').value;
+        let urlServico       = document.querySelector('#txtUrlServico').value;
+        let arrUrlServico    = urlServico.split('/');
+
+        objOperacao.operacao = arrUrlServico.pop();
+        objOperacao.validado = false;
+
+        //executa consulta no arquivo .json, definido no campo: URL Definição do Serviço
+        validarWebService();
+    }
+
     function validarWebService() {
         let tpInteg = document.querySelectorAll('input[name="rdnTpIntegracao"]:checked');
         let params  = {
@@ -411,10 +438,9 @@
             type: "POST",
             url: path,
             dataType: 'xml',
-            async: false,
             data: parametros,
             beforeSend: function() {
-                //infraExibirAviso(false);
+                infraExibirAviso(false);
             },
             success: function(result) {
                 montaOperacao(result);
@@ -422,13 +448,18 @@
             error: function(msgError) {
                 msgCommit = "Erro ao processar o XML do SEI: " + msgError.responseText;
             },
-            complete: function(result) {
-                //infraAvisoCancelar();
+            complete: function(result,opt) {
+                infraAvisoCancelar();
             }
         });
     }
 
     function montaOperacao( result ) {
+        if ( $(result).find('erros').length > 0 ) {
+            console.error($(result).find('erro').attr('descricao'));
+            return false;
+        }
+
         let nmOperacao = '/' + objOperacao.operacao;
 
         //recupera o json que retorna do servico com os dados das operacoes existentes e dados de entrada/saida de cada operacao
@@ -441,40 +472,15 @@
 
         if( !objOperacao.validado ) return objOperacao.validado;
 
-        if ( $(result).find('success').text() != 'true' ) {
-            if ( $(result).find('erros').length )
-                alert( $(result).find('erro').attr('descricao') );
-            else
-                alert( $(result).find('msg').text() );
-        }
+        showDadosTela();
     }
 
-    function validarMapear(){
-        if (infraTrim(document.querySelector('#txtUrlDefServico').value) == '') {
-            alert(setMensagemPersonalizada(msgDef, ['URL Definição do Serviço']));
-            document.querySelector('#txtUrlDefServico').focus();
-            return false;
-        }
-
-        if (infraTrim(document.querySelector('#txtUrlServico').value) == '') {
-            alert(setMensagemPersonalizada(msgDef, ['URL do Endpoint da Operação']));
-            document.querySelector('#txtUrlServico').focus();
-            return false;
-        }
-
+    function showDadosTela(){
         let tpFuncionalidade = document.querySelector('#selFuncionalidade').value;
-        let urlServico       = document.querySelector('#txtUrlServico').value;
-        let arrUrlServico    = urlServico.split('/');
-
-        objOperacao.operacao = arrUrlServico.pop();
-        objOperacao.validado = false;
-
-        //executa consulta no arquivo .json, definido no campo: URL Definição do Serviço
-        validarWebService();
 
         if ( objOperacao.validado === false ) {
-           alert('Operação Inválida.');
-           return false;
+            alert('Operação Inválida.');
+            return false;
         }
 
         const txt                  = '/' + objOperacao.operacao;
@@ -539,6 +545,5 @@
                 v.appendChild( opt );
             });
         });
-        //alert('Dados das combos carregados!');
     }
 </script>

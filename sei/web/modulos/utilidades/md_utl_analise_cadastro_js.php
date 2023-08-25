@@ -69,16 +69,10 @@
         } else {
             $('#divCargaHrDistribExecRascunho').css("display", "block");
         }
-        //  $('input[name^=chkItem]').trigger('click');
+
         carregarHiddenDominio();
-
-        const arrTpsCtrl = new Array();
-	    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
-            arrTpsCtrl.push(<?= $tpCtrl?>);
-	    <?php endforeach; ?>
-
-        getCargaHrDistribuida(arrTpsCtrl,<?= $idUsuarioResp ?>);
         preencherNomeHidden();
+
         $('input[type=checkbox]').on('change', function() {
             var idCheckbox = this.id;
             if(idCheckbox.indexOf("chkItem") != -1) {
@@ -119,7 +113,7 @@
         <?php
             if($_GET['acao'] == 'md_utl_analise_alterar') {
                 ?>
-            var tempoSomado = 0;
+            var tempoSomado = parseInt( convertToMins( $("#spnCargaHrDistribExec").html() ) ); //0;
             const atividadesSelecionadas = [];
             $('input[type=checkbox]').each(function () {
                 var idCheckbox = this.id;

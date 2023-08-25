@@ -538,34 +538,60 @@ class MdUtlAdmAtividadeRN extends InfraRN {
             $objInfraException->lancarValidacao($msg);
         }
     }
-    
-    public function getAtividadesParaRetriagem($idsAtividades){
-      $objMdUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
-      $arrIds = strpos($idsAtividades,',') > 0 ? explode(',',$idsAtividades) : array($idsAtividades);
 
-      $objMdUtlAtividadeDTO->setNumIdMdUtlAdmAtividade( $arrIds , InfraDTO::$OPER_IN );
+		public function getAtividadesParaRetriagem($arrObjsRelTriag) {
+			if ( !empty( $arrObjsRelTriag ) ){
+				$contador    = 0;
+				$arrGrid     = [];
+				$tmpExecucao = 0;
 
-      $objMdUtlAtividadeDTO->retNumIdMdUtlAdmAtividade();
-      $objMdUtlAtividadeDTO->retStrNome();
-      $objMdUtlAtividadeDTO->retStrSinAnalise();
-      $objMdUtlAtividadeDTO->retNumTmpExecucaoAtv();
-      $objMdUtlAtividadeDTO->retNumComplexidade();
-      
-      $arrMdUtlAtividadeDTO = $this->listar( $objMdUtlAtividadeDTO );
-      $contador = 0;
-      $arrGrid  = array();
-      $tmpExecucao = 0;
+				foreach ( $arrObjsRelTriag as $objTriag ) {
+					$objUtlAtividadeDTO = new MdUtlAdmAtividadeDTO();
+					$objUtlAtividadeDTO->setNumIdMdUtlAdmAtividade( $objTriag->getNumIdMdUtlAdmAtividade() );
+					$objUtlAtividadeDTO->retStrSinAnalise();
+					$objUtlAtividadeDTO = $this->consultar( $objUtlAtividadeDTO );
 
-      foreach ( $arrMdUtlAtividadeDTO as $objDTO ) {
-        $idMain = $contador . '_' . $objDTO->getNumIdMdUtlAdmAtividade();
-        $idPk = $objDTO->getNumIdMdUtlAdmAtividade();
-        $vlUe = $objDTO->getStrSinAnalise() == 'S' ? MdUtlAdmPrmGrINT::convertToHoursMins($objDTO->getNumTmpExecucaoAtv()) : '0min';
-        $strVlAnalise = $objDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
-        $tmpExecucao += $objDTO->getNumTmpExecucaoAtv();
-        $contador++;
-        $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNome() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $objDTO->getNumTmpExecucaoAtv());
-      }
-      return array( 'itensTable' => PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrGrid) , 'tmpExecucao' => $tmpExecucao );
-    }
+					$idMain       = $contador . '_' . $objTriag->getNumIdMdUtlAdmAtividade();
+					$idPk         = $objTriag->getNumIdMdUtlAdmAtividade();
+					$strVlAnalise = $objUtlAtividadeDTO->getStrSinAnalise() == 'S' ? 'Sim' : 'Não';
 
+					//tempo total da atividade
+					$tmpExecucao  = $objTriag->getNumTempoExecucao();
+					$sumTmpExecucao += $tmpExecucao;
+
+					//tempo atribuido, onde pode ter um tempo menor
+					$tmpExecAtrib = $objTriag->getNumTempoExecucaoAtribuido();
+					$sumTmpExecAtrib += $tmpExecAtrib;
+
+					//descricao da atividade
+					$strDescAtiv = $objTriag->getStrNomeAtividade() . ' (' . self::$ARR_COMPLEXIDADE[$objTriag->getNumComplexidadeAtividade()] . ')';
+
+					// concatena idRelTriag com Data de Execucao
+					$strDadosExtra = '';
+					$strDadosExtra = (!is_null($objTriag->getDtaDataExecucao())) ? $objTriag->getDtaDataExecucao() : '_';
+					$strDadosExtra .= '#'. $objTriag->getNumIdMdUtlRelTriagemAtv();
+
+					$contador ++;
+
+					$arrGrid[] = [
+						$idMain,
+						$idPk,
+						$strDescAtiv,
+						MdUtlAdmPrmGrINT::convertToHoursMins($tmpExecAtrib),
+						$objUtlAtividadeDTO->getStrSinAnalise(),
+						$strVlAnalise,
+						$tmpExecucao,
+						$tmpExecAtrib,
+						$strDadosExtra
+					];
+				}
+
+				return [
+					'itensTable'  => PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrGrid),
+					'tmpExecucao' => $sumTmpExecucao,
+				];
+			}
+
+			return [];
+		}
 }

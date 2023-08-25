@@ -401,25 +401,25 @@ class MdUtlAdmPrmGrINT extends InfraINT {
         return $retorno;
     }
 
-    public static function recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idControleDesempenho = null)
+    public static function recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idControleDesempenho = null, $strTela = null)
     {
+    	  $msgPadrao = $strTela ? MdUtlMensagemINT::setMensagemPadraoPersonalizada(MdUtlMensagemINT::$MSG_UTL_137,[$strTela]) : MdUtlMensagemINT::$MSG_UTL_136;
         if (!$idControleDesempenho){
-            return 'O Total abrange toda e qualquer execução realizada pelo usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+	        return $msgPadrao;
         }
-
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-
-        return 'O Total abrange toda e qualquer execução realizada pelo usuário logado no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+				return $msgPadrao ."\n \n". $dados['textoFrequencia'];
     }
 
     public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirProcessos($idControleDesempenho)
     {
+	      $msgPadrao = MdUtlMensagemINT::$MSG_UTL_136;
+	      $msgDist   = 'A Carga Exigível no Período Atual somente será exibida depois que for aplicado o filtro "Membro Participante". \n \n '. $msgPadrao;
         if (!$idControleDesempenho) {
-            return 'O Total de Tempo Executado no Período somente será exibido depois que for aplicado o filtro "Responsável".\n \n O Total abrange toda e qualquer execução realizada pelo responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento é "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
+	        return $msgDist;
         }
-
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-        return 'O Total de Tempo Executado no Período somente será exibido depois que for aplicado o filtro "Responsável".\n \n O Total abrange toda e qualquer execução realizada pelo responsável no Tipo de Controle indicado, dentro do Período em andamento, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+        return $msgDist ."\n \n". $dados['textoFrequencia'];
     }
 
     public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirPessoaCargaHoraria($idControleDesempenho)
@@ -464,26 +464,25 @@ class MdUtlAdmPrmGrINT extends InfraINT {
 
     public static function retornaTipoPeriodo($idTipoControle)
     {
-      $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
-      $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
-      $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idTipoControle);
-      $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
-      $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+	    $objMdUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+	    $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
+	    $objMdUtlAdmTpCtrlDTO->retStrStaFrequencia();
+	    $objMdUtlAdmTpCtrlDTO = ( new MdUtlAdmTpCtrlDesempRN() )->consultar($objMdUtlAdmTpCtrlDTO);
 
-      $retorno = '';
-      switch($objMdUtlAdmPrmGr->getStrStaFrequencia()){
-        case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
-          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_DIARIO;
-          break;
+	    $retorno = '';
+	    switch($objMdUtlAdmTpCtrlDTO->getStrStaFrequencia()){
+		    case MdUtlAdmPrmGrRN::$FREQUENCIA_DIARIO:
+			    $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_DIARIO;
+			    break;
 
-        case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
-          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_SEMANAL;
-          break;
+		    case MdUtlAdmPrmGrRN::$FREQUENCIA_SEMANAL:
+			    $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_SEMANAL;
+			    break;
 
-        case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
-          $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_MENSAL;
-          break;
-      }
+		    case MdUtlAdmPrmGrRN::$FREQUENCIA_MENSAL:
+			    $retorno = MdUtlAdmPrmGrRN::$STR_FREQUENCIA_MENSAL;
+			    break;
+	    }
       return $retorno;
     }
 

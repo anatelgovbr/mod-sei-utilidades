@@ -1114,7 +1114,7 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                             $numUnidEsforcoHist += $tempoExecucao;
                             break;
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_ANALISE:
-                            $tempoExecucao = $this->getTempoExecucaoAnalise($objMdUtlHistControleDsmp->getNumIdMdUtlAnalise(),$idUsuarioParticipante);
+                            $tempoExecucao = $this->getTempoExecucaoAnalise($objMdUtlHistControleDsmp->getNumIdMdUtlAnalise(),$idUsuarioParticipante, $arrDatas);
                             $numUnidEsforcoHist += $tempoExecucao;
                             break;
                         case MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO:
@@ -1205,11 +1205,17 @@ class MdUtlHistControleDsmpRN extends InfraRN {
                     $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
                     $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
                     $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
+		                $objMdUtlAnaliseDTO->retDtaPeriodoInicio();
+		                $objMdUtlAnaliseDTO->retDtaPeriodoFim();
 
-                    $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
-                    $vlrUndEsf = !is_null( $objMdUtlAnalise ) ? $objMdUtlAnalise->getNumTempoExecucaoAtribuido() : 0;
-                    $numTempoExecucaoNaoRealizadoHist += $vlrUndEsf;
+		                $dtIni = explode(' ' , $arrDatas['DT_INICIAL'])[0];
+		                $dtFim = explode(' ' , $arrDatas['DT_FINAL'])[0];
 
+	                  $objMdUtlAnaliseDTO = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
+
+		                if ( !is_null( $objMdUtlAnaliseDTO ) && ( $dtIni == $objMdUtlAnaliseDTO->getDtaPeriodoInicio() && $dtFim == $objMdUtlAnaliseDTO->getDtaPeriodoFim() ) ) {
+			                $numTempoExecucaoNaoRealizadoHist += $objMdUtlAnaliseDTO->getNumTempoExecucaoAtribuido();
+		                }
                 }
             }
         }
@@ -1230,17 +1236,31 @@ class MdUtlHistControleDsmpRN extends InfraRN {
 
     }
 
-    public function getTempoExecucaoAnalise($idAnalise, $idUsuarioParticipante){
+    public function getTempoExecucaoAnalise($idAnalise, $idUsuarioParticipante, $arrDatas = null){
         $objMdUtlAnaliseRN = new MdUtlAnaliseRN();
         $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
         $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($idAnalise);
         $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
         $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+
         $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
+	      $objMdUtlAnaliseDTO->retDtaPeriodoInicio();
+	      $objMdUtlAnaliseDTO->retDtaPeriodoFim();
 
         $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
-       
-        return !is_null( $objMdUtlAnalise ) ? $objMdUtlAnalise->getNumTempoExecucaoAtribuido() : 0;
+
+        if ( $objMdUtlAnalise ){
+	        $dtIni = $arrDatas ? explode(' ' , $arrDatas['DT_INICIAL'])[0] : $objMdUtlAnalise->getDtaPeriodoInicio();
+	        $dtFim = $arrDatas ? explode(' ' , $arrDatas['DT_FINAL'])[0] : $objMdUtlAnalise->getDtaPeriodoFim();
+
+	        if ( $dtIni == $objMdUtlAnalise->getDtaPeriodoInicio() && $dtFim == $objMdUtlAnalise->getDtaPeriodoFim() ) {
+		        return $objMdUtlAnalise->getNumTempoExecucaoAtribuido();
+	        }	else {
+	        	return 0;
+	        }
+        } else {
+	        return 0;
+        }
     }
 
     public function getTempoExecucaoRevisao($idRevisao, $idUsuarioParticipante){

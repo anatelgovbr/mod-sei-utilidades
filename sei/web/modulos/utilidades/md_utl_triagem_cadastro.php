@@ -27,6 +27,7 @@ $strUrlPadrao = 'controlador.php?acao=' . $acaoPrincipal;
 // Vars
 $idProcedimento = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 $strTitulo = 'Triagem ';
+$strTela   = trim($strTitulo);
 
 //Tipo de Controle e Procedimento
 $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
@@ -167,6 +168,10 @@ $arrIdsTpCtrls = [$idTipoControle];
 
 // verifica se exite grupo cadastrado para ocultar ou exibir os campos na tela
 $existeGrupoCadastrado = MdUtlAdmGrpINT::verificarExisteGruposParametrizado($objControleDsmpDTO->getNumIdMdUtlAdmTpCtrlDesemp(), $objControleDsmpDTO->getNumIdMdUtlAdmFila(), $idTipoProcedimento);
+
+//Retorna os tempos calculados: Executado, Pendente, Distribuido e Carga Padrao
+$arrParams = ['idTipoControle' => $arrIdsTpCtrls , 'idUsuarioParticipante' => $idUsuarioResp , 'isRetornoXML' => false];
+$arrTempos = MdUtlAdmPrmGrUsuINT::buscarDadosCargaUsuarioCompleto( $arrParams );
 
 switch ($_GET['acao']) {
 
@@ -313,7 +318,12 @@ switch ($_GET['acao']) {
                 $contador++;
                 $valorTotalUE += $vlrTmpExec;
                 $valorTotalHdn += $vlUeHdn;
-                $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidadeAtividade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $vlUeHdn, $vlrTmpExec);
+
+	            $strDadosExtra = '';
+	            $strDadosExtra = ($objDTO && !is_null($objDTO->getDtaDataExecucao())) ? $objDTO->getDtaDataExecucao() : '_';
+	            $strDadosExtra .= ($objDTO && !is_null($objDTO->getNumIdMdUtlRelTriagemAtv())) ? '#'. $objDTO->getNumIdMdUtlRelTriagemAtv() : '#_';
+
+                $arrGrid[] = array($idMain, $idPk, $objDTO->getStrNomeAtividade() . ' (' . MdUtlAdmAtividadeRN::$ARR_COMPLEXIDADE[$objDTO->getNumComplexidadeAtividade()] . ')', $vlUe, $objDTO->getStrSinAnalise(), $strVlAnalise, $vlUeHdn, $vlrTmpExec, $strDadosExtra);
                 $isSemAnalise = $objDTO->getStrSinAnalise() == 'N';
             }
 
@@ -609,7 +619,7 @@ $strNumeroProcesso = $objProcedimentoDTO->getStrProtocoloProcedimentoFormatado()
                             <th class="infraTh" align="center" width="20%">Com Análise?</th> <!--5-->
                             <th style="display: none">Total de Tempo de Execução</th><!--4-->
                             <th style="display: none">Total de Tempo de Execução Atribuido</th>
-                            <th style="display: none">Habilitado para Avaliação</th>
+                            <th style="display: none">Informações Úteis</th>
                             <?php if (!$isConsultar) { ?>
                                 <th class="infraTh" align="center" width="15%">Ações</th><!--6-->
                             <?php } ?>

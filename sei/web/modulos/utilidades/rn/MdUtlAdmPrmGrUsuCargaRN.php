@@ -267,6 +267,7 @@ class MdUtlAdmPrmGrUsuCargaRN extends InfraRN {
 		$cargaHoraria      = 0; //$this->geraTempoCargaHoraria( $fatorPres , $arrPeriodo['numFrequencia'] , $_POST['txtCargaPadrao'] );
 		$arrDatasAusencias = [];
 		$diaAtual          = date('Y-m-d');
+		$isPodeCadastrar   = false;
 
     // virou chefe
     if ( $objMdUtlAdmPrmGrUsuDTO->getStrSinChefiaImediata() == 'S' && $isChefeAlterado ) {
@@ -305,48 +306,54 @@ class MdUtlAdmPrmGrUsuCargaRN extends InfraRN {
 		// condicoes acima
 
 	  if ( $cargaHoraria > 0 ) {
-	      // verifica se a integracao esta ativa, com REST e o membro tem ausencias no periodo
-	      $objMdUtlAdmIntegDTO = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$AUSENCIA);
+      // verifica se a integracao esta ativa, com REST e o membro tem ausencias no periodo
+      $objMdUtlAdmIntegDTO = ( new MdUtlAdmIntegracaoRN() )->obterConfigIntegracaoPorFuncionalidade(MdUtlAdmIntegracaoRN::$AUSENCIA);
 
-	      if ( $objMdUtlAdmIntegDTO && $objMdUtlAdmIntegDTO['integracao']->getStrTipoIntegracao() == 'RE' ) {
-			      // retorna dados do usuario atual
-			      $objUserDTO = new UsuarioDTO();
-			      $objUserDTO->setNumIdUsuario($objMdUtlAdmPrmGrUsuDTO->getNumIdUsuario());
-			      $objUserDTO->retStrSigla();
-			      $objUserDTO = ( new UsuarioRN() )->consultarRN0489($objUserDTO);
+      if ( $objMdUtlAdmIntegDTO && $objMdUtlAdmIntegDTO['integracao']->getStrTipoIntegracao() == 'RE' ) {
+	      // retorna dados do usuario atual
+	      $objUserDTO = new UsuarioDTO();
+	      $objUserDTO->setNumIdUsuario($objMdUtlAdmPrmGrUsuDTO->getNumIdUsuario());
+	      $objUserDTO->retStrSigla();
+	      $objUserDTO = ( new UsuarioRN() )->consultarRN0489($objUserDTO);
 
-	          $arrParams      = ['dataInicial' => $dtIniPadraoEUA, 'dataFinal' => $dtFinPadraoEUA, 'loginUsuario' => $objUserDTO->getStrSigla()];
-	          $arrParams      = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada( $objMdUtlAdmIntegDTO, $arrParams )];
-	          $arrObjAusencia = MdUtlAdmIntegracaoINT::executarConsultaREST( $objMdUtlAdmIntegDTO , $arrParams['parametros'] );
+	      if( !is_null($objUserDTO) ) {
+		      $isPodeCadastrar = true;
 
-	          if ( !empty( $arrObjAusencia ) ) {
-		            $arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($objMdUtlAdmIntegDTO['parametros-integracao']);
-	              foreach ( $arrObjAusencia as $objAusencia ) {
-	                  $arrRangeDiasAus = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias( $objAusencia->{$arrIdentificador['dataInicial']} , $objAusencia->{$arrIdentificador['dataFinal']} );
-	                  foreach ( $arrRangeDiasAus as $diaAusencia ) {
-	                      if ( strtotime($diaAusencia) >= strtotime($dtIniPadraoEUA ) && strtotime($diaAusencia) <= strtotime( $dtFinPadraoEUA )	) {
-	                          array_push($arrDatasAusencias,$diaAusencia);
-	                          $tmpParcial = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria( $fatorPres, 1, $_POST['txtCargaPadrao'] );
-	                          $cargaHoraria -= $tmpParcial;
-	                      }
-	                  }
-	              }
-	          }
+		      $arrParams = ['dataInicial' => $dtIniPadraoEUA, 'dataFinal' => $dtFinPadraoEUA, 'loginUsuario' => $objUserDTO->getStrSigla()];
+		      $arrParams = ['parametros' => MdUtlAdmIntegracaoINT::montaParametrosEntrada($objMdUtlAdmIntegDTO, $arrParams)];
+		      $arrObjAusencia = MdUtlAdmIntegracaoINT::executarConsultaREST($objMdUtlAdmIntegDTO, $arrParams['parametros']);
+
+		      if (!empty($arrObjAusencia)) {
+			      $arrIdentificador = MdUtlAdmIntegracaoINT::montaParametrosSaida($objMdUtlAdmIntegDTO['parametros-integracao']);
+			      foreach ($arrObjAusencia as $objAusencia) {
+				      $arrRangeDiasAus = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($objAusencia->{$arrIdentificador['dataInicial']}, $objAusencia->{$arrIdentificador['dataFinal']});
+				      foreach ($arrRangeDiasAus as $diaAusencia) {
+					      if (strtotime($diaAusencia) >= strtotime($dtIniPadraoEUA) && strtotime($diaAusencia) <= strtotime($dtFinPadraoEUA)) {
+						      array_push($arrDatasAusencias, $diaAusencia);
+						      $tmpParcial = (new MdUtlAdmPrmGrUsuCargaRN())->geraTempoCargaHoraria($fatorPres, 1, $_POST['txtCargaPadrao']);
+						      $cargaHoraria -= $tmpParcial;
+					      }
+				      }
+			      }
+		      }
 	      }
+      }
 	  }
 
-		$strDatasAusencias = empty($arrDatasAusencias) ? null : MdUtlAdmPrmGrUsuCargaINT::montaDatasAusenciasBanco($arrDatasAusencias);
+	  if ( $isPodeCadastrar ) {
+		  $strDatasAusencias = empty($arrDatasAusencias) ? null : MdUtlAdmPrmGrUsuCargaINT::montaDatasAusenciasBanco($arrDatasAusencias);
 
-		$objMdUtlAdmPrmGrUsuCargaDTO->setNumCargaHoraria( $cargaHoraria );
-		$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial( $arrPeriodo['dtInicial'] );
-		$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal( $arrPeriodo['dtFinal'] );
-		$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu( $objMdUtlAdmPrmGrUsuDTO->getNumIdMdUtlAdmPrmGrUsu() );
-		$objMdUtlAdmPrmGrUsuCargaDTO->setStrDatasAusencias( $strDatasAusencias );
-		$objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
-		$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($objMdUtlAdmPrmGrUsuDTO->getNumIdUsuario());
-		$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmPrmGrUsuDTO->getNumIdMdUtlAdmPrmGr());
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setNumCargaHoraria($cargaHoraria);
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial($arrPeriodo['dtInicial']);
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal($arrPeriodo['dtFinal']);
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($objMdUtlAdmPrmGrUsuDTO->getNumIdMdUtlAdmPrmGrUsu());
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setStrDatasAusencias($strDatasAusencias);
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario($objMdUtlAdmPrmGrUsuDTO->getNumIdUsuario());
+		  $objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmPrmGrUsuDTO->getNumIdMdUtlAdmPrmGr());
 
-		$this->cadastrar( $objMdUtlAdmPrmGrUsuCargaDTO );
+		  $this->cadastrar($objMdUtlAdmPrmGrUsuCargaDTO);
+	  }
 	}
 
   public function atualizarCargaHorariaAntiga( MdUtlAdmPrmGrUsuDTO $objMdUtlAdmPrmGrUsuDTO, $objMdUtlAdmPrmGrUsuCargaDTO,  $strFrequencia = null){
@@ -488,6 +495,44 @@ class MdUtlAdmPrmGrUsuCargaRN extends InfraRN {
 		if( !is_null( $objMdUtlCargaDTO )) {
 			$objMdUtlCargaDTO->setStrSinAtivo('N');
 			$this->alterar($objMdUtlCargaDTO);
+		}
+	}
+
+	public function getInfoCargaPeriodoAtivo( $arrParams , $isRetUnicoRegistro = true ){
+
+		$objMdUtlAdmPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
+
+		$objMdUtlAdmPrmGrUsuCargaDTO->setStrSinAtivo('S');
+
+		if( isset($arrParams['idPrmGr']) && !is_null($arrParams['idPrmGr']) )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGr([$arrParams['idPrmGr']] , InfraDTO::$OPER_IN);
+
+		if( isset($arrParams['idPrmGrUsu']) && !is_null($arrParams['idPrmGrUsu']) )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($arrParams['idPrmGrUsu']);
+
+		if( isset($arrParams['idUsuario']) && !is_null($arrParams['idUsuario']) )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setNumIdUsuario([$arrParams['idUsuario']] , InfraDTO::$OPER_IN);
+
+		if( isset($arrParams['periodoIni']) && !is_null($arrParams['periodoIni']) )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoInicial($arrParams['periodoIni']);
+
+		if( isset($arrParams['periodoFin']) && !is_null($arrParams['periodoFin']) )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setDtaPeriodoFinal($arrParams['periodoFin']);
+
+		if( $isRetUnicoRegistro )
+			$objMdUtlAdmPrmGrUsuCargaDTO->setNumMaxRegistrosRetorno(1);
+
+		//config ordenacao
+		//$objMdUtlAdmPrmGrUsuCargaDTO->setOrd('IdMdUtlAdmPrmGrUsuCarga',InfraDTO::$TIPO_ORDENACAO_DESC);
+
+		//config coluna(s) para retorno
+		$objMdUtlAdmPrmGrUsuCargaDTO->retNumCargaHoraria();
+
+		if ( $isRetUnicoRegistro ) {
+			$ret = $this->consultar($objMdUtlAdmPrmGrUsuCargaDTO);
+			return is_null($ret) ? '0' : $ret->getNumCargaHoraria();
+		} else {
+			return $this->listar($objMdUtlAdmPrmGrUsuCargaDTO);
 		}
 	}
 }

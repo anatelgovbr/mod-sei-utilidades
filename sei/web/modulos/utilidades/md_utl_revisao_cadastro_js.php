@@ -170,12 +170,6 @@
                     .prop('checked',false);
             }
         <?php endif; ?>
-
-        const arrTpsCtrl = new Array();
-	    <?php foreach($arrIdsTpCtrls as $tpCtrl): ?>
-            arrTpsCtrl.push(<?= $tpCtrl?>);
-	    <?php endforeach; ?>
-        getCargaHrDistribuida(arrTpsCtrl, <?= $idUsuarioResp ?>);
     }
 
     function validarSelects() {

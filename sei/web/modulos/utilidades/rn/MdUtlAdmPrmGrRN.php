@@ -87,7 +87,7 @@ class MdUtlAdmPrmGrRN extends InfraRN
         $objMdUtlAdmPrmGrDTOOriginal->retTodos();
         $objMdUtlAdmPrmGrDTOOriginal->setNumIdMdUtlAdmPrmGr($objMdUtlAdmPrmGrDTO->getNumIdMdUtlAdmPrmGr());
         $objMdUtlAdmPrmGrDTOOriginal = $this->consultar($objMdUtlAdmPrmGrDTOOriginal);
-        if ($objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() != "") {
+        if ( !is_null($objMdUtlAdmPrmGrDTOOriginal) && $objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() != "") {
             if ($objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() == "D" && $objMdUtlAdmPrmGrDTO->getStrStaFrequencia() == "S") {
                 if (date('N') != "1") {
                     $objInfraException->adicionarValidacao('A alteração do Tipo de Período de Diário para Semanal somente é permitida em segundas-feiras.');
@@ -562,13 +562,19 @@ class MdUtlAdmPrmGrRN extends InfraRN
 
     public function _cadastrarNovoUsuarioHistorico($arrObjsParametrizados, $idTipoControleUtl)
     {
+    	  $idUsuarioAtual = SessaoSEI::getInstance()->getNumIdUsuario();
+    	  if ( empty($idUsuarioAtual) ) {
+		      $objUsuarioRN   = new MdUtlUsuarioRN();
+		      $idUsuarioAtual = $objUsuarioRN->getObjUsuarioUtilidades( true );
+	      }
+
         if (count($arrObjsParametrizados) > 0) {
             $objHistoricoRN = new MdUtlAdmHistPrmGrUsuRN();
             foreach ($arrObjsParametrizados as $objDTOParametrizado) {
                 if (!is_null($objDTOParametrizado)) {
                     $objHistoricoDTO = $objHistoricoRN->clonarObjParametroParaHistorico($objDTOParametrizado);
                     $objHistoricoDTO->setDthInicial(InfraData::getStrDataHoraAtual());
-                    $objHistoricoDTO->setNumIdUsuarioAtual(SessaoSEI::getInstance()->getNumIdUsuario());
+                    $objHistoricoDTO->setNumIdUsuarioAtual($idUsuarioAtual);
                     $objHistoricoRN->cadastrar($objHistoricoDTO);
 
                     //atualizar distribuições no controle de desempenho para usuario alterado
@@ -592,7 +598,9 @@ class MdUtlAdmPrmGrRN extends InfraRN
 	       Retorna registros de usuarios excluidos que contem alteração na data Fim de Participacao para ser salvo no registro do historico
 	       $arrDadosExtraMembro = [0 => idPrmGrUsu , 1 => idUsuario , 2 => Data Fim Participacao]
 	      */
-	      $arrDadosExtraMembro = PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbUsuarioRemove']);
+	      $arrDadosExtraMembro = isset( $_POST['hdnTbUsuarioRemove'] )
+	        ? PaginaSEI::getInstance()->getArrItensTabelaDinamica($_POST['hdnTbUsuarioRemove'])
+		      : [];
 
         $count = $objMdUtlHistAdmPrmGrUsuRN->contar($objMdUtlHistAdmPrmGrUsuDTO);
         if ($count > 0) {
@@ -600,12 +608,15 @@ class MdUtlAdmPrmGrRN extends InfraRN
             foreach ($arrObjs as $objDTO) {
                 $objDTO->setDthFinal(InfraData::getStrDataHoraAtual());
 
-                foreach ( $arrDadosExtraMembro as $updFimPart ) {
-	                if ( (int) $updFimPart[1] == $objDTO->getNumIdUsuario() ) {
-		                $objDTO->setDthFimParticipacao( $updFimPart[2] );
-		                break;
+                if ( !empty( $arrDadosExtraMembro ) ) {
+	                foreach ($arrDadosExtraMembro as $updFimPart) {
+		                if ((int)$updFimPart[1] == $objDTO->getNumIdUsuario()) {
+			                $objDTO->setDthFimParticipacao($updFimPart[2]);
+			                break;
+		                }
 	                }
                 }
+
                 $objMdUtlHistAdmPrmGrUsuRN->alterar($objDTO);
             }
         }
@@ -693,7 +704,7 @@ class MdUtlAdmPrmGrRN extends InfraRN
 
         if ( $_POST['hdnCargaPadrao'] != $objMdUtlAdmPrmGrDTO->getNumCargaPadrao() || $objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() != $_POST['selStaFrequencia']) {
         	$isUpdateCargaPadrao = $_POST['hdnCargaPadrao'] != $objMdUtlAdmPrmGrDTO->getNumCargaPadrao();
-          if($objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() == "M" && $_POST['selStaFrequencia'] == "S") {
+          if ( !is_null($objMdUtlAdmPrmGrDTOOriginal) && $objMdUtlAdmPrmGrDTOOriginal->getStrStaFrequencia() == "M" && $_POST['selStaFrequencia'] == "S") {
               $this->atualizarCargaMembros($idMdUtlAdmPrmGr, true, $isUpdateCargaPadrao);
           } else {
               $this->atualizarCargaMembros($idMdUtlAdmPrmGr, false, $isUpdateCargaPadrao);

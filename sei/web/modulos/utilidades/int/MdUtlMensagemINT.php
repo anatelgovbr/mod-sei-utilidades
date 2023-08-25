@@ -145,7 +145,11 @@ class MdUtlMensagemINT extends InfraINT {
 		public static $MSG_UTL_130 = 'Para remover este membro, antes é necessário preencher a Data Fim de Participação';
 		public static $MSG_UTL_131 = 'Não é permitido solicitar ajuste de prazo, pois em nenhuma das atividades selecionadas deste processo possuem prazo definido.';
 		public static $MSG_UTL_132 = 'Não foi possível distribuir processos para o usuário logado, pois nenhum processo foi encontrado considerando as parametrizações da Distribuição.';
-
+		public static $MSG_UTL_133 = "Erro Interno no Servidor de Resposta\nHá um problema com o recurso que você está procurando e ele não pode ser exibido";
+		public static $MSG_UTL_134 = "Falha na execução da consulta no webservice";
+		public static $MSG_UTL_135 = "Nenhum recurso correspondente encontrado para determinada solicitação";
+		public static $MSG_UTL_136 = 'A Carga Exigível no Período Atual corresponde ao Tempo de Execução exigido pelo usuário logado no Tipo de Controle indicado durante o período atual, abatendo o tempo de ausências formais (afastamentos, licenças e férias) ou o tempo de quando estiver no exercício de Chefia Imediata (inclusive Substituição), caso na Administração do Módulo no SEI esteja ativada a integração com o Sistema de Recursos Humanos.';
+		public static $MSG_UTL_137 = 'A Carga Exigível no Período Atual corresponde ao Tempo de Execução exigido pelo Membro Responsável pela @VALOR1@ no Tipo de Controle indicado durante o período atual, abatendo o tempo de ausências formais (afastamentos, licenças e férias) ou o tempo de quando estiver no exercício de Chefia Imediata (inclusive Substituição), caso na Administração do Módulo no SEI esteja ativada a integração com o Sistema de Recursos Humanos.';
 
     public static function getMensagem($msg, $arrParams = null){
         $isPersonalizada = count(explode('@VALOR', self::$MSG_UTL_10)) > 1;
