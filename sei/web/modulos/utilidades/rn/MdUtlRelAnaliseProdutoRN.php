@@ -160,4 +160,30 @@ class MdUtlRelAnaliseProdutoRN extends InfraRN{
         return $this->listar($objMdUtlRelAnaliseProdutoDTO);
     }
 
+		public function atualizaReferenciaRelTriagAtvRelAnaliseProdutoConectado( array $arrParams ) {
+
+				$idRelTriagAtv     = $arrParams['idRelTriagAtv'] ?? null;
+				$idAtividade       = $arrParams['idAtividade'] ?? null;
+				$novoIdRelTriagAtv = $arrParams['novoIdRelTriagAtv'] ?? null;
+
+				// verifica se tem registro na tabela md_utl_rel_analise_produto que referencia a md_utl_rel_triagem_atv passados no parametro
+				if ( !is_null( $idRelTriagAtv ) && !is_null( $idAtividade ) ) {
+					$objRelAnaliseProdDTO = new MdUtlRelAnaliseProdutoDTO();
+					$objRelAnaliseProdDTO->setNumIdMdUtlAdmAtividade( $idAtividade );
+					$objRelAnaliseProdDTO->setNumIdMdUtlRelTriagemAtv( $idRelTriagAtv );
+
+					$objRelAnaliseProdDTO->retNumIdMdUtlRelAnaliseProduto();
+					$objRelAnaliseProdDTO->retNumIdMdUtlRelTriagemAtv();
+
+					$arrObjs = $this->listar($objRelAnaliseProdDTO);
+
+					// se contem registros, atualiza a coluna Fk da tabela md_utl_rel_analise_produto que referencia a tabela md_utl_rel_triagem_atv
+					if ( is_array($arrObjs) && !empty($arrObjs) ) {
+						foreach ( $arrObjs as $k => $objRelAnaliseProd ) {
+							$objRelAnaliseProd->setNumIdMdUtlRelTriagemAtv( $novoIdRelTriagAtv );
+							$this->alterar( $objRelAnaliseProd );
+						}
+					}
+				}
+		}
 }

@@ -241,6 +241,7 @@
     }
 
     function removerTags( html ){
+        html = infraRemoverFormatacaoXML(html);
         const data = new DOMParser().parseFromString(html, 'text/html');
         return data.body.textContent || "";
     }

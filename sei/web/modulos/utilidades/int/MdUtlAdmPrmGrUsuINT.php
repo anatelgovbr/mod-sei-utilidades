@@ -360,23 +360,27 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 
         $tipoPeriodo = '';
         if ($post['idTipoControle'] && count($post['idTipoControle']) == 1) {
-            $tipoPeriodo = MdUtlAdmPrmGrINT::retornaTipoPeriodo(current($post['idTipoControle']));
+        	$retorno['tipoPeriodo'] = MdUtlAdmPrmGrINT::retornaTipoPeriodo(current($post['idTipoControle']));
         }
 
         $dadosChefia = ( new MdUtlAdmPrmGrUsuRN() )->validaUsuarioIsChefiaImediata( [ $arrIdsPrmGr , $post['idUsuarioParticipante'] ]);
 
-        $xml = '<Documento>';
-        $xml .= '<ValorCarga>' . $retorno['totalCarga'] . '</ValorCarga>';
-        $xml .= '<ValorUndEs>' . $retorno['totalUnidEsforco'] . '</ValorUndEs>';
-        $xml .= '<ValorUndEsExecutado>' . $retorno['unidEsforcoHist'] . '</ValorUndEsExecutado>';
-        $xml .= '<ValorTempoPendenteExecucao>' . $retorno['valorTempoPendenteExecucao'] . '</ValorTempoPendenteExecucao>';
-        $xml .= '<TipoPeriodo>' . $tipoPeriodo . '</TipoPeriodo>';
+	      $retorno['isChefeImediato'] = $dadosChefia ? 'S' : 'N';
 
-        if( $dadosChefia ) $xml .= '<ChefeImediato>S</ChefeImediato>';
+        if ( isset( $post['isRetornoXML'] ) && $post['isRetornoXML'] === false ) {
+        	return $retorno;
+        } else {
+	        $xml = '<Documento>';
+		        $xml .= '<ValorCarga>' . $retorno['totalCarga'] . '</ValorCarga>';
+		        $xml .= '<ValorUndEs>' . $retorno['totalUnidEsforco'] . '</ValorUndEs>';
+		        $xml .= '<ValorUndEsExecutado>' . $retorno['unidEsforcoHist'] . '</ValorUndEsExecutado>';
+		        $xml .= '<ValorTempoPendenteExecucao>' . $retorno['valorTempoPendenteExecucao'] . '</ValorTempoPendenteExecucao>';
+		        $xml .= '<TipoPeriodo>' . $retorno['tipoPeriodo'] . '</TipoPeriodo>';
+		        $xml .= '<ChefeImediato>'. $retorno['isChefeImediato'] .'</ChefeImediato>';
+	        $xml .= '</Documento>';
 
-        $xml .= '</Documento>';
-
-        return $xml;
+	        return $xml;
+        }
     }
 
     public static function buscarCargaPadrao( $post ){
@@ -419,11 +423,6 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 		    $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
 		    $objMdUtlPrazoRN = new MdUtlPrazoRN();
 
-		    $objMdUtlPrmGrDTO = new MdUtlAdmPrmGrDTO();
-		    $objMdUtlPrmGrDTO->setNumIdMdUtlAdmPrmGr($idParam);
-		    $objMdUtlPrmGrDTO->retDtaDataCorte();
-		    $objMdUtlPrmGrDTO = (new MdUtlAdmPrmGrRN())->consultar($objMdUtlPrmGrDTO);
-
 		    $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPeriodoAtual($idParam);
 
 		    #if (empty($arrDatasFiltro)) $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPorFrequencia($inicioPeriodo);
@@ -437,8 +436,8 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 		    $totalTempoExecucaoExecutadoHist = $tempoExecucaoExecutado + $tempoExecucaoExecutadoHist;
 
 		    $arrPeriodo = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo([$staFrequencia]);
-		    $diasUteis = $arrPeriodo['numFrequencia'];
-		    $totalCarga = $objMdUtlAdmPrmGrUsuRN->verificaCargaPadrao(array($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $diasUteis));
+
+		    $totalCarga = $objMdUtlAdmPrmGrUsuRN->verificaCargaPadrao(array($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $arrPeriodo));
 
 		    $valorTempoPendenteExecucao = MdUtlAdmPrmGrUsuINT::retornaTempoPendenteExecucao($idUsuarioParticipante, $idTipoControle);
 

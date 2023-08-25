@@ -147,6 +147,7 @@ try {
 	        $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="fechar();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
+            $strTela = 'Análise';
 
             $idObj = in_array(
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
@@ -197,6 +198,7 @@ try {
             $arrComandos[] = '<button type="button" accesskey="C" name="btnCancelar" id="btnCancelar" value="Cancelar" onclick="window.history.back();" class="infraButton"><span class="infraTeclaAtalho">C</span>ancelar</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_TRIAGEM;
+	        $strTela = 'Triagem(sem análise)';
 
             $idObj = in_array(
                 $objControleDsmpDTO->getStrStaAtendimentoDsmp(),
@@ -251,6 +253,7 @@ try {
             $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="'.$onClickCloseAction.'" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
+	        $strTela = 'Análise';
 
             $numId = $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE
                 ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
@@ -279,6 +282,7 @@ try {
             $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="'.$onClickCloseAction.'" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_TRIAGEM;
+	        $strTela = 'Triagem(sem análise)';
 
             $numId = $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM
             ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
@@ -308,6 +312,10 @@ try {
 }catch(Exception $e){
     PaginaSEI::getInstance()->processarExcecao($e);
 }
+
+//Retorna os tempos calculados: Executado, Pendente, Distribuido e Carga Padrao
+$arrParams = ['idTipoControle' => $arrIdsTpCtrls , 'idUsuarioParticipante' => $idUsuarioResp , 'isRetornoXML' => false];
+$arrTempos = MdUtlAdmPrmGrUsuINT::buscarDadosCargaUsuarioCompleto( $arrParams );
 
 $habDivDistAutoTriagem = $encaminhamentoRevisao['sta_encaminhamento'] == 'N';
 

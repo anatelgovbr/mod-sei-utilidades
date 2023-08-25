@@ -209,7 +209,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         // textos dos tooltips
         $txtTooltipUsuárioParticipante = 'Selecione o Membro Participante para o qual pretende distribuir esta atividade no fluxo do Controle de Desempenho.\n \n Caso alguém não seja listado como Membro Participante, verifique com o Gestor do Controle de Desempenho para adicioná-lo na Fila correspondente do Tipo de Controle indicado. Também é necessário que o Membro Participante possua permissões nesta Unidade.';
 
-        $txtTooltipCargaHorariaPadrao = 'A Carga Horária Padrão corresponde ao Tempo da Jornada de Trabalho parametrizado para o Tipo de Controle que os Membros Participantes devem cumprir.';
+        $txtTooltipCargaHorariaPadrao = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamicoDistribuirProcessos($idTipoControle);
 
         $txtTooltipTotalTempoPendenteExecucao = 'O Total de Tempo Pendente de Execução somente será exibido depois que for selecionado o Membro Participante.\n \n O Total corresponde à soma do Tempo de Execução de cada processo sob responsabilidade do Membro Participante, independentemente de quando tenha sido distribuído.';
 
@@ -309,7 +309,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
         <div class="row">
             <div class="<?= $col_default ?>" id="divCargaPadrao">
                 <div class="form-group">
-                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">Carga Horária Padrão no Período:</label>
+                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">Carga Exigível no Período Atual:</label>
 
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao,'Ajuda') ?> />

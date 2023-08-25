@@ -124,22 +124,50 @@ class MdUtlRelTriagemAtvRN extends InfraRN
 
     protected function cadastrarObjsTriagemConectado($arrDados)
     {
-        $dados = array_key_exists('0', $arrDados) ? $arrDados[0] : null;
-        $objTriagem = array_key_exists('1', $arrDados) ? $arrDados[1] : null;
+        $dados         = array_key_exists('0', $arrDados) ? $arrDados[0] : null;
+        $objTriagem    = array_key_exists('1', $arrDados) ? $arrDados[1] : null;
         $arrAtividades = PaginaSEI::getInstance()->getArrItensTabelaDinamica($dados['hdnTbAtividade']);
+
         $arrRetorno = array();
         if (count($arrAtividades) > 0 && !is_null($objTriagem)) {
             foreach ($arrAtividades as $atividade) {
+            	  // retorna registro de Data de Execucao e o IdRelTriagAtv Atual, caso existem
+            	  $arrDadosExtras = array_key_exists(8,$atividade) ? explode('#',$atividade[8]) : ['_'];
+
                 $objRelTriagemAtivDTO = new MdUtlRelTriagemAtvDTO();
                 $objRelTriagemAtivDTO->setNumIdMdUtlRelTriagemAtv(null);
                 $objRelTriagemAtivDTO->setNumIdMdUtlTriagem($objTriagem->getNumIdMdUtlTriagem());
                 $objRelTriagemAtivDTO->setNumIdMdUtlAdmAtividade($atividade[1]);
                 $objRelTriagemAtivDTO->setNumTempoExecucao($atividade[6]);
-                $objRelTriagemAtivDTO->setNumTempoExecucaoAtribuido($atividade[6]);
+                $objRelTriagemAtivDTO->setNumTempoExecucaoAtribuido($atividade[7]);
+	              $objRelTriagemAtivDTO->setDtaDataExecucao($arrDadosExtras[0] != '_' ? $arrDadosExtras[0] : null);
+
                 $isChefiaImediata = $dados['isChefiaImediata'];
                 if ($isChefiaImediata) $objRelTriagemAtivDTO->setNumTempoExecucaoAtribuido(0);
 
-                $arrRetorno[] = $this->cadastrar($objRelTriagemAtivDTO);
+                $objCadastrado = $this->cadastrar($objRelTriagemAtivDTO);
+                $arrRetorno['objRetornoRelTriagem'][] = $objCadastrado;
+
+                //case veio da Tela de Retriagem
+                if ( !isset( $dados['isOrigemTelaAnalise'] ) ) {
+	                //verifica a referencia anterior da relTriagemAtv para atualizar na RelAnaliseProduto
+			            if ( is_numeric( $arrDadosExtras[1] ) ) {
+				            $objRelAnaliseProdRN = new MdUtlRelAnaliseProdutoRN();
+
+				            $arrParametro = [
+					            'idRelTriagAtv'     => $arrDadosExtras[1],
+					            'idAtividade'       => $atividade[1],
+					            'novoIdRelTriagAtv' => $objCadastrado->getNumIdMdUtlRelTriagemAtv()
+				            ];
+
+				            $objRelAnaliseProdRN->atualizaReferenciaRelTriagAtvRelAnaliseProduto($arrParametro);
+			            }
+		            } else { //veio da Tela de Analise
+	                $arrRetorno['itensRelTriagemParaAtualizar'][] = [
+	                	'idRelTriagAtv'     => $arrDadosExtras[1] ,
+		                'novoIdRelTriagAtv' => $objCadastrado->getNumIdMdUtlRelTriagemAtv()
+	                ];
+                }
             }
         }
         return $arrRetorno;
@@ -178,6 +206,8 @@ class MdUtlRelTriagemAtvRN extends InfraRN
         $objMdUtlRelAnaliseProdutoRN = new MdUtlRelAnaliseProdutoRN();
         $objMdUtlRelAnaliseProdutoDTO->setNumIdMdUtlAnalise($idAnalise);
         $objMdUtlRelAnaliseProdutoDTO->setStrSinAtivoAnalise('S');
+	      $objMdUtlRelAnaliseProdutoDTO->setOrd('IdMdUtlRelTriagemAtv',InfraDTO::$TIPO_ORDENACAO_ASC);
+
         $objMdUtlRelAnaliseProdutoDTO->retStrNomeProduto();
         $objMdUtlRelAnaliseProdutoDTO->retNumComplexidadeAtividade();
         $objMdUtlRelAnaliseProdutoDTO->retStrNomeSerie();
@@ -199,6 +229,12 @@ class MdUtlRelTriagemAtvRN extends InfraRN
         $objMdUtlRelAnaliseProdutoDTO->retStrObservacaoAnalise();
         $objMdUtlRelAnaliseProdutoDTO->retStrSinAtvRevAmostragem();
 
+        $objMdUtlRelAnaliseProdutoDTO->setOrd('DataExecucao',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objMdUtlRelAnaliseProdutoDTO->setOrd('IdMdUtlRelTriagemAtv',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objMdUtlRelAnaliseProdutoDTO->setOrd('NomeAtividade',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objMdUtlRelAnaliseProdutoDTO->setOrd('NomeProduto',InfraDTO::$TIPO_ORDENACAO_ASC);
+	      $objMdUtlRelAnaliseProdutoDTO->setOrd('NomeSerie',InfraDTO::$TIPO_ORDENACAO_ASC);
+
         $arrObjs = $objMdUtlRelAnaliseProdutoRN->listar($objMdUtlRelAnaliseProdutoDTO);
         return $arrObjs;
     }
@@ -215,6 +251,7 @@ class MdUtlRelTriagemAtvRN extends InfraRN
         $objRelTriagemAtvDTO->retNumVlTmpExecucaoRev();
         $objRelTriagemAtvDTO->retStrSinAnalise();
         $objRelTriagemAtvDTO->retStrSinNaoAplicarPercDsmpAtv();
+        $objRelTriagemAtvDTO->retDtaDataExecucao();
         return $objRelTriagemAtvRN->listar($objRelTriagemAtvDTO);
     }
 

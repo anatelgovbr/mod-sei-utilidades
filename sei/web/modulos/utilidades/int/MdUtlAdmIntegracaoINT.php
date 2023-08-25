@@ -46,6 +46,7 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
   }
 
   public static function getDadosServicoREST( $post ){
+	  $objInfraException = new InfraException();
 
     $urlServico = trim($post['urlServico']);
 
@@ -60,6 +61,8 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
     curl_setopt_array( $curl, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_SSL_VERIFYPEER => false,
+	    CURLOPT_CONNECTTIMEOUT => 3,
+	    CURLOPT_TIMEOUT        => 7,
       CURLOPT_CUSTOMREQUEST  => $post['tipoRequisicao'],
     ]);
 
@@ -82,14 +85,23 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
 	    curl_setopt( $curl, CURLOPT_HTTPHEADER, $header );
     }
 
-		$ret = self::trataRetornoCurl( curl_exec( $curl ) );
+    // executa a consulta no webservice
+    $ret  = curl_exec( $curl );
+	  $info = curl_getinfo( $curl );
+		$ret  = self::trataRetornoCurl( $info , $ret );
 
-    if ( $ret === false ) {
-    	$strError = curl_error( $curl );
-    	throw new InfraException( $strError );
+	  if ( $info['http_code'] == 0 ) $ret['msg'] = curl_error($curl);
+
+    if ( $ret['suc'] === false ) {
+	    $strError = "Falha no serviço SARH \n\n";
+	    $strError .= "URL acessada: $urlServico \n\n";
+	    $strError .= "STATUS CODE: " . $ret['code'] . "\n\n";
+	    $strError .= $ret['msg'];
+	    $objInfraException->lancarValidacao($strError);
+    	//throw new Exception( $strError );
     } else {
 	    curl_close( $curl );
-	    return $ret;
+	    return $ret['dados'];
     }
   }
 
@@ -164,32 +176,37 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
     return json_encode( $arrDados );
   }
 
-  private static function trataRetornoCurl( $ret ){
-  	$type = gettype( $ret );
+  private static function trataRetornoCurl( $info , $ret ){
+  	$arrRet = ['suc' => false , 'msg' => null , 'dados' => null , 'code' => $info['http_code']];
+  	$type   = gettype( $ret );
+	  $rs     = json_decode( $ret );
 
-  	switch ($type){
-		  case 'string':
-		  	$rs = json_decode( $ret );
-			  if ( is_object( $rs ) )
-			  {
-				  if (!is_null($rs->error))
-				    throw new InfraException($rs->message);
-				  else
-				  	return $rs;
-			  }
-			  else if( is_array($rs))
-			  {
-			  	return $rs;
-			  }
+	  switch ( $info['http_code'] ) {
+		  case 200:
+		  	$arrRet['suc']   = true;
+		  	$arrRet['dados'] = $rs;
 		  	break;
 
-		  case 'boolean':
-			  return $ret;
+		  case 404:
+			  $arrRet['msg'] = MdUtlMensagemINT::$MSG_UTL_135;
+			  break;
+
+		  case 500:
+		  	if ( $type == 'string' && is_object( $rs ) ) {
+		  		$arrRet['msg'] = !is_null($rs->message) ? $rs->message : ( !is_null($rs->error) ? $rs->error : MdUtlMensagemINT::$MSG_UTL_133 );
+			  } elseif ( $type == 'boolean') {
+		  		$arrRet['msg'] = MdUtlMensagemINT::$MSG_UTL_134;
+			  } else {
+				  $arrRet['msg'] = MdUtlMensagemINT::$MSG_UTL_133;
+			  }
 		  	break;
 
 		  default:
+			  $arrRet['msg'] = 'Falha não Identificada';
 		  	break;
 	  }
+
+	  return $arrRet;
   }
 
   public static function montaParametrosEntrada( $arrObjsIntegracao , $arrParams ){

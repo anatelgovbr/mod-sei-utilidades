@@ -71,8 +71,18 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         die;
     }
 
-    protected function atualizarVersaoConectado()
+    protected function normalizaVersao($versao)
     {
+        $ultimoPonto = strrpos($versao, '.');
+        if ($ultimoPonto !== false) {
+            $versao = substr($versao, 0, $ultimoPonto) . substr($versao, $ultimoPonto + 1);
+        }
+        return $versao;
+    }
+
+	protected function atualizarVersaoConectado()
+    {
+        
         try {
             $this->inicializar('INICIANDO A INSTALAÇÃO/ATUALIZAÇÃO DO ' . $this->nomeDesteModulo . ' NO SEI VERSÃO ' . SEI_VERSAO);
 
@@ -84,11 +94,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             }
 
             //testando versao do framework
-            $numVersaoInfraRequerida = '1.612.3';
-            $versaoInfraFormatada = (int)str_replace('.', '', VERSAO_INFRA);
-            $versaoInfraReqFormatada = (int)str_replace('.', '', $numVersaoInfraRequerida);
-
-            if ($versaoInfraFormatada < $versaoInfraReqFormatada) {
+	        $numVersaoInfraRequerida = '2.0.18';
+	        if ($this->normalizaVersao(VERSAO_INFRA) < $this->normalizaVersao($numVersaoInfraRequerida)) {
                 $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
 
@@ -1709,9 +1716,28 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         //$infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
         $infraAgendamentoDTO = $infraAgendamentoRN->cadastrar($infraAgendamentoDTO);
 
+	    $this->logar('CRIA ÍNDICES NAS TABELAS: md_utl_controle_dsmp e md_utl_hist_controle_dsmp SOBRE A COLUNA: dth_atual');
+	    InfraDebug::getInstance()->gravar('INICIADO ESTA EXECUÇÃO: ' . InfraData::getStrHoraAtual() );
+		    $objInfraMetaBD->criarIndice('md_utl_controle_dsmp', 'i07_md_utl_controle_dsmp', array('dth_atual'));
+		    $objInfraMetaBD->criarIndice('md_utl_hist_controle_dsmp', 'i07_md_utl_hist_controle_dsmp', array('dth_atual'));
+	    InfraDebug::getInstance()->gravar('FINALIZADO ESTA EXECUÇÃO: ' . InfraData::getStrHoraAtual() );
+
+	    /* EXECUCAO DA COLUNA ID_PROCEDIMENTO PARA NULL */
+	    $this->logar('ALTERA O CAMPO id_procedimento nulo NAS TABELAS: md_utl_controle_dsmp e md_utl_hist_controle_dsmp');
+	    InfraDebug::getInstance()->gravar('INICIADO ESTA EXECUÇÃO: ' . InfraData::getStrHoraAtual() );
+
+	    $objInfraMetaBD->excluirChaveEstrangeira('md_utl_controle_dsmp', 'fk1_md_utl_controle_dsmp');
+	    $objInfraMetaBD->alterarColuna('md_utl_controle_dsmp', 'id_procedimento', $objInfraMetaBD->tipoNumeroGrande(), 'null');
+
+	    $objInfraMetaBD->excluirChaveEstrangeira('md_utl_hist_controle_dsmp', 'fk1_md_utl_hist_controle_dsmp');
+	    $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'id_procedimento', $objInfraMetaBD->tipoNumeroGrande(), 'null');
+
+	    InfraDebug::getInstance()->gravar('FINALIZADO ESTA EXECUÇÃO: ' . InfraData::getStrHoraAtual() );
+	    /* FIM EXECUCAO DA COLUNA ID_PROCEDIMENTO PARA NULL */
+
 	    // ATUALIZACAO NA INFRA PARAMETRO
 	    $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+	    BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
 
 	    $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }

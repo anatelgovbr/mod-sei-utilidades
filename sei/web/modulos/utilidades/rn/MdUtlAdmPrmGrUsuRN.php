@@ -259,7 +259,9 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
   }
 
   protected function montarArrUsuarioParticipanteControlado($idMdUtlAdmPrmGr){
+			$objMdUtlAdmPrmGrUsuCargaRN = new MdUtlAdmPrmGrUsuCargaRN();
 
+	    $arrDatasFiltro = ( new MdUtlPrazoRN() )->getDatasPeriodoAtual($idMdUtlAdmPrmGr);
 
       $mdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
       $mdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($idMdUtlAdmPrmGr);
@@ -267,6 +269,8 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
       $mdUtlAdmPrmGrUsuDTO->setOrdStrSigla(InfraDTO::$TIPO_ORDENACAO_DESC);
       $mdUtlAdmPrmGrUsuDTO->setOrdNumIdMdUtlAdmPrmGrUsu(InfraDTO::$TIPO_ORDENACAO_DESC);
       $mdUtlAdmPrmGrUsu = $this->listar($mdUtlAdmPrmGrUsuDTO);
+
+
 
       $arrPresenca = array(
           MdUtlAdmPrmGrUsuRN::$TP_PRESENCA_PRESENCIAL => 'Presencial',
@@ -321,15 +325,16 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
           $UsuarioParticipante[]= empty($dadosUsuParticipante->getDthFimParticipacao()) ? '' : explode(' ', $dadosUsuParticipante->getDthFimParticipacao())[0];
 
           //Carga Horaria
-          $objMdUtlPrmGrUsuCargaDTO = new MdUtlAdmPrmGrUsuCargaDTO();
-	        $objMdUtlPrmGrUsuCargaDTO->setNumIdMdUtlAdmPrmGrUsu($dadosUsuParticipante->getNumIdMdUtlAdmPrmGrUsu());
-	        $objMdUtlPrmGrUsuCargaDTO->setStrSinAtivo('S');
-	        $objMdUtlPrmGrUsuCargaDTO->setOrd('IdMdUtlAdmPrmGrUsuCarga',InfraDTO::$TIPO_ORDENACAO_DESC);
-	        $objMdUtlPrmGrUsuCargaDTO->setNumMaxRegistrosRetorno(1);
-	        $objMdUtlPrmGrUsuCargaDTO->retNumCargaHoraria();
+	        $arrParams = [
+	        	'periodoIni' => $arrDatasFiltro['DT_INICIAL'],
+		        'periodoFin' => $arrDatasFiltro['DT_FINAL'],
+		        'idUsuario'  => $dadosUsuParticipante->getNumIdUsuario(),
+		        'idPrmGr'    => $idMdUtlAdmPrmGr,
+	        ];
 
-	        $objCargaHoraria = ( new MdUtlAdmPrmGrUsuCargaRN() )->consultar( $objMdUtlPrmGrUsuCargaDTO );
-					$cargaHorariaMembro = empty( $objCargaHoraria ) ? '0' : $objCargaHoraria->getNumCargaHoraria();
+	        $cargaHorariaMembro = $objMdUtlAdmPrmGrUsuCargaRN->getInfoCargaPeriodoAtivo($arrParams);
+	        $cargaHorariaMembro = empty($cargaHorariaMembro) ? '0' : $cargaHorariaMembro;
+
 	        $UsuarioParticipante[] = MdUtlAdmPrmGrINT::convertToHoursMins($cargaHorariaMembro);
 
           $arrUsuarioParticipante[]= $UsuarioParticipante;
@@ -435,16 +440,16 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 				if ( InfraData::compararDatasSimples($dtFimParticipacao , $carga->getDtaPeriodoInicial()) >= 0 ) {
 					$carga->setNumCargaHoraria(0);
 				} else {
-					$carga         = $carga->getNumCargaHoraria();
+					$_carga         = $carga->getNumCargaHoraria();
 					$dtIniEUA      = implode('-',array_reverse(explode('/',$carga->getDtaPeriodoInicial())));
 					$dtFinEUA      = implode('-',array_reverse(explode('/',$carga->getDtaPeriodoFinal())));
 					$dtFinPartEUA  = implode('-',array_reverse(explode('/',$dtFimParticipacao)));
 					$arrRangeDatas = MdUtlAdmPrmGrUsuCargaINT::geraRangeDias($dtIniEUA , $dtFinEUA);
 					$cargaDiaria   = $objMdUtlAdmPrmGrUsuCargaRN->geraTempoCargaHoraria( $fatorPres, 1, $_POST['selStaFrequencia'] );
 					foreach ( $arrRangeDatas as $dia ) {
-						if ( strtotime($dia) >= strtotime($dtFinPartEUA) ) $carga -= $cargaDiaria;
+						if ( strtotime($dia) >= strtotime($dtFinPartEUA) ) $_carga -= $cargaDiaria;
 					}
-					$carga->setNumCargaHoraria($carga);
+					$carga->setNumCargaHoraria($_carga);
 				}
 			  $objMdUtlAdmPrmGrUsuCargaRN->alterar($carga);
 		  }
@@ -462,13 +467,21 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 
     protected function verificaCargaPadraoConectado($arrObj){
 
-
         $idUsuarioParticipante = array_key_exists(0, $arrObj) ? $arrObj[0] : null;
         $idParam               = array_key_exists(1, $arrObj) ? $arrObj[1] : null;
+	      $arrDatasFiltro        = ( new MdUtlPrazoRN() )->getDatasPeriodoAtual($idParam);
         $numCargaPadrao        = array_key_exists(2, $arrObj) ? $arrObj[2] : null;
         $numPercentualTele     = array_key_exists(3, $arrObj) ? $arrObj[3] : null;
-        $diasUteis             = array_key_exists(4, $arrObj) ? $arrObj[4] : null;
+	      $diasUteis             = array_key_exists(4, $arrObj) ? $arrObj[4]['numFrequencia'] : null;
+	      $periodoInicial        = ( array_key_exists(4, $arrObj) && !is_null($arrObj[4]['dtInicial']) ) ? $arrObj[4]['dtInicial'] : $arrDatasFiltro['DT_INICIAL'];
+	      $periodoFinal          = ( array_key_exists(4, $arrObj) && !is_null($arrObj[4]['dtFinal']) ) ? $arrObj[4]['dtFinal'] : $arrDatasFiltro['DT_FINAL'];
+		    $arrParams             = [ 'idPrmGr' => $idParam , 'idUsuario' => $idUsuarioParticipante , 'periodoIni' =>  $periodoInicial , 'periodoFin' => $periodoFinal];
 
+		    $cargaPeriodoAtual     = ( new MdUtlAdmPrmGrUsuCargaRN() )->getInfoCargaPeriodoAtivo($arrParams);
+
+		    if ( !is_null($cargaPeriodoAtual) ) return $cargaPeriodoAtual;
+
+		    // se o resultado acima retornar null ou array vazio, busca pelo carga padrão parametrizada no Tipo de Ctrl
         $fatorReducaoFornada = 0;
         $fatorDesempUsu      = 0;
         
@@ -604,11 +617,11 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
 			    }
 		    }
 		    return $bolTemIntegracao;
-	    } catch (InfraException $e ) {
+	    } catch ( Exception $e ) {
     		$func = MdUtlAdmIntegracaoRN::$STR_CHEFIA;
     		$msg  = "Não foi possível estabelecer a integração com o Sistema de Recursos Humanos para atualizar a indicação de 
     		Chefia Imediata dos Membros Participantes deste Controle de Desempenho.";
-    		$msg .= "\n\n" . $func . ": " . $e->getMessage();
+    		$msg .= "\n\n" . $func;
 		    PaginaSEI::getInstance()->adicionarMensagem( $msg , InfraPagina::$TIPO_MSG_AVISO );
 	    }
     }

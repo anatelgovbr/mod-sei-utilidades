@@ -167,19 +167,17 @@ try {
                     $objRN = new MdUtlControleDsmpRN();
                     $objRN->associarFila();
                 }
+
+                // monta o link do direcionamento quando a acao veio da tela de detalhamento do processo
                 $arrHref = [
                     "acao=procedimento_visualizar",
                     "acao_origem={$_GET['acao']}",
                     "montar_visualizacao=0",
                     "id_procedimento=$idProcedimento"
                 ];
-                $link = SessaoSEI::getInstance()->assinarLink("controlador.php?".implode('&',$arrHref));
-                echo "<script>";
-                    echo "window.opener.parent.document.querySelector('#ifrArvore').src = '$link';";
-	                echo "window.opener.location.reload();";
-	                echo "window.close();";
-                echo "</script>";
-                die;
+
+	            $linkPosSubmitDetalhamento = SessaoSEI::getInstance()->assinarLink("controlador.php?".implode('&',$arrHref));
+
             }  
             break;
 
@@ -300,7 +298,17 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     var msgPadrao85 ='<?= MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_85)?>';
 
     function inicializar() {
-        
+	    <?php if ( isset($_POST['hdnAssociarFila'] ) && $_POST['hdnAssociarFila'] == 'ok' ): ?>
+            // veio da tela de detalhamento do processo
+            if ( document.querySelector('#hdnDetalhamento').value == 1 ) {
+                window.opener.parent.document.querySelector('#ifrArvore').src = '<?= $linkPosSubmitDetalhamento ?>';
+                window.opener.location.reload();
+            } else { // veio do menu Associar Processo a Fila
+                window.opener.document.querySelector('#btnPesquisar').click();
+            }
+            window.close();
+	    <?php endif; ?>
+
         if( document.getElementById('selTpCtrl').length == 1 ){
             alert('Não existe Tipo de Controle vinculado ao Tipo de Processo');
             window.close();

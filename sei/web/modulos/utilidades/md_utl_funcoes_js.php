@@ -56,6 +56,7 @@
             idUsuarioParticipante: idUsuario === null ? "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>" : idUsuario,
             idTipoControle: idsTpCtrl
         };
+
         $.ajax({
             url: "<?= $strUrlBuscarDadosCarga ?>",
             type: 'post',
@@ -83,6 +84,7 @@
                 if (document.getElementById('spnTempoPendente') !== null) {
                     document.getElementById('spnTempoPendente').innerHTML = String(convertToHoursMins(tmpPendente));
                 }
+
                 if ($("#spnCargaHrDistribRascunho").length) {
                     var totalTempoExecutadoPeriodo = $("#spnCargaHrDistribExec").html();
                     var tempoDecorrido = $("#spnCargaHrDistribRascunho").html();
@@ -91,7 +93,7 @@
                 }
 
                 if ( tela == 'distribuicao-listar' ) {
-                    if ( $(r).find('ChefeImediato').length > 0 ) $('#divMsgChefiaImediata').show();
+                    if ( $(r).find('ChefeImediato').text() == 'S' ) $('#divMsgChefiaImediata').show();
                 }
             },
             error: function (e) {
