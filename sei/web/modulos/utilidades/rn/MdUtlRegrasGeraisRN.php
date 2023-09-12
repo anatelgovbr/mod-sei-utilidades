@@ -1109,7 +1109,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                 array(MdUtlControleDsmpRN::$EM_TRIAGEM, MdUtlControleDsmpRN::$EM_CORRECAO_TRIAGEM)
             );
 
-            if (count($arrObjControleDsmp[0])) {
+            if ($arrObjControleDsmp && count($arrObjControleDsmp) > 0) {
                 $params['dataInicio'] = $arrObjControleDsmp[0]->getDthAtual();
                 $params['dataPrazo'] = $arrObjControleDsmp[0]->getDthPrazoTarefa();
                 $params['tempoExecucao'] = $arrObjControleDsmp[0]->getNumTempoExecucao();
@@ -1140,7 +1140,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
             );
 
             $params['tempoExecucao'] = $ultimaDistribuicao[0]->getNumTempoExecucao();
-            if (count($ultimaRetriagem[0])) {
+            if ($ultimaRetriagem && count($ultimaRetriagem) > 0) {
                 $dataRetiagem = DateTime::createFromFormat('d/m/Y H:i:s', $ultimaRetriagem[0]->getDthAtual());
                 if (($dataRetiagem > $dataUltDist)) {
                     $params['tempoExecucao'] = $ultimaRetriagem[0]->getNumTempoExecucao();
@@ -1160,7 +1160,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                 $params['dataInicio'] = $ultimaDistribuicao[0]->getDthAtual();
 
                 if ($isAjuste['possui_interrupcao'] == true) {
-                    if (count($retornoStatus[0])) {
+                    if ($retornoStatus && count($retornoStatus) > 0) {
                         $dataStatus = DateTime::createFromFormat('d/m/Y H:i:s', $retornoStatus[0]->getDthAtual());
 
                         if ($dataStatus > $dataUltDist) {
@@ -1174,7 +1174,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         $params['dataPrazo'] = $ultimaDistribuicao[0]->getDthPrazoTarefa();
                     }
                 } elseif ($isAjuste['possui_suspensao'] == true) {
-                    if (count($retornoStatus[0])) {
+                    if ($retornoStatus && count($retornoStatus) > 0) {
                         $dataStatus = DateTime::createFromFormat('d/m/Y H:i:s', $retornoStatus[0]->getDthAtual());
 
                         if ($dataStatus > $dataUltDist) {
@@ -1195,7 +1195,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         array(MdUtlControleDsmpRN::$EM_ANALISE)
                     );
 
-                    if (count($aprovAjuste[0])) {
+                    if ($aprovAjuste && count($aprovAjuste) > 0) {
                         $dataAprov = DateTime::createFromFormat('d/m/Y H:i:s', $aprovAjuste[0]->getDthAtual());
 
                         if ($dataAprov > $dataUltDist) {
@@ -1245,7 +1245,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
             );
 
             $params['tempoExecucao'] = $ultimaDistribuicao[0]->getNumTempoExecucao();
-            if (count($ultimaRetriagem[0])) {
+            if ($ultimaRetriagem && count($ultimaRetriagem) > 0) {
                 $dataRetiagem = DateTime::createFromFormat('d/m/Y H:i:s', $ultimaRetriagem[0]->getDthAtual());
                 if (($dataRetiagem > $dataUltDist)) {
                     $params['tempoExecucao'] = $ultimaRetriagem[0]->getNumTempoExecucao();
@@ -1265,7 +1265,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                 $params['dataInicio'] = $ultimaDistribuicao[0]->getDthAtual();
 
                 if ($isAjuste['possui_interrupcao'] == true) {
-                    if (count($retornoStatus[0])) {
+                    if ($retornoStatus && count($retornoStatus) > 0) {
                         $dataStatus = DateTime::createFromFormat('d/m/Y H:i:s', $retornoStatus[0]->getDthAtual());
 
                         if ($dataStatus > $dataUltDist) {
@@ -1277,7 +1277,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         }
                     }
                 } elseif ($isAjuste['possui_suspensao'] == true) {
-                    if (count($retornoStatus[0])) {
+                    if ($retornoStatus && count($retornoStatus) > 0) {
                         $dataStatus = DateTime::createFromFormat('d/m/Y H:i:s', $retornoStatus[0]->getDthAtual());
 
                         if ($dataStatus > $dataUltDist) {
@@ -1298,7 +1298,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
                         array(MdUtlControleDsmpRN::$EM_REVISAO)
                     );
 
-                    if (count($aprovAjuste[0])) {
+                    if ($aprovAjuste && count($aprovAjuste) > 0) {
                         $dataAprov = DateTime::createFromFormat('d/m/Y H:i:s', $aprovAjuste[0]->getDthAtual());
 
                         if ($dataAprov > $dataUltDist) {
@@ -1721,7 +1721,12 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
                     $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
                     $objMdUtlTriagemDTO->setNumIdMdUtlTriagem($historico->getNumIdMdUtlTriagem());
-                    $objMdUtlTriagemDTO->retTodos();
+
+                    $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
+	                  $objMdUtlTriagemDTO->retDthInicio();
+	                  $objMdUtlTriagemDTO->retDthPrazo();
+	                  $objMdUtlTriagemDTO->retNumTempoExecucao();
+                    #$objMdUtlTriagemDTO->retTodos();
 
                     $objMdUtlTriagemDTO = $mdUtlTriagemRN->consultar($objMdUtlTriagemDTO);
 
@@ -1741,7 +1746,12 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
                     $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
                     $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($historico->getNumIdMdUtlAnalise());
-                    $objMdUtlAnaliseDTO->retTodos();
+
+                    $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
+		                $objMdUtlAnaliseDTO->retDthInicio();
+		                $objMdUtlAnaliseDTO->retDthPrazo();
+		                $objMdUtlAnaliseDTO->retNumTempoExecucao();
+	                  #$objMdUtlAnaliseDTO->retTodos();
 
                     $objMdUtlAnaliseDTO = $mdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
 
@@ -1761,7 +1771,12 @@ class MdUtlRegrasGeraisRN extends InfraRN
                     $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
                     $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
                     $objMdUtlRevisaoDTO->setNumIdMdUtlRevisao($historico->getNumIdMdUtlRevisao());
-                    $objMdUtlRevisaoDTO->retTodos();
+
+	                  $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
+	                  $objMdUtlRevisaoDTO->retDthInicio();
+	                  $objMdUtlRevisaoDTO->retDthPrazo();
+		                $objMdUtlRevisaoDTO->retNumTempoExecucao();
+                    #$objMdUtlRevisaoDTO->retTodos();
 
                     $objMdUtlRevisaoDTO = $mdUtlRevisaoRN->consultar($objMdUtlRevisaoDTO);
 

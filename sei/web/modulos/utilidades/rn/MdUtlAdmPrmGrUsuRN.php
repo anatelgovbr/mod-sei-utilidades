@@ -14,7 +14,7 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
     //Tipo de Presença
     public static $TP_PRESENCA_PRESENCIAL   = 'P';
     public static $TP_PRESENCA_TELETRABALHO = 'T';
-    #public static $TP_PRESENCA_DIFERENCIADO = 'D';
+    public static $TP_PRESENCA_DIFERENCIADO = 'D';
 
     //Tipo de Jornada
     public static $TIPOJORNADA_INTEGRAL = 'I';
