@@ -452,9 +452,11 @@ class MdUtlControleDsmpINT extends InfraINT
         }
 
         if($frequencia == "S") {
-            $inicioSemana = date('Y-m-d', strtotime("Monday this week"));
-            $periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday")).") - Atual";
-            $i = -1;
+		        $inicioSemana        = date('Y-m-d', strtotime("Monday this week"));
+		        $strDiaSemanaAtual   = InfraData::obterDescricaoDiaSemana(date('d/m/Y'));
+		        $diaFinalSemanaAtual = $strDiaSemanaAtual == 'domingo' ? InfraData::getStrDataAtual() : date("d/m/Y", strtotime("next Sunday"));
+		        $periodo[]           = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". $diaFinalSemanaAtual .") - Atual";
+		        $i = -1;
             while(strtotime($inicioSemana) >  strtotime($dataInicioPeriodo)) {
                 $inicioSemana = date("Y-m-d", strtotime($i." week", strtotime($inicioSemana)));
                 $periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday", strtotime($inicioSemana))).")";

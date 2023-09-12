@@ -1222,7 +1222,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->logar('ADICIONANDO colunas na tabela md_utl_hist_controle_dsmp');
         $objInfraMetaBD->adicionarColuna('md_utl_hist_controle_dsmp', 'sta_atribuido', $objInfraMetaBD->tipoTextoFixo(1), 'null');
 
-        $this->_atualizarHistControleDsmp();
+	      // Metodo: _atualizarHistControleDsmp() originalmente era executado neste ponto mas foi removido para o final desta versao
+        //$this->_atualizarHistControleDsmp();
 
         $this->logar('ALTERANDO A TABELA - adicionado md_utl_adm_atividade.complexidade');
         $objInfraMetaBD->adicionarColuna('md_utl_adm_atividade', 'complexidade', $objInfraMetaBD->tipoNumero(), 'NULL');
@@ -1328,7 +1329,6 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->logar('ALTERANDO colunas na tabela md_utl_revisao para not null');
         $objInfraMetaBD->alterarColuna('md_utl_revisao', 'sin_realizar_aval_prod_prod', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
 
-
         $this->logar('ALTERANDO tablea md_utl_adm_fila coluna prazo_tarefa de not null para nul');
         $objInfraMetaBD->alterarColuna('md_utl_adm_fila', 'prazo_tarefa', $objInfraMetaBD->tipoTextoVariavel(3), 'null');
 
@@ -1376,6 +1376,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->logar('Altera os dados substituindo tipo_acao de "Revisão para "Avaliação"');
         $this->replaceRevisaoParaAvaliacao();
         $this->logar('FIM da Alteração dos dados substituindo tipo_acao de "Revisão para "Avaliação" ');
+
+	      //Metodo: _atualizarHistControleDsmp() removido para o final do script
+	      $this->_atualizarHistControleDsmp();
 
         $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
         BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
@@ -1839,8 +1842,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
             $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
             $objMdUtlRevisaoDTO->setStrSinRealizarAvalProdProd(null, InfraDTO::$OPER_IGUAL);
+	          $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
             $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
+            $objMdUtlRevisaoDTO->setOrd('IdMdUtlRevisao',InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
 
             $arrObjRevisao = $objMdUtlRevisaoBD->listar($objMdUtlRevisaoDTO);
@@ -1958,8 +1962,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlProcedimentoDTO = new MdUtlProcedimentoDTO();
             $objMdUtlProcedimentoDTO->retDblIdProcedimento();
             $objMdUtlProcedimentoDTO->setBolExclusaoLogica(false);
+	          $objMdUtlProcedimentoDTO->setNumPaginaAtual($pagina);
             $objMdUtlProcedimentoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlProcedimentoDTO->setNumPaginaAtual($pagina);
+	          $objMdUtlProcedimentoDTO->setOrd('IdProcedimento',InfraDTO::$TIPO_ORDENACAO_ASC);
             $arrObjProcedimento = $objMdUtlProcedimentoBD->listar($objMdUtlProcedimentoDTO);
 
             foreach ($arrObjProcedimento as $objProcedimento) {
@@ -2021,8 +2026,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         while($qtdRegistros < $totalRegistos) {
 
             $objMdUtlTriagemDTO = new MdUtlTriagemDTO();
+	          $objMdUtlTriagemDTO->setNumPaginaAtual($pagina);
             $objMdUtlTriagemDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlTriagemDTO->setNumPaginaAtual($pagina);
+	          $objMdUtlTriagemDTO->setOrd('IdMdUtlTriagem',InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlTriagemDTO->setBolExclusaoLogica(false);
             $objMdUtlTriagemDTO->retNumTempoExecucao();
             $objMdUtlTriagemDTO->retNumIdMdUtlTriagem();
@@ -2195,8 +2201,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
             $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
             $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+	          $objMdUtlAnaliseDTO->setNumPaginaAtual($pagina);
             $objMdUtlAnaliseDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlAnaliseDTO->setNumPaginaAtual($pagina);
+	          $objMdUtlAnaliseDTO->setOrd('IdMdUtlAnalise',InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlAnaliseDTO->retNumIdMdUtlAnalise();
             $objMdUtlAnaliseDTO->retDthInicio();
             $objMdUtlAnaliseDTO->retNumTempoExecucao();
@@ -2303,8 +2310,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
             $objMdUtlRevisaoDTO = new MdUtlRevisaoDTO();
             $objMdUtlRevisaoDTO->setBolExclusaoLogica(false);
+	          $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
             $objMdUtlRevisaoDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlRevisaoDTO->setNumPaginaAtual($pagina);
+	          $objMdUtlRevisaoDTO->setOrd('IdMdUtlRevisao',InfraDTO::$TIPO_ORDENACAO_ASC);
             $objMdUtlRevisaoDTO->retNumIdMdUtlRevisao();
             $objMdUtlRevisaoDTO->retDthInicio();
             $objMdUtlRevisaoDTO->retNumTempoExecucao();
@@ -2518,23 +2526,23 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $arrRetorno = [];
 
         foreach ($arrMdUtlAdmHistPrmGrUsu as $objMdUtlAdmHistPrmGrUsu) {
+	          $objMdUtlAdmHistPrmGrUsu->setNumFatorDesempDiferenciado(null);
             $dataAtual = DateTime::createFromFormat('d/m/Y H:i:s', $objTabela->getDthAtual());
             $dataInicial = DateTime::createFromFormat('d/m/Y H:i:s', $objMdUtlAdmHistPrmGrUsu->getDthInicial());
             $dataFinal = $objMdUtlAdmHistPrmGrUsu->getDthFinal() ? DateTime::createFromFormat('d/m/Y H:i:s', $objMdUtlAdmHistPrmGrUsu->getDthFinal()) : $objMdUtlAdmHistPrmGrUsu->getDthFinal();
-
             if (!empty($dataFinal) && (
                     $dataAtual >= $dataInicial &&
                     $dataAtual < $dataFinal)
             ) {
                 $arrRetorno['tipoPresenca'] = $objMdUtlAdmHistPrmGrUsu->getStrStaTipoPresenca();
-                $arrRetorno['fatorDesempenhoDiferenciado'] = $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado();
+                $arrRetorno['fatorDesempenhoDiferenciado'] = ( $objMdUtlAdmHistPrmGrUsu && !is_null($objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado() ) ) ? $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado() : null;
             }
             if (
                 $dataAtual >= $dataInicial &&
                 empty($dataFinal)
             ) {
                 $arrRetorno['tipoPresenca'] = $objMdUtlAdmHistPrmGrUsu->getStrStaTipoPresenca();
-                $arrRetorno['fatorDesempenhoDiferenciado'] = $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado();
+                $arrRetorno['fatorDesempenhoDiferenciado'] = ( $objMdUtlAdmHistPrmGrUsu && !is_null($objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado() ) ) ? $objMdUtlAdmHistPrmGrUsu->getNumFatorDesempDiferenciado() : null;
             }
         }
 
@@ -2778,8 +2786,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             $objMdUtlHistControleDsmpDTO->retNumTempoExecucao();
             $objMdUtlHistControleDsmpDTO->retDthAtual();
             $objMdUtlHistControleDsmpDTO->setBolExclusaoLogica(false);
+	          $objMdUtlHistControleDsmpDTO->setNumPaginaAtual($pagina);
             $objMdUtlHistControleDsmpDTO->setNumMaxRegistrosRetorno($qtdRegistrosPorVez);
-            $objMdUtlHistControleDsmpDTO->setNumPaginaAtual($pagina);
             $objMdUtlHistControleDsmpDTO->setOrd('IdMdUtlHistControleDsmp', InfraDTO::$TIPO_ORDENACAO_ASC);
             $arrObjHistorico = $objMdUtlHistControleDsmpBD->listar($objMdUtlHistControleDsmpDTO);
 
