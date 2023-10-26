@@ -101,7 +101,7 @@ $objMdUtlAdmPrmGrDTO->retDblPercentualTeletrabalho();
 $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
 
 $objMdUtlAdmPrmGrDTO    = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
-$percentualTeletrabalho = $objMdUtlAdmPrmGrDTO->getDblPercentualTeletrabalho();
+$percentualTeletrabalho = $objMdUtlAdmPrmGrDTO->getDblPercentualTeletrabalho() ?? '0';
 
 
 if(is_null($objTipoControleUtlDTO)){

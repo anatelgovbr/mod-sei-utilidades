@@ -419,17 +419,15 @@ class MdUtlControleDsmpRN extends InfraRN
         $objRelTpCtrlDesempUsuDTO->setNumIdUsuario(SessaoSEI::getInstance()->getNumIdUsuario());
         $objRelTpCtrlDesempUsuDTO->setStrSinAtivo('S');
         $objRelTpCtrlDesempUsuDTO->setTpControleTIPOFK(InfraDTO::$TIPO_FK_OBRIGATORIA);
-        $objRelTpCtrlDesempUsuDTO->adicionarCriterio(
-            array('IdMdUtlAdmPrmGr', 'IdMdUtlAdmPrmGr'),
-            array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_DIFERENTE),
-            array('', null),
-            array(InfraDTO::$OPER_LOGICO_AND)
-        );
+		    $objRelTpCtrlDesempUsuDTO->adicionarCriterio(
+			    array('IdMdUtlAdmPrmGr'),
+			    array(InfraDTO::$OPER_MAIOR_IGUAL),
+			    array('1')
+		    );
 
         $objRelTpCtrlDesempUsuDTO->retNumIdMdUtlAdmTpCtrlDesemp();
 
         if ($objRelTpCtrlDesempUsuRN->contar($objRelTpCtrlDesempUsuDTO) > 0) {
-
             $ret = $this->buscaIdsTpCtrlUndComParametro(
                 InfraArray::converterArrInfraDTO($objRelTpCtrlDesempUsuRN->listar($objRelTpCtrlDesempUsuDTO), 'IdMdUtlAdmTpCtrlDesemp')
             );
@@ -453,10 +451,9 @@ class MdUtlControleDsmpRN extends InfraRN
             $objAdmTpCtrlDesempDTO->setNumIdMdUtlAdmPrmGr($arrIdsPrmGr, InfraDTO::$OPER_IN);
             $objAdmTpCtrlDesempDTO->setStrSinAtivo('S');
             $objAdmTpCtrlDesempDTO->adicionarCriterio(
-                array('IdMdUtlAdmPrmGr', 'IdMdUtlAdmPrmGr'),
-                array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_DIFERENTE),
-                array('', null),
-                array(InfraDTO::$OPER_LOGICO_AND)
+	            array('IdMdUtlAdmPrmGr'),
+	            array(InfraDTO::$OPER_MAIOR_IGUAL),
+	            array('1')
             );
 
             $objAdmTpCtrlDesempDTO->retNumIdMdUtlAdmTpCtrlDesemp();
@@ -1748,7 +1745,7 @@ class MdUtlControleDsmpRN extends InfraRN
             $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
             $objMdUtlControleDsmpDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControle);
             $objMdUtlControleDsmpDTO->setStrTipoAcao(MdUtlControleDsmpRN::$STR_TIPO_ACAO_REVISAO);
-            $objMdUtlControleDsmpDTO->setStrDetalhe($arrFiltroDetalhe, InfraDTO::$OPER_IN);
+            #$objMdUtlControleDsmpDTO->setStrDetalhe($arrFiltroDetalhe, InfraDTO::$OPER_IN);
             $objMdUtlControleDsmpDTO->setNumIdUnidade(SessaoSEI::getInstance()->getNumIdUnidadeAtual());
 
             $objMdUtlControleDsmpDTO->adicionarCriterio(array('Atual', 'Atual', 'Atual'),
@@ -1757,20 +1754,23 @@ class MdUtlControleDsmpRN extends InfraRN
                 array(InfraDTO::$OPER_LOGICO_AND, InfraDTO::$OPER_LOGICO_AND));
 
             $objMdUtlControleDsmpDTO->retNumIdMdUtlAnalise();
+	          $objMdUtlControleDsmpDTO->retStrDetalhe();
 
             $countHs = $this->contar($objMdUtlControleDsmpDTO);
             if ($countHs > 0) {
                 $arrObjMdUtlHistControleDsmp = $this->listar($objMdUtlControleDsmpDTO);
                 foreach ($arrObjMdUtlHistControleDsmp as $objMdUtlHistControleDsmp) {
-                    $objMdUtlAnaliseRN = new MdUtlAnaliseRN();
-                    $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
-                    $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($objMdUtlHistControleDsmp->getNumIdMdUtlAnalise());
-                    $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
-                    $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
-                    $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
+                	  if ( in_array( $objMdUtlHistControleDsmp->getStrDetalhe() , $arrFiltroDetalhe ) ) {
+			                  $objMdUtlAnaliseRN = new MdUtlAnaliseRN();
+			                  $objMdUtlAnaliseDTO = new MdUtlAnaliseDTO();
+			                  $objMdUtlAnaliseDTO->setNumIdMdUtlAnalise($objMdUtlHistControleDsmp->getNumIdMdUtlAnalise());
+			                  $objMdUtlAnaliseDTO->setNumIdUsuario($idUsuarioParticipante);
+			                  $objMdUtlAnaliseDTO->setBolExclusaoLogica(false);
+			                  $objMdUtlAnaliseDTO->retNumTempoExecucaoAtribuido();
 
-                    $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
-                    $numTempoExecucaoNaoRealizado += !is_null($objMdUtlAnalise) ? $objMdUtlAnalise->getNumTempoExecucaoAtribuido() : 0;
+			                  $objMdUtlAnalise = $objMdUtlAnaliseRN->consultar($objMdUtlAnaliseDTO);
+			                  $numTempoExecucaoNaoRealizado += !is_null($objMdUtlAnalise) ? $objMdUtlAnalise->getNumTempoExecucaoAtribuido() : 0;
+	                  }
                 }
             }
         }
@@ -2563,12 +2563,11 @@ class MdUtlControleDsmpRN extends InfraRN
             $objAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
             $objAdmTpCtrlDesempDTO->setNumIdMdUtlAdmPrmGr($arrIdsPrmGr, InfraDTO::$OPER_IN);
             $objAdmTpCtrlDesempDTO->setStrSinAtivo('S');
-            $objAdmTpCtrlDesempDTO->adicionarCriterio(
-                array('IdMdUtlAdmPrmGr', 'IdMdUtlAdmPrmGr'),
-                array(InfraDTO::$OPER_DIFERENTE, InfraDTO::$OPER_DIFERENTE),
-                array('', null),
-                array(InfraDTO::$OPER_LOGICO_AND)
-            );
+						$objAdmTpCtrlDesempDTO->adicionarCriterio(
+							array('IdMdUtlAdmPrmGr'),
+							array(InfraDTO::$OPER_MAIOR_IGUAL),
+							array('1')
+		        );
 
             $objAdmTpCtrlDesempDTO->retNumIdMdUtlAdmTpCtrlDesemp();
 

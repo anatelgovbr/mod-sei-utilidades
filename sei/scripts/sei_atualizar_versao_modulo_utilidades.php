@@ -5,10 +5,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 {
 
 	private $numSeg = 0;
-    private $versaoAtualDesteModulo = '2.1.0';
+    private $versaoAtualDesteModulo = '2.2.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0','2.2.0');
 
     public function __construct()
     {
@@ -129,6 +129,8 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                     $this->instalarv200();
                 case '2.0.0':
                     $this->instalarv210();
+	              case '2.1.0':
+		                $this->instalarv220();
                     break;
 
 				default:
@@ -1744,6 +1746,33 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
 	    $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
     }
+
+		protected function instalarv220()
+		{
+			$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.2.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
+			$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+			$objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+
+			SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
+
+			$this->logar('ALTERA ESTRUTURA DA COLUNA resp_tacita_interrupcao DA TABELA md_utl_adm_prm_gr PARA CHAR(1)');
+			$objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoVariavel(3), 'null');
+			sleep(3); ( new MdUtlAdmPrmGrRN() )->atualizaValoresTacitaInterrupcao();
+			$objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+
+			$this->logar('ALTERA ESTRUTURA DA COLUNA sta_atendimento_dsmp DAS TABELAS md_utl_controle_dsmp E md_utl_hist_controle_dsmp PARA VARCHAR(2)');
+			$objInfraMetaBD->alterarColuna('md_utl_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
+			$objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
+			//comando abaixo foi validado nos SGBD's: Mysql, Oracle, Postgres e SqlServer
+			BancoSEI::getInstance()->executarSql('UPDATE md_utl_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
+			BancoSEI::getInstance()->executarSql('UPDATE md_utl_hist_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
+
+			// ATUALIZACAO NA INFRA PARAMETRO
+			$this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+			BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+			$this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.2.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+		}
 
     public function populaDadosLegadoDocumento(){
         InfraDebug::getInstance()->setBolDebugInfra(true);
