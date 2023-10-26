@@ -255,9 +255,10 @@ try {
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;
 	        $strTela = 'Análise';
 
-            $numId = $objControleDsmpDTO->getStrStaAtendimentoDsmp() == MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE
-                ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
-                : $objControleDsmpDTO->getNumIdMdUtlAnalise();
+	        $arrAuxSit = [MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE,MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE];
+	        $numId = in_array($objControleDsmpDTO->getStrStaAtendimentoDsmp() , $arrAuxSit)
+		        ? $objControleDsmpDTO->getNumIdMdUtlControleDsmp()
+		        : $objControleDsmpDTO->getNumIdMdUtlAnalise();
 
             $UsuarioRespTriagAnaliseAval = MdUtlControleDsmpINT::getNomeUsuarioRespTriagAnaliseAval(
                 $numId,

@@ -853,4 +853,25 @@ class MdUtlAdmPrmGrRN extends InfraRN
             }
         }
     }
+
+    /*
+     * Function usada ate o momento para execucao de script de atualizacao do Modulo
+     * */
+		protected function atualizaValoresTacitaInterrupcaoConectado(){
+			$objMdUtlPrmGrDTO = new MdUtlAdmPrmGrDTO();
+
+			$objMdUtlPrmGrDTO->retNumIdMdUtlAdmPrmGr();
+			$objMdUtlPrmGrDTO->retStrRespTacitaInterrupcao();
+
+			$objMdUtlPrmGrDTO = $this->listar($objMdUtlPrmGrDTO);
+
+			if ( !is_null( $objMdUtlPrmGrDTO ) ) {
+				foreach ( $objMdUtlPrmGrDTO as $obj ) {
+					$objMdUtlPrmGrAlterarDTO = new MdUtlAdmPrmGrDTO();
+					$objMdUtlPrmGrAlterarDTO->setNumIdMdUtlAdmPrmGr( $obj->getNumIdMdUtlAdmPrmGr() );
+					$objMdUtlPrmGrAlterarDTO->setStrRespTacitaInterrupcao( trim( $obj->getStrRespTacitaInterrupcao() ) );
+					$this->alterar($objMdUtlPrmGrAlterarDTO);
+				}
+			}
+		}
 }

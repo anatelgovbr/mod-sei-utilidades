@@ -1878,6 +1878,7 @@ class MdUtlRegrasGeraisRN extends InfraRN
         // valida se está assinado
         $objAssinaturaDTO = new AssinaturaDTO();
         $objAssinaturaDTO->setDblIdDocumento( $objDocumentoDTO->getDblIdDocumento() );
+	      $objAssinaturaDTO->setNumIdUsuario($arrPost['id_usuario']);
         $objAssinaturaDTO->retDthAberturaAtividade();
         $objAssinaturaDTO->setOrdDthAberturaAtividade( InfraDTO::$TIPO_ORDENACAO_ASC );
 

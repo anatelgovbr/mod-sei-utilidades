@@ -275,7 +275,7 @@ try {
     $strResultado .= '<th class="infraTh" width="15%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Atividade ','Nome',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="25%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Descrição','Descricao',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
     $strResultado .= '<th class="infraTh" width="20%">'.PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO,'Complexidade','Complexidade',$arrObjMdUtlAdmAtividadeDTO ).'</th>'."\n";
-    $strResultado .= '<th class="infraTh" width="11%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Tempo de Execucão', 'UndEsforcoAtv', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
+    $strResultado .= '<th class="infraTh" width="11%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Tempo de Execucão', 'TmpExecucaoAtv', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
     $strResultado .= '<th class="infraTh" width="11%">' . PaginaSEI::getInstance()->getThOrdenacao( $objMdUtlAdmAtividadeDTO, 'Possui Análise?', 'SinAnalise', $arrObjMdUtlAdmAtividadeDTO ) . '</th>' . "\n";
 
 

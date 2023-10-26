@@ -29,6 +29,8 @@ class MdUtlControleDsmpINT extends InfraINT
         $arrRetorno[MdUtlControleDsmpRN::$EM_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_EM_CORRECAO_ANALISE;
         $arrRetorno[MdUtlControleDsmpRN::$SUSPENSO] = MdUtlControleDsmpRN::$STR_SUSPENSO;
         $arrRetorno[MdUtlControleDsmpRN::$INTERROMPIDO] = MdUtlControleDsmpRN::$STR_INTERROMPIDO;
+	      $arrRetorno[MdUtlControleDsmpRN::$RASCUNHO_ANALISE] = MdUtlControleDsmpRN::$STR_RASCUNHO_ANALISE;
+	      $arrRetorno[MdUtlControleDsmpRN::$RASCUNHO_CORRECAO_ANALISE] = MdUtlControleDsmpRN::$STR_RASCUNHO_CORRECAO_ANALISE;
 
         return $arrRetorno;
     }

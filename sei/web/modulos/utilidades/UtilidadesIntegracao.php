@@ -22,7 +22,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     public function getVersao()
     {
 
-        return '2.1.0';
+        return '2.2.0';
     }
 
     public function getInstituicao()
@@ -622,7 +622,6 @@ class UtilidadesIntegracao extends SeiIntegracao
             $objMdUtlHsControleDsmpRN = new MdUtlHistControleDsmpRN();
             $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
             $objMdUtlAdmUtlTpCtrlRN = new MdUtlAdmTpCtrlDesempRN();
-            $arrIdTipoControle = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
             $arrIdTipoControle = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
             if(!is_null($arrIdTipoControle)){
                 $idProcedimento = $objProcedimentoAPI->getIdProcedimento();

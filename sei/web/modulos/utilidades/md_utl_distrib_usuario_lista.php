@@ -990,15 +990,14 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
     function configuraCkeckbox() {
         //seleção unica
-        var atributos = document.getElementsByClassName('infraCheckbox');
-
+        var atributos = document.getElementsByClassName('infraCheckboxInput');
         for (i = 0; i < atributos.length; i++) {
             atributos[i].removeAttribute('onclick');
         }
 
         for (i = 0; i < atributos.length; i++) {
             atributos[i].addEventListener('click', function (e) {
-                infraSelecionarItens(e.target, 'Infra');
+                infraSelecionarItens('Infra');
                 getTempoExecucao(e.target);
             });
         }
@@ -1007,7 +1006,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
         var ultSelecionarTodos = document.getElementsByClassName('utlSelecionarTodos');
 
         if(ultSelecionarTodos.length > 0 ){
-            var atributoMult = document.getElementsByClassName('utlSelecionarTodos')[0].children[1];
+            var atributoMult = ultSelecionarTodos[0].children[0];
 
             atributoMult.removeAttribute('onclick');
             atributoMult.addEventListener('click', function (e) {
@@ -1040,7 +1039,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
     function getTempoExecucao(obj) {
         var trPrincipal = obj.parentElement.parentElement.parentElement;
-        var valorUniEsforco = convertToMins(trPrincipal.children[6].innerText);console.log(valorUniEsforco);
+        var valorUniEsforco = convertToMins(trPrincipal.children[6].innerText);
         var totalUnidade = parseInt(document.getElementById('spnTotalUnidade').getAttribute('valor'));
 
 
