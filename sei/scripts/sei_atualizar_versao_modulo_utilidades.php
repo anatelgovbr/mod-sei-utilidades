@@ -129,11 +129,11 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                     $this->instalarv200();
                 case '2.0.0':
                     $this->instalarv210();
-	              case '2.1.0':
+                case '2.1.0':
 		                $this->instalarv220();
                     break;
 
-				default:
+								default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
                     break;
 
@@ -152,7 +152,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
     protected function instalarv100()
     {
 
-		$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+				$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $this->logar('CRIANDO A TABELA md_utl_adm_tp_ctrl_desemp');
@@ -795,7 +795,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv110()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+				$nmVersao = '1.1.0';
+
+				$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -833,15 +835,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'dth_final', $objInfraMetaBD->tipoDataHora(), 'not null');
         $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp', 'sin_acao_concluida', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv120()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+		    $nmVersao = '1.2.0';
+
+		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1021,15 +1022,15 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objMdUtlControleDsmpRN->corrigirCampoUltimaFila();
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.2.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv130()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+		    $nmVersao = '1.3.0';
+
+		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
         SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
@@ -1160,25 +1161,23 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->fixIndices($objInfraMetaBD, $arrTabelas);
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.3.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.3.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	      $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv140()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+	    $nmVersao = '1.4.0';
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.4.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
+	    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.4.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv150()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+		    $nmVersao = '1.5.0';
+
+		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1379,18 +1378,17 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->replaceRevisaoParaAvaliacao();
         $this->logar('FIM da Alteração dos dados substituindo tipo_acao de "Revisão para "Avaliação" ');
 
-	      //Metodo: _atualizarHistControleDsmp() removido para o final do script
-	      $this->_atualizarHistControleDsmp();
+				//Metodo: _atualizarHistControleDsmp() removido para o final do script
+				$this->_atualizarHistControleDsmp();
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'1.5.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.5.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	      $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv200()
     {
-        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+		    $nmVersao = '2.0.0';
+
+		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1473,20 +1471,19 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->fixIndices($objInfraMetaBD, $arrTabelas);
 
-        $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-        BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.0.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.0.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	      $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv210()
     {
-	    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+	    $nmVersao = '2.1.0';
+
+	    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
 	    $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 	    $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
 
-        SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
+	    SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
 
 	    $this->logar('Inserindo a coluna chefia_imediata na Tabela md_utl_adm_prm_gr_usu');
 	    $objInfraMetaBD->adicionarColuna('md_utl_adm_prm_gr_usu', 'chefia_imediata', $objInfraMetaBD->tipoTextoFixo(1), 'null');
@@ -1741,15 +1738,14 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 	    /* FIM EXECUCAO DA COLUNA ID_PROCEDIMENTO PARA NULL */
 
 	    // ATUALIZACAO NA INFRA PARAMETRO
-	    $this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-	    BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.1.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-
-	    $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.1.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
 		protected function instalarv220()
 		{
-			$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.2.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+			$nmVersao = '2.2.0';
+
+			$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
 			$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 			$objInfraParametro = new InfraParametro(BancoSEI::getInstance());
@@ -1769,9 +1765,30 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 			BancoSEI::getInstance()->executarSql('UPDATE md_utl_hist_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
 
 			// ATUALIZACAO NA INFRA PARAMETRO
-			$this->logar('ATUALIZANDO PARÂMETRO ' . $this->nomeParametroModulo . ' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
-			BancoSEI::getInstance()->executarSql('UPDATE infra_parametro SET valor = \'2.2.0\' WHERE nome = \'' . $this->nomeParametroModulo . '\' ');
-			$this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 2.2.0 DO ' . $this->nomeDesteModulo . ' REALIZADA COM SUCESSO NA BASE DO SEI');
+			$this->atualizarNumeroVersao($nmVersao);
+		}
+
+		/**
+		 * Atualiza o número de versão do módulo na tabela de parâmetro do sistema
+		 *
+		 * @param string $parStrNumeroVersao
+		 * @return void
+		 */
+		private function atualizarNumeroVersao($parStrNumeroVersao)	{
+			$this->logar('ATUALIZANDO PARÂMETRO '. $this->nomeParametroModulo .' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+
+			$objInfraParametroDTO = new InfraParametroDTO();
+			$objInfraParametroDTO->setStrNome($this->nomeParametroModulo);
+			$objInfraParametroDTO->retTodos();
+			$objInfraParametroBD = new InfraParametroBD(BancoSEI::getInstance());
+			$arrObjInfraParametroDTO = $objInfraParametroBD->listar($objInfraParametroDTO);
+
+			foreach ($arrObjInfraParametroDTO as $objInfraParametroDTO) {
+				$objInfraParametroDTO->setStrValor($parStrNumeroVersao);
+				$objInfraParametroBD->alterar($objInfraParametroDTO);
+			}
+	
+			$this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $parStrNumeroVersao .' DO '. $this->nomeDesteModulo .' REALIZADA COM SUCESSO NA BASE DO SEI');
 		}
 
     public function populaDadosLegadoDocumento(){
