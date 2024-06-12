@@ -330,20 +330,28 @@ class MdUtlPrazoRN extends InfraRN
         return $arrRetorno;
     }
 
-		public function getDatasPeriodoAtual($idPrmGr){
+    public function getDatasPeriodoAtual($idPrmGr , $isComHrs = true ){
     	$objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
-			$objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+		$objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
 
-			$objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idPrmGr);
-			$objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
+		$objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr($idPrmGr);
+		$objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
 
-			$objMdUtlAdmPrmGrDTO = $objMdUtlAdmPrmGrRN->consultar( $objMdUtlAdmPrmGrDTO );
+		$objMdUtlAdmPrmGrDTO = $objMdUtlAdmPrmGrRN->consultar( $objMdUtlAdmPrmGrDTO );
 
-			$arrPeriodo = ( new MdUtlAdmPrmGrUsuRN() )->getDiasUteisNoPeriodo( [$objMdUtlAdmPrmGrDTO->getStrStaFrequencia(),false] );
+		$arrPeriodo = ( new MdUtlAdmPrmGrUsuRN() )->getDiasUteisNoPeriodo( [$objMdUtlAdmPrmGrDTO->getStrStaFrequencia(),false] );
 
+		if ( $isComHrs ) {
 			return [
 				'DT_INICIAL' => $arrPeriodo['dtInicial'] . ' 00:00:00',
 				'DT_FINAL'   => $arrPeriodo['dtFinal'] . ' 23:59:59'
 			];
+		} else {
+			return [
+				'DT_INICIAL' => $arrPeriodo['dtInicial'],
+				'DT_FINAL'   => $arrPeriodo['dtFinal']
+			];
 		}
+
+	}
 }

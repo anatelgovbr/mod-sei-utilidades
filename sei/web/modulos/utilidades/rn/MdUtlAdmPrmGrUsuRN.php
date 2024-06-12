@@ -516,11 +516,12 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
     }
 
     protected function getDiasUteisNoPeriodoConectado($arrParams){
-				$staFrequencia    = $arrParams[0];
-	      $isUsarFeriadoSEI = array_key_exists(1,$arrParams) ? $arrParams[1] : true;
+  	    $staFrequencia    = $arrParams[0];
+	    $isUsarFeriadoSEI = array_key_exists(1,$arrParams) ? $arrParams[1] : true;
+	    $dataAtual        = array_key_exists(2,$arrParams) ? $arrParams[2] : InfraData::getStrDataAtual();
         $MdUtlPrazoRN     = new MdUtlPrazoRN();
 
-        $dataAtual = InfraData::getStrDataAtual();
+
         $dataAtualFormatada = explode('/', $dataAtual);
         $diaAtual      = $dataAtualFormatada[0];
         $mesAtual      = $dataAtualFormatada[1];
@@ -541,10 +542,10 @@ class MdUtlAdmPrmGrUsuRN extends InfraRN {
                 $dataPrimeiroDiaSemana = $dataAtualFormatada;
 
                 $dataPrimeiroDiaSemana = $MdUtlPrazoRN->retornaPrimeiroDiaSemana($dataPrimeiroDiaSemana);
-	              $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dataPrimeiroDiaSemana)));
+                $dtFinal   = date('d/m/Y', strtotime('+6 days', strtotime($dataPrimeiroDiaSemana)));
 
                 $arrDataPrimeiroDiaSemana = explode('-',$dataPrimeiroDiaSemana);
-	              $dtInicial = implode('/', $arrDataPrimeiroDiaSemana);
+	            $dtInicial = implode('/', $arrDataPrimeiroDiaSemana);
                 $diasUteis = $MdUtlPrazoRN->retornaQtdDiaUtil($dtInicial, $dtFinal, false, $isUsarFeriadoSEI);
                 $numFrequencia = $diasUteis;
                 break;

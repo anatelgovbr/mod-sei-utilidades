@@ -47,7 +47,7 @@ function atualizaUtilidadesArvore(){
 }
 
 function associarFila(){
-      infraAbrirJanela('<?=$strLinkAssociarFila?>', 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');
+    infraAbrirJanelaModal('<?=$strLinkAssociarFila?>',900,500);
 }
 
 function iniciarTriagem(){

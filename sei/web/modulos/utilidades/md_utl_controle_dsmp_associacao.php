@@ -191,7 +191,7 @@ try {
     $arrComandos[] = '<button type="button" accesskey="S" id="sbmAssociarFila" onclick="submeterAssociarFila();" name="sbmAssociarFila" class="infraButton">
                                     <span class="infraTeclaAtalho">S</span>alvar</button>';
 
-    $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="window.close();" class="infraButton">
+    $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="closeModal();" class="infraButton">
                                     Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
     if($idTpControle != '0'){
@@ -301,12 +301,17 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 	    <?php if ( isset($_POST['hdnAssociarFila'] ) && $_POST['hdnAssociarFila'] == 'ok' ): ?>
             // veio da tela de detalhamento do processo
             if ( document.querySelector('#hdnDetalhamento').value == 1 ) {
-                window.opener.parent.document.querySelector('#ifrArvore').src = '<?= $linkPosSubmitDetalhamento ?>';
-                window.opener.location.reload();
+                window.parent.document.querySelector('#ifrArvore').src = '<?= $linkPosSubmitDetalhamento ?>';
+                /**
+                 * PARA FUNCIONAMENTO FUTURAMENTE NA VERSAO 4.1.* DO SEI, USAR O COMANDO ABAIXO SUBSTITUINDO O CONTEUDO DA LINHA: 309
+                 * window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#btnDtlhProcesso').click();
+                 */
+                window.parent.document.location.reload();
+
             } else { // veio do menu Associar Processo a Fila
-                window.opener.document.querySelector('#btnPesquisar').click();
+                window.parent.document.querySelector('#btnPesquisar').click();
             }
-            window.close();
+            closeModal();
 	    <?php endif; ?>
 
         if( document.getElementById('selTpCtrl').length == 1 ){
@@ -317,13 +322,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
         iniciarTbDinamica();
         var arrIdsProcedimento = new Array();
         var isDetalhamento = "<?=$isDetalhamento?>";
-
         if(isDetalhamento != '1') {
             arrIdsProcedimento = retornaIdsProcedimentosFormatados();
         }
-
         buscarUltimasFilas(arrIdsProcedimento, isDetalhamento);
-
     }
 
     function submeterAssociarFila(){
@@ -404,7 +406,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
     function montarTelaMultipla(arrUltimasFilas){
 
-        var linhas = window.opener.$(".infraTrMarcada");
+        var linhas = $( window.parent.document.querySelectorAll('.infraTrMarcada') );
 
         for (var i = linhas.length - 1; i >=0; i--) {
             var objLinha         = linhas[i];
@@ -429,10 +431,19 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     function montarTelaDetalhamento(arrUltimasFilas, idProcedimento){
         var objLinha         = arrUltimasFilas[0];
         var idProcedimento   = idProcedimento;
-        var strProcesso      = window.opener.document.getElementById('hdnProtocoloFormatado').value;
-        var filaAtual        = window.opener.document.getElementById('hdnNomeFilaAtual').value;
-        var status           = window.opener.document.getElementById('hdnIdStatusAtual').value;
-        var nmTpCtrlAtual    = window.opener.document.getElementById('hdnNomeTpCtrlAtual').value;
+
+        /**
+         * PARA FUNCIONAMENTO FUTURAMENTE NA VERSAO 4.1.* DO SEI, USAR O COMANDO ABAIXO SUBSTITUINDO O CONTEUDO DA LINHA: 445
+         * window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#ifrVisualizacao');
+         */
+
+        // Inicio de trecho alterado
+        var objVisualizacao  = window.parent.document.querySelector('#ifrVisualizacao');
+        var strProcesso      = objVisualizacao.contentWindow.document.querySelector('#hdnProtocoloFormatado').value;
+        var filaAtual        = objVisualizacao.contentWindow.document.querySelector('#hdnNomeFilaAtual').value;
+        var status           = objVisualizacao.contentWindow.document.querySelector('#hdnIdStatusAtual').value;
+        var nmTpCtrlAtual    = objVisualizacao.contentWindow.document.querySelector('#hdnNomeTpCtrlAtual').value;
+
         var nomeCampoUltFila = 'UltimaFila' + idProcedimento;
         var TpControle       = $(arrUltimasFilas).find('TipoControle' + idProcedimento ).text();
         var ultimaFila       = $(arrUltimasFilas).find(nomeCampoUltFila).text();
@@ -447,9 +458,8 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
 
 
     function retornaIdsProcedimentosFormatados(){
-        var linhas = window.opener.$(".infraTrMarcada");
+        var linhas = $( window.parent.document.querySelectorAll('.infraTrMarcada') );
         var arrProcedimentos = new Array();
-
         for (var i = 0; i < linhas.length; i++) {
             var objLinha = linhas[i];
             var idProcedimento = $(objLinha).find('.tdIdProcesso').text();

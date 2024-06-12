@@ -28,10 +28,13 @@ $selTipoProcessoCampo = array_key_exists('selTipoProcessoUtlMs', $_POST) ? $_POS
 $selStatusCampo = array_key_exists('selStatusUtlMs', $_POST) ? $_POST['selStatusUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selStatusUtlMs');
 $selAtividadeCampo = array_key_exists('selAtividadeUtlMs', $_POST) ? $_POST['selAtividadeUtlMs'] : PaginaSEI::getInstance()->recuperarCampo('selAtividadeUtlMs');
 $selTpControleCampo = array_key_exists('selTpControle', $_POST) ? $_POST['selTpControle'] : PaginaSEI::getInstance()->recuperarCampo('selTpControle');
+$selPeriodoCampo = array_key_exists('selPeriodo', $_POST) ? $_POST['selPeriodo'] : PaginaSEI::getInstance()->recuperarCampo('selPeriodo');
 
 $somaTmpExecucao = 0;
 $idProcedimentoMeusProcessos = array_key_exists('id_procedimento', $_GET) ? $_GET['id_procedimento'] : $_POST['hdnIdProcedimento'];
 $strSituacao = '';
+
+$linkCtrlProcesso = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acaoorigem=' . $_GET['acao']);
 
 $objFilaRN = new MdUtlAdmFilaRN();
 $objMdUtlAdmFilaPrmGrUsuRN = new MdUtlAdmFilaPrmGrUsuRN();
@@ -64,18 +67,29 @@ if ($isProcessoAutorizadoConcluir == 1) {
 }
 */
 
-$arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso' => $selTipoProcessoCampo, 'selStatus' => $selStatusCampo, 'selTpControle' => $selTpControleCampo);
+$arrPostDados = array('txtProcesso' => $txtProcessoCampo, 'selFila' => $selFilaCampo, 'selTipoProcesso' => $selTipoProcessoCampo, 'selStatus' => $selStatusCampo, 'selTpControle' => $selTpControleCampo, 'selPeriodo' => $selPeriodoCampo);
+$strNmUnidade = SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
 
 //Array que sera usado para montar os tipos de controles da unidade
-$arrObjTpControleUnidadeLogada     = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
-$arrListaTpControle                = array();
-$arrListaIdsTpControle             = array();
-if (!is_null($arrObjTpControleUnidadeLogada) ){
-    foreach ($arrObjTpControleUnidadeLogada as $k => $v) {
-        $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
-        array_push( $arrListaIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
+try {
+    $arrObjTpControleUnidadeLogada     = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
+    $arrListaTpControle                = array();
+    $arrListaIdsTpControle             = array();
+    if (!is_null($arrObjTpControleUnidadeLogada) ){
+        foreach ($arrObjTpControleUnidadeLogada as $k => $v) {
+            $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
+            array_push( $arrListaIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
+        }
+    } else {
+        $msgErro = MdUtlMensagemINT::setMensagemPadraoPersonalizada( MdUtlMensagemINT::$MSG_UTL_138 , [$strNmUnidade] );
+        throw new InfraException($msgErro);
     }
+} catch( InfraException $e ){
+    PaginaSEI::getInstance()->adicionarMensagem( $e->__toString() , InfraPagina::$TIPO_MSG_ERRO );
+    header('Location: ' . $linkCtrlProcesso );
+    die;
 }
+
 
 // retorna tipos de controles da unidade onde o usuario é membro participante
 $arrTpControleUsuMembroUnid = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeUsuMembro($arrListaIdsTpControle);
@@ -206,6 +220,33 @@ $arrComandos[] = '<button type="button" accesskey="c" id="btnFechar" onclick="fe
 $numRegistros = 0;
 if ($isParametrizado) {
     $paramTpCtrl = is_null($idTipoControle) ? $arrListaIdsTpControle : $idTipoControle;
+
+	// habilita/configura combo Periodo
+	$strSelPeriodo = '';
+	if ( $idTipoControle ) {
+		if( empty($selPeriodoCampo) ) {
+			$bolMarcarSelected = true;
+			$dtIniPer          = null;
+			$dtFinPer          = null;
+		} else {
+			$bolMarcarSelected = false;
+			$arrDtaPeriodos    = explode('|',$selPeriodoCampo);
+			$dtIniPer          = $arrDtaPeriodos[0];
+			$dtFinPer          = $arrDtaPeriodos[1];
+		}
+
+		$arrDadosPeriodo = MdUtlControleDsmpINT::montarSelectPeriodoAnalise( $idTipoControle, SessaoSEI::getInstance()->getNumIdUsuario(), $dtIniPer, $dtFinPer, null, $bolMarcarSelected );
+
+		// caso nao tenha sido selecionado a combo Periodo mas foi informado o Tipo de Ctrl, o valor padrao sera o periodo atual
+		if ( empty( $arrPostDados['selPeriodo'] ) ) $arrPostDados['selPeriodo'] = $arrDadosPeriodo[2]['inicial'].'|'.$arrDadosPeriodo[2]['final'];
+
+		$dtPerIniEUA     = implode( '-' , array_reverse( explode( '/' , $arrDadosPeriodo[2]['inicial'] ) ) );
+		$isPeriodoAtual  = $arrDadosPeriodo['periodoAtual'][0] == $dtPerIniEUA ? 'S' : 'N';
+		$arrPostDados['dadosPeriodo']['periodoSelecionado'] = $arrDadosPeriodo[2];
+		$arrPostDados['dadosPeriodo']['isPeriodoAtual']     = $isPeriodoAtual;
+		$strSelPeriodo = $arrDadosPeriodo[1];
+	}
+
     $objDTOCombo = $objMdUtlControleDsmpRN->getObjDTOParametrizadoMeusProcessos(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $paramTpCtrl, array()));
     //Configuração da Paginação
     /*
@@ -216,6 +257,12 @@ if ($isParametrizado) {
     }
     */
     $objDTO = $objMdUtlControleDsmpRN->getObjDTOParametrizadoMeusProcessos(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $paramTpCtrl, $arrPostDados));
+
+	$paramTpCtrl = is_array($paramTpCtrl) ? $paramTpCtrl : [(int) $paramTpCtrl];
+
+    $arrObjsProcessosExecutados = $objMdUtlControleDsmpRN->montaProcessosExecutados(array($arrObjsFilaUsuDTO, $isGestorSipSei, $arrObjsTpProcesso, $paramTpCtrl, $arrPostDados));
+
+	$strProcessosExecutados = PaginaSEI::getInstance()->gerarItensTabelaDinamica($arrObjsProcessosExecutados[0]);
 
     if (!is_null($objDTO)) {
 
@@ -545,7 +592,7 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
             <div class="<?= $col_default ?>" id="divTpCtrl">
                 <label id="lblTpControle" for="selTpControle" accesskey="" class="infraLabelOpcional">Tipo de Controle:</label>
                 <select id="selTpControle" name="selTpControle" class="infraSelect padraoSelect form-control"
-                        onchange="pesquisar();"
+                        onchange="mudouElemento(this);"
                         tabindex="<?= PaginaSEI::getInstance()->getProxTabDados() ?>">
                     <?= $selTpControle ?>
                 </select>
@@ -590,6 +637,14 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
                     <?= $selAtividade ?>
                 </select>
             </div>
+
+            <div class="<?= $col_default ?> mb-2" id="divPeriodo">
+                <label id="lblPeriodo" for="selPeriodo"  class="infraLabelOpcional">Período:</label>
+                <select id="selPeriodo" id="selPeriodo" name="selPeriodo" onchange="pesquisar()" class="infraSelect padraoSelect form-control"
+                        tabindex="<?= PaginaSEI::getInstance()->getProxTabDados()?>">
+			        <?= $strSelPeriodo ?>
+                </select>
+            </div>
         </div>
 
         <?php if ( !empty( $objChefiaImediata ) ): ?>
@@ -617,50 +672,144 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
         <input type="hidden" id="hdnIsConcluirProcesso" name="hdnIsConcluirProcesso"
                value="<?php echo $isProcessoAutorizadoConcluir ?>"/>
         <input type="hidden" id="hdnIdProcedimento" name="hdnIdProcedimento"
-               value="<?php echo $idProcedimentoMeusProcessos ?>"/>   
+               value="<?php echo $idProcedimentoMeusProcessos ?>"/>
 
-        <?php $col_def_labels = "col-12 col-sm-10 col-md-10 col-lg-6"; ?>
+	    <?php $col_def_labels_lg6 = "col-12 col-sm-10 col-md-10 col-lg-6 col-xl-6"; ?>
+	    <?php $col_def_labels = "col-12"; ?>
 
         <div class="row mt-3">
-            <div class="<?= $col_def_labels ?> mb-2 justify-content-center align-self-center" id="divSomaTmpExecucao">
+            <div class="<?= $col_def_labels_lg6 ?> mb-2 justify-content-center align-self-center" id="divSomaTmpExecucao">
                 <label class="infraLabelOpcional">
                     Total de Tempo Pendente de Execução:
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
+                    <span class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                      <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTmpExecucao) ?>
+                    </span>
                 </label>
-                <span class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;"><?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTmpExecucao) ?></span>            
             </div>
 
-            <div class="<?= $col_def_labels ?> mb-2" id="divCargaHrDistribExec">
+            <div class="<?= $col_def_labels_lg6 ?> mb-2" id="divCargaHrDistribExec">
                 <label id="lblCargaHrDistribExec" class="infraLabelOpcional">
                     Total de Tempo Executado no Período:
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
+                    <span id="spnCargaHrDistribExec" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        0min
+                    </span>
                 </label>
-                <span id="spnCargaHrDistribExec" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
             </div>
 
-            <div class="<?= $col_def_labels ?> mb-2" id="divCargaPadPeriodo">
-                <label id="lblCargaHrPadrao" class="infraLabelOpcional">Carga Exigível no Período Atual:</label>
+            <div class="<?= $col_def_labels_lg6 ?> mb-2" id="divCargaPadPeriodo">
+                <label id="lblCargaHrPadrao" class="infraLabelOpcional">
+                    Carga Exigível no Período:
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                             name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
-
-                <span id="spnCargaHrPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                    <span id="spnCargaHrPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        0min
+                    </span>
+                </label>
             </div>
 
-            <div class="<?= $col_def_labels ?> mb-2" id="divCargaHrDistrib">
+            <div class="<?= $col_def_labels_lg6 ?> mb-2" id="divCargaHrDistrib">
                 <label id="lblCargaHrDistrib" class="infraLabelOpcional">
                     Carga Horária Distribuída no Período:
                     <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
+                    <span id="spnCargaHrDistrib" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        0min
+                    </span>
                 </label>
-                <span id="spnCargaHrDistrib" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
             </div>
+
+            <!-- NOVA LABEL -->
+            <div class="<?= $col_def_labels_lg6 ?> mb-2" id="divCargaPadraoMenosExecutado">
+                <label id="lblCargaPadraoMenosExecutado" class="infraLabelOpcional">
+                    <!--Diferença entre Carga Exigível e o Tempo Executado no Período:-->
+                    Carga Exigível Pendente de Execução no Período
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                         name="ajuda" <?= PaginaSEI::montarTitleTooltip('Diferença entre a Carga Exigível e o Tempo Executado no período selecionado.','Ajuda') ?> />
+                    <span id="spnCargaPadraoMenosExecutado" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        <?= MdUtlAdmPrmGrINT::convertToHoursMins(0) ?>
+                    </span>
+                </label>
+            </div>
+
+            <div class="<?= $col_def_labels_lg6 ?> mb-2" id="divExecutadoExcedente">
+                <label id="lblExecutadoExcedente" class="infraLabelOpcional">
+                    Tempo Excedente Executado no Período
+                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                         name="ajuda" <?= PaginaSEI::montarTitleTooltip('Tempo Executado que excedeu ao previsto na Carga Exigível no Período','Ajuda') ?> />
+                    <span id="spnExecutadoExcedente" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        <?= MdUtlAdmPrmGrINT::convertToHoursMins(0) ?>
+                    </span>
+                </label>
+
+            </div>
+            <!-- FIM NOVA LABEL -->
         </div>
 
         <div class="row">
             <div class="col-12">
-                <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros); ?>
+                <div style="background-color: #999999; font-weight: 500; border-bottom: 1px #bfb7b7 solid; padding-top: 5px; padding-bottom:5px;">
+                    <span class="spnExpandirTodos">
+                        <img id="imgExpandir_01" class="imgExpandir" style="margin-bottom: -7px;"
+                             onclick="expandirTodos('div01', this)"
+                             src=" <?php echo PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/exibir.svg' ?>"/>
+                        <!--  no Período Selecionado -->
+                        <label class="infraLabelObrigatorio">Lista de Processos Em Andamento</label>
+                    </span>
+                    <div id="div01" style="display: none;" class="table-responsive">
+                        <?php PaginaSEI::getInstance()->montarAreaTabela($strResultado, $numRegistros); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <div style="background-color: #999999; font-weight: 500; border-bottom: 1px #bfb7b7 solid; padding-top: 5px; padding-bottom:5px;">
+                    <span class="spnExpandirTodos">
+                        <img id="imgExpandir_02" class="imgExpandir" style="margin-bottom: -7px;"
+                             onclick="expandirTodos('div02', this)"
+                             src=" <?php echo PaginaSEI::getInstance()->getDiretorioSvgGlobal() . '/exibir.svg' ?>"/>
+                        <label class="infraLabelObrigatorio">Lista de Processos Executados no Período Selecionado</label>
+                    </span>
+                    <div id="div02" style="display: none;" class="table-responsive">
+	                    <?php if ( empty($strProcessosExecutados) ) :?>
+                            <div class="mt-2">
+                                <label class="infraLabelOpcional pl-2">Nenhum registro encontrado.</label>
+                            </div>
+	                    <?php else: ?>
+                            <table class="infraTable table" summary="ProcessosExecutados" id="tbProcessosExecutados">
+                                <caption class="infraCaption">
+                                    <?= PaginaSEI::getInstance()->gerarCaptionTabela('Meus Processos Executados', count($arrObjsProcessosExecutados[0])) ?>
+                                </caption>
+                                <tr>
+                                    <th class="infraTh">Origem Registro + Número incrementado</th>
+                                    <th class="infraTh" align="left" style="width: 13%;">Processo</th>
+                                    <th class="infraTh" align="left" style="width: 18%;">Atividade</th>
+                                    <th class="infraTh" align="left" style="width: 18%;">Tipo de Controle</th>
+                                    <th class="infraTh" align="left" style="width: 14%;">Fila</th>
+                                    <th class="infraTh" align="left" style="width: 10%;">Tempo de Execução</th>
+                                    <th class="infraTh" align="left" style="width: 12%;">Tipo de Ação</th>
+                                    <th class="infraTh" align="left" style="width: 18%;">Período de Execução</th>
+                                </tr>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                    <!-- Paragrado adicionado somente para comparação com o tempo informado na Label do Tempo Executado -->
+                    <?php if ( !empty( $arrObjsProcessosExecutados[1] ) ) : ?>
+                        <p class="ml-2 pt-2">
+                            <label class="infraLabelOpcional font-weight-bold">Total Tempo de Execução: <?= MdUtlAdmPrmGrINT::convertToHoursMins( $arrObjsProcessosExecutados[1] ) ?></label>
+                        </p>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
@@ -668,7 +817,9 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
 
     </form>
 
-    <?php        
+    <input type="hidden" id="hdnTbProcessosExecutados" value="<?= $strProcessosExecutados ?>" />
+
+    <?php
         require_once 'md_utl_geral_js.php';
         require_once 'md_utl_funcoes_js.php';
     ?>
@@ -725,7 +876,26 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
             }
         }
 
-        getCargaHrDistribuida( todosValoresTpCtrl );
+        let tmpPeriodo = $('#selPeriodo').val();
+
+        getCargaHrDistribuida( todosValoresTpCtrl, null, '', tmpPeriodo );
+
+        // carrega tabela com processos executados
+        if ( document.querySelector('#hdnTbProcessosExecutados').value.length > 0 ) {
+            objTabelaDinamicaProcExecutados = new infraTabelaDinamica('tbProcessosExecutados', 'hdnTbProcessosExecutados', false, false, false);
+            objTabelaDinamicaProcExecutados.gerarEfeitoTabela = true;
+
+            $('#tbProcessosExecutados > tbody > tr > td').css({
+                'display': 'table-cell',
+                'vertical-align': 'inherit'
+            });
+
+            let tbl = document.querySelector('#tbProcessosExecutados');
+            [tbl.rows].map( row => $( row ).find('th:first , td:first').css('display','none') );
+        }
+        // Deixa visivel as duas Grids
+        expandirTodos( 'div01' , document.querySelector('#imgExpandir_01') );
+        expandirTodos( 'div02' , document.querySelector('#imgExpandir_02') );
 
         addEnter();
         
@@ -733,13 +903,18 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
         // para ficar na mesma formatação das labels que retornam dados referentes a tempo
         if( $('#divInfraAreaTabela').find('table').length == 0 ){
             $('#divInfraAreaPaginacaoSuperior').hide();
-            $('#divInfraAreaTabela').parent().parent().addClass('mt-2');
-            $('#divInfraAreaTabela > label').addClass('infraLabelOpcional'); 
+            $('#divInfraAreaPaginacaoInferior').hide();
+            $('#divInfraAreaTabela').addClass('mt-2');
+            $('#divInfraAreaTabela > label').addClass('infraLabelOpcional pl-2');
         }else{
             if( $('#divInfraAreaPaginacaoSuperior').find('select').length == 0 ){
                 $('#divInfraAreaPaginacaoSuperior').hide();
+                $('#divInfraAreaPaginacaoInferior').hide();
             }
         }
+
+        // seta cor que contem a msg que quantidade de registros nas grids para ficar preto
+        $('.infraCaption').css('color','black');
     }
 
     function confirmarRetorno(strStatus, $strUrlLink) {
@@ -776,12 +951,18 @@ $txtTooltipCargaHorariaDistribuidaPeriodo = MdUtlAdmPrmGrINT::recuperarTextoFreq
     function addPesquisarEnter(evt) {
         var key_code = evt.keyCode ? evt.keyCode :
             evt.charCode ? evt.charCode :
-                evt.which ? evt.which : void 0;
+            evt.which ? evt.which : void 0;
         
         if (key_code == 13) {
             pesquisar();
         }
+    }
 
+    function mudouElemento(elem){
+        if ( $( elem ).attr('id') == 'selTpControle') {
+            $('#selPeriodo').val('');
+        }
+        pesquisar();
     }
 
     function pesquisar() {

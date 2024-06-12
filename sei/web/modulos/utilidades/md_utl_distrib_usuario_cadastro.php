@@ -287,44 +287,58 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                 <div class="form-group">
                     <label id="lblTotalTempoPendenteExecucao" for="txtTotalTempoPendenteExecucao" class="infraLabelOpcional">
                         Total de Tempo Pendente de Execução:
-                    </label>
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                             name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoPendenteExecucao,'Ajuda') ?> />
 
-                    <span id="txtTotalTempoPendenteExecucao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                        <span id="txtTotalTempoPendenteExecucao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                            <span class="spinner-border spinner-border-sm" style="display: none"></span>
+                            0min
+                        </span>
+                    </label>
                 </div>
             </div>
             <div class="<?= $col_default ?>" id="divTotalExePeriodo">
                 <div class="form-group">
                     <label id="lblTotalExePeriodo" for="txtTotalExePeriodo" class="infraLabelOpcional">
                         Total de Tempo Executado no Período:
-                    </label>
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                         name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                             name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipTotalTempoExecutadoPeriodo,'Ajuda') ?> />
 
-                    <span id="txtTotalExePeriodo" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                        <span id="txtTotalExePeriodo" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                            <span class="spinner-border spinner-border-sm" style="display: none"></span>
+                            0min
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="<?= $col_default ?>" id="divCargaPadrao">
                 <div class="form-group">
-                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">Carga Exigível no Período Atual:</label>
+                    <label id="lblCargaPadrao" for="txtCargaPadrao" class="infraLabelOpcional">
+                        Carga Exigível no Período Atual:
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                            name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao,'Ajuda') ?> />
 
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaPadrao,'Ajuda') ?> />
-
-                    <span id="txtCargaPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                        <span id="txtCargaPadrao" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                            <span class="spinner-border spinner-border-sm" style="display: none"></span>
+                            0min
+                        </span>
+                    </label>
                 </div>
             </div>
             <div class="<?= $col_default ?>" id="divDistribuidaMes">
                 <div class="form-group">
-                    <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional">Carga Horária Distribuída no Período:</label>
+                    <label id="lblDistribuida" for="txtDistribuida" class="infraLabelOpcional">
+                        Carga Horária Distribuída no Período:
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                            name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
 
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaDistribuidaPeriodo,'Ajuda') ?> />
-
-                    <span id="txtDistribuida" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">0min</span>
+                        <span id="txtDistribuida" class="badge badge-primary badge-pill ml-1 p-2" style="vertical-align: top;">
+                            <span class="spinner-border spinner-border-sm" style="display: none"></span>
+                            0min
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -334,24 +348,26 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                 <div class="form-group">
                     <label id="lblSelecionadaDist" for="txtSelecionadaDist" class="infraLabelOpcional">
                         Carga Horária selecionada para Distribuição:
-                    </label>
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaSelecionadaDistribuicao,'Ajuda') ?> />
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                            name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaSelecionadaDistribuicao,'Ajuda') ?> />
 
-                    <span id="txtSelecionadaDist" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
-                      <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
-                    </span>
+                        <span id="txtSelecionadaDist" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
+                          <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
+                        </span>
+                    </label>
                 </div>
             </div>
             <div class="<?= $col_default ?>" id="divTotalUniEsforco">
                 <div class="form-group">
-                    <label id="lblTotalUniEsforco" for="txtTotalUniEsforco" class="infraLabelOpcional">Carga Horária Total:</label>
-                    <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
-                        name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaTotal,'Ajuda') ?> />
+                    <label id="lblTotalUniEsforco" for="txtTotalUniEsforco" class="infraLabelOpcional">
+                        Carga Horária Total:
+                        <img align="top" src="<?= PaginaSEI::getInstance()->getDiretorioSvgGlobal() ?>/ajuda.svg" class="infraImg"
+                            name="ajuda" <?= PaginaSEI::montarTitleTooltip($txtTooltipCargaHorariaTotal,'Ajuda') ?> />
 
-                    <span id="txtTotalUniEsforco" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
-                      <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
-                    </span>
+                        <span id="txtTotalUniEsforco" class="badge badge-warning badge-pill ml-1 p-2" style="vertical-align: top;">
+                          <?= MdUtlAdmPrmGrINT::convertToHoursMins($somaTempoExecucao) ?>
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -424,7 +440,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     function inicializar() {
         var count = "<?=$countDistribuicao?>";
         verificarConcorrencia(count);
-
         if (count > 0) {
             carregarComponenteUsuarioParticipante();
             iniciarGridDinamicaDistribuicao();
@@ -565,6 +580,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             if (id != '') {
                 document.getElementById('hdnIdUsuarioParticipanteLupa').value = id;
                 document.getElementById('txtUsuarioParticipante').value = descricao;
+
+                $('.spinner-border').show();
+
                 //chamar a função responsavel por carregar os campos do participante - Ajax
                 realizarAjaxDadosCarga();
             } else {
@@ -594,17 +612,20 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
     }
 
     function limparCampos() {
+        let span = '<span class="spinner-border spinner-border-sm" style="display: none"></span>';
+
         document.getElementById('txtTotalUniEsforco').innerHTML = convertToHoursMins('<?=$somaTempoExecucao?>');
         document.getElementById('txtSelecionadaDist').innerHTML = convertToHoursMins('<?=$somaTempoExecucao?>');
-        document.getElementById('txtDistribuida').innerHTML = '0min';
-        document.getElementById('txtCargaPadrao').innerHTML = '<?=$strCargaPadrao?>';
-        document.getElementById('txtTotalExePeriodo').innerHTML = '0min';
-        document.getElementById('txtTotalTempoPendenteExecucao').innerHTML = '0min';
+        document.getElementById('txtDistribuida').innerHTML = span + ' 0min';
+        document.getElementById('txtCargaPadrao').innerHTML = span + ' <?=$strCargaPadrao?>';
+        document.getElementById('txtTotalExePeriodo').innerHTML = span + ' 0min';
+        document.getElementById('txtTotalTempoPendenteExecucao').innerHTML = span + ' 0min';
         document.getElementById('dvChefiaImediata').style.display = 'none';
         resetarTempoExecucaoTabelaDistribuicao();
     }
 
     function realizarAjaxDadosCarga() {
+
         let isChefiaImediata = false;
 
         var params = {
@@ -624,6 +645,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
             async: true,
             dataType: 'XML',
             success: function (r) {
+
                 let chefiaImediata = $( r ).find('ChefiaImediata').text();
                 isChefiaImediata   = chefiaImediata.length > 0;
 

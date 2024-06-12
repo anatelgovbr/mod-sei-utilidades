@@ -51,10 +51,11 @@
         return Math.trunc(tmp / (1 + (perc / 100)));
     }
 
-    function getCargaHrDistribuida( idsTpCtrl , idUsuario = null, tela = '' ){
+    function getCargaHrDistribuida( idsTpCtrl , idUsuario = null, tela = '', periodo = null ){
         var params = {
             idUsuarioParticipante: idUsuario === null ? "<?= SessaoSEI::getInstance()->getNumIdUsuario() ?>" : idUsuario,
-            idTipoControle: idsTpCtrl
+            idTipoControle: idsTpCtrl,
+            tmpPeriodo: periodo
         };
 
         $.ajax({
@@ -63,6 +64,7 @@
             data: params,
             dataType: 'xml',
             success: function (r) {
+
                 var cargaDisti = $(r).find('ValorUndEs').text();
                 var cargaDistiExe = $(r).find('ValorUndEsExecutado').text();
                 var cargaPadrao = $(r).find('ValorCarga').text();
@@ -90,6 +92,19 @@
                     var tempoDecorrido = $("#spnCargaHrDistribRascunho").html();
                     tempoDecorrido = parseInt(convertToMins(tempoDecorrido)) + parseInt(convertToMins(totalTempoExecutadoPeriodo));
                     $("#spnCargaHrDistribRascunho").html(convertToHoursMins(tempoDecorrido));
+                }
+
+                // CODIFICACAO PARA LABEL CARGA PERIODO - EXECUTADO
+                let tmpExec = cargaDistiExe;
+                let tt      = cargaPadrao - tmpExec;
+
+                if ( tt < 0 ) {
+                    tt *= -1;
+                    $('#spnCargaPadraoMenosExecutado').html( convertToHoursMins(0) );
+                    $('#spnExecutadoExcedente').html( convertToHoursMins(tt) );
+                } else {
+                    $('#spnExecutadoExcedente').html( convertToHoursMins(0) );
+                    $('#spnCargaPadraoMenosExecutado').html( convertToHoursMins(tt) );
                 }
 
                 if ( tela == 'distribuicao-listar' ) {

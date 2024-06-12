@@ -305,6 +305,8 @@ class MdUtlAdmPrmGrINT extends InfraINT {
 
     public static function convertToHoursMins($time)
     {
+    	if ( is_string($time) ) return $time;
+
         $hours = intVal($time / 60);
         $minutes = ($time % 60);
         if ($time == 0) {
@@ -403,18 +405,18 @@ class MdUtlAdmPrmGrINT extends InfraINT {
 
     public static function recuperarTextoFrequenciaTooltipDinamicoMeusProcessos($idControleDesempenho = null, $strTela = null)
     {
-    	  $msgPadrao = $strTela ? MdUtlMensagemINT::setMensagemPadraoPersonalizada(MdUtlMensagemINT::$MSG_UTL_137,[$strTela]) : MdUtlMensagemINT::$MSG_UTL_136;
+    	$msgPadrao = $strTela ? MdUtlMensagemINT::setMensagemPadraoPersonalizada(MdUtlMensagemINT::$MSG_UTL_137,[$strTela]) : MdUtlMensagemINT::$MSG_UTL_136;
         if (!$idControleDesempenho){
 	        return $msgPadrao;
         }
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-				return $msgPadrao ."\n \n". $dados['textoFrequencia'];
+        return $msgPadrao ."\n \n". $dados['textoFrequencia'];
     }
 
     public static function recuperarTextoFrequenciaTooltipDinamicoDistribuirProcessos($idControleDesempenho)
     {
 	      $msgPadrao = MdUtlMensagemINT::$MSG_UTL_136;
-	      $msgDist   = 'A Carga Exigível no Período Atual somente será exibida depois que for aplicado o filtro "Membro Participante". \n \n '. $msgPadrao;
+	      $msgDist   = 'A Carga Exigível no Período Selecionado somente será exibida depois que for aplicado o filtro "Membro Participante". \n \n '. $msgPadrao;
         if (!$idControleDesempenho) {
 	        return $msgDist;
         }
@@ -445,21 +447,21 @@ class MdUtlAdmPrmGrINT extends InfraINT {
     public static function recuperarTextoFrequenciaTooltipDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
     {
         if (!$idControleDesempenho) {
-            return 'A Carga total abrange todo e qualquer tempo que foi distribudo para o usurio logado no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Perodo de distribuio e acompanhamento  "Semanal", tendo sempre incio toda segunda-feira s 0h, o que marca o fim do Perodo anterior;';
+            return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período selecionado, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuição e acompanhamento  "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
         }
 
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-        return 'A Carga total abrange todo e qualquer tempo que foi distribudo para o usurio logado no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
+        return 'A Carga total abrange todo e qualquer tempo que foi distribuído para o usuário logado no Tipo de Controle indicado, dentro do Período selecionado, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n '. $dados['textoFrequencia'];
     }
 
     public static function recuperarTextoFrequenciaTooltipDistribuicaoDinamicoCargaHorariaDistribuidaPeriodo($idControleDesempenho)
     {
         if (!$idControleDesempenho) {
-            return 'A Carga Horria Distribuda no Perodo somente ser exibida depois que for aplicado o filtro "Responsvel".\n \n A Carga total abrange todo e qualquer tempo que foi distribudo para o responsvel no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Perodo de distribuio e acompanhamento  "Semanal", tendo sempre incio toda segunda-feira s 0h, o que marca o fim do Perodo anterior;';
+            return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período selecionado, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n Para o Tipo de Controle selecionado, o Período de distribuido e acompanhamento  "Semanal", tendo sempre início toda segunda-feira às 0h, o que marca o fim do Período anterior;';
         }
 
         $dados = MdUtlAdmPrmGrINT::recuperarTextoFrequenciaTooltipDinamico($idControleDesempenho);
-        return 'A Carga Horria Distribuda no Perodo somente ser exibida depois que for aplicado o filtro "Responsvel".\n \n A Carga total abrange todo e qualquer tempo que foi distribudo para o responsvel no Tipo de Controle indicado, dentro do Perodo em andamento, conforme definido nos parmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
+        return 'A Carga Horária Distribuída no Período somente será exibida depois que for aplicado o filtro "Responsável".\n \n A Carga total abrange todo e qualquer tempo que foi distribuído para o responsável no Tipo de Controle indicado, dentro do Período selecionado, conforme definido nos parâmetros gerais do Tipo de Controle de Desempenho.\n \n'. $dados['textoFrequencia'];
     }
 
     public static function retornaTipoPeriodo($idTipoControle)
