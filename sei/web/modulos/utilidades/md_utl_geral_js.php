@@ -309,8 +309,24 @@
         [tbl.rows].map( row => $( row ).find('th:last , td:last').css('display','none') )
     }
 
-    function debugTableGeral(){
-        let tb = document.querySelector('#hdnTbUsuario').value;
+    function expandirTodos(idDiv, img) {
+        var divFilha = document.getElementById(idDiv);
+
+        if (divFilha.style.display == "none") {
+            document.getElementById(idDiv).removeAttribute('style');
+            img.setAttribute('src', '/infra_css/svg/ocultar.svg');//menos
+        } else {
+            document.getElementById(idDiv).setAttribute("style", "display: none");
+            img.setAttribute('src', '/infra_css/svg/exibir.svg');//mais
+        }
+    }
+
+    function closeModal(){
+        $( window.top.document ).find('div[id^=divInfraSparklingModalClose]').click();
+    }
+
+    function debugTableGeral(idHdnTable){
+        let tb = document.querySelector('#'+idHdnTable).value;
         let arrLinhas = tb.split('¥');
         console.log(arrLinhas);
     }

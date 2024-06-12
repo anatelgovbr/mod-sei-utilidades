@@ -322,7 +322,7 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
         $arrFrequencia = MdUtlAdmPrmGrINT::retornaArrPadraoFrequenciaDiaria();
 
         $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
-	      $arrPeriodo = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo([$objDTO->getStrStaFrequencia()]);
+        $arrPeriodo = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo([$objDTO->getStrStaFrequencia()]);
         $diasUteis = $arrPeriodo['numFrequencia'];
 
         $arrParamRet['idPrmGr']           = $objDTO->getNumIdMdUtlAdmPrmGr();
@@ -337,11 +337,11 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
     }
 
     public static function buscarDadosCargaUsuarioCompleto( $post ){
-				$arrIdsPrmGr = [];
+    	$arrIdsPrmGr = [];
         foreach( $post['idTipoControle'] as $idTpCtrl ){
             $arrParams = self::getValoresParamUnidEsf( $idTpCtrl );
-            $dados[]   = MdUtlAdmPrmGrUsuINT::arrDadosCargaUsuario($post['idUsuarioParticipante'], $arrParams['idPrmGr'], $arrParams['numCargaPadrao'], $arrParams['numPercentualTele'], $arrParams['staFrequencia'], $idTpCtrl, $arrParams['inicioPeriodo']);
-	          $arrIdsPrmGr[] = $arrParams['idPrmGr'];
+            $dados[]   = MdUtlAdmPrmGrUsuINT::arrDadosCargaUsuario($post['idUsuarioParticipante'], $arrParams['idPrmGr'], $arrParams['numCargaPadrao'], $arrParams['numPercentualTele'], $arrParams['staFrequencia'], $idTpCtrl, $post['tmpPeriodo'], true /*$arrParams['inicioPeriodo']*/);
+            $arrIdsPrmGr[] = $arrParams['idPrmGr'];
         }
 
         $retorno = array();
@@ -416,14 +416,23 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
         return $xml;
     }
 
-    public static function arrDadosCargaUsuario($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $staFrequencia, $idTipoControle, $inicioPeriodo)
+    public static function arrDadosCargaUsuario($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $staFrequencia, $idTipoControle, $strPeriodo, $isPeriodoVariavel = false /*$inicioPeriodo*/)
     {
 		    $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
 		    $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
 		    $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
 		    $objMdUtlPrazoRN = new MdUtlPrazoRN();
 
-		    $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPeriodoAtual($idParam);
+	      if ( $isPeriodoVariavel ){
+			    if (!empty($strPeriodo)) {
+				    $arrDt = explode('|', $strPeriodo);
+				    $arrDatasFiltro = ['DT_INICIAL' => $arrDt[0] . ' 00:00:00', 'DT_FINAL' => $arrDt[1] . ' 23:59:59'];
+			    } else {
+				    $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPeriodoAtual($idParam);
+			    }
+		    } else {
+			    $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPorFrequencia($strPeriodo);
+		    }
 
 		    #if (empty($arrDatasFiltro)) $arrDatasFiltro = $objMdUtlPrazoRN->getDatasPorFrequencia($inicioPeriodo);
 
@@ -435,7 +444,8 @@ class MdUtlAdmPrmGrUsuINT extends InfraINT
 		    $tempoExecucaoExecutadoHist = $objMdUtlHistControleDsmpRN->buscarTempoExecucaoExecutadoHist(array($idUsuarioParticipante, $idTipoControle, $arrDatasFiltro));
 		    $totalTempoExecucaoExecutadoHist = $tempoExecucaoExecutado + $tempoExecucaoExecutadoHist;
 
-		    $arrPeriodo = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo([$staFrequencia]);
+		    $iniPeriodo = substr($arrDatasFiltro['DT_INICIAL'],0,10);
+		    $arrPeriodo = $objMdUtlAdmPrmGrUsuRN->getDiasUteisNoPeriodo([$staFrequencia, true, $iniPeriodo]);
 
 		    $totalCarga = $objMdUtlAdmPrmGrUsuRN->verificaCargaPadrao(array($idUsuarioParticipante, $idParam, $numCargaPadrao, $numPercentualTele, $arrPeriodo));
 

@@ -411,87 +411,103 @@ class MdUtlControleDsmpINT extends InfraINT
         return $select;
     }
 
-    public static function montarSelectPeriodoAnalise($idTipoControleDesempenho, $idUsuarioAtribuicao, $periodoInicialSelecionado = NULL, $periodoFinalSelecionado = NULL, $frequenciaAnalise = NULL)
-    {
-        $objMdUtlAdmTpCtrlDesempRN  = new MdUtlAdmTpCtrlDesempRN();
-        $objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
-        $objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleDesempenho);
-        $objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
-        $objMdUtlAdmTpCtrlDesemp = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
+	public static function montarSelectPeriodoAnalise($idTipoControleDesempenho, $idUsuarioAtribuicao = NULL, $periodoInicialSelecionado = NULL, $periodoFinalSelecionado = NULL, $frequenciaAnalise = NULL, $bolOrigemLista = false)
+	{
+		$objMdUtlAdmTpCtrlDesempRN  = new MdUtlAdmTpCtrlDesempRN();
+		$objMdUtlAdmTpCtrlDesempDTO = new MdUtlAdmTpCtrlDesempDTO();
+		$objMdUtlAdmTpCtrlDesempDTO->setNumIdMdUtlAdmTpCtrlDesemp($idTipoControleDesempenho);
+		$objMdUtlAdmTpCtrlDesempDTO->retNumIdMdUtlAdmPrmGr();
+		$objMdUtlAdmTpCtrlDesemp = $objMdUtlAdmTpCtrlDesempRN->consultar($objMdUtlAdmTpCtrlDesempDTO);
 
-        $objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
-        $objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
-        $objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr( $objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() );
-        $objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
-        $objMdUtlAdmPrmGrDTO->retNumInicioPeriodo();
-        $objMdUtlAdmPrmGrDTO->retDtaDataCorte();
-        $objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
+		$objMdUtlAdmPrmGrRN = new MdUtlAdmPrmGrRN();
+		$objMdUtlAdmPrmGrDTO = new MdUtlAdmPrmGrDTO();
+		$objMdUtlAdmPrmGrDTO->setNumIdMdUtlAdmPrmGr( $objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr() );
+		$objMdUtlAdmPrmGrDTO->retStrStaFrequencia();
+		$objMdUtlAdmPrmGrDTO->retNumInicioPeriodo();
+		$objMdUtlAdmPrmGrDTO->retDtaDataCorte();
+		$objMdUtlAdmPrmGr = $objMdUtlAdmPrmGrRN->consultar($objMdUtlAdmPrmGrDTO);
 
-        $objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
-        $objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
+		$objMdUtlAdmPrmGrUsuDTO = new MdUtlAdmPrmGrUsuDTO();
+		$objMdUtlAdmPrmGrUsuRN = new MdUtlAdmPrmGrUsuRN();
 
-        $objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
-        $objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario($idUsuarioAtribuicao);
-        $objMdUtlAdmPrmGrUsuDTO->setNumMaxRegistrosRetorno(1);
-        $objMdUtlAdmPrmGrUsuDTO->retDthInicioParticipacao();
-        $objMdUtlAdmPrmGrUsuDTO = $objMdUtlAdmPrmGrUsuRN->consultar($objMdUtlAdmPrmGrUsuDTO);
+		if ( $idUsuarioAtribuicao ) {
+			$objMdUtlAdmPrmGrUsuDTO->setNumIdMdUtlAdmPrmGr($objMdUtlAdmTpCtrlDesemp->getNumIdMdUtlAdmPrmGr());
+			$objMdUtlAdmPrmGrUsuDTO->setNumIdUsuario($idUsuarioAtribuicao);
+			$objMdUtlAdmPrmGrUsuDTO->setNumMaxRegistrosRetorno(1);
+			$objMdUtlAdmPrmGrUsuDTO->retDthInicioParticipacao();
+			$objMdUtlAdmPrmGrUsuDTO = $objMdUtlAdmPrmGrUsuRN->consultar($objMdUtlAdmPrmGrUsuDTO);
+		}
 
-        if(!is_null($objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao())) {
-            $dataInicioPeriodo = $objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao();
-            $dataInicioPeriodo = explode(" ", $dataInicioPeriodo);
-            $dataInicioPeriodo = $dataInicioPeriodo[0];
-        } elseif($objMdUtlAdmPrmGr->getDtaDataCorte()) {
-            $dataInicioPeriodo = $objMdUtlAdmPrmGr->getDtaDataCorte();
-        } else {
-            $dataInicioPeriodo = date("Y-m-d");
-        }
-        $dataInicioPeriodo = implode('-', array_reverse(explode('/', $dataInicioPeriodo)));
-        $periodo = array();
-        if($frequenciaAnalise != NULL) {
-            $frequencia = $frequenciaAnalise;
-        } else {
-            $frequencia = $objMdUtlAdmPrmGr->getStrStaFrequencia();
-        }
+		if( $idUsuarioAtribuicao && !is_null($objMdUtlAdmPrmGrUsuDTO) && !is_null($objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao())) {
+			$dataInicioPeriodo = $objMdUtlAdmPrmGrUsuDTO->getDthInicioParticipacao();
+			$dataInicioPeriodo = explode(" ", $dataInicioPeriodo);
+			$dataInicioPeriodo = $dataInicioPeriodo[0];
+		} elseif($objMdUtlAdmPrmGr->getDtaDataCorte()) {
+			$dataInicioPeriodo = $objMdUtlAdmPrmGr->getDtaDataCorte();
+		} else {
+			$dataInicioPeriodo = date("Y-m-d");
+		}
+		$dataInicioPeriodo = implode('-', array_reverse(explode('/', $dataInicioPeriodo)));
+		$periodo = array();
+		if($frequenciaAnalise != NULL) {
+			$frequencia = $frequenciaAnalise;
+		} else {
+			$frequencia = $objMdUtlAdmPrmGr->getStrStaFrequencia();
+		}
 
-        if($frequencia == "S") {
-		        $inicioSemana        = date('Y-m-d', strtotime("Monday this week"));
-		        $strDiaSemanaAtual   = InfraData::obterDescricaoDiaSemana(date('d/m/Y'));
-		        $diaFinalSemanaAtual = $strDiaSemanaAtual == 'domingo' ? InfraData::getStrDataAtual() : date("d/m/Y", strtotime("next Sunday"));
-		        $periodo[]           = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". $diaFinalSemanaAtual .") - Atual";
-		        $i = -1;
-            while(strtotime($inicioSemana) >  strtotime($dataInicioPeriodo)) {
-                $inicioSemana = date("Y-m-d", strtotime($i." week", strtotime($inicioSemana)));
-                $periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday", strtotime($inicioSemana))).")";
-            }
-        } elseif($frequencia == "M") {
-                $inicioMes = date('Y-m-01');
-                $periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y").") - Atual";
-                $i = -1;
-                while(strtotime($inicioMes) >  strtotime($dataInicioPeriodo)) {
-                    $inicioMes = date("Y-m-01", strtotime($i." month"));
-                    $periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y", strtotime($inicioMes)).")";
-                    $i--;
-                }
-        } else {
-            return array("D", $dataInicioPeriodo);
-        }
-        $select = '<option value=""></option>';
-        $vlSelecionado = $periodoInicialSelecionado."|".$periodoFinalSelecionado;
-				$numLimitador = 15;
-        foreach ($periodo as $key => $parametros) {
-            $periodoExplodido = explode("(", $parametros);
-            $periodoInicialExplodido = explode(" ", $periodoExplodido[1]);
-            $periodoInicial = $periodoInicialExplodido[0];
-            $periodoFinalExplodido = explode(")", $periodoInicialExplodido[2]);
-            $periodoFinal = $periodoFinalExplodido[0];
-            $chave = $periodoInicial . '|' . $periodoFinal;
-            $strSelected = $vlSelecionado != null && $chave == $vlSelecionado ? 'selected=selected' : '';
-            $select .= '<option ' . $strSelected . ' value="' . $chave.'">' . $parametros . '</option>';
-            $numLimitador--;
-            if( $numLimitador == 0 ) break;
-        }
-        return array($frequencia, $select);
-    }
+		if($frequencia == "S") {
+			$inicioSemana        = date('Y-m-d', strtotime("Monday this week"));
+			$strDiaSemanaAtual   = InfraData::obterDescricaoDiaSemana(date('d/m/Y'));
+			$diaFinalSemanaAtual = $strDiaSemanaAtual == 'domingo' ? InfraData::getStrDataAtual() : date("d/m/Y", strtotime("next Sunday"));
+			$periodo[]           = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". $diaFinalSemanaAtual .") - Atual";
+
+			$arrPeriodoAtual = [ $inicioSemana , date("Y-m-d", strtotime("next Sunday")) ];
+
+			$i = -1;
+			while(strtotime($inicioSemana) >  strtotime($dataInicioPeriodo)) {
+				$inicioSemana = date("Y-m-d", strtotime($i." week", strtotime($inicioSemana)));
+				$periodo[] = "Semanal (". date("d/m/Y", strtotime($inicioSemana))." a ". date("d/m/Y", strtotime("next Sunday", strtotime($inicioSemana))).")";
+			}
+		} elseif($frequencia == "M") {
+			$inicioMes = date('Y-m-01');
+			$periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y").") - Atual";
+
+			$arrPeriodoAtual = [ $inicioMes , date("Y-m-t") ];
+
+			$i = -1;
+			while(strtotime($inicioMes) >  strtotime($dataInicioPeriodo)) {
+				$inicioMes = date("Y-m-01", strtotime($i." month"));
+				$periodo[] = "Mensal (". date("d/m/Y", strtotime($inicioMes))." a ". date("t/m/Y", strtotime($inicioMes)).")";
+				$i--;
+			}
+		} else {
+			return array("D", $dataInicioPeriodo);
+		}
+		$select = '<option value=""></option>';
+		$vlSelecionado = $periodoInicialSelecionado."|".$periodoFinalSelecionado;
+		$numLimitador  = 15;
+		$arrPeriodosSelecionado = [];
+		foreach ($periodo as $key => $parametros) {
+			$periodoExplodido = explode("(", $parametros);
+			$periodoInicialExplodido = explode(" ", $periodoExplodido[1]);
+			$periodoInicial = $periodoInicialExplodido[0];
+			$periodoFinalExplodido = explode(")", $periodoInicialExplodido[2]);
+			$periodoFinal = $periodoFinalExplodido[0];
+			$chave = $periodoInicial . '|' . $periodoFinal;
+			$strSelected = $vlSelecionado != null && $chave == $vlSelecionado ? 'selected=selected' : '';
+
+			if ( $bolOrigemLista && strpos($parametros,'Atual') ) $strSelected = 'selected=selected';
+
+			$select .= '<option ' . $strSelected . ' value="' . $chave.'">' . $parametros . '</option>';
+
+			if (!empty( $strSelected) ) $arrPeriodosSelecionado = ['inicial' => $periodoInicial , 'final' => $periodoFinal];
+
+			$numLimitador--;
+			if( $numLimitador == 0 ) break;
+		}
+
+		return array($frequencia, $select, $arrPeriodosSelecionado , 'periodoAtual' => $arrPeriodoAtual);
+	}
 
     public static function retornaSelectEncaminhamentoAnaliseTriagem()
     {

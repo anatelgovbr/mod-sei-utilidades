@@ -133,6 +133,9 @@ class MdUtlControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'StaEncaminhamentoAnalise','anl.sta_encaminhamento_analise','md_utl_analise anl');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_NUM, 'IdMdUtlAdmFilaEncAnalise','anl.id_md_utl_adm_fila','md_utl_analise anl');
 
+    $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTA, 'PeriodoInicioAnalise','anl.dta_periodo_inicio','md_utl_analise anl');
+	$this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTA, 'PeriodoFimAnalise','anl.dta_periodo_fim','md_utl_analise anl');
+
     //Revisão
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SinAtivoRevisao','rev.sin_ativo','md_utl_revisao rev');
 

@@ -294,7 +294,7 @@
     }
 
     function abrirModalRevisao() {
-        infraAbrirJanela('<?=$strLinkIniciarRevisao?>','janelaAjudaVariaveisModelo',1200,600,'location=0,status=1,resizable=1,scrollbars=1',false);
+        infraAbrirJanelaModal('<?= $strLinkIniciarRevisao ?>',1000,600);
     }
 
     function validarSeriesObrigatorias(){

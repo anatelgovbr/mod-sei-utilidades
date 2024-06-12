@@ -249,7 +249,7 @@ try {
 
             $isConsultar = true;
 
-            $onClickCloseAction = in_array($_GET['acao_origem'], ['md_utl_analise_alterar', 'md_utl_triagem_alterar']) ? 'window.close();' : 'window.history.back();';
+            $onClickCloseAction = in_array($_GET['acao_origem'], ['md_utl_analise_alterar', 'md_utl_triagem_alterar']) ? 'closeModal();' : 'window.history.back();';
             $arrComandos[] = '<button type="button" accesskey="C" name="btnFechar" id="btnFechar" value="Fechar" onclick="'.$onClickCloseAction.'" class="infraButton">Fe<span class="infraTeclaAtalho">c</span>har</button>';
 
             $tpAcaoAval = MdUtlControleDsmpRN::$EM_ANALISE;

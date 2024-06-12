@@ -82,6 +82,8 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->configurarFK('IdProcedimento', 'protocolo', 'id_protocolo');
     $this->configurarFK('IdMdUtlContestRevisao', 'imd_utl_contest_revisao', 'id_md_utl_contest_revisao');
 
+	$this->configurarFK('IdMdUtlAnalise', 'md_utl_analise anl', 'anl.id_md_utl_analise', InfraDTO::$TIPO_FK_OPCIONAL);
+
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeFila','fila.nome','md_utl_adm_fila fila');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeUsuarioDist','ud.nome','usuario ud');
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SiglaUsuarioDist','ud.sigla','usuario ud');
@@ -91,6 +93,10 @@ class MdUtlHistControleDsmpDTO extends InfraDTO {
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'SiglaUsuario','ua.sigla','usuario ua');
 
     $this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_STR, 'NomeTpControle','nome','md_utl_adm_tp_ctrl_desemp');
+
+	//Análise
+	$this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTA, 'PeriodoInicioAnalise','anl.dta_periodo_inicio','md_utl_analise anl');
+	$this->adicionarAtributoTabelaRelacionada(InfraDTO::$PREFIXO_DTA, 'PeriodoFimAnalise','anl.dta_periodo_fim','md_utl_analise anl');
 
     $this->adicionarAtributo(InfraDTO::$PREFIXO_STR,'SinVerificarPermissao');
 

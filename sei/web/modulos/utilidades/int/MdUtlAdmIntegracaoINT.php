@@ -46,7 +46,7 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
   }
 
   public static function getDadosServicoREST( $post ){
-	  $objInfraException = new InfraException();
+	$objInfraException = new InfraException();
 
     $urlServico = trim($post['urlServico']);
 
@@ -61,12 +61,12 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
     curl_setopt_array( $curl, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_SSL_VERIFYPEER => false,
-	    CURLOPT_CONNECTTIMEOUT => 5,
-	    CURLOPT_TIMEOUT        => 20,
+	  CURLOPT_CONNECTTIMEOUT => 8,
+	  CURLOPT_TIMEOUT        => 20,
       CURLOPT_CUSTOMREQUEST  => $post['tipoRequisicao'],
     ]);
 
-	  // monta dados de parametros necessarios
+    // monta dados de parametros necessarios
     if ( array_key_exists( 'parametros' , $post ) ) {
       $payload = json_encode( $post['parametros'] );
       curl_setopt( $curl, CURLOPT_POSTFIELDS, $payload );
@@ -87,10 +87,10 @@ class MdUtlAdmIntegracaoINT extends InfraINT {
 
     // executa a consulta no webservice
     $ret  = curl_exec( $curl );
-	  $info = curl_getinfo( $curl );
-		$ret  = self::trataRetornoCurl( $info , $ret );
+    $info = curl_getinfo( $curl );
+	$ret  = self::trataRetornoCurl( $info , $ret );
 
-	  if ( $info['http_code'] == 0 ) $ret['msg'] = curl_error($curl);
+	if ( $info['http_code'] == 0 ) $ret['msg'] = curl_error($curl);
 
     if ( $ret['suc'] === false ) {
 	    $strError = "Falha no serviço SARH \n\n";

@@ -8,6 +8,10 @@ require_once dirname(__FILE__) . '/../../SEI.php';
 
 session_start();
 SessaoSEI::getInstance()->validarLink();
+
+//$objInfraExcep = new InfraException();
+$linkCtrlProcesso = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_controlar&acaoorigem=' . $_GET['acao']);
+
 $arrIdProcedimentoAssociado = array();
 if (isset($_SESSION['ID_PROCEDIMENTO_FILA_ASSOCIAR'])) {
     $arrIdProcedimentoAssociado = $_SESSION['ID_PROCEDIMENTO_FILA_ASSOCIAR'];
@@ -22,19 +26,35 @@ $objMdUtlAdmTpCtrlUndRN = new MdUtlAdmRelTpCtrlDesempUndRN();
 $objMdUtlAdmTpCtrlUsuRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
 
 //Array que sera usado para montar os tipos de controles da unidade
-$arrObjTpControle   = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();  
-$arrListaTpControle = array();
-if (!is_null($arrObjTpControle) && count($arrObjTpControle) > 0 ){
-    foreach ($arrObjTpControle as $k => $v) {
-        $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
-    }
-}
+$arrObjTpControle   = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
 
-//Validação de Tipo de Controle
-$idTipoControle = null;
-if (isset($_POST['selTpControle']) && !empty($_POST['selTpControle'])) {
-    $idTipoControle = $_POST['selTpControle'];
-} 
+$strNmUnidade = SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+
+try {
+
+    if (!$arrObjTpControle){
+        $msgErro = MdUtlMensagemINT::setMensagemPadraoPersonalizada( MdUtlMensagemINT::$MSG_UTL_138 , [$strNmUnidade] );
+        throw new InfraException($msgErro);
+    }
+
+    $arrListaTpControle = array();
+    if (!is_null($arrObjTpControle) && count($arrObjTpControle) > 0) {
+        foreach ($arrObjTpControle as $k => $v) {
+            $arrListaTpControle[$v->getNumIdMdUtlAdmTpCtrlDesemp()] = $v->getStrNomeTipoControle();
+        }
+    }
+
+    //Validação de Tipo de Controle
+    $idTipoControle = null;
+    if (isset($_POST['selTpControle']) && !empty($_POST['selTpControle'])) {
+        $idTipoControle = $_POST['selTpControle'];
+    }
+
+} catch(InfraException $e){
+    PaginaSEI::getInstance()->adicionarMensagem( $e->__toString() , InfraPagina::$TIPO_MSG_ERRO );
+    header('Location: ' . $linkCtrlProcesso );
+    die;
+}
 
 // Tipos de Controles onde usuario é gestor
 $idsTpCtrlUsuarioGestor = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
@@ -210,7 +230,7 @@ if ( $isParametrizado ) {
         $objDTO->retStrSiglaUsuarioDistribuicao();
         $objDTO->retNumIdMdUtlAnalise();
         $objDTO->retStrNomeTpCtrlDsmp();
-        $objDTO->retStrIdTipoCtrlDsmp();
+        $objDTO->retNumIdMdUtlAdmTpCtrlDesemp();
 
         PaginaSEI::getInstance()->prepararOrdenacao($objDTO, 'ProtocoloProcedimentoFormatado', InfraDTO::$TIPO_ORDENACAO_ASC);
         PaginaSEI::getInstance()->prepararPaginacao($objDTO, 200);
@@ -295,7 +315,7 @@ if ( $isParametrizado ) {
 
                 //Linha Tipo Controle  Desempenho
                 $strResultado .= '<td class="tdIdTpCtrl" style="display: none">';
-                $strResultado .= $arrObjs[$i]->getStrIdTipoCtrlDsmp();
+                $strResultado .= $arrObjs[$i]->getNumIdMdUtlAdmTpCtrlDesemp();
                 $strResultado .= '</td>';
 
                 $strResultado .= '<td class="tdTpCtrl">';
@@ -593,7 +613,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
 
         valido = associacaoIsPermitida();                    
         if( valido ){
-            infraAbrirJanela(strUrlAssocFila, 'janelaAssinatura', 1000, 450, 'location=0,status=1,resizable=1,scrollbars=1');                      
+            infraAbrirJanelaModal(strUrlAssocFila,1000,600);
         }
     }     
 

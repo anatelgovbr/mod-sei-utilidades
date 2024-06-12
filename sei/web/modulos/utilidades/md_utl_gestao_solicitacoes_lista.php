@@ -64,8 +64,20 @@ $arrIdsTpControle = array();
 //Retorna tipos de controles onde o usuário é gestor
 $arrGestorSipSei  = $objMdUtlAdmTpCtrlUsuRN->usuarioLogadoIsGestorTpControle();
 
-//Retorna os tipos de controles da unidade
-$arrObjTpControleUnid = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
+$strNmUnidade = SessaoSEI::getInstance()->getStrSiglaUnidadeAtual();
+
+try{
+    //Retorna os tipos de controles da unidade
+    $arrObjTpControleUnid = $objMdUtlAdmTpCtrlUndRN->getArrayTipoControleUnidadeLogada();
+    if (!$arrObjTpControleUnid){
+        $msgErro = MdUtlMensagemINT::setMensagemPadraoPersonalizada( MdUtlMensagemINT::$MSG_UTL_138 , [$strNmUnidade] );
+        throw new InfraException($msgErro);
+    }
+} catch( InfraException $e ){
+    PaginaSEI::getInstance()->adicionarMensagem( $e->__toString() , InfraPagina::$TIPO_MSG_ERRO );
+    header('Location: ' . $linkCtrlProcesso );
+    die;
+}
 
 $existeTpCtrlUnidade = !is_null( $arrObjTpControleUnid );
 $userIsAvaliador     = 0;
@@ -78,7 +90,8 @@ if ( $existeTpCtrlUnidade ) {
 $userIsAvaliador = $arrIsAvaliador['qtdUserAvaliador'];
 
 //Relaciona os tipos de controle da unidade onde o usuario é gestor
-if ( count($arrObjTpControleUnid) > 0 && ($arrGestorSipSeicount || ( $arrGestorSipSei ) > 0 ) ){
+//if ( count($arrObjTpControleUnid) > 0 && ($arrGestorSipSeicount || ( $arrGestorSipSei ) > 0 ) ){
+if ( $arrObjTpControleUnid && $arrGestorSipSei ) {
     foreach ($arrObjTpControleUnid as $k => $v) {
         if ( in_array( $v->getNumIdMdUtlAdmTpCtrlDesemp() , $arrGestorSipSei ) ) array_push( $arrIdsTpControle , $v->getNumIdMdUtlAdmTpCtrlDesemp() );
     }
@@ -500,18 +513,6 @@ PaginaSEI::getInstance()->abrirBody($strTitulo, 'onload="inicializar();"');
                 document.getElementById('frmGestaoLista').submit();
                 expandirTodos();
             }
-        }
-    }
-
-    function expandirTodos(idDiv, img) {
-        var divFilha = document.getElementById(idDiv);
-
-        if (divFilha.style.display == "none") {
-            document.getElementById(idDiv).removeAttribute('style');
-            img.setAttribute('src', '/infra_css/svg/ocultar.svg');//menos
-        } else {
-            document.getElementById(idDiv).setAttribute("style", "display: none");
-            img.setAttribute('src', '/infra_css/svg/exibir.svg');//mais
         }
     }
 
