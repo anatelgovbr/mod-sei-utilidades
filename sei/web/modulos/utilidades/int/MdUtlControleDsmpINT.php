@@ -485,7 +485,7 @@ class MdUtlControleDsmpINT extends InfraINT
 		}
 		$select = '<option value=""></option>';
 		$vlSelecionado = $periodoInicialSelecionado."|".$periodoFinalSelecionado;
-		$numLimitador  = 15;
+		$numLimitador  = 180;
 		$arrPeriodosSelecionado = [];
 		foreach ($periodo as $key => $parametros) {
 			$periodoExplodido = explode("(", $parametros);
