@@ -515,8 +515,10 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
   }
 
   function preencherHiddenGrupoAtividade(){
-    if( window.top.document.querySelector("#ifrVisualizacao") != null ) {
-      var idsGrupoAtv = window.top.document.getElementById("ifrVisualizacao").contentWindow.document.getElementById('hdnGrupoAtividade').value;
+    let contentVisual = window.top.document.querySelector('#ifrConteudoVisualizacao');
+    if( contentVisual != null ) {
+      let elemVisual = contentVisual.contentWindow.document.querySelector('#ifrVisualizacao');
+      var idsGrupoAtv = elemVisual.contentWindow.document.querySelector('#hdnGrupoAtividade').value;
     } else {
       var idsGrupoAtv = window.top.document.getElementById("hdnGrupoAtividade");
     }
@@ -524,7 +526,7 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     var isVazioHdn = document.getElementById('hdnIdsGrupoAtividadeTriagem').value == '';
 
     if(isVazioHdn) {
-      idsGrupoAtv = idsGrupoAtv != '' ? idsGrupoAtv : 0;
+      idsGrupoAtv = idsGrupoAtv != null && idsGrupoAtv.length > 0 ? idsGrupoAtv : '0';
       document.getElementById('hdnIdsGrupoAtividadeTriagem').value = idsGrupoAtv;
       document.getElementById('frmMdUtlAdmAtividadeLista').action = '<?=$strLinkSelecionar?>';
       document.getElementById("frmMdUtlAdmAtividadeLista").submit();

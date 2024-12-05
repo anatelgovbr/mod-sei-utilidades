@@ -43,7 +43,7 @@ function inicializar() {
 
 function atualizaUtilidadesArvore(){
     let link = "<?= SessaoSEI::getInstance()->assinarLink('controlador.php?acao=procedimento_visualizar&acao_origem='.$_GET['acao'].'&montar_visualizacao=0&id_procedimento='.$idProcedimento) ?>";
-    parent.document.querySelector('#ifrArvore').src = link;
+    top.document.querySelector('#ifrArvore').src = link;
 }
 
 function associarFila(){

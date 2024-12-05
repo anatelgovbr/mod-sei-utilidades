@@ -5,10 +5,10 @@ class MdUtlAtualizadorSipRN extends InfraRN
 {
 
     private $numSeg = 0;
-    private $versaoAtualDesteModulo = '2.2.0';
+    private $versaoAtualDesteModulo = '2.3.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0','2.2.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0','2.2.0','2.3.0');
 
     private $nomeGestorControleDesempenho = 'Gestor de Controle de Desempenho';
     private $descricaoGestorControleDesempenho = 'Acesso aos recursos específicos de Gestor de Controle de Desempenho do Módulo Utilidades do SEI.';
@@ -87,12 +87,13 @@ class MdUtlAtualizadorSipRN extends InfraRN
             //checando BDs suportados
             if (!(BancoSip::getInstance() instanceof InfraMySql) &&
                 !(BancoSip::getInstance() instanceof InfraSqlServer) &&
-                !(BancoSip::getInstance() instanceof InfraOracle)) {
+                !(BancoSip::getInstance() instanceof InfraOracle) &&
+                !(BancoSip::getInstance() instanceof InfraPostgreSql)) {
                 $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSip::getInstance()), true);
             }
 
             //testando versao do framework
-	        $numVersaoInfraRequerida = '2.0.18';
+            $numVersaoInfraRequerida = '2.23.8';
             if (version_compare(VERSAO_INFRA, $numVersaoInfraRequerida) < 0) {
                 $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
@@ -128,7 +129,9 @@ class MdUtlAtualizadorSipRN extends InfraRN
                 case '2.0.0':
                     $this->instalarv210();
                 case '2.1.0':
-	              	  $this->instalarv220();
+	              	$this->instalarv220();
+                case '2.2.0':
+                    $this->instalarv230();
                     break;
                 default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
@@ -1190,37 +1193,42 @@ class MdUtlAtualizadorSipRN extends InfraRN
 	    $this->atualizarNumeroVersao($nmVersao);
     }
 
-		protected function instalarv220()
-		{
-			$nmVersao = '2.2.0';
+    protected function instalarv220()
+    {
+        $nmVersao = '2.2.0';
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
+        $this->atualizarNumeroVersao($nmVersao);
+    }
 
-			$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
+    protected function instalarv230()
+    {
+        $nmVersao = '2.3.0';
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SIP');
+        $this->atualizarNumeroVersao($nmVersao);
+    }
 
-			$this->atualizarNumeroVersao($nmVersao);
-		}
+    /**
+     * Atualiza o número de versão do módulo na tabela de parâmetro do sistema
+     *
+     * @param string $parStrNumeroVersao
+     * @return void
+     */
+    private function atualizarNumeroVersao($parStrNumeroVersao)	{
+        $this->logar('ATUALIZANDO PARÂMETRO '. $this->nomeParametroModulo .' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
 
-		/**
-		 * Atualiza o número de versão do módulo na tabela de parâmetro do sistema
-		 *
-		 * @param string $parStrNumeroVersao
-		 * @return void
-		 */
-		private function atualizarNumeroVersao($parStrNumeroVersao)	{
-			$this->logar('ATUALIZANDO PARÂMETRO '. $this->nomeParametroModulo .' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+        $objInfraParametroDTO = new InfraParametroDTO();
+        $objInfraParametroDTO->setStrNome($this->nomeParametroModulo);
+        $objInfraParametroDTO->retTodos();
+        $objInfraParametroBD = new InfraParametroBD(BancoSIP::getInstance());
+        $arrObjInfraParametroDTO = $objInfraParametroBD->listar($objInfraParametroDTO);
 
-			$objInfraParametroDTO = new InfraParametroDTO();
-			$objInfraParametroDTO->setStrNome($this->nomeParametroModulo);
-			$objInfraParametroDTO->retTodos();
-			$objInfraParametroBD = new InfraParametroBD(BancoSIP::getInstance());
-			$arrObjInfraParametroDTO = $objInfraParametroBD->listar($objInfraParametroDTO);
+        foreach ($arrObjInfraParametroDTO as $objInfraParametroDTO) {
+            $objInfraParametroDTO->setStrValor($parStrNumeroVersao);
+            $objInfraParametroBD->alterar($objInfraParametroDTO);
+        }
 
-			foreach ($arrObjInfraParametroDTO as $objInfraParametroDTO) {
-				$objInfraParametroDTO->setStrValor($parStrNumeroVersao);
-				$objInfraParametroBD->alterar($objInfraParametroDTO);
-			}
-
-			$this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $parStrNumeroVersao .' DO '. $this->nomeDesteModulo .' REALIZADA COM SUCESSO NA BASE DO SIP');
-		}
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $parStrNumeroVersao .' DO '. $this->nomeDesteModulo .' REALIZADA COM SUCESSO NA BASE DO SIP');
+    }
 
     protected function cadastrarPerfilAdministradorControleDesempenho()
     {
@@ -1240,6 +1248,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             $objPerfilDTO->setStrDescricao($this->descricaoAdministradorControleDesempenho);
             $objPerfilDTO->setStrSinCoordenado('N');
             $objPerfilDTO->setStrSinAtivo('S');
+            $objPerfilDTO->setStrSin2Fatores('N');
             $objPerfilRN->cadastrar($objPerfilDTO);
         }
     }
@@ -1725,6 +1734,7 @@ class MdUtlAtualizadorSipRN extends InfraRN
             $objPerfilDTOGestorDesempenho->setStrDescricao($this->descricaoGestorControleDesempenho);
             $objPerfilDTOGestorDesempenho->setStrSinCoordenado('N');
             $objPerfilDTOGestorDesempenho->setStrSinAtivo('S');
+            $objPerfilDTOGestorDesempenho->setStrSin2Fatores('N');
 
             $objPerfilDTOGestorDesempenho = $objPerfilRN->cadastrar($objPerfilDTOGestorDesempenho);
         }

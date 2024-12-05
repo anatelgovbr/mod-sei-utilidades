@@ -374,15 +374,15 @@ class MdUtlHistControleDsmpRN extends InfraRN {
 
         foreach($arrIdsProcedimento as $idProcedimento){
 
-            if(is_null($arrRetorno) || (is_array($arrRetorno) && !array_key_exists($idProcedimento, $arrRetorno))){
+            if(is_null($arrRetorno) || (is_array($arrRetorno) && !array_key_exists($idProcedimento, $arrRetorno[1]))){
                 $arrRetorno = array();
-                $arrRetorno[$idProcedimento]['ID_TRIAGEM'] =null;
-                $arrRetorno[$idProcedimento]['ID_ANALISE'] =null;
-                $arrRetorno[$idProcedimento]['ID_REVISAO'] =null;
-                $arrRetorno[$idProcedimento]['TEMPO_EXECUCAO'] =null;
-                $arrRetorno[$idProcedimento]['ID_ATENDIMENTO'] = $arrIdsAtendimento[$idProcedimento];
+                $arrRetorno[1][$idProcedimento]['ID_TRIAGEM'] =null;
+                $arrRetorno[1][$idProcedimento]['ID_ANALISE'] =null;
+                $arrRetorno[1][$idProcedimento]['ID_REVISAO'] =null;
+                $arrRetorno[1][$idProcedimento]['TEMPO_EXECUCAO'] =null;
+                $arrRetorno[1][$idProcedimento]['ID_ATENDIMENTO'] = $arrIdsAtendimento[$idProcedimento];
             }
-            $this->_salvarObjHistorico($idProcedimento, $arrRetorno, null, MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO ,'Nenhuma Fila', MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO);
+            $this->_salvarObjHistorico($idProcedimento, $arrRetorno[1], null, MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO ,'Nenhuma Fila', MdUtlControleDsmpRN::$CONCLUIR_ASSOCIACAO);
         }
     }
 
