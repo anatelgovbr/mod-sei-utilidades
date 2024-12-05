@@ -5,10 +5,10 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 {
 
 	private $numSeg = 0;
-    private $versaoAtualDesteModulo = '2.2.0';
+    private $versaoAtualDesteModulo = '2.3.0';
     private $nomeDesteModulo = 'MÓDULO UTILIDADES';
     private $nomeParametroModulo = 'VERSAO_MODULO_UTILIDADES';
-    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0','2.2.0');
+    private $historicoVersoes = array('1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0','2.0.0','2.1.0','2.2.0','2.3.0');
 
     public function __construct()
     {
@@ -80,12 +80,13 @@ class MdUtlAtualizadorSeiRN extends InfraRN
             //checando BDs suportados
             if (!(BancoSEI::getInstance() instanceof InfraMySql) &&
                 !(BancoSEI::getInstance() instanceof InfraSqlServer) &&
-                !(BancoSEI::getInstance() instanceof InfraOracle)) {
+                !(BancoSEI::getInstance() instanceof InfraOracle) &&
+                !(BancoSEI::getInstance() instanceof InfraPostgreSql)) {
                 $this->finalizar('BANCO DE DADOS NÃO SUPORTADO: ' . get_parent_class(BancoSEI::getInstance()), true);
             }
 
             //testando versao do framework
-	        $numVersaoInfraRequerida = '2.0.18';
+            $numVersaoInfraRequerida = '2.23.8';
             if (version_compare(VERSAO_INFRA, $numVersaoInfraRequerida) < 0) {
                 $this->finalizar('VERSÃO DO FRAMEWORK PHP INCOMPATÍVEL (VERSÃO ATUAL ' . VERSAO_INFRA . ', SENDO REQUERIDA VERSÃO IGUAL OU SUPERIOR A ' . $numVersaoInfraRequerida . ')', true);
             }
@@ -121,10 +122,11 @@ class MdUtlAtualizadorSeiRN extends InfraRN
                 case '2.0.0':
                     $this->instalarv210();
                 case '2.1.0':
-		                $this->instalarv220();
+		            $this->instalarv220();
+                case '2.2.0':
+                    $this->instalarv230();
                     break;
-
-								default:
+                default:
                     $this->logar('A VERSÃO MAIS ATUAL DO ' . $this->nomeDesteModulo . ' (v' . $this->versaoAtualDesteModulo . ') JÁ ESTÁ INSTALADA.');
                     break;
 
@@ -143,7 +145,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
     protected function instalarv100()
     {
 
-				$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
         $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO 1.0.0 DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $this->logar('CRIANDO A TABELA md_utl_adm_tp_ctrl_desemp');
@@ -221,7 +223,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 				id_md_utl_adm_tp_ctrl_desemp ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				nome ' . $objInfraMetaBD->tipoTextoVariavel(50) . ' NOT NULL,
 				descricao ' . $objInfraMetaBD->tipoTextoVariavel(250) . ' NOT NULL,
-				und_esforco_triagem ' . $objInfraMetaBD->tipoTextoVariavel(50) . ' NOT NULL,
+				und_esforco_triagem ' . $objInfraMetaBD->tipoNumero() . ' NOT NULL,
 				sin_distribuicao_automatica ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
 				sin_distribuicao_ult_usuario ' . $objInfraMetaBD->tipoTextoFixo(1) . ' NOT NULL,
 				prazo_tarefa  ' . $objInfraMetaBD->tipoTextoVariavel(3) . ' NOT NULL,
@@ -786,9 +788,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv110()
     {
-				$nmVersao = '1.1.0';
+        $nmVersao = '1.1.0';
 
-				$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -831,9 +833,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv120()
     {
-		    $nmVersao = '1.2.0';
+        $nmVersao = '1.2.0';
 
-		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -933,9 +935,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         }
 
         //Alterando os campos para not null
-        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
-        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
-        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'NOT NULL');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_dilacao', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_suspensao', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_just_prazo', 'sin_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'not null');
 
         $strDescricao = 'Script para Reprovação/Aprovação dos Ajustes de Prazo';
         $strComando = 'MdUtlAgendamentoAutomaticoRN::aprovarReprovarAjustesPrazo';
@@ -1008,7 +1010,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $strPeriodicidadeComplemento = '7,8,9,10,11,12,13,14,15,16,17,18,19,20';
         $this->_cadastrarNovoAgendamento($strDescricao, $strComando, $strPeriodicidadeComplemento);
 
-        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr', 'sin_retorno_ult_fila', $objInfraMetaBD->tipoTextoFixo(1), null);
+        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr', 'sin_retorno_ult_fila', $objInfraMetaBD->tipoTextoFixo(1), 'null');
 
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objMdUtlControleDsmpRN->corrigirCampoUltimaFila();
@@ -1018,9 +1020,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv130()
     {
-		    $nmVersao = '1.3.0';
+        $nmVersao = '1.3.0';
 
-		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1166,9 +1168,9 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
     protected function instalarv150()
     {
-		    $nmVersao = '1.5.0';
+        $nmVersao = '1.5.0';
 
-		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1225,7 +1227,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         BancoSEI::getInstance()->executarSql($sqlTabela);
 
         $this->logar('ALTERANDO A TABELA - alterando md_utl_adm_atividade.complexidade para NOT NULL');
-        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade', 'complexidade', $objInfraMetaBD->tipoNumero(), 'NOT NULL');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_atividade', 'complexidade', $objInfraMetaBD->tipoNumero(), 'not null');
 
         $this->logar('INSERINDO PARÂMETROS DE BLOQUEIO DO MÓDULO ');
         BancoSEI::getInstance()->executarSql('INSERT INTO infra_parametro (valor, nome) VALUES( null,  \'MODULO_UTILIDADES_BLOQUEAR_GERAR_PROCESSO_SEM_PELO_MENOS_UM_INTERESSADO\' )');
@@ -1369,17 +1371,17 @@ class MdUtlAtualizadorSeiRN extends InfraRN
         $this->replaceRevisaoParaAvaliacao();
         $this->logar('FIM da Alteração dos dados substituindo tipo_acao de "Revisão para "Avaliação" ');
 
-				//Metodo: _atualizarHistControleDsmp() removido para o final do script
-				$this->_atualizarHistControleDsmp();
+        //Metodo: _atualizarHistControleDsmp() removido para o final do script
+        $this->_atualizarHistControleDsmp();
 
-	      $this->atualizarNumeroVersao($nmVersao);
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv200()
     {
-		    $nmVersao = '2.0.0';
+        $nmVersao = '2.0.0';
 
-		    $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
         $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
 
@@ -1462,7 +1464,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
         $this->fixIndices($objInfraMetaBD, $arrTabelas);
 
-	      $this->atualizarNumeroVersao($nmVersao);
+	    $this->atualizarNumeroVersao($nmVersao);
     }
 
     protected function instalarv210()
@@ -1503,7 +1505,7 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 
 	    $this->logar('MUDANÇAS RELACIONADAS A REMOÇÃO DO CRUD: JORNADA E TIPO DE AUSENCIA');
 	    $this->logar('DROP NAS TABELAS: md_utl_adm_rel_jornada_usu , md_utl_adm_jornada , seq_md_utl_adm_jornada , md_utl_adm_tp_ausencia , seq_md_utl_adm_tp_ausencia');
-	    if (BancoSEI::getInstance() instanceof InfraOracle) {
+	    if (BancoSEI::getInstance() instanceof InfraOracle || BancoSEI::getInstance() instanceof InfraPostgreSql ) {
 		    BancoSEI::getInstance()->executarSql('drop sequence seq_md_utl_adm_jornada');
 		    BancoSEI::getInstance()->executarSql('drop sequence seq_md_utl_adm_tp_ausencia');
 	    } else {
@@ -1732,55 +1734,61 @@ class MdUtlAtualizadorSeiRN extends InfraRN
 	    $this->atualizarNumeroVersao($nmVersao);
     }
 
-		protected function instalarv220()
-		{
-			$nmVersao = '2.2.0';
+    protected function instalarv220()
+    {
+        $nmVersao = '2.2.0';
 
-			$this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
 
-			$objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
-			$objInfraParametro = new InfraParametro(BancoSEI::getInstance());
+        $objInfraMetaBD = new InfraMetaBD(BancoSEI::getInstance());
+        $objInfraParametro = new InfraParametro(BancoSEI::getInstance());
 
-			SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
+        SessaoSEI::getInstance()->validarAuditarPermissao('md_utl_controle_dsmp_listar');
 
-			$this->logar('ALTERA ESTRUTURA DA COLUNA resp_tacita_interrupcao DA TABELA md_utl_adm_prm_gr PARA CHAR(1)');
-			$objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoVariavel(3), 'null');
-			sleep(3); ( new MdUtlAdmPrmGrRN() )->atualizaValoresTacitaInterrupcao();
-			$objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'null');
+        $this->logar('ALTERA ESTRUTURA DA COLUNA resp_tacita_interrupcao DA TABELA md_utl_adm_prm_gr PARA CHAR(1)');
+        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoVariavel(3), 'null');
+        sleep(3); ( new MdUtlAdmPrmGrRN() )->atualizaValoresTacitaInterrupcao();
+        $objInfraMetaBD->alterarColuna('md_utl_adm_prm_gr','resp_tacita_interrupcao', $objInfraMetaBD->tipoTextoFixo(1), 'null');
 
-			$this->logar('ALTERA ESTRUTURA DA COLUNA sta_atendimento_dsmp DAS TABELAS md_utl_controle_dsmp E md_utl_hist_controle_dsmp PARA VARCHAR(2)');
-			$objInfraMetaBD->alterarColuna('md_utl_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
-			$objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
-			//comando abaixo foi validado nos SGBD's: Mysql, Oracle, Postgres e SqlServer
-			BancoSEI::getInstance()->executarSql('UPDATE md_utl_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
-			BancoSEI::getInstance()->executarSql('UPDATE md_utl_hist_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
+        $this->logar('ALTERA ESTRUTURA DA COLUNA sta_atendimento_dsmp DAS TABELAS md_utl_controle_dsmp E md_utl_hist_controle_dsmp PARA VARCHAR(2)');
+        $objInfraMetaBD->alterarColuna('md_utl_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
+        $objInfraMetaBD->alterarColuna('md_utl_hist_controle_dsmp','sta_atendimento_dsmp', $objInfraMetaBD->tipoTextoVariavel(2), 'not null');
+        //comando abaixo foi validado nos SGBD's: Mysql, Oracle, Postgres e SqlServer
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
+        BancoSEI::getInstance()->executarSql('UPDATE md_utl_hist_controle_dsmp SET sta_atendimento_dsmp = rtrim(ltrim(sta_atendimento_dsmp))');
 
-			// ATUALIZACAO NA INFRA PARAMETRO
-			$this->atualizarNumeroVersao($nmVersao);
-		}
+        // ATUALIZACAO NA INFRA PARAMETRO
+        $this->atualizarNumeroVersao($nmVersao);
+    }
 
-		/**
-		 * Atualiza o número de versão do módulo na tabela de parâmetro do sistema
-		 *
-		 * @param string $parStrNumeroVersao
-		 * @return void
-		 */
-		private function atualizarNumeroVersao($parStrNumeroVersao)	{
-			$this->logar('ATUALIZANDO PARÂMETRO '. $this->nomeParametroModulo .' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
+    protected function instalarv230() {
+        $nmVersao = '2.3.0';
+        $this->logar('EXECUTANDO A INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $nmVersao .' DO ' . $this->nomeDesteModulo . ' NA BASE DO SEI');
+        $this->atualizarNumeroVersao($nmVersao);
+    }
 
-			$objInfraParametroDTO = new InfraParametroDTO();
-			$objInfraParametroDTO->setStrNome($this->nomeParametroModulo);
-			$objInfraParametroDTO->retTodos();
-			$objInfraParametroBD = new InfraParametroBD(BancoSEI::getInstance());
-			$arrObjInfraParametroDTO = $objInfraParametroBD->listar($objInfraParametroDTO);
+    /**
+     * Atualiza o número de versão do módulo na tabela de parâmetro do sistema
+     *
+     * @param string $parStrNumeroVersao
+     * @return void
+     */
+    private function atualizarNumeroVersao($parStrNumeroVersao)	{
+        $this->logar('ATUALIZANDO PARÂMETRO '. $this->nomeParametroModulo .' NA TABELA infra_parametro PARA CONTROLAR A VERSÃO DO MÓDULO');
 
-			foreach ($arrObjInfraParametroDTO as $objInfraParametroDTO) {
-				$objInfraParametroDTO->setStrValor($parStrNumeroVersao);
-				$objInfraParametroBD->alterar($objInfraParametroDTO);
-			}
-	
-			$this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $parStrNumeroVersao .' DO '. $this->nomeDesteModulo .' REALIZADA COM SUCESSO NA BASE DO SEI');
-		}
+        $objInfraParametroDTO = new InfraParametroDTO();
+        $objInfraParametroDTO->setStrNome($this->nomeParametroModulo);
+        $objInfraParametroDTO->retTodos();
+        $objInfraParametroBD = new InfraParametroBD(BancoSEI::getInstance());
+        $arrObjInfraParametroDTO = $objInfraParametroBD->listar($objInfraParametroDTO);
+
+        foreach ($arrObjInfraParametroDTO as $objInfraParametroDTO) {
+            $objInfraParametroDTO->setStrValor($parStrNumeroVersao);
+            $objInfraParametroBD->alterar($objInfraParametroDTO);
+        }
+
+        $this->logar('INSTALAÇÃO/ATUALIZAÇÃO DA VERSÃO '. $parStrNumeroVersao .' DO '. $this->nomeDesteModulo .' REALIZADA COM SUCESSO NA BASE DO SEI');
+    }
 
     public function populaDadosLegadoDocumento(){
         InfraDebug::getInstance()->setBolDebugInfra(true);

@@ -1,7 +1,7 @@
 # Módulo Utilidades
 
 ## Requisitos
-- Requisito Mínimo é o SEI 4.0.12 instalado/atualizado - Não é compatível com versões anteriores e em versões mais recentes é necessário conferir antes se possui compatibilidade.
+- Requisito Mínimo é o SEI 4.1.4 instalado/atualizado - Não é compatível com versões anteriores e em versões mais recentes é necessário conferir antes se possui compatibilidade.
    - Verificar valor da constante de versão no arquivo /sei/web/SEI.php ou, após logado no sistema, parando o mouse sobre a logo do SEI no canto superior esquerdo.
 - Antes de executar os scripts de instalação/atualização, o usuário de acesso aos bancos de dados do SEI e do SIP, constante nos arquivos ConfiguracaoSEI.php e ConfiguracaoSip.php, deverá ter permissão de acesso total ao banco de dados, permitindo, por exemplo, criação e exclusão de tabelas.
 - Os códigos-fonte do Módulo podem ser baixados a partir do link a seguir, devendo sempre utilizar a versão mais recente: [https://github.com/anatelgovbr/mod-sei-utilidades/releases](https://github.com/anatelgovbr/mod-sei-utilidades/releases "Clique e acesse")
@@ -37,16 +37,17 @@
 9. Após a execução com sucesso, com um usuário com permissão de Administrador no SEI, seguir os passos dispostos no tópico "Orientações Negociais" mais abaixo.
 
 ## Orientações Negociais
-1. NÃO ESCOPO DO MÓDULO, até a v1.5.0: 
-	- Ainda não foi implementada a integração para envio de dados à API sobre PGDs disponibilizada pelo Ministério da Economia.
-	- O módulo ainda não possui menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, sendo necessário implementar solução de BI própria para ter uma visão geral do acompanhamento do desempenho, especialmente sobre Períodos anteriores ao Período atual.
-		- Para Período atual, no menu Controle de Desempenho > Distribuição é possível realizar filtragem por "Membro Participante" e acompanhar os dados sobre "Total de Tempo Executado no Período", "Carga Horária Padrão no Período" e "Carga Horária Distribuída no Período".
-		- Até disponibilizarmos menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, na pasta "bi_scripts" disponibilizamos três arquivos sql para extração de dados para uso em ferramenta de BI da instituição: "ExtracaoDados_historico.sql", "ExtracaoDados_tempo_executado.sql" e "ExtracaoDados_tempo_pendente.sql".
-2. Imediatamente após a instalação com sucesso, com usuário com permissão de "Administrador" do SEI, acessar os menus de administração do Módulo pelo seguinte caminho: Administração > Controle de Desempenho.
-3. O script de banco do SIP já cria todos os Recursos e Menus e os associam automaticamente ao Perfil "Básico" ou ao Perfil "Administrador".
+1. ESCOPO DO MÓDULO, a partir da v2.1.0: 
+    - No menu Controle de Desempenho > Distribuição é possível realizar filtragem por "Membro Participante" e "Período" e acompanhar os dados sobre "Total de Tempo Executado no Período", "Carga Horária Padrão no Período" e "Carga Horária Distribuída no Período".
+    - No menu Controle de Desempenho > Meus Processos é possível realizar filtragem do Usuário Logado por "Período" e acompanhar os dados sobre "Total de Tempo Executado no Período", "Carga Horária Padrão no Período" e "Carga Horária Distribuída no Período". 
+2. Ainda não foi implementada a integração para envio de dados à API sobre PGDs disponibilizada pelo Ministério da Economia.
+   	- O módulo ainda não possui menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, sendo necessário implementar solução de BI própria para ter uma visão geral do acompanhamento do desempenho, especialmente sobre Períodos anteriores ao Período atual.
+   	- Até disponibilizarmos menu/tela com relatórios para acompanhamento geral de cada membro Participante sobre Períodos de execução passados, na pasta "bi_scripts" disponibilizamos três arquivos sql para extração de dados para uso em ferramenta de BI da instituição: "ExtracaoDados_historico.sql", "ExtracaoDados_tempo_executado.sql" e "ExtracaoDados_tempo_pendente.sql".
+3. Imediatamente após a instalação com sucesso, com usuário com permissão de "Administrador" do SEI, acessar os menus de administração do Módulo pelo seguinte caminho: Administração > Controle de Desempenho.
+4. O script de banco do SIP já cria todos os Recursos e Menus e os associam automaticamente ao Perfil "Básico" ou ao Perfil "Administrador".
 	- O script de banco do SIP também cria o Perfil "Gestor de Controle de Desempenho" e associa os Recursos e Menus correspondentes. O mencionado Perfil deve ser concedido aos Gestores de Controle de Desempenho indicados em Administração > Controle de Desempenho > Tipos de Controle de Desempenho.
 	- Independente da criação de outros Perfis, os recursos indicados para o Perfil "Básico" ou "Administrador" devem manter correspondência com os Perfis dos Usuários internos que utilizarão o Módulo e dos Usuários Administradores do Módulo.
 	- Tão quanto ocorre com as atualizações do SEI, versões futuras deste Módulo continuarão a atualizar e criar Recursos e associá-los apenas aos Perfis "Básico", "Administrador" e "Gestor de Controle de Desempenho".
 	- Todos os recursos do Módulo iniciam pelo sufix **"md_utl_"**.
-4. Acesse no link a seguir o Manual de Administração: Ainda em construção
-5. Acesse no link a seguir o Manual do Usuário Interno: Ainda em construção
+5. Acesse no link a seguir o Manual de Administração: Ainda em construção
+6. Acesse no link a seguir o Manual do Usuário Interno: Ainda em construção

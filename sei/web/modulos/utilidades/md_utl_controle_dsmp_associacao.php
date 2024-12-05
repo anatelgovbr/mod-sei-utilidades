@@ -302,11 +302,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
             // veio da tela de detalhamento do processo
             if ( document.querySelector('#hdnDetalhamento').value == 1 ) {
                 window.parent.document.querySelector('#ifrArvore').src = '<?= $linkPosSubmitDetalhamento ?>';
-                /**
-                 * PARA FUNCIONAMENTO FUTURAMENTE NA VERSAO 4.1.* DO SEI, USAR O COMANDO ABAIXO SUBSTITUINDO O CONTEUDO DA LINHA: 309
-                 * window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#btnDtlhProcesso').click();
-                 */
-                window.parent.document.location.reload();
+
+                //window.parent.document.location.reload(); // 4.0.12
+                window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#btnDtlhProcesso').click(); // 4.1.*
 
             } else { // veio do menu Associar Processo a Fila
                 window.parent.document.querySelector('#btnPesquisar').click();
@@ -431,14 +429,9 @@ PaginaSEI::getInstance()->abrirBody($strTitulo,'onload="inicializar();"');
     function montarTelaDetalhamento(arrUltimasFilas, idProcedimento){
         var objLinha         = arrUltimasFilas[0];
         var idProcedimento   = idProcedimento;
-
-        /**
-         * PARA FUNCIONAMENTO FUTURAMENTE NA VERSAO 4.1.* DO SEI, USAR O COMANDO ABAIXO SUBSTITUINDO O CONTEUDO DA LINHA: 445
-         * window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#ifrVisualizacao');
-         */
-
-        // Inicio de trecho alterado
-        var objVisualizacao  = window.parent.document.querySelector('#ifrVisualizacao');
+        
+        // var objVisualizacao  = window.parent.document.querySelector('#ifrVisualizacao'); // 4.0.12
+        var objVisualizacao  = window.parent.document.querySelector('#ifrConteudoVisualizacao').contentWindow.document.querySelector('#ifrVisualizacao'); // 4.1.*
         var strProcesso      = objVisualizacao.contentWindow.document.querySelector('#hdnProtocoloFormatado').value;
         var filaAtual        = objVisualizacao.contentWindow.document.querySelector('#hdnNomeFilaAtual').value;
         var status           = objVisualizacao.contentWindow.document.querySelector('#hdnIdStatusAtual').value;

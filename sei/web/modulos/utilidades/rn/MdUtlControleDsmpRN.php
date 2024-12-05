@@ -190,8 +190,6 @@ class MdUtlControleDsmpRN extends InfraRN
             if ($objMdUtlControleDsmpDTO->getStrSinVerificarPermissao() == 'S') {
                 SessaoSEI::getInstance()->validarPermissao('md_utl_controle_dsmp_listar');
             }
-            $ret = $objMdUtlControleDsmpBD->listar($objMdUtlControleDsmpDTO,true);
-            $a=1;
             return $objMdUtlControleDsmpBD->listar($objMdUtlControleDsmpDTO);
 
         } catch (Exception $e) {

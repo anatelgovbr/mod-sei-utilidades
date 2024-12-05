@@ -90,7 +90,6 @@ class MdUtlUsuarioRN extends InfraRN {
             $objUsuarioDTO->setStrIdxUsuario($idxUsuario);
             $objUsuarioDTO->setStrStaTipo(UsuarioRN::$TU_SISTEMA);
             $objUsuarioDTO->setStrSenha(null);
-            $objUsuarioDTO->setStrSinAcessibilidade(MdUtlUsuarioRN::$NAO);
             $objUsuarioDTO->setStrSinAtivo(MdUtlUsuarioRN::$SIM);
 
             $objUsuarioDTO = $objUsuarioRN->cadastrarRN0487($objUsuarioDTO);
