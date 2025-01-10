@@ -116,12 +116,18 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $objMdUtlAdmRelTpCtrlUsuRN = new MdUtlAdmRelTpCtrlDesempUsuRN();
         $objMdUtlAdmRelTpCtrlUsuDTO = new MdUtlAdmRelTpCtrlDesempUsuDTO();
         $objMdUtlAdmRelTpCtrlUsuDTO->setNumIdUsuario($arrIds, InfraDTO::$OPER_IN);
+        $objMdUtlAdmRelTpCtrlUsuDTO->retStrNomeTipoControle();
         $objMdUtlAdmRelTpCtrlUsuDTO->retTodos();
 
         $existeGestor = $objMdUtlAdmRelTpCtrlUsuRN->contar($objMdUtlAdmRelTpCtrlUsuDTO) > 0;
 
         if ($existeGestor) {
-            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_40, array($acao));
+            $arrDados = $objMdUtlAdmRelTpCtrlUsuRN->listar($objMdUtlAdmRelTpCtrlUsuDTO);
+            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_40, array($acao)) . "\n\n";
+
+            foreach ( $arrDados as $dadosDTO ) {
+                $msg .= "- {$dadosDTO->getStrNomeTipoControle()} \n";
+            }
         }
 
         return $msg;
@@ -133,52 +139,37 @@ class MdUtlRegrasGeraisRN extends InfraRN
 
         $objMdUtlControleDsmpRN = new MdUtlControleDsmpRN();
         $objMdUtlControleDsmpDTO = new MdUtlControleDsmpDTO();
-        $objMdUtlControleDsmpDTO->retTodos();
+        $objMdUtlControleDsmpDTO->retStrProtocoloProcedimentoFormatado();
+        $objMdUtlControleDsmpDTO->retStrSiglaUnidade();
 
         $objMdUtlControleDsmpDTO->adicionarCriterio(array('IdUsuarioAtual', 'IdUsuarioDistribuicao'), array(InfraDTO::$OPER_IN, InfraDTO::$OPER_IN), array($arrIds, $arrIds), array(InfraDTO::$OPER_LOGICO_OR));
-        $existeControleDsmp = $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO) > 0;
+        $qtd = $objMdUtlControleDsmpRN->contar($objMdUtlControleDsmpDTO);
+        $existeControleDsmp = $qtd > 0;
 
         if ($existeControleDsmp) {
-            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_41, array($acao));
+            $arrDados = $objMdUtlControleDsmpRN->listar($objMdUtlControleDsmpDTO);
+            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_41, array($acao)) . "\n\n";
+            $loop = 0;
+            foreach ( $arrDados as $dadosDTO ) {
+                if ( $loop > 14 ) break;
+                $msg .=  "- {$dadosDTO->getStrSiglaUnidade()}: {$dadosDTO->getStrProtocoloProcedimentoFormatado()} \n";
+                $loop++;
+            }
         }
 
         return $msg;
-
-    }
-
-    private function _validarHsControleDsmp($arrIds, $acao)
-    {
-
-        $msg = '';
-
-        $objMdUtlHistControleDsmpRN = new MdUtlHistControleDsmpRN();
-        $objMdUtlHistControleDsmpDTO = new MdUtlHistControleDsmpDTO();
-        $objMdUtlHistControleDsmpDTO->retTodos();
-
-        $objMdUtlHistControleDsmpDTO->adicionarCriterio(array('IdUsuarioAtual', 'IdUsuarioDistribuicao'), array(InfraDTO::$OPER_IN, InfraDTO::$OPER_IN), array($arrIds, $arrIds), array(InfraDTO::$OPER_LOGICO_OR));
-        $existeHsControleDsmp = $objMdUtlHistControleDsmpRN->contar($objMdUtlHistControleDsmpDTO) > 0;
-
-        if ($existeHsControleDsmp) {
-            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_42, array($acao));
-        }
-
-        return $msg;
-
     }
 
     protected function verificarExistenciaUsuarioConectado($params)
     {
-
         $arrObjUsuarioAPI = $params[0];
         $acao = $params[1];
         $arrIds = array();
         $msg = '';
 
-
         foreach ($arrObjUsuarioAPI as $objUsuario) {
             $arrIds[] = $objUsuario->getIdUsuario();
         }
-
 
         //Validar Controle DSMP
         $msg = $this->_validarControleDsmp($arrIds, $acao);
@@ -186,20 +177,13 @@ class MdUtlRegrasGeraisRN extends InfraRN
             return $msg;
         }
 
-        //Validar Histórico Controle DSMP
-        $msg = $this->_validarHsControleDsmp($arrIds, $acao);
-        if ($msg != '') {
-            return $msg;
-        }
-
-
         //Validar Gestor no Tipo de Controle
         $msg = $this->_validarGestorTipoControle($arrIds, $acao);
         if ($msg != '') {
             return $msg;
         }
 
-        //Validar Usuário Participante na Parametrização do Tipo de Controle
+        //Validar Usuário Participante na Parametrização do Tipo de Controle + Fila
         $msg = $this->_validarUsuarioParticipanteParametrizacao($arrIds, $acao);
         if ($msg != '') {
             return $msg;
@@ -213,10 +197,51 @@ class MdUtlRegrasGeraisRN extends InfraRN
         $objMdUtlAdmRelPrmGrUsuDTO->setNumIdUsuario($arrIds, InfraDTO::$OPER_IN);
         $objMdUtlAdmRelPrmGrUsuDTO->retTodos();
 
-        $existeUsuarioParticipante = $objMdUtlAdmRelPrmGrUsuRN->contar($objMdUtlAdmRelPrmGrUsuDTO) > 0;
+        $qtd = $objMdUtlAdmRelPrmGrUsuRN->contar($objMdUtlAdmRelPrmGrUsuDTO);
+
+        $existeUsuarioParticipante = $qtd > 0;
 
         if ($existeUsuarioParticipante) {
-            $msg = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_36, array($acao));
+            $msg            = MdUtlMensagemINT::getMensagem(MdUtlMensagemINT::$MSG_UTL_36, array($acao)) . "\n\n";
+            $arrDados       = $objMdUtlAdmRelPrmGrUsuRN->listar($objMdUtlAdmRelPrmGrUsuDTO);
+            $arrIdsPrmGr    = InfraArray::converterArrInfraDTO($arrDados,'IdMdUtlAdmPrmGr');
+            $arrIdsPrmGrUsu = InfraArray::converterArrInfraDTO($arrDados,'IdMdUtlAdmPrmGrUsu','IdMdUtlAdmPrmGr');
+
+            foreach ( $arrIdsPrmGr as $idPrmGr ) {
+                $objMdUtlAdmTpCtrlDTO = new MdUtlAdmTpCtrlDesempDTO();
+                $objMdUtlAdmTpCtrlDTO->setNumIdMdUtlAdmPrmGr($idPrmGr);
+                //$objMdUtlAdmTpCtrlDTO->setOrd('Nome',InfraDTO::$TIPO_ORDENACAO_ASC);
+                $objMdUtlAdmTpCtrlDTO->retStrNome();
+
+                $objTpCtrlDTO = ( new MdUtlAdmTpCtrlDesempRN() )->consultar($objMdUtlAdmTpCtrlDTO);
+
+                $msg .= "Tipo de Controle: {$objTpCtrlDTO->getStrNome()} \n";
+                $msg .= " - Membro Participante \n";
+
+                // Consulta os Ids das filas que o Usuario faz parte como Membro Participante
+                $objMdUtlAdmFilaPrmGrUsuDTO = new MdUtlAdmFilaPrmGrUsuDTO();
+                $objMdUtlAdmFilaPrmGrUsuDTO->setNumIdMdUtlAdmPrmGrUsu( $arrIdsPrmGrUsu[$idPrmGr] );
+                $objMdUtlAdmFilaPrmGrUsuDTO->retNumIdMdUtlAdmFila();
+
+                $objMdUtlAdmFilaPrmGrUsuDTO = ( new MdUtlAdmFilaPrmGrUsuRN() )->listar( $objMdUtlAdmFilaPrmGrUsuDTO );
+                $arrIdsFila = InfraArray::converterArrInfraDTO($objMdUtlAdmFilaPrmGrUsuDTO,'IdMdUtlAdmFila');
+
+                if ( $arrIdsFila ) {
+                    // Consulta as Filas
+                    $objMdUtlAdmFilaDTO = new MdUtlAdmFilaDTO();
+                    $objMdUtlAdmFilaDTO->setNumIdMdUtlAdmFila($arrIdsFila, InfraDTO::$OPER_IN);
+                    $objMdUtlAdmFilaDTO->retStrNome();
+                    $objMdUtlAdmFilaDTO->retNumIdMdUtlAdmFila();
+                    $objMdUtlAdmFilaDTO->setOrd('Nome', InfraDTO::$TIPO_ORDENACAO_ASC);
+
+                    $strListaFilas = implode(
+                        ', ' ,
+                        InfraArray::converterArrInfraDTO( ( new MdUtlAdmFilaRN() )->listar($objMdUtlAdmFilaDTO) , 'Nome')
+                    );
+
+                    $msg .= " - Filas: $strListaFilas \n\n";
+                }
+            }
         }
 
         return $msg;

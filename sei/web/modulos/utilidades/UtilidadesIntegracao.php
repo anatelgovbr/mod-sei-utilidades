@@ -22,7 +22,7 @@ class UtilidadesIntegracao extends SeiIntegracao
     public function getVersao()
     {
 
-        return '2.3.0';
+        return '2.3.1';
     }
 
     public function getInstituicao()
